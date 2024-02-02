@@ -1,0 +1,75 @@
+﻿@{
+    ViewData["Title"] = "Submit Request";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body>
+
+    <header>
+        <div class="row d-flex mx-3 align-items-center justify-content-md-between justify-content-center"
+            style="height: 100px;">
+            <div class="col-4"></div>
+            <div class="col-4 d-flex justify-content-center">
+                <img class=" d-none d-md-flex" src="~/images/hallo_doc_logo.png" alt="logo_icon" height="100px">
+            </div>
+            <div class="col-4 d-flex justify-content-md-center justify-content-end">
+                <button onclick="myFunction()" class=" btn btn-outline-info shadow-none">
+                    <img src="/images/dark_mode_black_24dp.svg" alt="dark_mode">
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container-fluid">
+
+        <div class="bg-image d-lg-none"></div>
+
+        <div class="row mx-2 d-flex flex-column align-items-center">
+
+            <div class="col-12 col-sm-9 col-md-7 col-lg-5 mt-4">
+                <a class="text-decoration-none" asp-controller="patient" asp-action="SubmitRequest">
+                    <div class="d-flex submit-request-div align-items-center justify-content-center">
+                        <div class="justify-content-center d-flex align-items-center">
+                            <h4 class="fw-normal text-white">Submit A Request</h4>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-12 col-sm-9 col-md-7 col-lg-5 mt-4">
+                <a class="text-decoration-none" asp-action="Login" asp-controller="patient">
+                    <div class=" registered-patient-div  align-items-center d-flex justify-content-center">
+                        <div class="justify-content-center d-flex align-items-center">
+                            <h4 class="fw-normal text-white">Registered Patients</h4>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+        </div>
+
+        <div class="row align-items-center justify-content-center">
+
+            <footer class="position-fixed bottom-0 py-3" style="background-color: #282828;">
+
+                <div class="justify-content-md-end justify-content-center d-flex">
+                    <a class="text-decoration-none" href=""><span class="text-white">Terms of Conditions</span></a>
+                    <span class="px-2 " style="color: grey;">|</span>
+                    <a class="text-decoration-none" href=""><span class="text-white">Privacy Policy</span></a>
+                </div>
+
+            </footer>
+        </div>
+
+    </div>
+
+</body>
+
+</html>

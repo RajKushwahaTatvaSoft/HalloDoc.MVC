@@ -1,0 +1,113 @@
+﻿@{
+    ViewData["Title"] = "Submit Request";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Role</title>
+
+    <link rel="stylesheet" href="/css/patient.css">
+    <script type="text/javascript" src="/js/patient.js"></script>
+
+</head>
+
+<body>
+
+    <header class="shadow">
+        <div class="d-flex mx-3 align-items-center justify-content-between">
+            <img src="/images/hallo_doc_logo.png" alt="logo_icon" height="100px">
+            <button onclick="myFunction()" class="btn btn-outline-info shadow-none">
+                <img src="/images/dark_mode_black_24dp.svg" alt="dark_mode">
+            </button>
+        </div>
+    </header>
+
+    <div class="container-fluid">
+
+        <div class="row mt-4">
+
+            <div class="col-4">
+                <a asp-action="Index" asp-controller="patient" class="btn btn-outline-info shadow-none">
+                    <div class="d-flex justify-content-center align-items-center">
+                        <img src="/images/back_arrow.svg" alt="back_arrow" height="20px">
+                        <span class="h6 p-0 m-0 text-center" style="color: #10bce9;">Back</span>
+                    </div>
+                </a>
+            </div>
+            <div class="col-4 d-flex justify-content-center">
+
+                <h1>I am a...</h1>
+
+            </div>
+
+            <div class="col-4"></div>
+
+        </div>
+
+        <div class="row mt-4">
+            <div class="d-flex justify-content-center">
+                <a class="text-decoration-none" href="create_patient_request.html">
+                    <div class="patient-div justify-content-center d-flex align-items-center">
+                        <h4 class="text-uppercase">Patient</h4>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+
+        <div class="row mt-4">
+            <div class="d-flex justify-content-center">
+                <a class="text-decoration-none" href="create_family_request.html">
+                    <div class="family-friend-div justify-content-center d-flex align-items-center">
+                        <h4 class="text-uppercase">Family/Friend</h4>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+
+        <div class="row mt-4">
+            <div class="d-flex justify-content-center">
+                <a class="text-decoration-none" href="create_concierge_request.html">
+                    <div class="concierge-div justify-content-center d-flex align-items-center">
+                        <h4 class="text-uppercase">Concierge</h4>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+
+
+        <div class="row mt-4">
+            <div class="d-flex justify-content-center">
+                <a class="text-decoration-none" href="create_business_request.html">
+                    <div class="business-partners-div justify-content-center d-flex align-items-center">
+                        <h4 class="text-uppercase">Business Partners</h4>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+
+        <div class="row align-items-center justify-content-center">
+
+            <footer class="position-fixed bottom-0 py-3" style="background-color: #282828;">
+
+                <div class="justify-content-md-end justify-content-center d-flex">
+                    <a class="text-decoration-none" href=""><span class="text-white">Terms of Conditions</span></a>
+                    <span class="px-2 " style="color: grey;">|</span>
+                    <a class="text-decoration-none" href=""><span class="text-white">Privacy Policy</span></a>
+                </div>
+
+            </footer>
+        </div>
+
+    </div>
+
+</body>
+
+</html>

@@ -1,0 +1,229 @@
+﻿/* Select Role Screen Css */
+:root {
+    --primary: #10bce9
+}
+
+.patient-authentication #floatingInputGroup1:focus {
+    box-shadow: none;
+}
+
+.patient-authentication a {
+    text-decoration: none;
+    color: grey;
+}
+
+.patient-authentication a:hover {
+    text-decoration: none;
+    color: blue;
+}
+
+.patient-authentication .background {
+    position: absolute;
+    height: 100vh;
+    width: 100vw;
+    background-image: url('~/images/11116016_415.jpg');
+    background-size: cover;
+    background-position: center;
+    filter: blur(5px);
+    opacity: 0.4;
+    z-index: -1;
+}
+
+.patient-authentication .input-bg {
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+.patient-authentication .btn:hover {
+    background-color: #e3e3e3;
+}
+
+html, body {
+    height: 100%;
+}
+
+.btn-primary {
+    background-color: var(--primary);
+    border: 0px solid white;
+}
+
+.btn:focus {
+    box-shadow: none;
+}
+
+.btn:active {
+    box-shadow: none;
+}
+
+.patient-div {
+    width: 350px;
+    height: 50px;
+    background-color: #e8eaf1;
+    border: 1px solid #4367d3;
+    border-radius: 5px;
+}
+
+    .patient-div h4 {
+        color: #4367d3;
+    }
+
+    .patient-div:hover {
+        background-color: #4367d3;
+    }
+
+        .patient-div:hover h4, .family-friend-div:hover h4, .concierge-div:hover h4, .business-partners-div:hover h4 {
+            color: white;
+        }
+
+.family-friend-div {
+    width: 350px;
+    height: 50px;
+    background-color: #e5f3f8;
+    border: 1px solid #00adef;
+    border-radius: 5px;
+}
+
+    .family-friend-div h4 {
+        color: #00adef;
+    }
+
+    .family-friend-div:hover {
+        background-color: #00adef;
+    }
+
+.concierge-div {
+    width: 350px;
+    height: 50px;
+    background-color: #e8f0e8;
+    border: 1px solid #228b22;
+    border-radius: 5px;
+}
+
+    .concierge-div h4 {
+        color: #228b22;
+    }
+
+    .concierge-div:hover {
+        background-color: #228b22;
+    }
+
+.business-partners-div {
+    width: 350px;
+    height: 50px;
+    background-color: #f6e6ef;
+    border: 1px solid #d90f81;
+    border-radius: 5px;
+}
+
+    .business-partners-div h4 {
+        color: #d90f81;
+    }
+
+    .business-partners-div:hover {
+        background-color: #d90f81;
+    }
+
+.footer-bg {
+    background-color: #282828;
+    color: #282828;
+}
+
+.btn:hover {
+    background-color: #e3e3e3;
+}
+
+/* Submit Request Screen Css */
+
+.submit-request-div {
+    height: 50px;
+    background-color: #10bce9;
+    border-radius: 5px;
+}
+
+.registered-patient-div {
+    height: 50px;
+    background-color: #0d1556;
+    border-radius: 5px;
+}
+
+
+.bg-image {
+    position: absolute;
+    height: 100vh;
+    width: 100vw;
+    background-image: url('../assets/11116016_415.jpg');
+    background-size: cover;
+    background-position: center;
+    filter: blur(5px);
+    opacity: 0.4;
+    z-index: -1;
+}
+
+/* Create Patient Request Screen Css */
+
+.create-patient-request input:focus {
+    box-shadow: none;
+}
+
+.create-patient-request textarea:focus {
+    box-shadow: none;
+}
+
+.form-floating:focus-within label {
+    color: #10bce9;
+}
+
+.create-patient-request {
+    /* #f9f9f9 */
+    background-color: #f9f9f9;
+}
+
+.iti {
+    position: relative;
+    height: 100%;
+    width: 100%;
+    display: inline-block;
+}
+
+.iti--allow-dropdown input, .iti--allow-dropdown input[type=text], .iti--allow-dropdown input[type=tel], .iti--separate-dial-code input, .iti--separate-dial-code input[type=text], .iti--separate-dial-code input[type=tel] {
+    padding-right: 6px;
+    padding-left: 52px;
+    margin-left: 0;
+    height: 59px;
+}
+
+.iti__country-list {
+    z-index: 5;
+}
+
+.upload-border {
+    border: 1px solid black;
+    width: 315px;
+}
+
+input[type=file]::-webkit-file-upload-button {
+    width: 0;
+    padding: 0;
+    margin: 0;
+    -webkit-appearance: none;
+    border: none;
+    border: 0px;
+}
+
+x::-webkit-file-upload-button, input[type=file]:after {
+    content: 'Browse...';
+    left: 100%;
+    margin-left: 3px;
+    position: relative;
+    -webkit-appearance: button;
+    padding: 3px 8px 2px;
+    border: 0px;
+}
+
+.info-icon-shadow {
+    box-shadow: 0px 0px 1px 2px #faaa04;
+    border-radius: 100%;
+}
+
+.dark-mode {
+    background-color: black;
+}
