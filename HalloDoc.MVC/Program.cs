@@ -1,7 +1,14 @@
+using Microsoft.EntityFrameworkCore;
+using HalloDoc.MVC.Models;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddDbContext<HalloDocContext>(options =>
+options.UseNpgsql(builder.Configuration.GetConnectionString("HalloDocContext")));
+
 
 var app = builder.Build();
 
@@ -22,6 +29,6 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Patient}/{action=SubmitRequest}/{id?}");
+    pattern: "{controller=Patient}/{action=Index}");
 
 app.Run();

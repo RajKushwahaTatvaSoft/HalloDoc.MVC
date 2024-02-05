@@ -1,0 +1,375 @@
+﻿@{
+    ViewData["Title"] = "Family/Friend Request";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family/Friend Request</title>
+
+    <link rel="stylesheet" href="/css/patient.css">
+    <script type="text/javascript" src="/js/patient.js"></script>
+
+    <!-- <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script> -->
+
+    <script src="https://code.jquery.com/jquery-3.6.1.min.js"
+        integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous">
+        </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
+
+</head>
+
+<body class="create-patient-request">
+
+    <header class="shadow">
+        <div class="d-flex mx-3 align-items-center justify-content-between">
+            <img src="/images/hallo_doc_logo.png" alt="logo_icon" height="100px">
+            <button onclick="myFunction()" class="btn btn-outline-info shadow-none night-mode-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="24px"
+                    viewBox="0 0 24 24" width="24px">
+                    <rect fill="none" height="24" width="24" />
+                    <path
+                        d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z" />
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="reloadAlertLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+
+            <div class="modal-content">
+
+                <div class="modal-body flex-column d-flex justify-content-center align-items-center mx-3 my-5">
+
+                    <div class="info-icon-shadow">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="100px" viewBox="0 0 24 24" width="100px"
+                            fill="#faaa04">
+                            <path d="M0 0h24v24H0z" fill="none" />
+                            <path
+                                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+                        </svg>
+                    </div>
+
+                    <h3 class="my-2">Information</h3>
+
+                    <div>
+                        <p class="text-center">When submitting a request, you must provide the correct contact
+                            information for the patient
+                            or the responsibly party. Failure to provice the correct email and phone number will delay
+                            service or be declined</p>
+                    </div>
+
+                    <button type="button" onclick="closeModal()" class="mt-1 btn btn-primary px-3 py-2" data-dismiss="modal">OK</button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+
+        <div class="mt-4">
+            <a asp-controller="Patient" asp-action="SubmitRequest" class="btn btn-outline-info shadow-none">
+                <div class="d-flex justify-content-center align-items-center back-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="24">
+                        <path
+                            d="m142-480 294 294q15 15 14.5 35T435-116q-15 15-35 15t-35-15L57-423q-12-12-18-27t-6-30q0-15 6-30t18-27l308-308q15-15 35.5-14.5T436-844q15 15 15 35t-15 35L142-480Z" />
+                    </svg>
+                    <span class="h6 p-0 m-0 text-center">Back</span>
+                </div>
+            </a>
+        </div>
+
+        <form action="">
+
+            <div class="container-fluid form-card shadow-sm rounded mx-1 my-3 py-3">
+
+                <div class="row">
+                    <h3>Family/Friend Information</h3>
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-4 col-md-6 col-12">
+                        <div class="form-floating mt-3">
+                            <input class="form-control" placeholder="Leave a comment here"
+                                id="floatingTextarea2"></input>
+                            <label for="floatingTextarea2">Your First Name</label>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 col-12">
+                        <div class="form-floating mt-3">
+                            <input class="form-control" placeholder="Leave a comment here"
+                                id="floatingTextarea2"></input>
+                            <label for="floatingTextarea2">Your Last Name</label>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 col-12">
+
+                        <div class="form-floating mt-3">
+                            <input id="family-phone" class="form-control" type="tel" name="phone"></input>
+                        </div>
+
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 col-12">
+                        <div class="form-floating mt-3">
+                            <input class="form-control" placeholder="Leave a comment here"
+                                id="floatingTextarea2"></input>
+                            <label for="floatingTextarea2">Your Email</label>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 col-12">
+                        <div class="form-floating mt-3">
+                            <input class="form-control" placeholder="Leave a comment here"
+                                id="floatingTextarea2"></input>
+                            <label for="floatingTextarea2">Relation With Patient</label>
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <div class="row mt-3">
+                    <h3>Patient Information</h3>
+                </div>
+
+                <div class="row">
+
+                    <div class="form-floating mt-2">
+                        <textarea class="form-control" placeholder="Leave a comment here" id="floatingTextarea2"
+                            style="height: 100px;"></textarea>
+                        <label class="ms-2" for="floatingTextarea2">Enter brief details of Symptoms (Optional)</label>
+                    </div>
+
+                </div>
+
+
+                <div class="row">
+
+                    <div class="col-lg-4 col-md-6 col-12">
+                        <div class="form-floating mt-3">
+                            <input class="form-control" placeholder="Leave a comment here"
+                                id="floatingTextarea2"></input>
+                            <label for="floatingTextarea2">First Name</label>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 col-12">
+                        <div class="form-floating mt-3">
+                            <input class="form-control" placeholder="Leave a comment here"
+                                id="floatingTextarea2"></input>
+                            <label for="floatingTextarea2">Last Name</label>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 col-12">
+
+                        <div class="form-floating mt-3">
+
+                            <input class="form-control" placeholder="Leave a comment here" type="date"
+                                id="floatingTextarea2" name="birthday">
+                            <label for="floatingTextarea2">Date of Birth:</label>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="row mt-3">
+                    <h3>Patient Contact Information</h3>
+                </div>
+
+                <div class="row">
+
+                    <div class="col-md-6 col-12">
+                        <div class="form-floating mt-3">
+                            <input class="form-control" placeholder="Leave a comment here"
+                                id="floatingTextarea2"></input>
+                            <label for="floatingTextarea2">Email</label>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 col-12">
+
+                        <div class="form-floating mt-3">
+                            <input id="patient-phone" class="form-control" type="tel" name="phone"></input>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="row mt-3">
+                    <h3>Patient Location</h3>
+                </div>
+
+                <div class="row">
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <div class="form-floating mt-3">
+                            <input class="form-control" placeholder="Leave a comment here"
+                                id="floatingTextarea2"></input>
+                            <label for="floatingTextarea2">Street</label>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <div class="form-floating mt-3">
+                            <input class="form-control" placeholder="Leave a comment here"
+                                id="floatingTextarea2"></input>
+                            <label for="floatingTextarea2">City</label>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <div class="form-floating mt-3">
+                            <input class="form-control" placeholder="Leave a comment here"
+                                id="floatingTextarea2"></input>
+                            <label for="floatingTextarea2">State</label>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <div class="form-floating mt-3">
+                            <input class="form-control" placeholder="Leave a comment here"
+                                id="floatingTextarea2"></input>
+                            <label for="floatingTextarea2">Zip Code</label>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <div class="form-floating mt-3">
+                            <input class="form-control" placeholder="Leave a comment here"
+                                id="floatingTextarea2"></input>
+                            <label for="floatingTextarea2">Room # / Suite (Optional)</label>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="row mt-3">
+                    <h3>(Optional) Upload Photo or Document</h3>
+                </div>
+
+                <div class="row">
+
+                    <div class="mb-3">
+
+                        <input class="form-control" type="file" id="file_input_id" style="opacity:0;height:0;">
+
+                        <div class="input-group mb-3">
+                            <input type="text" id='text_input_id' class="form-control" placeholder="Select File"
+                                style="caret-color: transparent" autocomplete="off">
+
+                            <span class="input-group-text" id="text_input_span_id " style="background-color: #10bce9;">
+                                <div>
+                                    <img src="/images/upload_icon.svg" alt="upload-icon">
+                                    <span class="ms-1 text-white">Upload</span>
+                                </div>
+                            </span>
+
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="row">
+                    <div class=" d-flex justify-content-center justify-content-md-end">
+                        <button class="btn" type="submit" style="background-color: #10bce9;">
+                            <span class="text-white">Submit</span>
+                        </button>
+
+                        <button class="btn ms-3" type="reset" style="border: 1px solid #10bce9;">
+                            <span style="color: #10bce9;">Cancel</span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+        </form>
+
+
+        <div class="row align-items-end justify-content-center">
+
+            <footer class="py-3" style="background-color: #282828;">
+
+                <div class="justify-content-md-end justify-content-center d-flex">
+                    <a class="text-decoration-none" href=""><span class="text-white">Terms of Conditions</span></a>
+                    <span class="px-2 " style="color: grey;">|</span>
+                    <a class="text-decoration-none" href=""><span class="text-white">Privacy Policy</span></a>
+                </div>
+
+            </footer>
+        </div>
+
+
+
+    </div>
+
+    <script>
+        // bind file-input-form click action to text-input-span
+        $('#text_input_span_id').click(function () {
+            $("#file_input_id").trigger('click');
+        })
+        // bind file-input-form click action to text-input-form
+        $('#text_input_id').click(function () {
+            $("#file_input_id").trigger('click');
+        })
+        // display file name in text-input-form    
+        $("#file_input_id").change(function () {
+            $('#text_input_id').val(this.value.replace(/C:\\fakepath\\/i, ''))
+        })
+    </script>
+
+    <script>
+
+        var phoneInputField = document.querySelector("#family-phone");
+        var phoneInput = window.intlTelInput(phoneInputField, {
+            utilsScript:
+                "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+        });
+
+        var phoneInputField = document.querySelector("#patient-phone");
+        var phoneInput = window.intlTelInput(phoneInputField, {
+            utilsScript:
+                "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+        });
+
+        $(function () {
+            $("#datepicker").datepicker({
+                autoclose: true,
+                todayHighlight: true,
+            }).datepicker('update', new Date());
+        });
+
+    </script>
+
+    <script>
+
+        window.onload = function () {
+            $('#myModal').modal('show');
+        }
+
+        function closeModal() {
+           $('#myModal').modal('hide')
+        }
+
+    </script>
+
+</body>
+
+</html>

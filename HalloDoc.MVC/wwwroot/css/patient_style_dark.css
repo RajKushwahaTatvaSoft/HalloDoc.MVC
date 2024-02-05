@@ -1,0 +1,39 @@
+﻿.dark-mode {
+    --primary: white;
+    background-color: #282828;
+}
+
+    .dark-mode .btn:hover {
+        background-color: white;
+        border-color: white;
+    }
+
+    .dark-mode :is(h1, h2, h3, label) {
+        color: white;
+    }
+
+    .dark-mode .btn:hover svg {
+        fill: black;
+    }
+
+    .dark-mode .btn:hover span {
+        color: black;
+    }
+
+    .dark-mode .form-card {
+        background-color: #454545;
+    }
+
+    .dark-mode textarea, .dark-mode input {
+        background-color: #454545;
+        color: white;
+    }
+
+        .dark-mode input:focus, .dark-mode textarea:focus {
+            background-color: #676767;
+            color: white;
+        }
+
+    .dark-mode .btn:active {
+        background-color: #454545;
+    }

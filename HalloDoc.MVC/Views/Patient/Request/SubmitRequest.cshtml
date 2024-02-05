@@ -20,8 +20,12 @@
     <header class="shadow">
         <div class="d-flex mx-3 align-items-center justify-content-between">
             <img src="/images/hallo_doc_logo.png" alt="logo_icon" height="100px">
-            <button onclick="myFunction()" class="btn btn-outline-info shadow-none">
-                <img src="/images/dark_mode_black_24dp.svg" alt="dark_mode">
+            <button onclick="myFunction()" class="btn btn-outline-info shadow-none night-mode-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="24px"
+                     viewBox="0 0 24 24" width="24px">
+                    <rect fill="none" height="24" width="24" />
+                    <path d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z" />
+                </svg>
             </button>
         </div>
     </header>
@@ -32,9 +36,11 @@
 
             <div class="col-4">
                 <a asp-action="Index" asp-controller="patient" class="btn btn-outline-info shadow-none">
-                    <div class="d-flex justify-content-center align-items-center">
-                        <img src="/images/back_arrow.svg" alt="back_arrow" height="20px">
-                        <span class="h6 p-0 m-0 text-center" style="color: #10bce9;">Back</span>
+                    <div class="d-flex justify-content-center align-items-center back-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="24">
+                            <path d="m142-480 294 294q15 15 14.5 35T435-116q-15 15-35 15t-35-15L57-423q-12-12-18-27t-6-30q0-15 6-30t18-27l308-308q15-15 35.5-14.5T436-844q15 15 15 35t-15 35L142-480Z" />
+                        </svg>
+                        <span class="h6 p-0 m-0 text-center">Back</span>
                     </div>
                 </a>
             </div>
@@ -50,7 +56,7 @@
 
         <div class="row mt-4">
             <div class="d-flex justify-content-center">
-                <a class="text-decoration-none" href="create_patient_request.html">
+                <a asp-controller="Patient" asp-action="PatientRequest" class="text-decoration-none">
                     <div class="patient-div justify-content-center d-flex align-items-center">
                         <h4 class="text-uppercase">Patient</h4>
                     </div>
@@ -61,7 +67,7 @@
 
         <div class="row mt-4">
             <div class="d-flex justify-content-center">
-                <a class="text-decoration-none" href="create_family_request.html">
+                <a asp-controller="Patient" asp-action="FamilyFriendRequest" class="text-decoration-none">
                     <div class="family-friend-div justify-content-center d-flex align-items-center">
                         <h4 class="text-uppercase">Family/Friend</h4>
                     </div>
@@ -72,7 +78,7 @@
 
         <div class="row mt-4">
             <div class="d-flex justify-content-center">
-                <a class="text-decoration-none" href="create_concierge_request.html">
+                <a asp-controller="Patient" asp-action="ConciergeRequest" class="text-decoration-none">
                     <div class="concierge-div justify-content-center d-flex align-items-center">
                         <h4 class="text-uppercase">Concierge</h4>
                     </div>
@@ -84,7 +90,7 @@
 
         <div class="row mt-4">
             <div class="d-flex justify-content-center">
-                <a class="text-decoration-none" href="create_business_request.html">
+                <a asp-controller="Patient" asp-action="BusinessRequest" class="text-decoration-none">
                     <div class="business-partners-div justify-content-center d-flex align-items-center">
                         <h4 class="text-uppercase">Business Partners</h4>
                     </div>
