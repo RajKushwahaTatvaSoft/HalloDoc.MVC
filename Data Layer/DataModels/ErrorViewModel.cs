@@ -1,4 +1,4 @@
-namespace HalloDoc.MVC.Models
+namespace Data_Layer.DataModels
 {
     public class ErrorViewModel
     {

@@ -1,4 +1,5 @@
-﻿@{
+﻿@model Aspnetuser
+@{
     ViewData["Title"] = "Login";
 }
 
@@ -48,29 +49,32 @@
 
                 <div class="col-lg-6 col-md-8 col-xs-12 mt-3">
 
-                    <div class="">
-                        <div class="form-floating d-flex border rounded input-bg">
-                            <input type="text" class="form-control shadow-none border-0 bg-transparent"
-                                id="floatingInputGroup1" placeholder="Username" />
-                            <img src="/images/user_circle.svg" alt="user_circle" class="pe-3">
-                            <label class="" for="floatingInputGroup1">Username</label>
+                    <form method="post">
+                        <div class="">
+                            <div class="form-floating d-flex border rounded input-bg">
+                                <input asp-for="Username" type="text" class="form-control shadow-none border-0 bg-transparent"
+                                       id="floatingInputGroup1" placeholder="Username" />
+                                <img src="/images/user_circle.svg" alt="user_circle" class="pe-3">
+                                <label class="" for="floatingInputGroup1">Username</label>
+                            </div>
+
                         </div>
 
-                    </div>
-
-                    <div class="mt-3">
-                        <div class="form-floating d-flex border rounded input-bg">
-                            <input type="password" class="form-control shadow-none border-0 bg-transparent"
-                                id="login-pass-text" placeholder="Username" />
-                            <img src="/images/password_icon.svg" id="login-pass-btn" onclick="togglePassword()" alt="password_icon" class="pe-3">
-                            <img src="/images/password_not_visible.svg" alt="password_icon" class="pe-3 d-none">
-                            <label for="floatingInputGroup1">Password</label>
+                        <div class="mt-3">
+                            <div class="form-floating d-flex border rounded input-bg">
+                                <input asp-for="Passwordhash" type="password" class="form-control shadow-none border-0 bg-transparent"
+                                       id="login-pass-text" placeholder="Username" />
+                                <img src="/images/password_icon.svg" id="login-pass-btn" onclick="togglePassword()" alt="password_icon" class="pe-3">
+                                <img src="/images/password_not_visible.svg" alt="password_icon" class="pe-3 d-none">
+                                <label for="floatingInputGroup1">Password</label>
+                            </div>
                         </div>
-                    </div>
 
-                    <button class="btn w-100 my-4" style="background-color: #10bce9; color: white;">
-                        Login
-                    </button>
+                        <button class="btn w-100 my-4" style="background-color: #10bce9; color: white;">
+                            Login
+                        </button>
+                    </form>
+                    
 
                     <a asp-action="ForgetPassword" asp-controller="patient" class="row d-flex justify-content-center">
                         <span class="h6 text-center" style="color: #10bce9;">Forgot Password?</span>
