@@ -1,6 +1,7 @@
 ﻿using Data_Layer.DataContext;
 using Microsoft.AspNetCore.Mvc;
 using Data_Layer.DataModels;
+using Data_Layer.ViewModels;
 
 namespace HalloDoc.MVC.Controllers
 {
@@ -12,7 +13,6 @@ namespace HalloDoc.MVC.Controllers
         {
             _context = context;
         }
-
 
         public IActionResult Index()
         {
@@ -57,6 +57,7 @@ namespace HalloDoc.MVC.Controllers
 
         public IActionResult PatientRequest()
         {
+            PatientRequestViewModel prvm = new PatientRequestViewModel();
             return View("Request/PatientRequest");
         }
 
