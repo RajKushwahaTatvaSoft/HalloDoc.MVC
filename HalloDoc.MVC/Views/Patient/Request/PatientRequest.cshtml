@@ -1,4 +1,4 @@
-﻿@model Requestclient
+﻿@model PatientRequestViewModel
 @{
     ViewData["Title"] = "Self Request";
 }
@@ -66,7 +66,7 @@
                 <div class="row">
 
                     <div class="form-floating mt-2">
-                        <textarea class="form-control" placeholder="Leave a comment here" id="floatingTextarea2"
+                        <textarea asp-for="Symptom" class="form-control" placeholder="Leave a comment here" id="floatingTextarea2"
                             style="height: 100px;"></textarea>
                         <label class="ms-2" for="floatingTextarea2">Enter brief details of Symptoms (Optional)</label>
                     </div>
@@ -76,14 +76,14 @@
                 <div class="row">
                     <div class="col-lg-4 col-md-6 col-12">
                         <div class="form-floating mt-3">
-                            <input class="form-control" placeholder="Leave a comment here"
+                            <input asp-for="FirstName" class="form-control" placeholder="Leave a comment here"
                                 id="floatingTextarea2"></input>
                             <label for="floatingTextarea2">First Name</label>
                         </div>
                     </div>
                     <div class="col-lg-4 col-md-6 col-12">
                         <div class="form-floating mt-3">
-                            <input class="form-control" placeholder="Leave a comment here"
+                            <input asp-for="LastName" class="form-control" placeholder="Leave a comment here"
                                 id="floatingTextarea2"></input>
                             <label for="floatingTextarea2">Last Name</label>
                         </div>
@@ -93,7 +93,7 @@
 
                         <div class="form-floating mt-3">
 
-                            <input class="form-control" placeholder="Leave a comment here" type="date"
+                            <input asp-for="DOB" class="form-control" placeholder="Leave a comment here" type="date"
                                 id="floatingTextarea2" name="birthday">
                             <label for="floatingTextarea2">Date of Birth:</label>
 
@@ -111,7 +111,7 @@
 
                     <div class="col-md-6 col-12">
                         <div class="form-floating mt-3">
-                            <input class="form-control" placeholder="Leave a comment here"
+                            <input asp-for="Email" class="form-control" placeholder="Leave a comment here"
                                 id="floatingTextarea2"></input>
                             <label for="floatingTextarea2">Email</label>
                         </div>
@@ -120,7 +120,7 @@
                     <div class="col-md-6 col-12">
 
                         <div class="form-floating mt-3">
-                            <input id="patient-phone" class="form-control" type="tel" name="phone"></input>
+                            <input asp-for="Phone" id="patient-phone" class="form-control" type="tel" name="phone"></input>
                         </div>
 
                     </div>
@@ -134,14 +134,14 @@
                 <div class="row">
                     <div class="col-12 col-md-6 col-lg-4">
                         <div class="form-floating mt-3">
-                            <input class="form-control" placeholder="Leave a comment here"
+                            <input asp-for="Street" class="form-control" placeholder="Leave a comment here"
                                 id="floatingTextarea2"></input>
                             <label for="floatingTextarea2">Street</label>
                         </div>
                     </div>
                     <div class="col-12 col-md-6 col-lg-4">
                         <div class="form-floating mt-3">
-                            <input class="form-control" placeholder="Leave a comment here"
+                            <input asp-for="City" class="form-control" placeholder="Leave a comment here"
                                 id="floatingTextarea2"></input>
                             <label for="floatingTextarea2">City</label>
                         </div>
@@ -149,14 +149,14 @@
 
                     <div class="col-12 col-md-6 col-lg-4">
                         <div class="form-floating mt-3">
-                            <input class="form-control" placeholder="Leave a comment here"
+                            <input asp-for="State" class="form-control" placeholder="Leave a comment here"
                                 id="floatingTextarea2"></input>
                             <label for="floatingTextarea2">State</label>
                         </div>
                     </div>
                     <div class="col-12 col-md-6 col-lg-4">
                         <div class="form-floating mt-3">
-                            <input class="form-control" placeholder="Leave a comment here"
+                            <input asp-for="ZipCode" class="form-control" placeholder="Leave a comment here"
                                 id="floatingTextarea2"></input>
                             <label for="floatingTextarea2">Zip Code</label>
                         </div>
@@ -164,7 +164,7 @@
 
                     <div class="col-12 col-md-6 col-lg-4">
                         <div class="form-floating mt-3">
-                            <input class="form-control" placeholder="Leave a comment here"
+                            <input asp-for="RoomSuite" class="form-control" placeholder="Leave a comment here"
                                 id="floatingTextarea2"></input>
                             <label for="floatingTextarea2">Room # / Suite (Optional)</label>
                         </div>
@@ -183,7 +183,7 @@
                         <input class="form-control" type="file" id="file_input_id" style="opacity:0;height:0;">
 
                         <div class="input-group mb-3">
-                            <input type="text" id='text_input_id' class="form-control" placeholder="Select File"
+                            <input asp-for="FilePath" type="text" id='text_input_id' class="form-control" placeholder="Select File"
                                 style="caret-color: transparent" autocomplete="off">
 
                             <span class="input-group-text" id="text_input_span_id " style="background-color: #10bce9;">

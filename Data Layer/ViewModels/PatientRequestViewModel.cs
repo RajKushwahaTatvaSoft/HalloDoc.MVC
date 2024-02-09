@@ -1,19 +1,19 @@
-﻿using Data_Layer.DataModels;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Data_Layer.ViewModels
+﻿namespace Data_Layer.ViewModels
 {
     public class PatientRequestViewModel
     {
-        public Request req;
-        public Requestclient reqcli;
-        public Aspnetuser Aspnetuser;
-        public User user;
-        public Requestwisefile requestwisefile;
-
+        public string? Symptom { get; set; }
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
+        public string? DOB { get; set; }
+        public string? Email { get; set; }
+        public string? Phone { get; set; }
+        public string? Street { get; set; }
+        public string? City { get; set; }
+        public string? State { get; set; }
+        public string? ZipCode { get; set; }
+        public string? RoomSuite { get; set; }
+        public string? FilePath { get; set; }
+        public string? Password { get; set; }
     }
 }
