@@ -1,4 +1,5 @@
-﻿@{
+﻿@model BusinessRequestViewModel
+@{
     ViewData["Title"] = "Business Request";
 }
 
@@ -52,7 +53,7 @@
             </a>
         </div>
 
-        <form action="">
+        <form method="post">
 
             <div class="container-fluid form-card shadow-lg rounded mx-1 my-3 py-3">
 
@@ -63,7 +64,7 @@
                 <div class="row">
                     <div class="col-lg-4 col-md-6 col-12">
                         <div class="form-floating mt-3">
-                            <input class="form-control" placeholder="Leave a comment here"
+                            <input asp-for="FirstName" class="form-control" placeholder="Leave a comment here"
                                 id="floatingTextarea2"></input>
                             <label for="floatingTextarea2">Your First Name</label>
                         </div>
@@ -71,7 +72,7 @@
 
                     <div class="col-lg-4 col-md-6 col-12">
                         <div class="form-floating mt-3">
-                            <input class="form-control" placeholder="Leave a comment here"
+                            <input asp-for="LastName" class="form-control" placeholder="Leave a comment here"
                                 id="floatingTextarea2"></input>
                             <label for="floatingTextarea2">Your Last Name</label>
                         </div>
@@ -80,14 +81,14 @@
                     <div class="col-lg-4 col-md-6 col-12">
 
                         <div class="form-floating mt-3">
-                            <input id="business-phone" class="form-control" type="tel" name="phone"></input>
+                            <input asp-for="Phone" id="business-phone" class="form-control" type="tel" name="phone"></input>
                         </div>
 
                     </div>
 
                     <div class="col-lg-4 col-md-6 col-12">
                         <div class="form-floating mt-3">
-                            <input class="form-control" placeholder="Leave a comment here"
+                            <input asp-for="Email" class="form-control" placeholder="Leave a comment here"
                                 id="floatingTextarea2"></input>
                             <label for="floatingTextarea2">Your Email</label>
                         </div>
@@ -95,7 +96,7 @@
 
                     <div class="col-lg-4 col-md-6 col-12">
                         <div class="form-floating mt-3">
-                            <input class="form-control" placeholder="Leave a comment here"
+                            <input asp-for="BusinessOrPropertyName" class="form-control" placeholder="Leave a comment here"
                                 id="floatingTextarea2"></input>
                             <label for="floatingTextarea2">Business / Property Name</label>
                         </div>
@@ -103,7 +104,7 @@
 
                     <div class="col-lg-4 col-md-6 col-12">
                         <div class="form-floating mt-3">
-                            <input class="form-control" placeholder="Leave a comment here"
+                            <input asp-for="CaseNumber" class="form-control" placeholder="Leave a comment here"
                                 id="floatingTextarea2"></input>
                             <label for="floatingTextarea2">Case Number (Optional)</label>
                         </div>
@@ -118,7 +119,7 @@
                 <div class="row">
 
                     <div class="form-floating mt-2">
-                        <textarea class="form-control" placeholder="Leave a comment here" id="floatingTextarea2"
+                        <textarea asp-for="patientDetails.Symptom" class="form-control" placeholder="Leave a comment here" id="floatingTextarea2"
                             style="height: 100px;"></textarea>
                         <label class="ms-2" for="floatingTextarea2">Enter brief details of Symptoms (Optional)</label>
                     </div>
@@ -130,7 +131,7 @@
 
                     <div class="col-lg-4 col-md-6 col-12">
                         <div class="form-floating mt-3">
-                            <input class="form-control" placeholder="Leave a comment here"
+                            <input asp-for="patientDetails.FirstName" class="form-control" placeholder="Leave a comment here"
                                 id="floatingTextarea2"></input>
                             <label for="floatingTextarea2">First Name</label>
                         </div>
@@ -138,7 +139,7 @@
 
                     <div class="col-lg-4 col-md-6 col-12">
                         <div class="form-floating mt-3">
-                            <input class="form-control" placeholder="Leave a comment here"
+                            <input asp-for="patientDetails.LastName" class="form-control" placeholder="Leave a comment here"
                                 id="floatingTextarea2"></input>
                             <label for="floatingTextarea2">Last Name</label>
                         </div>
@@ -148,7 +149,7 @@
 
                         <div class="form-floating mt-3">
 
-                            <input class="form-control" placeholder="Leave a comment here" type="date"
+                            <input asp-for="patientDetails.DOB" class="form-control" placeholder="Leave a comment here" type="date"
                                 id="floatingTextarea2" name="birthday">
                             <label for="floatingTextarea2">Date of Birth:</label>
 
@@ -166,7 +167,7 @@
 
                     <div class="col-md-6 col-12">
                         <div class="form-floating mt-3">
-                            <input class="form-control" placeholder="Leave a comment here"
+                            <input asp-for="patientDetails.Email" class="form-control" placeholder="Leave a comment here"
                                 id="floatingTextarea2"></input>
                             <label for="floatingTextarea2">Email</label>
                         </div>
@@ -175,7 +176,7 @@
                     <div class="col-md-6 col-12">
 
                         <div class="form-floating mt-3">
-                            <input id="patient-phone" class="form-control" type="tel" name="phone1"></input>
+                            <input asp-for="patientDetails.Phone" id="patient-phone" class="form-control" type="tel" name="phone1"></input>
                         </div>
 
                     </div>
@@ -191,14 +192,14 @@
 
                     <div class="col-12 col-md-6 col-lg-4">
                         <div class="form-floating mt-3">
-                            <input class="form-control" placeholder="Leave a comment here"
+                            <input asp-for="patientDetails.Street" class="form-control" placeholder="Leave a comment here"
                                 id="floatingTextarea2"></input>
                             <label for="floatingTextarea2">Street</label>
                         </div>
                     </div>
                     <div class="col-12 col-md-6 col-lg-4">
                         <div class="form-floating mt-3">
-                            <input class="form-control" placeholder="Leave a comment here"
+                            <input asp-for="patientDetails.City" class="form-control" placeholder="Leave a comment here"
                                 id="floatingTextarea2"></input>
                             <label for="floatingTextarea2">City</label>
                         </div>
@@ -206,14 +207,14 @@
 
                     <div class="col-12 col-md-6 col-lg-4">
                         <div class="form-floating mt-3">
-                            <input class="form-control" placeholder="Leave a comment here"
+                            <input asp-for="patientDetails.State" class="form-control" placeholder="Leave a comment here"
                                 id="floatingTextarea2"></input>
                             <label for="floatingTextarea2">State</label>
                         </div>
                     </div>
                     <div class="col-12 col-md-6 col-lg-4">
                         <div class="form-floating mt-3">
-                            <input class="form-control" placeholder="Leave a comment here"
+                            <input asp-for="patientDetails.ZipCode" class="form-control" placeholder="Leave a comment here"
                                 id="floatingTextarea2"></input>
                             <label for="floatingTextarea2">Zip Code</label>
                         </div>
@@ -221,7 +222,7 @@
 
                     <div class="col-12 col-md-6 col-lg-4">
                         <div class="form-floating mt-3">
-                            <input class="form-control" placeholder="Leave a comment here"
+                            <input asp-for="patientDetails.RoomSuite" class="form-control" placeholder="Leave a comment here"
                                 id="floatingTextarea2"></input>
                             <label for="floatingTextarea2">Room # / Suite (Optional)</label>
                         </div>

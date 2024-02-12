@@ -1,4 +1,6 @@
-﻿namespace Data_Layer.ViewModels
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Data_Layer.ViewModels
 {
     public class PatientRequestViewModel
     {
@@ -15,5 +17,7 @@
         public string? RoomSuite { get; set; }
         public string? FilePath { get; set; }
         public string? Password { get; set; }
+        [Compare(nameof(Password), ErrorMessage = "Password and Confirm Password should be same.")]
+        public string? ConfirmPassword { get; set; }
     }
 }

@@ -18,16 +18,29 @@ namespace HalloDoc.MVC.Controllers
         MDEnRoute = 5,
         MDOnSite = 6
     }
+
+    public enum RequestType
+    {
+        Business = 1,
+        Patient = 2,
+        Family = 3,
+        Concierge = 4
+    }
+
     public class PatientController : Controller
     {
-        private readonly ApplicationDBContext _context;
+        private readonly ApplicationDbContext _context;
 
-        public PatientController(ApplicationDBContext context)
+        public PatientController(ApplicationDbContext context)
         {
             _context = context;
         }
 
         public IActionResult Index()
+        {
+            return View();
+        }
+        public IActionResult Dashboard()
         {
             return View();
         }
@@ -76,6 +89,11 @@ namespace HalloDoc.MVC.Controllers
             return View("Request/PatientRequest");
         }
 
+        public string GetRequestIP()
+        {
+            return "127.0.0.1";
+        }
+
         //POST
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -83,86 +101,164 @@ namespace HalloDoc.MVC.Controllers
         {
             if (ModelState.IsValid)
             {
+                string requestIpAddress = GetRequestIP();
 
-                Guid generatedId = Guid.NewGuid();
-
-                // Creating Patient in Aspnetusers Table
-                Aspnetuser aspnetuser = new()
+                if (userViewModel.Password != null)
                 {
-                    Id = generatedId.ToString(),
-                    Username = userViewModel.FirstName!,
-                    Passwordhash = GetSHA256Hash("123456"),
-                    Email = userViewModel.Email,
-                    Phonenumber = userViewModel.Phone,
-                    Createddate = DateTime.Now
-                };
+                    Guid generatedId = Guid.NewGuid();
 
-                _context.Aspnetusers.Add(aspnetuser);
-                _context.SaveChanges();
+                    // Creating Patient in Aspnetusers Table
+                    Aspnetuser aspnetuser = new()
+                    {
+                        Id = generatedId.ToString(),
+                        Username = userViewModel.FirstName!,
+                        Passwordhash = GetSHA256Hash(userViewModel.Password),
+                        Email = userViewModel.Email,
+                        Phonenumber = userViewModel.Phone,
+                        Createddate = DateTime.Now,
+                        Ip = requestIpAddress,
+                    };
+
+                    _context.Aspnetusers.Add(aspnetuser);
+                    _context.SaveChanges();
 
 
-                // Creating Patient in User Table
-                User user = new()
+                    // Creating Patient in User Table
+                    User user = new()
+                    {
+                        Aspnetuserid = generatedId.ToString(),
+                        Firstname = userViewModel.FirstName,
+                        Lastname = userViewModel.LastName,
+                        Email = userViewModel.Email,
+                        Mobile = userViewModel.Phone,
+                        Street = userViewModel.Street,
+                        City = userViewModel.City,
+                        State = userViewModel.State,
+                        Zipcode = userViewModel.ZipCode,
+                        Createddate = DateTime.Now,
+                        Createdby = generatedId.ToString(),
+                        Ip = requestIpAddress,
+                    };
+
+                    _context.Users.Add(user);
+                    _context.SaveChanges();
+
+                    // Adding request in Request Table
+                    Request request = new()
+                    {
+                        Requesttypeid = 2,
+                        Userid = user.Userid,
+                        Firstname = userViewModel.FirstName,
+                        Lastname = userViewModel.LastName,
+                        Phonenumber = userViewModel.Phone,
+                        Email = userViewModel.Email,
+                        Status = (short)RequestStatus.Unassigned,
+                        Createddate = DateTime.Now,
+                        Patientaccountid = generatedId.ToString(),
+                        Createduserid = user.Userid,
+                        Ip = requestIpAddress,
+                    };
+
+                    _context.Requests.Add(request);
+                    _context.SaveChanges();
+
+                    //Adding request in RequestClient Table
+                    Requestclient requestclient = new()
+                    {
+                        Requestid = request.Requestid,
+                        Firstname = userViewModel.FirstName,
+                        Lastname = userViewModel.LastName,
+                        Phonenumber = userViewModel.Phone,
+                        Email = userViewModel.Email,
+                        Address = userViewModel.Street,
+                        City = userViewModel.City,
+                        State = userViewModel.State,
+                        Zipcode = userViewModel.ZipCode,
+                        Notes = userViewModel.Symptom,
+                        Ip = requestIpAddress,
+                    };
+
+                    _context.Requestclients.Add(requestclient);
+                    _context.SaveChanges();
+
+                    //Adding File Data in RequestWiseFile Table
+                    Requestwisefile requestwisefile = new()
+                    {
+                        Requestid = request.Requestid,
+                        Createddate = DateTime.Now,
+                        Ip = requestIpAddress,
+                    };
+
+                    _context.Requestwisefiles.Add(requestwisefile);
+                    _context.SaveChanges();
+
+                }
+                else
                 {
-                    Aspnetuserid = generatedId.ToString(),
-                    Firstname = userViewModel.FirstName,
-                    Lastname = userViewModel.LastName,
-                    Email = userViewModel.Email,
-                    Mobile = userViewModel.Phone,
-                    Street = userViewModel.Street,
-                    City = userViewModel.City,
-                    State = userViewModel.State,
-                    Zipcode = userViewModel.ZipCode,
-                    Createddate = DateTime.Now,
-                    Createdby = generatedId.ToString()
-                };
+                    // Fetching Registered User
+                    User user = _context.Users.FirstOrDefault(u => u.Email == userViewModel.Email);
 
-                _context.Users.Add(user);
-                _context.SaveChanges();
+                    // Adding request in Request Table
+                    Request request = new()
+                    {
+                        Requesttypeid = 2,
+                        Userid = user.Userid,
+                        Firstname = userViewModel.FirstName,
+                        Lastname = userViewModel.LastName,
+                        Phonenumber = userViewModel.Phone,
+                        Email = userViewModel.Email,
+                        Status = (short)RequestStatus.Unassigned,
+                        Createddate = DateTime.Now,
+                        Ip = requestIpAddress,
+                    };
 
-                // Adding request in Request Table
-                Request request = new()
-                {
-                    Requesttypeid = 2,
-                    Userid = user.Userid,
-                    Firstname = userViewModel.FirstName,
-                    Lastname = userViewModel.LastName,
-                    Phonenumber = userViewModel.Phone,
-                    Email = userViewModel.Email,
-                    Status = (short) RequestStatus.Unassigned ,
-                    Createddate= DateTime.Now,
-                };
+                    _context.Requests.Add(request);
+                    _context.SaveChanges();
 
-                _context.Requests.Add(request);
-                _context.SaveChanges();
+                    //Adding request in RequestClient Table
+                    Requestclient requestclient = new()
+                    {
+                        Requestid = request.Requestid,
+                        Firstname = userViewModel.FirstName,
+                        Lastname = userViewModel.LastName,
+                        Phonenumber = userViewModel.Phone,
+                        Email = userViewModel.Email,
+                        Address = userViewModel.Street,
+                        City = userViewModel.City,
+                        State = userViewModel.State,
+                        Zipcode = userViewModel.ZipCode,
+                        Notes = userViewModel.Symptom,
+                        Ip = requestIpAddress,
+                    };
 
-                //Adding request in RequestClient Table
-                Requestclient requestclient = new()
-                {
-                    Requestid = request.Requestid,
-                    Firstname = userViewModel.FirstName,
-                    Lastname = userViewModel.LastName,
-                    Phonenumber = userViewModel.Phone,
-                    Email = userViewModel.Email,
-                    Address = userViewModel.Street,
-                    City = userViewModel.City,
-                    State = userViewModel.State,
-                    Zipcode = userViewModel.ZipCode,
-                    Notes = userViewModel.Symptom
-                };
+                    _context.Requestclients.Add(requestclient);
+                    _context.SaveChanges();
 
-                _context.Requestclients.Add(requestclient);
+                    //Adding File Data in RequestWiseFile Table
+                    //Requestwisefile requestwisefile = new()
+                    //{
+                    //    Requestid = request.Requestid,
+                    //    Createddate = DateTime.Now,
+                    //    Ip = requestIpAddress,
+                    //};
 
-                _context.SaveChanges();
+                    //_context.Requestwisefiles.Add(requestwisefile);
+                    _context.SaveChanges();
 
-                return View("Request/FamilyFriendRequest");
+                }
+
+                return View("Dashboard");
             }
-            else
-            {
-                IEnumerable<ModelError> allErrors = ModelState.Values.SelectMany(v => v.Errors);
-            }
-            return View("Index");
 
+            return View();
+
+        }
+
+        [HttpPost]
+        public JsonResult PatientCheckEmail(string email)
+        {
+            bool emailExists = _context.Users.Any(u => u.Email == email);
+            return Json(new { exists = emailExists });
         }
 
         public string GetSHA256Hash(string password)
@@ -185,13 +281,211 @@ namespace HalloDoc.MVC.Controllers
             return View("Request/FamilyFriendRequest");
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult FamilyFriendRequest(FamilyFriendRequestViewModel friendViewModel)
+        {
+            if (ModelState.IsValid)
+            {
+                string requestIpAddress = GetRequestIP();
+
+                Request request = new()
+                {
+                    Requesttypeid = (int) RequestType.Family,
+                    Firstname = friendViewModel.FirstName,
+                    Lastname = friendViewModel.LastName,
+                    Phonenumber = friendViewModel.Phone,
+                    Email = friendViewModel.Email,
+                    Status = (short) RequestStatus.Unassigned,
+                    Createddate = DateTime.Now,
+                    Ip = requestIpAddress,
+                };
+
+                _context.Requests.Add(request);
+                _context.SaveChanges();
+
+                Requestclient reqClient = new()
+                {
+                    Requestid = request.Requestid,
+                    Firstname = friendViewModel.patientDetails.FirstName,
+                    Lastname    = friendViewModel.patientDetails.LastName,
+                    Phonenumber = friendViewModel.patientDetails.Phone,
+                    Notes = friendViewModel.patientDetails.Symptom,
+                    Email = friendViewModel.patientDetails.Email,
+                    Street = friendViewModel.patientDetails.Street,
+                    City = friendViewModel.patientDetails.City,
+                    State = friendViewModel.patientDetails.State,
+                    Zipcode = friendViewModel.patientDetails.ZipCode,
+                    Ip = requestIpAddress,
+                };
+
+
+                _context.Requestclients.Add(reqClient);
+                _context.SaveChanges();
+
+                Requestwisefile reqWiseFile = new()
+                {
+                    Requestid = request.Requestid,
+                    Createddate = DateTime.Now,
+                    Ip = requestIpAddress,
+                    Filename = friendViewModel.patientDetails.FilePath,
+                };
+
+                _context.Requestwisefiles.Add(reqWiseFile);
+                _context.SaveChanges();
+
+                return View("Dashboard");
+
+            }
+            return View("Request/FamilyFriendRequest");
+        }
+
         public IActionResult ConciergeRequest()
         {
             return View("Request/ConciergeRequest");
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ConciergeRequest(ConciergeRequestViewModel conciergeViewModel)
+        {
+            if (ModelState.IsValid)
+            {
+                string requestIpAddress = GetRequestIP();
+
+                Request request = new()
+                {
+                    Requesttypeid = 4,
+                    Firstname = conciergeViewModel.FirstName,
+                    Lastname = conciergeViewModel.LastName,
+                    Phonenumber = conciergeViewModel.Phone,
+                    Email = conciergeViewModel.Email,
+                    Status = (short)RequestStatus.Unassigned,
+                    Createddate = DateTime.Now,
+                    Ip = requestIpAddress,
+                };
+                _context.Requests.Add(request);
+                _context.SaveChanges();
+
+                Concierge concierge = new()
+                {
+                    Conciergename = conciergeViewModel.FirstName,
+                    Address = conciergeViewModel.HotelOrPropertyName,
+                    Street = conciergeViewModel.Street,
+                    City = conciergeViewModel.City,
+                    State = conciergeViewModel.State,
+                    Zipcode = conciergeViewModel.ZipCode,
+                    Createddate = DateTime.Now,
+                    Ip = requestIpAddress,
+                };
+
+                _context.Concierges.Add(concierge);
+                _context.SaveChanges();
+
+                Requestconcierge reqConcierge = new()
+                {
+                    Requestid = request.Requestid,
+                    Conciergeid = concierge.Conciergeid,
+                    Ip = requestIpAddress,
+                };
+
+                _context.Requestconcierges.Add(reqConcierge);
+                _context.SaveChanges();
+
+
+                Requestclient requestclient = new()
+                {
+                    Requestid = request.Requestid,
+                    Firstname = conciergeViewModel.patientDetails.FirstName,
+                    Lastname = conciergeViewModel.patientDetails.LastName,
+                    Phonenumber = conciergeViewModel.patientDetails.Phone,
+                    Notes = conciergeViewModel.patientDetails.Symptom,
+                    Email = conciergeViewModel.patientDetails.Email,
+                    Street = conciergeViewModel.patientDetails.Street,
+                    City = conciergeViewModel.patientDetails.City,
+                    State = conciergeViewModel.patientDetails.State,
+                    Zipcode = conciergeViewModel.patientDetails.ZipCode,
+                    Ip = requestIpAddress,
+                };
+
+                _context.Requestclients.Add(requestclient);
+                _context.SaveChanges();
+
+
+                return View("Dashboard");
+            }
+            return View("Request/ConciergeRequest");
+        }
+
         public IActionResult BusinessRequest()
         {
+            return View("Request/BusinessRequest");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult BusinessRequest(BusinessRequestViewModel businessViewModel)
+        {
+            if (ModelState.IsValid)
+            {
+                string requestIpAddress = GetRequestIP();
+
+                Business business = new()
+                {
+                    Name = businessViewModel.BusinessOrPropertyName,
+                    Phonenumber = businessViewModel.Phone,
+                    Createddate = DateTime.Now,
+                    Ip = requestIpAddress,
+                };
+
+                _context.Businesses.Add(business);
+                _context.SaveChanges();
+
+                Request request = new()
+                {
+                    Requesttypeid = 1,
+                    Firstname = businessViewModel.FirstName,
+                    Lastname = businessViewModel.LastName,
+                    Phonenumber = businessViewModel.Phone,
+                    Email = businessViewModel.Email,
+                    Status = (short)RequestStatus.Unassigned,
+                    Createddate = DateTime.Now,
+                    Ip = requestIpAddress,
+                };
+
+                _context.Requests.Add(request);
+                _context.SaveChanges();
+
+                Requestclient reqClient = new()
+                {
+                    Requestid = request.Requestid,
+                    Firstname = businessViewModel.patientDetails.FirstName,
+                    Lastname = businessViewModel.patientDetails.LastName,
+                    Phonenumber = businessViewModel.patientDetails.Phone,
+                    Email = businessViewModel.patientDetails.Email,
+                    Street = businessViewModel.patientDetails.Street,
+                    City = businessViewModel.patientDetails.City,
+                    State = businessViewModel.patientDetails.State,
+                    Zipcode = businessViewModel.patientDetails.ZipCode,
+                    Ip = requestIpAddress,
+                };
+
+                _context.Requestclients.Add(reqClient);
+                _context.SaveChanges();
+
+
+                Requestbusiness reqBusiness = new()
+                {
+                    Requestid = request.Requestid,
+                    Businessid = business.Id,
+                };
+
+                _context.Requestbusinesses.Add(reqBusiness);
+                _context.SaveChanges();
+
+                return View("Dashboard");
+
+            }
             return View("Request/BusinessRequest");
         }
     }
