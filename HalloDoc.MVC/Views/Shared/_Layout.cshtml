@@ -5,10 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Patient - @ViewData["Title"]</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
     <link rel="stylesheet" href="~/css/patient_style.css">
     <link rel="stylesheet" href="~/css/patient_style_dark.css">
 </head>
 <body>
+
+    <partial name="_Notification"/>
 
     <main role="main">
         @RenderBody()

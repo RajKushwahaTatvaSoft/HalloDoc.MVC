@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Http;
+using System.ComponentModel.DataAnnotations;
 
 namespace Data_Layer.ViewModels
 {
@@ -7,8 +8,9 @@ namespace Data_Layer.ViewModels
         public string? Symptom { get; set; }
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
-        public string? DOB { get; set; }
+        public DateTime DOB { get; set; }
         public string? Email { get; set; }
+        public string? Countrycode { get; set; }
         public string? Phone { get; set; }
         public string? Street { get; set; }
         public string? City { get; set; }
@@ -19,5 +21,6 @@ namespace Data_Layer.ViewModels
         public string? Password { get; set; }
         [Compare(nameof(Password), ErrorMessage = "Password and Confirm Password should be same.")]
         public string? ConfirmPassword { get; set; }
+        public IFormFile file {  get; set; }
     }
 }

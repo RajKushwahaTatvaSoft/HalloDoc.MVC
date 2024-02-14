@@ -181,8 +181,7 @@ html, body {
 
 
 /* Create Patient Request Screen Css */
-
-.create-patient-request input:focus {
+ .create-patient-request input:focus {
     box-shadow: none;
 }
 
@@ -244,4 +243,50 @@ x::-webkit-file-upload-button, input[type=file]:after {
 .info-icon-shadow {
     box-shadow: 0px 0px 1px 2px #faaa04;
     border-radius: 100%;
+}
+
+
+/* Patient Dashboard */
+
+.patient-dashboard {
+    background-color: #f9f9f9;
+}
+
+.nav .active {
+    background-color: white !important;
+}
+
+.active .tabHeader {
+    text-decoration: none;
+    color: var(--primary);
+    font-weight: 500;
+    border-bottom: 2px solid var(--primary);
+}
+
+.tabHeader {
+    color: black;
+}
+
+.table-head {
+    background-color: #f0f0f0;
+}
+
+    .table-head th {
+        font-weight: 500;
+    }
+
+.table .table-body tr {
+    height: 55px;
+}
+
+.table td:first-child, th:first-child {
+    padding-left: 20px;
+}
+
+.dashboard-card{
+    border-radius : 5px;
+}
+
+.patient-dashboard input:focus {
+    box-shadow: none;
 }

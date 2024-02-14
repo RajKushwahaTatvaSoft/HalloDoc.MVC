@@ -1,6 +1,6 @@
 ﻿@model PatientRequestViewModel
 @{
-    ViewData["Title"] = "Self Request";
+    ViewData["Title"] = "Patient Request";
 }
 
 <!DOCTYPE html>
@@ -92,7 +92,7 @@
                         <div class="form-floating mt-3">
 
                             <input asp-for="DOB" class="form-control" placeholder="Leave a comment here" type="date"
-                                   id="floatingTextarea2" name="birthday">
+                                   id="floatingTextarea2">
                             <label for="floatingTextarea2">Date of Birth:</label>
 
                         </div>
@@ -118,6 +118,7 @@
                     <div class="col-md-6 col-12">
 
                         <div class="form-floating mt-3">
+                            <input id="patient-phone-country" asp-for="Countrycode" hidden />
                             <input asp-for="Phone" id="patient-phone" class="form-control" type="tel" name="phone"></input>
                         </div>
 
@@ -199,7 +200,7 @@
 
                     <div class="mb-3">
 
-                        <input class="form-control" type="file" id="file_input_id" style="opacity:0;height:0;">
+                        <input asp-for="file" class="form-control" type="file" id="file_input_id" style="opacity:0;height:0;">
 
                         <div class="input-group mb-3">
                             <input asp-for="FilePath" type="text" id='text_input_id' class="form-control" placeholder="Select File"
@@ -219,7 +220,8 @@
 
                 <div class="row">
                     <div class=" d-flex justify-content-center justify-content-md-end">
-                        <button type="submit" class="btn" style="background-color: #10bce9;">
+
+                        <button type="submit" onclick="changeCountryCode()" class="btn" style="background-color: #10bce9;">
                             <span class="text-white">Submit</span>
                         </button>
 
@@ -250,27 +252,27 @@
 
     </div>
 
-  @* <script>
-        $(document).ready(function () {
-            $('#floatingInputemail').on('blur', function () {
-                var inputValue = $('#floatingInputemail').val();
+    @* <script>
+    $(document).ready(function () {
+    $('#floatingInputemail').on('blur', function () {
+    var inputValue = $('#floatingInputemail').val();
 
-                $.get('/Patient/PatientCheckEmail', { email: inputValue }, function (response) {
-                    if (!response.isValid) {
-                        const pass = document.getElementsByClassName("hidden-pass");
-                        for (let i = 0; i < pass.length; ++i) {
-                            pass[i].style.display = "block";
-                        }
-                    }
-                    else {
-                        const pass = document.getElementsByClassName("hidden-pass");
-                        for (let i = 0; i < pass.length; ++i) {
-                            pass[i].style.display = "none";
-                        }
-                    }
-                });
-            });
-        });
+    $.get('/Patient/PatientCheckEmail', { email: inputValue }, function (response) {
+    if (!response.isValid) {
+    const pass = document.getElementsByClassName("hidden-pass");
+    for (let i = 0; i < pass.length; ++i) {
+    pass[i].style.display = "block";
+    }
+    }
+    else {
+    const pass = document.getElementsByClassName("hidden-pass");
+    for (let i = 0; i < pass.length; ++i) {
+    pass[i].style.display = "none";
+    }
+    }
+    });
+    });
+    });
     </script> *@
 
     <script type="text/javascript">
@@ -311,18 +313,30 @@
     </script>
 
     <script>
-        var phoneInputField = document.querySelector("#patient-phone");
-        var phoneInput = window.intlTelInput(phoneInputField, {
+
+
+        // if (document.getElementById("patientDateOfBirth")) {
+        //     var today = new Date().toISOString().split('T')[0];
+        //     document.getElementById("patientDateOfBirth").max = today;
+        // }
+
+
+        const phoneInputField = document.getElementById("patient-phone");
+        var patientPhoneInput = window.intlTelInput(phoneInputField, {
             utilsScript:
                 "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+            preferredCountries: ["in"],
+            separateDialCode: true,
+            initialCountry: "in"
         });
 
-        $(function () {
-            $("#datepicker").datepicker({
-                autoclose: true,
-                todayHighlight: true,
-            }).datepicker('update', new Date());
-        });
+
+        function changeCountryCode() {
+            var countryCode = document.getElementById("patient-phone-country");
+            countryCode.value = patientPhoneInput.getSelectedCountryData().dialCode;
+            console.log(countryCode.value);
+        }
+
     </script>
 
 </body>

@@ -8,7 +8,7 @@
         border-color: white;
     }
 
-    .dark-mode :is(h1, h2, h3, label) {
+    .dark-mode :is(h1, h2, h3, h4, span, label, td) {
         color: white;
     }
 
@@ -35,5 +35,20 @@
         }
 
     .dark-mode .btn:active {
+        background-color: #454545;
+    }
+
+
+    /* Patient Dashboard CSS */
+
+    .dark-mode .nav .active {
+        background-color: #282828 !important;
+    }
+
+    .dark-mode h4 {
+        color: white;
+    }
+
+    .dark-mode .dashboard-card {
         background-color: #454545;
     }

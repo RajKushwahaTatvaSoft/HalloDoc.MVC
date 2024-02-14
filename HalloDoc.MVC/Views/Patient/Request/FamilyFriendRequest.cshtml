@@ -89,7 +89,7 @@
             </a>
         </div>
 
-        <form method="post">
+        <form method="post" enctype="multipart/form-data">
 
             <div class="container-fluid form-card shadow-sm rounded mx-1 my-3 py-3">
 
@@ -265,7 +265,7 @@
 
                     <div class="mb-3">
 
-                        <input asp-for="patientDetails.FilePath" class="form-control" type="file" id="file_input_id" style="opacity:0;height:0;">
+                        <input asp-for="file" class="form-control" type="file" id="file_input_id" style="opacity:0;height:0;">
 
                         <div class="input-group mb-3">
                             <input type="text" id='text_input_id' class="form-control" placeholder="Select File"

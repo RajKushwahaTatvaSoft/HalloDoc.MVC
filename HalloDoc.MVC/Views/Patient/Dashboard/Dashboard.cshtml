@@ -1,0 +1,79 @@
+﻿@model User
+@{
+    Layout = "_PatientDashboardLayout";
+    ViewData["Title"] = "Dashboard";
+    ViewData["Username"] = Model.Firstname + " " + Model.Lastname;
+}
+<div class="tab-content px-4" id="myTabContent">
+    <div class="tab-pane fade show active" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
+
+        <h4 class="mt-5">Medical History</h4>
+
+        <div class="shadow dashboard-card mt-4">
+
+            <div class="p-3 d-flex justify-content-end">
+                <button onclick="myFunction()" class="btn btn-outline-info shadow-none night-mode-btn">
+                    <span>Create New Request</span>
+                </button>
+            </div>
+            <div>
+                <table class="table">
+                    <colgroup>
+                        <col span="1" style="width: 15%;">
+                        <col span="1" style="width: 70%;">
+                        <col span="1" style="width: 15%;">
+                    </colgroup>
+
+                    <thead class="table-head align-middle">
+                        <tr>
+                            <th>Created Date</th>
+                            <th>Current Status</th>
+                            <th>Document</th>
+                        </tr>
+                    </thead>
+                    <tbody class="table-body align-middle">
+                        <tr class="table-row">
+                            <td>27 Feb, 2022</td>
+                            <td>Accepted</td>
+                            <td></td>
+                        </tr>
+                        <tr class="table-row">
+                            <td>27 Feb, 2022</td>
+                            <td>Accepted</td>
+                            <td></td>
+                        </tr>
+                        <tr class="table-row">
+                            <td>27 Feb, 2022</td>
+                            <td>Accepted</td>
+                            <td>
+                                <a asp-controller="Patient" asp-action="Profile" asp-route-id="@Model.Userid" class="btn btn-outline-info shadow-none night-mode-btn">
+                                    <span>(1) Documents</span>
+                                </a>
+                            </td>
+                        </tr>
+                        <tr class="table-row">
+                            <td>27 Feb, 2022</td>
+                            <td>Accepted</td>
+                            <td></td>
+                        </tr>
+                        <tr class="table-row">
+                            <td>27 Feb, 2022</td>
+                            <td>Accepted</td>
+                            <td>hi</td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
+        <div style="height: 20px;"></div>
+
+    </div>
+    <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+
+        <h4 class="mt-3">Profile</h4>
+
+    </div>
+</div>

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Data_Layer.DataContext;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using System.Security.Cryptography;
+using System.Text;
 
 
 namespace HalloDoc.MVC.Controllers
@@ -27,8 +28,10 @@ namespace HalloDoc.MVC.Controllers
         Concierge = 4
     }
 
+
     public class PatientController : Controller
     {
+
         private readonly ApplicationDbContext _context;
 
         public PatientController(ApplicationDbContext context)
@@ -42,7 +45,37 @@ namespace HalloDoc.MVC.Controllers
         }
         public IActionResult Dashboard()
         {
-            return View();
+            int id = Convert.ToInt32(TempData["loginUserId"]);
+
+            User? user = _context.Users.FirstOrDefault(u => u.Userid == id);
+
+            if (user != null)
+            {
+                return View("Dashboard/Dashboard", user);
+            }
+            return View("Error");
+        }
+
+        public IActionResult ViewDocument(int? id)
+        {
+            User? user = _context.Users.FirstOrDefault(u => u.Userid == id);
+
+            if (user != null)
+            {
+                return View("Dashboard/ViewDocument", user);
+            }
+            return View("Error");
+        }
+
+        public IActionResult Profile(int? id)
+        {
+            User? user = _context.Users.FirstOrDefault(u => u.Userid == id);
+
+            if (user != null)
+            {
+                return View("Dashboard/Profile", user);
+            }
+            return View("Error");
         }
 
         // GET
@@ -59,15 +92,19 @@ namespace HalloDoc.MVC.Controllers
             if (ModelState.IsValid)
             {
                 var obj = _context.Aspnetusers.ToList();
+                var passHash = GenerateSHA256(loginUser.Passwordhash);
+                Aspnetuser user = _context.Aspnetusers.FirstOrDefault(aspnetuser => aspnetuser.Username == loginUser.Username && aspnetuser.Passwordhash == passHash);
 
-                foreach (var aspnetuser in obj)
+                if (user != null)
                 {
-                    if (aspnetuser.Username == loginUser.Username && aspnetuser.Passwordhash == loginUser.Passwordhash)
-                    {
-                        return View("Index");
-                    }
+                    User patientUser = _context.Users.FirstOrDefault(u => u.Aspnetuserid == user.Id);
+                    TempData["success"] = "Login Successful";
+                    TempData["loginUserId"] = patientUser.Userid;
+                    return RedirectToAction("Dashboard");
                 }
+
             }
+            TempData["error"] = "Invalid Username or Password";
 
             return View("Authentication/Login");
 
@@ -103,18 +140,22 @@ namespace HalloDoc.MVC.Controllers
             {
                 string requestIpAddress = GetRequestIP();
 
+                //either new will be created or existing one will be fetched
+                User user = null;
+
                 if (userViewModel.Password != null)
                 {
                     Guid generatedId = Guid.NewGuid();
+                    string phoneNumber = "+" + userViewModel.Countrycode + '-' + userViewModel.Phone;
 
                     // Creating Patient in Aspnetusers Table
                     Aspnetuser aspnetuser = new()
                     {
                         Id = generatedId.ToString(),
-                        Username = userViewModel.FirstName!,
-                        Passwordhash = GetSHA256Hash(userViewModel.Password),
+                        Username = userViewModel.Email!,
+                        Passwordhash = GenerateSHA256(userViewModel.Password),
                         Email = userViewModel.Email,
-                        Phonenumber = userViewModel.Phone,
+                        Phonenumber = phoneNumber,
                         Createddate = DateTime.Now,
                         Ip = requestIpAddress,
                     };
@@ -124,13 +165,13 @@ namespace HalloDoc.MVC.Controllers
 
 
                     // Creating Patient in User Table
-                    User user = new()
+                    user = new()
                     {
                         Aspnetuserid = generatedId.ToString(),
                         Firstname = userViewModel.FirstName,
                         Lastname = userViewModel.LastName,
                         Email = userViewModel.Email,
-                        Mobile = userViewModel.Phone,
+                        Mobile = phoneNumber,
                         Street = userViewModel.Street,
                         City = userViewModel.City,
                         State = userViewModel.State,
@@ -138,6 +179,9 @@ namespace HalloDoc.MVC.Controllers
                         Createddate = DateTime.Now,
                         Createdby = generatedId.ToString(),
                         Ip = requestIpAddress,
+                        Intdate = userViewModel.DOB.Day,
+                        Strmonth = userViewModel.DOB.Month.ToString(),
+                        Intyear = userViewModel.DOB.Year,
                     };
 
                     _context.Users.Add(user);
@@ -150,7 +194,7 @@ namespace HalloDoc.MVC.Controllers
                         Userid = user.Userid,
                         Firstname = userViewModel.FirstName,
                         Lastname = userViewModel.LastName,
-                        Phonenumber = userViewModel.Phone,
+                        Phonenumber = phoneNumber,
                         Email = userViewModel.Email,
                         Status = (short)RequestStatus.Unassigned,
                         Createddate = DateTime.Now,
@@ -168,7 +212,7 @@ namespace HalloDoc.MVC.Controllers
                         Requestid = request.Requestid,
                         Firstname = userViewModel.FirstName,
                         Lastname = userViewModel.LastName,
-                        Phonenumber = userViewModel.Phone,
+                        Phonenumber = phoneNumber,
                         Email = userViewModel.Email,
                         Address = userViewModel.Street,
                         City = userViewModel.City,
@@ -182,21 +226,26 @@ namespace HalloDoc.MVC.Controllers
                     _context.SaveChanges();
 
                     //Adding File Data in RequestWiseFile Table
-                    Requestwisefile requestwisefile = new()
+                    if (userViewModel.file != null)
                     {
-                        Requestid = request.Requestid,
-                        Createddate = DateTime.Now,
-                        Ip = requestIpAddress,
-                    };
 
-                    _context.Requestwisefiles.Add(requestwisefile);
-                    _context.SaveChanges();
+                        Requestwisefile requestwisefile = new()
+                        {
+                            Requestid = request.Requestid,
+                            Createddate = DateTime.Now,
+                            Ip = requestIpAddress,
+                            Filename = userViewModel.file.FileName,
+                        };
+
+                        _context.Requestwisefiles.Add(requestwisefile);
+                        _context.SaveChanges();
+                    }
 
                 }
                 else
                 {
                     // Fetching Registered User
-                    User user = _context.Users.FirstOrDefault(u => u.Email == userViewModel.Email);
+                    user = _context.Users.FirstOrDefault(u => u.Email == userViewModel.Email);
 
                     // Adding request in Request Table
                     Request request = new()
@@ -234,20 +283,26 @@ namespace HalloDoc.MVC.Controllers
                     _context.Requestclients.Add(requestclient);
                     _context.SaveChanges();
 
-                    //Adding File Data in RequestWiseFile Table
-                    //Requestwisefile requestwisefile = new()
-                    //{
-                    //    Requestid = request.Requestid,
-                    //    Createddate = DateTime.Now,
-                    //    Ip = requestIpAddress,
-                    //};
 
-                    //_context.Requestwisefiles.Add(requestwisefile);
-                    _context.SaveChanges();
+                    //Adding File Data in RequestWiseFile Table
+                    if (userViewModel.file != null)
+                    {
+
+                        Requestwisefile requestwisefile = new()
+                        {
+                            Requestid = request.Requestid,
+                            Createddate = DateTime.Now,
+                            Ip = requestIpAddress,
+                            Filename = userViewModel.file.FileName,
+                        };
+
+                        _context.Requestwisefiles.Add(requestwisefile);
+                        _context.SaveChanges();
+                    }
 
                 }
-
-                return View("Dashboard");
+                TempData["loginUserId"] = user.Userid;
+                return RedirectToAction("Dashboard");
             }
 
             return View();
@@ -261,20 +316,23 @@ namespace HalloDoc.MVC.Controllers
             return Json(new { exists = emailExists });
         }
 
-        public string GetSHA256Hash(string password)
+
+        public static string GenerateSHA256(string input)
         {
-            byte[] salt = RandomNumberGenerator.GetBytes(128 / 8); // divide by 8 to convert bits to bytes
-
-            // derive a 256-bit subkey (use HMACSHA256 with 100,000 iterations)
-            string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
-                password: password!,
-                salt: salt,
-                prf: KeyDerivationPrf.HMACSHA256,
-                iterationCount: 100000,
-                numBytesRequested: 256 / 8));
-
-            return hashed;
+            var bytes = Encoding.UTF8.GetBytes(input);
+            using (var hashEngine = SHA256.Create())
+            {
+                var hashedBytes = hashEngine.ComputeHash(bytes, 0, bytes.Length);
+                var sb = new StringBuilder();
+                foreach (var b in hashedBytes)
+                {
+                    var hex = b.ToString("x2");
+                    sb.Append(hex);
+                }
+                return sb.ToString();
+            }
         }
+
 
         public IActionResult FamilyFriendRequest()
         {
@@ -291,12 +349,12 @@ namespace HalloDoc.MVC.Controllers
 
                 Request request = new()
                 {
-                    Requesttypeid = (int) RequestType.Family,
+                    Requesttypeid = (int)RequestType.Family,
                     Firstname = friendViewModel.FirstName,
                     Lastname = friendViewModel.LastName,
                     Phonenumber = friendViewModel.Phone,
                     Email = friendViewModel.Email,
-                    Status = (short) RequestStatus.Unassigned,
+                    Status = (short)RequestStatus.Unassigned,
                     Createddate = DateTime.Now,
                     Ip = requestIpAddress,
                 };
@@ -308,7 +366,7 @@ namespace HalloDoc.MVC.Controllers
                 {
                     Requestid = request.Requestid,
                     Firstname = friendViewModel.patientDetails.FirstName,
-                    Lastname    = friendViewModel.patientDetails.LastName,
+                    Lastname = friendViewModel.patientDetails.LastName,
                     Phonenumber = friendViewModel.patientDetails.Phone,
                     Notes = friendViewModel.patientDetails.Symptom,
                     Email = friendViewModel.patientDetails.Email,
@@ -322,19 +380,23 @@ namespace HalloDoc.MVC.Controllers
 
                 _context.Requestclients.Add(reqClient);
                 _context.SaveChanges();
-
-                Requestwisefile reqWiseFile = new()
+                if (friendViewModel.file != null)
                 {
-                    Requestid = request.Requestid,
-                    Createddate = DateTime.Now,
-                    Ip = requestIpAddress,
-                    Filename = friendViewModel.patientDetails.FilePath,
-                };
+                    Requestwisefile reqWiseFile = new()
+                    {
+                        Requestid = request.Requestid,
+                        Createddate = DateTime.Now,
+                        Ip = requestIpAddress,
+                        Filename = friendViewModel.file.FileName,
+                    };
 
-                _context.Requestwisefiles.Add(reqWiseFile);
-                _context.SaveChanges();
+                    _context.Requestwisefiles.Add(reqWiseFile);
+                    _context.SaveChanges();
+                }
 
-                return View("Dashboard");
+
+                TempData["success"] = "Request Added Successfully.";
+                return View("Index");
 
             }
             return View("Request/FamilyFriendRequest");
@@ -412,7 +474,8 @@ namespace HalloDoc.MVC.Controllers
                 _context.SaveChanges();
 
 
-                return View("Dashboard");
+                TempData["success"] = "Request Added Successfully.";
+                return View("Index");
             }
             return View("Request/ConciergeRequest");
         }
@@ -483,7 +546,8 @@ namespace HalloDoc.MVC.Controllers
                 _context.Requestbusinesses.Add(reqBusiness);
                 _context.SaveChanges();
 
-                return View("Dashboard");
+                TempData["success"] = "Request Added Successfully.";
+                return View("Index");
 
             }
             return View("Request/BusinessRequest");
