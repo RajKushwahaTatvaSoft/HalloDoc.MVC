@@ -1,75 +1,21 @@
-﻿@model User
+﻿@model PatientProfileViewModel
 @{
     Layout = "_PatientDashboardLayout";
     ViewData["Title"] = "Profile";
-    ViewData["Username"] = Model.Firstname + " " + Model.Lastname;
+    ViewData["Username"] = Model.FirstName + " " + Model.LastName;
 }
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+
+<script src="https://code.jquery.com/jquery-3.6.1.min.js"
+        integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous">
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
+
 <div class="tab-content px-4" id="myTabContent">
     <div class="tab-pane fade" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
-
-        <h4 class="mt-5">Medical History</h4>
-
-        <div class="shadow dashboard-card mt-4">
-
-            <div class="p-3 d-flex justify-content-end">
-                <button onclick="myFunction()" class="btn btn-outline-info shadow-none night-mode-btn">
-                    <span>Create New Request</span>
-                </button>
-            </div>
-            <div>
-                <table class="table">
-                    <colgroup>
-                        <col span="1" style="width: 15%;">
-                        <col span="1" style="width: 70%;">
-                        <col span="1" style="width: 15%;">
-                    </colgroup>
-
-                    <thead class="table-head align-middle">
-                        <tr>
-                            <th>Created Date</th>
-                            <th>Current Status</th>
-                            <th>Document</th>
-                        </tr>
-                    </thead>
-                    <tbody class="table-body align-middle">
-                        <tr class="table-row">
-                            <td>27 Feb, 2022</td>
-                            <td>Accepted</td>
-                            <td></td>
-                        </tr>
-                        <tr class="table-row">
-                            <td>27 Feb, 2022</td>
-                            <td>Accepted</td>
-                            <td></td>
-                        </tr>
-                        <tr class="table-row">
-                            <td>27 Feb, 2022</td>
-                            <td>Accepted</td>
-                            <td>
-                                <a asp-controller="Patient" asp-action="ViewDocument" asp-route-id="@Model.Userid" class="btn btn-outline-info shadow-none night-mode-btn">
-                                    <span>(1) Documents</span>
-                                </a>
-                            </td>
-                        </tr>
-                        <tr class="table-row">
-                            <td>27 Feb, 2022</td>
-                            <td>Accepted</td>
-                            <td></td>
-                        </tr>
-                        <tr class="table-row">
-                            <td>27 Feb, 2022</td>
-                            <td>Accepted</td>
-                            <td>hi</td>
-                        </tr>
-
-                    </tbody>
-                </table>
-            </div>
-
-        </div>
-
-        <div style="height: 20px;"></div>
-
     </div>
     <div class="tab-pane fade active show" id="profile" role="tabpanel" aria-labelledby="profile-tab">
 
@@ -85,138 +31,149 @@
                     </button>
                 </div>
 
-                <div class="shadow dashboard-card mt-3 p-3">
+                <form method="post">
 
-                    <h4>General Information</h4>
+                    <div class="shadow dashboard-card mt-3 p-3">
 
-                    <div class="row">
-                        <div class="col-lg-4 col-md-6 col-12">
-                            <div class="form-floating mt-3">
-                                <input asp-for="Firstname" class="form-control" placeholder="Leave a comment here" disabled
-                                       id="floatingTextarea2"></input>
-                                <label for="floatingTextarea2">First Name</label>
-                            </div>
-                        </div>
+                        <h4>General Information</h4>
 
-
-                        <div class="col-lg-4 col-md-6 col-12">
-                            <div class="form-floating mt-3">
-                                <input asp-for="Lastname" class="form-control" placeholder="Leave a comment here" disabled
-                                       id="floatingTextarea2"></input>
-                                <label for="floatingTextarea2">Last Name</label>
-                            </div>
-                        </div>
-
-                        <div class="col-lg-4 col-md-6 col-12">
-
-                            <div class="form-floating mt-3">
-
-                                <input asp-for="Strmonth" class="form-control" placeholder="Leave a comment here" type="date" disabled
-                                       id="floatingTextarea2" name="birthday">
-                                <label for="floatingTextarea2">Date of Birth:</label>
-
+                        <div class="row">
+                            <div class="col-lg-4 col-md-6 col-12">
+                                <div class="form-floating mt-3">
+                                    <input asp-for="UserId" hidden />
+                                    <input asp-for="FirstName" class="form-control" placeholder="Leave a comment here" disabled
+                                           id="floatingTextarea2"></input>
+                                    <label for="floatingTextarea2">First Name</label>
+                                </div>
                             </div>
 
-                        </div>
 
-                    </div>
-
-                    <h4 class="mt-3">Contact Information</h4>
-
-                    <div class="row">
-                        <div class="col-lg-4 col-md-2 col-12">
-                            <div class="form-floating mt-3">
-                                <input asp-for="Firstname" class="form-control" placeholder="Leave a comment here" disabled
-                                       id="floatingTextarea2"></input>
-                                <label for="floatingTextarea2">Mobile</label>
-                            </div>
-                        </div>
-
-
-                        <div class="col-lg-4 col-md-4 col-12">
-                            <div class="form-floating mt-3">
-                                <input asp-for="Mobile" class="form-control" type="tel" placeholder="Leave a comment here" disabled></input>
-                            </div>
-                        </div>
-
-                        <div class="col-lg-4 col-md-6 col-12">
-
-                            <div class="form-floating mt-3">
-
-                                <input asp-for="Email" class="form-control" placeholder="Leave a comment here" disabled
-                                       id="floatingTextarea2" name="birthday">
-                                <label for="floatingTextarea2">Email</label>
-
+                            <div class="col-lg-4 col-md-6 col-12">
+                                <div class="form-floating mt-3">
+                                    <input asp-for="LastName" class="form-control" placeholder="Leave a comment here" disabled
+                                           id="floatingTextarea2"></input>
+                                    <label for="floatingTextarea2">Last Name</label>
+                                </div>
                             </div>
 
-                        </div>
+                            <div class="col-lg-4 col-md-6 col-12">
 
-                    </div>
+                                <div class="form-floating mt-3">
+                                    <input class="form-control" asp-for="Date" type="date" disabled
+                                           id="date-of-birth">
+                                    <label for="floatingTextarea2">Date of Birth:</label>
 
-                    <h4 class="mt-3">Location Information</h4>
-
-                    <div class="row">
-                        <div class="col-lg-4 col-md-6 col-12">
-                            <div class="form-floating mt-3">
-                                <input asp-for="Street" class="form-control" placeholder="Leave a comment here" disabled
-                                       id="floatingTextarea2"></input>
-                                <label for="floatingTextarea2">Street</label>
-                            </div>
-                        </div>
-
-
-                        <div class="col-lg-4 col-md-6 col-12">
-                            <div class="form-floating mt-3">
-                                <input asp-for="City" class="form-control" placeholder="Leave a comment here" disabled></input>
-                                <label for="floatingTextarea2">City</label>
-                            </div>
-                        </div>
-
-                        <div class="col-lg-4 col-md-6 col-12">
-
-                            <div class="form-floating mt-3">
-
-                                <input asp-for="State" class="form-control" placeholder="Leave a comment here" disabled
-                                       id="floatingTextarea2" name="birthday">
-                                <label for="floatingTextarea2">State</label>
-
-                            </div>
-
-                        </div>
-
-                        <div class="col-lg-4 col-md-4 col-12">
-
-                            <div class="form-floating mt-3">
-
-                                <input asp-for="Zipcode" class="form-control" placeholder="Leave a comment here" disabled
-                                       id="floatingTextarea2" name="birthday">
-                                <label for="floatingTextarea2">Zip Code</label>
-
-                            </div>
-
-                        </div>
-
-                        <div class="col-lg-4 col-md-2 col-12 mt-3">
-                            <button onclick="history.go(-1)" class="btn btn-outline-info shadow-none night-mode-btn h-100">
-                                <div class="d-flex">
-                                    <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M480-480q33 0 56.5-23.5T560-560q0-33-23.5-56.5T480-640q-33 0-56.5 23.5T400-560q0 33 23.5 56.5T480-480Zm0 294q122-112 181-203.5T720-552q0-109-69.5-178.5T480-800q-101 0-170.5 69.5T240-552q0 71 59 162.5T480-186Zm0 106Q319-217 239.5-334.5T160-552q0-150 96.5-239T480-880q127 0 223.5 89T800-552q0 100-79.5 217.5T480-80Zm0-480Z" /></svg>
-                                    <span>Map</span>
                                 </div>
 
+                            </div>
+
+                        </div>
+
+                        <h4 class="mt-3">Contact Information</h4>
+
+                        <div class="row">
+                            <div class="col-lg-4 col-md-2 col-12">
+                                <div class="form-floating mt-3">
+                                    <select disabled asp-for="Type" class="form-select" id="floatingSelectGrid" aria-label="Floating label select example">
+                                        <option value="Mobile" selected>Mobile</option>
+                                        <option value="Telephone">Telephone</option>
+                                    </select>
+                                    <label for="floatingSelectGrid">Works with selects</label>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-4 col-md-4 col-12">
+                                <div class="form-floating mt-3">
+                                    <input id="patient-phone-country" asp-for="CountryCode" hidden />
+
+                                    <input id="patient-phone" asp-for="Phone" class="form-control" type="tel" placeholder="Leave a comment here" disabled></input>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-4 col-md-6 col-12">
+
+                                <div class="form-floating mt-3">
+
+                                    <input asp-for="Email" class="form-control" placeholder="Leave a comment here" disabled
+                                           id="email">
+                                    <label for="email">Email</label>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <h4 class="mt-3">Location Information</h4>
+
+                        <div class="row">
+                            <div class="col-lg-4 col-md-6 col-12">
+                                <div class="form-floating mt-3">
+                                    <input asp-for="Street" class="form-control" placeholder="Leave a comment here" disabled
+                                           id="floatingTextarea2"></input>
+                                    <label for="floatingTextarea2">Street</label>
+                                </div>
+                            </div>
+
+
+                            <div class="col-lg-4 col-md-6 col-12">
+                                <div class="form-floating mt-3">
+                                    <input asp-for="City" class="form-control" placeholder="Leave a comment here" disabled></input>
+                                    <label for="floatingTextarea2">City</label>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-4 col-md-6 col-12">
+
+                                <div class="form-floating mt-3">
+
+                                    <input asp-for="State" class="form-control" placeholder="Leave a comment here" disabled
+                                           id="floatingTextarea2">
+                                    <label for="floatingTextarea2">State</label>
+
+                                </div>
+
+                            </div>
+
+                            <div class="col-lg-4 col-md-4 col-12">
+
+                                <div class="form-floating mt-3">
+
+                                    <input asp-for="ZipCode" class="form-control" placeholder="Leave a comment here" disabled
+                                           id="floatingTextarea2">
+                                    <label for="floatingTextarea2">Zip Code</label>
+
+                                </div>
+
+                            </div>
+
+                            <div class="col-lg-4 col-md-2 col-12 mt-3">
+                                <button onclick="" class="btn btn-outline-info shadow-none night-mode-btn h-100">
+                                    <div class="d-flex">
+                                        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M480-480q33 0 56.5-23.5T560-560q0-33-23.5-56.5T480-640q-33 0-56.5 23.5T400-560q0 33 23.5 56.5T480-480Zm0 294q122-112 181-203.5T720-552q0-109-69.5-178.5T480-800q-101 0-170.5 69.5T240-552q0 71 59 162.5T480-186Zm0 106Q319-217 239.5-334.5T160-552q0-150 96.5-239T480-880q127 0 223.5 89T800-552q0 100-79.5 217.5T480-80Zm0-480Z" /></svg>
+                                        <span>Map</span>
+                                    </div>
+
+                                </button>
+                            </div>
+
+                        </div>
+
+                        <div class="d-flex justify-content-end">
+
+                            <button id="editBtn" type="button" onclick="editDetails()" class="btn my-4 py-2 px-4" style="background-color: #10bce9; color: white;">
+                                Edit
                             </button>
+
+                            <button id="saveBtn" onclick="changeCountryCode()" type="submit" class="btn my-4 py-2 px-4" style="background-color: #10bce9; color: white; display:none;">
+                                Save
+                            </button>
+
                         </div>
 
                     </div>
 
-                    <div class="d-flex justify-content-end">
-
-                        <button onclick="editDetails()" class="btn my-4 py-2 px-4" style="background-color: #10bce9; color: white;">
-                            Edit
-                        </button>
-
-                    </div>
-
-                </div>
+                </form>
 
             </div>
 
@@ -225,7 +182,41 @@
     </div>
 </div>
 
+
+
+<script type="text/javascript">
+
+    // function padTo2Digits(num) {
+    //     return num.toString().padStart(2, '0');
+    // }
+
+    // var dob = document.getElementById("date-of-birth");
+    // dob.value = date;
+
+</script>
+
+
 <script>
+
+    const phoneInputField = document.getElementById("patient-phone");
+    var patientPhoneInput = window.intlTelInput(phoneInputField, {
+        utilsScript:
+            "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+        preferredCountries: ["in"],
+        separateDialCode: true,
+        initialCountry: "in"
+    });
+
+
+    function changeCountryCode() {
+        var countryCode = document.getElementById("patient-phone-country");
+        countryCode.value = patientPhoneInput.getSelectedCountryData().dialCode;
+        console.log(countryCode.value);
+    }
+
+</script>
+<script>
+
 
     function editDetails() {
 
@@ -233,6 +224,38 @@
         for (var i = 0; i < inputs.length; i++) {
             inputs[i].disabled = false;
         }
+
+        var selects = document.getElementsByTagName("select");
+        for (var i = 0; i < selects.length; i++) {
+            selects[i].disabled = false;
+        }
+
+        var editBtn = document.getElementById("editBtn");
+        editBtn.style.display = "none";
+
+        var saveBtn = document.getElementById("saveBtn");
+        saveBtn.style.display = "block";
+
+    }
+
+    function saveDetails() {
+
+        var inputs = document.getElementsByTagName("input");
+        for (var i = 0; i < inputs.length; i++) {
+            inputs[i].disabled = true;
+        }
+
+        var selects = document.getElementsByTagName("select");
+        for (var i = 0; i < selects.length; i++) {
+            selects[i].disabled = true;
+        }
+
+
+        var editBtn = document.getElementById("editBtn");
+        editBtn.style.display = "block";
+
+        var saveBtn = document.getElementById("saveBtn");
+        saveBtn.style.display = "none";
 
     }
 </script>

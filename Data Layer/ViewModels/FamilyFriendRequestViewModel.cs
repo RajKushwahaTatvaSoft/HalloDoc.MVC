@@ -15,6 +15,6 @@ namespace Data_Layer.ViewModels
         public string? Phone { get; set; }
         public string? Email { get; set; }
         public string? Relation { get; set; }
-        public IFormFile file { get; set; }
+        public IFormFile? file { get; set; }
     }
 }

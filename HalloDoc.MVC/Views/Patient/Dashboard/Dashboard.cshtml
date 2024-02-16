@@ -1,8 +1,8 @@
-﻿@model User
+﻿@model PatientDashboardViewModel
 @{
     Layout = "_PatientDashboardLayout";
     ViewData["Title"] = "Dashboard";
-    ViewData["Username"] = Model.Firstname + " " + Model.Lastname;
+    ViewData["Username"] = Model.UserName;
 }
 <div class="tab-content px-4" id="myTabContent">
     <div class="tab-pane fade show active" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
@@ -32,36 +32,32 @@
                         </tr>
                     </thead>
                     <tbody class="table-body align-middle">
+                        @for (int i = 0; i < Model.Requests.Count; i++)
+                        {
+                            <tr class="table-row">
+                                <td>
+                                    @Model.Requests[i].Createddate.ToString("MMM dd, yyyy")
+                                    </td>
+                                <td>@Model.Requests[i].Status</td>
+                                <td> 
+                                    @if(Model.DocumentCount[i] > 0)
+                                    {
+                                        <a asp-controller="Patient" asp-action="ViewDocument" asp-route-id="@Model.Requests[i].Requestid" class="btn btn-outline-info shadow-none night-mode-btn">
+                                            <span>(@Model.DocumentCount[i]) Documents</span>
+                                        </a>
+                                    }
+                                </td>
+                            </tr>
+                        }
                         <tr class="table-row">
-                            <td>27 Feb, 2022</td>
-                            <td>Accepted</td>
-                            <td></td>
-                        </tr>
-                        <tr class="table-row">
-                            <td>27 Feb, 2022</td>
-                            <td>Accepted</td>
-                            <td></td>
-                        </tr>
-                        <tr class="table-row">
-                            <td>27 Feb, 2022</td>
-                            <td>Accepted</td>
+                            <td>Double Dummy</td>
+                            <td>Dummy</td>
                             <td>
-                                <a asp-controller="Patient" asp-action="Profile" asp-route-id="@Model.Userid" class="btn btn-outline-info shadow-none night-mode-btn">
-                                    <span>(1) Documents</span>
+                                <a asp-controller="Patient" asp-action="Profile" asp-route-id="@Model.UserId" class="btn btn-outline-info shadow-none night-mode-btn">
+                                    <span>(1) Dummy into 100</span>
                                 </a>
                             </td>
                         </tr>
-                        <tr class="table-row">
-                            <td>27 Feb, 2022</td>
-                            <td>Accepted</td>
-                            <td></td>
-                        </tr>
-                        <tr class="table-row">
-                            <td>27 Feb, 2022</td>
-                            <td>Accepted</td>
-                            <td>hi</td>
-                        </tr>
-
                     </tbody>
                 </table>
             </div>

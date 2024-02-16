@@ -290,3 +290,7 @@ x::-webkit-file-upload-button, input[type=file]:after {
 .patient-dashboard input:focus {
     box-shadow: none;
 }
+
+.patient-dashboard select:focus {
+    box-shadow: none;
+}

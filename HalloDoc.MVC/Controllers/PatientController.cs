@@ -33,10 +33,12 @@ namespace HalloDoc.MVC.Controllers
     {
 
         private readonly ApplicationDbContext _context;
+        private readonly IWebHostEnvironment _environment;
 
-        public PatientController(ApplicationDbContext context)
+        public PatientController(ApplicationDbContext context, IWebHostEnvironment environment)
         {
             _context = context;
+            _environment = environment;
         }
 
         public IActionResult Index()
@@ -45,26 +47,35 @@ namespace HalloDoc.MVC.Controllers
         }
         public IActionResult Dashboard()
         {
-            int id = Convert.ToInt32(TempData["loginUserId"]);
+            string id = HttpContext.Session.GetString("userEmail");
 
-            User? user = _context.Users.FirstOrDefault(u => u.Userid == id);
+            User? user = _context.Users.FirstOrDefault(u => u.Email == id);
 
             if (user != null)
             {
-                return View("Dashboard/Dashboard", user);
+                PatientDashboardViewModel dashboardVM = new PatientDashboardViewModel();
+                dashboardVM.UserId = user.Userid;
+                dashboardVM.UserName = user.Firstname + " " + user.Lastname;    
+                dashboardVM.Requests = _context.Requests.Where(req => req.Userid == user.Userid).ToList();
+                List<int> fileCounts = new List<int>();
+                foreach (var request in dashboardVM.Requests)
+                {
+                    int count = _context.Requestwisefiles.Count(reqFile => reqFile.Requestid == request.Requestid);
+                    fileCounts.Add(count);
+                }
+                dashboardVM.DocumentCount = fileCounts;
+                return View("Dashboard/Dashboard", dashboardVM);
             }
             return View("Error");
         }
 
         public IActionResult ViewDocument(int? id)
         {
-            User? user = _context.Users.FirstOrDefault(u => u.Userid == id);
-
-            if (user != null)
-            {
-                return View("Dashboard/ViewDocument", user);
-            }
-            return View("Error");
+            List<Requestwisefile> files = _context.Requestwisefiles.Where(reqFile => reqFile.Requestid == id).ToList();
+            
+            ViewDocumentViewModel viewDocumentVM = new ViewDocumentViewModel();
+            viewDocumentVM.requestwisefiles = files;
+            return View("Dashboard/ViewDocument",viewDocumentVM);
         }
 
         public IActionResult Profile(int? id)
@@ -73,9 +84,49 @@ namespace HalloDoc.MVC.Controllers
 
             if (user != null)
             {
-                return View("Dashboard/Profile", user);
+                string dobDate = user.Intyear + "-" + user.Strmonth + "-" + user.Intdate;
+
+                PatientProfileViewModel model = new()
+                {
+                    UserId = user.Userid,
+                    FirstName = user.Firstname,
+                    LastName = user.Lastname,
+                    Date = DateTime.Parse(dobDate),
+                    Type = "Mobile",
+                    Phone = user.Mobile,
+                    Email = user.Email,
+                    Street = user.Street,
+                    City = user.City,
+                    State = user.State,
+                    ZipCode = user.Zipcode,
+                };
+
+                return View("Dashboard/Profile", model);
             }
             return View("Error");
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Profile(PatientProfileViewModel pm)
+        {
+            string phoneNumber = "+" + pm.CountryCode + '-' + pm.Phone;
+
+            User dbUser = _context.Users.FirstOrDefault(u => u.Userid == pm.UserId);
+            dbUser.Firstname = pm.FirstName;
+            dbUser.Lastname = pm.LastName;
+            dbUser.Intdate = pm.Date.Value.Day;
+            dbUser.Strmonth = pm.Date.Value.Month.ToString();
+            dbUser.Intyear = pm.Date.Value.Year;
+            dbUser.Mobile = phoneNumber;
+            dbUser.Street = pm.Street;
+            dbUser.City = pm.City;
+            dbUser.State = pm.State;
+            dbUser.Zipcode = pm.ZipCode;
+
+            _context.Update(dbUser);
+            _context.SaveChanges();
+            TempData["loginUserId"] = dbUser.Userid;
+            return RedirectToAction("Dashboard");
         }
 
         // GET
@@ -99,7 +150,7 @@ namespace HalloDoc.MVC.Controllers
                 {
                     User patientUser = _context.Users.FirstOrDefault(u => u.Aspnetuserid == user.Id);
                     TempData["success"] = "Login Successful";
-                    TempData["loginUserId"] = patientUser.Userid;
+                    HttpContext.Session.SetString("userEmail", patientUser.Email);
                     return RedirectToAction("Dashboard");
                 }
 
@@ -129,6 +180,16 @@ namespace HalloDoc.MVC.Controllers
         public string GetRequestIP()
         {
             return "127.0.0.1";
+        }
+
+        public void InsertRequestWiseFile(IFormFile document)
+        {
+            string path = _environment.WebRootPath;
+            string filePath = "document/" + document.FileName;
+            string fullPath = Path.Combine(path, filePath);
+
+            using FileStream stream = new(fullPath, FileMode.Create);
+            document.CopyTo(stream);
         }
 
         //POST
@@ -226,15 +287,16 @@ namespace HalloDoc.MVC.Controllers
                     _context.SaveChanges();
 
                     //Adding File Data in RequestWiseFile Table
-                    if (userViewModel.file != null)
+                    if (userViewModel.File != null)
                     {
+                        InsertRequestWiseFile(userViewModel.File);
 
                         Requestwisefile requestwisefile = new()
                         {
                             Requestid = request.Requestid,
                             Createddate = DateTime.Now,
                             Ip = requestIpAddress,
-                            Filename = userViewModel.file.FileName,
+                            Filename = userViewModel.File.FileName,
                         };
 
                         _context.Requestwisefiles.Add(requestwisefile);
@@ -285,15 +347,16 @@ namespace HalloDoc.MVC.Controllers
 
 
                     //Adding File Data in RequestWiseFile Table
-                    if (userViewModel.file != null)
+                    if (userViewModel.File != null)
                     {
+                        InsertRequestWiseFile(userViewModel.File);
 
                         Requestwisefile requestwisefile = new()
                         {
                             Requestid = request.Requestid,
                             Createddate = DateTime.Now,
                             Ip = requestIpAddress,
-                            Filename = userViewModel.file.FileName,
+                            Filename = userViewModel.File.FileName,
                         };
 
                         _context.Requestwisefiles.Add(requestwisefile);
