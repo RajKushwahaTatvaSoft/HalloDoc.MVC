@@ -6,6 +6,8 @@ using Data_Layer.DataContext;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using System.Security.Cryptography;
 using System.Text;
+using System.Diagnostics;
+using System.IO.Compression;
 
 
 namespace HalloDoc.MVC.Controllers
@@ -45,17 +47,28 @@ namespace HalloDoc.MVC.Controllers
         {
             return View();
         }
+
+        public IActionResult PatientDashboardHeader()
+        {
+            return View("Dashboard/PatientDashboardHeader");
+        }
+
         public IActionResult Dashboard()
         {
-            string id = HttpContext.Session.GetString("userEmail");
+            int? userId = HttpContext.Session.GetInt32("userId");
 
-            User? user = _context.Users.FirstOrDefault(u => u.Email == id);
+            if (userId == null)
+            {
+                return View("Error");
+            }
+
+            User? user = _context.Users.FirstOrDefault(u => u.Userid == userId);
 
             if (user != null)
             {
                 PatientDashboardViewModel dashboardVM = new PatientDashboardViewModel();
                 dashboardVM.UserId = user.Userid;
-                dashboardVM.UserName = user.Firstname + " " + user.Lastname;    
+                dashboardVM.UserName = user.Firstname + " " + user.Lastname;
                 dashboardVM.Requests = _context.Requests.Where(req => req.Userid == user.Userid).ToList();
                 List<int> fileCounts = new List<int>();
                 foreach (var request in dashboardVM.Requests)
@@ -66,21 +79,69 @@ namespace HalloDoc.MVC.Controllers
                 dashboardVM.DocumentCount = fileCounts;
                 return View("Dashboard/Dashboard", dashboardVM);
             }
+
             return View("Error");
         }
 
-        public IActionResult ViewDocument(int? id)
+        public IActionResult ViewDocument(int requestId)
         {
-            List<Requestwisefile> files = _context.Requestwisefiles.Where(reqFile => reqFile.Requestid == id).ToList();
-            
+            int? userId = HttpContext.Session.GetInt32("userId");
+
+            if (userId == null || requestId == null)
+            {
+                return View("Error");
+            }
+
+            User user = _context.Users.FirstOrDefault(u => u.Userid == userId);
+            Request request = _context.Requests.FirstOrDefault(req => req.Requestid == requestId);
+
+            List<Requestwisefile> files = _context.Requestwisefiles.Where(reqFile => reqFile.Requestid == requestId).ToList();
+
             ViewDocumentViewModel viewDocumentVM = new ViewDocumentViewModel();
+
             viewDocumentVM.requestwisefiles = files;
-            return View("Dashboard/ViewDocument",viewDocumentVM);
+            viewDocumentVM.RequestId = requestId;
+            viewDocumentVM.UserName = user.Firstname + " " + user.Lastname;
+            viewDocumentVM.ConfirmationNumber = request.Confirmationnumber;
+
+            return View("Dashboard/ViewDocument", viewDocumentVM);
         }
 
-        public IActionResult Profile(int? id)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ViewDocument(ViewDocumentViewModel viewDocumentVM)
         {
-            User? user = _context.Users.FirstOrDefault(u => u.Userid == id);
+            if (viewDocumentVM.File != null)
+            {
+
+                InsertRequestWiseFile(viewDocumentVM.File);
+
+                Requestwisefile requestwisefile = new()
+                {
+                    Requestid = viewDocumentVM.RequestId,
+                    Filename = viewDocumentVM.File.FileName,
+                    Createddate = DateTime.Now,
+                    Ip = GetRequestIP(),
+
+                };
+                _context.Requestwisefiles.Add(requestwisefile);
+                _context.SaveChanges();
+
+                viewDocumentVM.File = null;
+
+            }
+
+            return ViewDocument(viewDocumentVM.RequestId);
+        }
+        public string GenerateConfirmationNumber(User user)
+        {
+            string confirmationNumber = "AD" + user.Createddate.Date.ToString("D2") + user.Createddate.Month.ToString("D2") + user.Lastname.Substring(0, 2).ToUpper() + user.Firstname.Substring(0, 2).ToUpper() + "0001";
+            return confirmationNumber;
+        }
+        public IActionResult Profile()
+        {
+            int? userId = HttpContext.Session.GetInt32("userId");
+            User? user = _context.Users.FirstOrDefault(u => u.Userid == userId);
 
             if (user != null)
             {
@@ -103,8 +164,58 @@ namespace HalloDoc.MVC.Controllers
 
                 return View("Dashboard/Profile", model);
             }
-            return View("Error");
+            return RedirectToAction("Error");
         }
+
+        public IActionResult Logout()
+        {
+            HttpContext.Session.Clear();
+            return RedirectToAction("Login");
+        }
+        public async Task<IActionResult> DownloadAllFiles(int requestId)
+        {
+            try
+            {
+                // Fetch all document details for the given request:
+                var documentDetails = _context.Requestwisefiles.Where(m => m.Requestid == requestId).ToList();
+
+                if (documentDetails == null || documentDetails.Count == 0)
+                {
+                    return NotFound("No documents found for download");
+                }
+
+                // Create a unique zip file name
+                var zipFileName = $"Documents_{DateTime.Now:yyyyMMddHHmmss}.zip";
+                var zipFilePath = Path.Combine(_environment.WebRootPath, "DownloadableZips", zipFileName);
+
+                // Create the directory if it doesn't exist
+                var zipDirectory = Path.GetDirectoryName(zipFilePath);
+                if (!Directory.Exists(zipDirectory))
+                {
+                    Directory.CreateDirectory(zipDirectory);
+                }
+
+                // Create a new zip archive
+                using (var zipArchive = ZipFile.Open(zipFilePath, ZipArchiveMode.Create))
+                {
+                    // Add each document to the zip archive
+                    foreach (var document in documentDetails)
+                    {
+                        var documentPath = Path.Combine(_environment.WebRootPath, "document", document.Filename);
+                        zipArchive.CreateEntryFromFile(documentPath, document.Filename);
+                    }
+                }
+
+                // Return the zip file for download
+                var zipFileBytes = await System.IO.File.ReadAllBytesAsync(zipFilePath);
+                return File(zipFileBytes, "application/zip", zipFileName);
+            }
+            catch
+            {
+                return BadRequest("Error downloading files");
+            }
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Profile(PatientProfileViewModel pm)
@@ -150,7 +261,7 @@ namespace HalloDoc.MVC.Controllers
                 {
                     User patientUser = _context.Users.FirstOrDefault(u => u.Aspnetuserid == user.Id);
                     TempData["success"] = "Login Successful";
-                    HttpContext.Session.SetString("userEmail", patientUser.Email);
+                    HttpContext.Session.SetInt32("userId", patientUser.Userid);
                     return RedirectToAction("Dashboard");
                 }
 
@@ -163,6 +274,14 @@ namespace HalloDoc.MVC.Controllers
 
         public IActionResult ForgetPassword()
         {
+            return View("Authentication/ForgetPassword");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ForgetPassword(ForgotPasswordViewModel forPasVM)
+        {
+            TempData["success"] = "Mail Sent successfully. to " + forPasVM.Email;
             return View("Authentication/ForgetPassword");
         }
 
@@ -253,6 +372,7 @@ namespace HalloDoc.MVC.Controllers
                     {
                         Requesttypeid = 2,
                         Userid = user.Userid,
+                        Confirmationnumber = GenerateConfirmationNumber(user),
                         Firstname = userViewModel.FirstName,
                         Lastname = userViewModel.LastName,
                         Phonenumber = phoneNumber,
@@ -316,6 +436,7 @@ namespace HalloDoc.MVC.Controllers
                         Userid = user.Userid,
                         Firstname = userViewModel.FirstName,
                         Lastname = userViewModel.LastName,
+                        Confirmationnumber = GenerateConfirmationNumber(user),
                         Phonenumber = userViewModel.Phone,
                         Email = userViewModel.Email,
                         Status = (short)RequestStatus.Unassigned,
@@ -364,8 +485,7 @@ namespace HalloDoc.MVC.Controllers
                     }
 
                 }
-                TempData["loginUserId"] = user.Userid;
-                return RedirectToAction("Dashboard");
+                return RedirectToAction("Login");
             }
 
             return View();
@@ -614,6 +734,12 @@ namespace HalloDoc.MVC.Controllers
 
             }
             return View("Request/BusinessRequest");
+        }
+
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error()
+        {
+            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
     }
 }

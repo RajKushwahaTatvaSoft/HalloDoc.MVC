@@ -4,6 +4,32 @@
     ViewData["Title"] = "Dashboard";
     ViewData["Username"] = Model.UserName;
 }
+@* <div class="modal fade" id="myModal1" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <div class="modal-dark modal-title" id="exampleModalLongTitle">Create New Request</div>
+                <button type="button" class="btn-close" aria-label="Close" data-bs-dismiss="modal"></button>
+            </div>
+            <form>
+                <input type="hidden" name="" id="redirect-value" value="submit_for_me">
+                <div class="modal-body">
+                    <span class="modal-head">Here, I want to create new request for ...</span>
+                    <div class="modal-flex d-flex justify-content-center my-3">
+                        <div class="btn common-btn cancel-btn create-request-active border border-1 border-info" onclick="toggleButton(this,'submit_for_me')"> Me </div>
+                        <div class="btn common-btn cancel-btn ms-2 border border-1 border-info" onclick="toggleButton(this,'submit_for_other')"> Some One Else</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-info continue-btn" data-bs-dismiss="modal" onclick="redirect()">Continue</button>
+                    <button type="button" class="btn cancel-btn" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div> *@
+
 <div class="tab-content px-4" id="myTabContent">
     <div class="tab-pane fade show active" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
 
@@ -12,9 +38,9 @@
         <div class="shadow dashboard-card mt-4">
 
             <div class="p-3 d-flex justify-content-end">
-                <button onclick="myFunction()" class="btn btn-outline-info shadow-none night-mode-btn">
+                <a class="btn btn-outline-info shadow-none night-mode-btn" data-bs-toggle="modal" data-bs-target="#myModal1">
                     <span>Create New Request</span>
-                </button>
+                </a>
             </div>
             <div>
                 <table class="table">
@@ -37,27 +63,18 @@
                             <tr class="table-row">
                                 <td>
                                     @Model.Requests[i].Createddate.ToString("MMM dd, yyyy")
-                                    </td>
+                                </td>
                                 <td>@Model.Requests[i].Status</td>
-                                <td> 
-                                    @if(Model.DocumentCount[i] > 0)
+                                <td>
+                                    @if (Model.DocumentCount[i] >= 0)
                                     {
-                                        <a asp-controller="Patient" asp-action="ViewDocument" asp-route-id="@Model.Requests[i].Requestid" class="btn btn-outline-info shadow-none night-mode-btn">
+                                        <a asp-controller="Patient" asp-action="ViewDocument" asp-route-requestId="@Model.Requests[i].Requestid" class="btn btn-outline-info shadow-none night-mode-btn">
                                             <span>(@Model.DocumentCount[i]) Documents</span>
                                         </a>
                                     }
                                 </td>
                             </tr>
                         }
-                        <tr class="table-row">
-                            <td>Double Dummy</td>
-                            <td>Dummy</td>
-                            <td>
-                                <a asp-controller="Patient" asp-action="Profile" asp-route-id="@Model.UserId" class="btn btn-outline-info shadow-none night-mode-btn">
-                                    <span>(1) Dummy into 100</span>
-                                </a>
-                            </td>
-                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -73,3 +90,11 @@
 
     </div>
 </div>
+
+<script>
+    var profile = document.getElementById("profile-tab");
+    var dashboard = document.getElementById("dashboard-tab");
+
+    profile.classList.remove("active");
+    dashboard.classList.add("active");
+</script>
