@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Data_Layer.DataContext;
+using Business_Layer.Repository;
+using Business_Layer.Repository.Interface;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +10,8 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 options.UseNpgsql(builder.Configuration.GetConnectionString("ApplicationDbContext")));
+
+builder.Services.AddScoped<IRequestRepository, RequestRepository>();
 
 builder.Services.AddSession(options =>
 {

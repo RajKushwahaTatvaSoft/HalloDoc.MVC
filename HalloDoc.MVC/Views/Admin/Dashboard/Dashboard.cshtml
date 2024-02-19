@@ -1,0 +1,270 @@
+﻿@{
+    Layout = "_AdminDashboardLayout";
+}
+
+<div class="px-4">
+
+    <div class="row mt-3">
+
+        <div class="col-2 d-flex flex-column status-tab active align-items-center" id="status-new-tab">
+
+            <div class="py-2 ps-2 w-100 status-new">
+                <div class="d-flex">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
+                         fill="currentcolor">
+                        <path d="M0 0h24v24H0z" fill="none" />
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+                    </svg>
+                    <span class="ms-2 text-uppercase">new</span>
+                </div>
+                <span class="fw-bold">1452</span>
+            </div>
+
+            <svg fill="#203f9a" height="10px" width="20px" viewBox="0 0 200 100">
+                <polygon points="0,0 100,100 200,0 " />
+            </svg>
+
+        </div>
+
+        <div class="col-2 d-flex flex-column status-tab align-items-center">
+            <div class="py-2 ps-2 w-100 status-pending">
+                <div class="d-flex">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
+                         fill="currentcolor">
+                        <path d="M0 0h24v24H0z" fill="none" />
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+                    </svg>
+                    <span class="ms-2 text-uppercase">pending</span>
+                </div>
+                <span class="fw-bold">266</span>
+            </div>
+
+            <svg fill="#00adef" height="10px" width="20px" viewBox="0 0 200 100">
+                <polygon points="0,0 100,100 200,0 " />
+            </svg>
+
+        </div>
+
+        <div class="col-2 d-flex flex-column status-tab align-items-center">
+            <div class="py-2 ps-2 w-100 status-active">
+                <div class="d-flex">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
+                         fill="currentcolor">
+                        <path d="M0 0h24v24H0z" fill="none" />
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+                    </svg>
+                    <span class="ms-2 text-uppercase">active</span>
+                </div>
+                <span class="fw-bold">266</span>
+            </div>
+
+            <svg fill="#228c20" height="10px" width="20px" viewBox="0 0 200 100">
+                <polygon points="0,0 100,100 200,0 " />
+            </svg>
+
+        </div>
+
+        <div class="col-2 d-flex flex-column status-tab align-items-center">
+            <div class="py-2 ps-2 w-100 status-conclude">
+                <div class="d-flex">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
+                         fill="currentcolor">
+                        <path d="M0 0h24v24H0z" fill="none" />
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+                    </svg>
+                    <span class="ms-2 text-uppercase">conclude</span>
+                </div>
+                <span class="fw-bold">266</span>
+            </div>
+
+            <svg fill="#da0f82" height="10px" width="20px" viewBox="0 0 200 100">
+                <polygon points="0,0 100,100 200,0 " />
+            </svg>
+
+        </div>
+
+        <div class="col-2 d-flex flex-column status-tab align-items-center">
+            <div class="py-2 ps-2 w-100 status-to-close">
+                <div class="d-flex">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
+                         fill="currentcolor">
+                        <path d="M0 0h24v24H0z" fill="none" />
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+                    </svg>
+                    <span class="ms-2 text-uppercase">to close</span>
+                </div>
+                <span class="fw-bold">266</span>
+            </div>
+
+            <svg fill="#0370d7" height="10px" width="20px" viewBox="0 0 200 100">
+                <polygon points="0,0 100,100 200,0 " />
+            </svg>
+
+        </div>
+
+        <div class="col-2 d-flex flex-column status-tab align-items-center">
+            <div class="py-2 ps-2 w-100 status-unpaid">
+                <div class="d-flex">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
+                         fill="currentcolor">
+                        <path d="M0 0h24v24H0z" fill="none" />
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+                    </svg>
+                    <span class="ms-2 text-uppercase">unpaid</span>
+                </div>
+                <span class="fw-bold">266</span>
+            </div>
+
+            <svg fill="#9966cd" height="10px" width="20px" viewBox="0 0 200 100">
+                <polygon points="0,0 100,100 200,0 " />
+            </svg>
+
+        </div>
+
+    </div>
+
+    <div class="d-flex align-items-center justify-content-between mt-3">
+
+        <div class="d-flex align-items-center">
+            <h5>Patients</h5>
+            <span class="ms-1 fw-bold" style="color: #404a66; font-size: 12px;">(New)</span>
+        </div>
+
+        <div class="d-flex align-items-center">
+
+            <button type="submit" class="mx-1 px-2 py-1 btn btn-primary" style="background-color:#10bce9">
+                <svg width="25px" height="25px" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" fill="white"
+                     class="bi bi-reply">
+                    <path transform="scale(-1, 1) translate(-20,0)"
+                          d="M6.598 5.013a.144.144 0 0 1 .202.134V6.3a.5.5 0 0 0 .5.5c.667 0 2.013.005 3.3.822.984.624 1.99 1.76 2.595 3.876-1.02-.983-2.185-1.516-3.205-1.799a8.74 8.74 0 0 0-1.921-.306 7.404 7.404 0 0 0-.798.008h-.013l-.005.001h-.001L7.3 9.9l-.05-.498a.5.5 0 0 0-.45.498v1.153c0 .108-.11.176-.202.134L2.614 8.254a.503.503 0 0 0-.042-.028.147.147 0 0 1 0-.252.499.499 0 0 0 .042-.028l3.984-2.933zM7.8 10.386c.068 0 .143.003.223.006.434.02 1.034.086 1.7.271 1.326.368 2.896 1.202 3.94 3.08a.5.5 0 0 0 .933-.305c-.464-3.71-1.886-5.662-3.46-6.66-1.245-.79-2.527-.942-3.336-.971v-.66a1.144 1.144 0 0 0-1.767-.96l-3.994 2.94a1.147 1.147 0 0 0 0 1.946l3.994 2.94a1.144 1.144 0 0 0 1.767-.96v-.667z" />
+                </svg>
+                <span class="ms-1 text-white">Send Link</span>
+            </button>
+
+            <button type="submit" class="mx-1 px-2 py-1 btn btn-primary" style="background-color:#10bce9">
+                <svg width="25px" height="25px" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" fill="white"
+                     class="bi bi-reply">
+                    <path transform="scale(-1, 1) translate(-20,0)"
+                          d="M6.598 5.013a.144.144 0 0 1 .202.134V6.3a.5.5 0 0 0 .5.5c.667 0 2.013.005 3.3.822.984.624 1.99 1.76 2.595 3.876-1.02-.983-2.185-1.516-3.205-1.799a8.74 8.74 0 0 0-1.921-.306 7.404 7.404 0 0 0-.798.008h-.013l-.005.001h-.001L7.3 9.9l-.05-.498a.5.5 0 0 0-.45.498v1.153c0 .108-.11.176-.202.134L2.614 8.254a.503.503 0 0 0-.042-.028.147.147 0 0 1 0-.252.499.499 0 0 0 .042-.028l3.984-2.933zM7.8 10.386c.068 0 .143.003.223.006.434.02 1.034.086 1.7.271 1.326.368 2.896 1.202 3.94 3.08a.5.5 0 0 0 .933-.305c-.464-3.71-1.886-5.662-3.46-6.66-1.245-.79-2.527-.942-3.336-.971v-.66a1.144 1.144 0 0 0-1.767-.96l-3.994 2.94a1.147 1.147 0 0 0 0 1.946l3.994 2.94a1.144 1.144 0 0 0 1.767-.96v-.667z" />
+                </svg>
+                <span class="ms-1 text-white">Create Request</span>
+            </button>
+
+            <button type="submit" class="mx-1 px-2 py-1 btn btn-primary" style="background-color:#10bce9">
+                <svg width="25px" height="25px" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" fill="white"
+                     class="bi bi-reply">
+                    <path transform="scale(-1, 1) translate(-20,0)"
+                          d="M6.598 5.013a.144.144 0 0 1 .202.134V6.3a.5.5 0 0 0 .5.5c.667 0 2.013.005 3.3.822.984.624 1.99 1.76 2.595 3.876-1.02-.983-2.185-1.516-3.205-1.799a8.74 8.74 0 0 0-1.921-.306 7.404 7.404 0 0 0-.798.008h-.013l-.005.001h-.001L7.3 9.9l-.05-.498a.5.5 0 0 0-.45.498v1.153c0 .108-.11.176-.202.134L2.614 8.254a.503.503 0 0 0-.042-.028.147.147 0 0 1 0-.252.499.499 0 0 0 .042-.028l3.984-2.933zM7.8 10.386c.068 0 .143.003.223.006.434.02 1.034.086 1.7.271 1.326.368 2.896 1.202 3.94 3.08a.5.5 0 0 0 .933-.305c-.464-3.71-1.886-5.662-3.46-6.66-1.245-.79-2.527-.942-3.336-.971v-.66a1.144 1.144 0 0 0-1.767-.96l-3.994 2.94a1.147 1.147 0 0 0 0 1.946l3.994 2.94a1.144 1.144 0 0 0 1.767-.96v-.667z" />
+                </svg>
+                <span class="ms-1 text-white">Export</span>
+            </button>
+
+            <button type="submit" class="mx-1 px-2 py-1 btn btn-primary" style="background-color:#10bce9">
+                <svg width="25px" height="25px" viewBox="0 0 20 20" fill="white">
+                    <path transform="scale(-1, 1) translate(-20,0)"
+                          d="M6.598 5.013a.144.144 0 0 1 .202.134V6.3a.5.5 0 0 0 .5.5c.667 0 2.013.005 3.3.822.984.624 1.99 1.76 2.595 3.876-1.02-.983-2.185-1.516-3.205-1.799a8.74 8.74 0 0 0-1.921-.306 7.404 7.404 0 0 0-.798.008h-.013l-.005.001h-.001L7.3 9.9l-.05-.498a.5.5 0 0 0-.45.498v1.153c0 .108-.11.176-.202.134L2.614 8.254a.503.503 0 0 0-.042-.028.147.147 0 0 1 0-.252.499.499 0 0 0 .042-.028l3.984-2.933zM7.8 10.386c.068 0 .143.003.223.006.434.02 1.034.086 1.7.271 1.326.368 2.896 1.202 3.94 3.08a.5.5 0 0 0 .933-.305c-.464-3.71-1.886-5.662-3.46-6.66-1.245-.79-2.527-.942-3.336-.971v-.66a1.144 1.144 0 0 0-1.767-.96l-3.994 2.94a1.147 1.147 0 0 0 0 1.946l3.994 2.94a1.144 1.144 0 0 0 1.767-.96v-.667z" />
+                    <text x="10" y="18" style="font-size: 5px;fill: white">ALL</text>
+                </svg>
+                <span class="ms-1 text-white">Export All</span>
+            </button>
+
+            <button type="submit" class="mx-1 px-2 py-1 btn btn-primary" style="background-color:#10bce9">
+                <svg width="25px" height="25px" viewBox="0 0 20 20" fill="white">
+                    <path transform="scale(-1, 1) translate(-20,0)"
+                          d="M6.598 5.013a.144.144 0 0 1 .202.134V6.3a.5.5 0 0 0 .5.5c.667 0 2.013.005 3.3.822.984.624 1.99 1.76 2.595 3.876-1.02-.983-2.185-1.516-3.205-1.799a8.74 8.74 0 0 0-1.921-.306 7.404 7.404 0 0 0-.798.008h-.013l-.005.001h-.001L7.3 9.9l-.05-.498a.5.5 0 0 0-.45.498v1.153c0 .108-.11.176-.202.134L2.614 8.254a.503.503 0 0 0-.042-.028.147.147 0 0 1 0-.252.499.499 0 0 0 .042-.028l3.984-2.933zM7.8 10.386c.068 0 .143.003.223.006.434.02 1.034.086 1.7.271 1.326.368 2.896 1.202 3.94 3.08a.5.5 0 0 0 .933-.305c-.464-3.71-1.886-5.662-3.46-6.66-1.245-.79-2.527-.942-3.336-.971v-.66a1.144 1.144 0 0 0-1.767-.96l-3.994 2.94a1.147 1.147 0 0 0 0 1.946l3.994 2.94a1.144 1.144 0 0 0 1.767-.96v-.667z" />
+                    <text x="10" y="18" style="font-size: 5px;fill: white">ALL</text>
+                </svg>
+                <span class="ms-1 text-white">Request DTY Support</span>
+            </button>
+        </div>
+
+    </div>
+
+    <div class="d-flex ps-3 mt-3 align-items-center justify-content-between">
+
+        <div class="d-flex">
+
+            <div class="d-flex normal-input rounded align-items-center ps-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 50 50">
+                    <path d="M 21 3 C 11.654545 3 4 10.654545 4 20 C 4 29.345455 11.654545 37 21 37 C 24.701287 37 28.127393 35.786719 30.927734 33.755859 L 44.085938 46.914062 L 46.914062 44.085938 L 33.875 31.046875 C 36.43682 28.068316 38 24.210207 38 20 C 38 10.654545 30.345455 3 21 3 z M 21 5 C 29.254545 5 36 11.745455 36 20 C 36 28.254545 29.254545 35 21 35 C 12.745455 35 6 28.254545 6 20 C 6 11.745455 12.745455 5 21 5 z">
+                    </path>
+                </svg>
+                <input type="text" class="form-control" placeholder="Search Patients">
+            </div>
+
+            <div class="d-flex normal-input rounded align-items-center ms-2 ps-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 50 50">
+                    <path d="M 21 3 C 11.654545 3 4 10.654545 4 20 C 4 29.345455 11.654545 37 21 37 C 24.701287 37 28.127393 35.786719 30.927734 33.755859 L 44.085938 46.914062 L 46.914062 44.085938 L 33.875 31.046875 C 36.43682 28.068316 38 24.210207 38 20 C 38 10.654545 30.345455 3 21 3 z M 21 5 C 29.254545 5 36 11.745455 36 20 C 36 28.254545 29.254545 35 21 35 C 12.745455 35 6 28.254545 6 20 C 6 11.745455 12.745455 5 21 5 z">
+                    </path>
+                </svg>
+                <select class="form-select border-0" aria-label="Default select example">
+                    <option selected>All Regions</option>
+                    <option value="1">One</option>
+                    <option value="2">Two</option>
+                    <option value="3">Three</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center">
+
+            <button class="active-filter filter-options d-flex align-items-center  px-2 py-1 rounded">
+                <span>All</span>
+            </button>
+
+            <button class="filter-options px-2 py-1 rounded d-flex align-items-center ms-2">
+                <svg height="15" width="15" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <circle fill="#5fbc61" r="45" cx="50" cy="50" stroke="grey" stroke-width="3" />
+                </svg>
+                <span class="ms-2">Patient</span>
+            </button>
+
+            <button class="filter-options px-2 py-1 rounded d-flex align-items-center ms-2">
+                <svg height="15" width="15" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <circle fill="#ed9124" r="45" cx="50" cy="50" stroke="grey" stroke-width="3" />
+                </svg>
+                <span class="ms-2">Family/Friend</span>
+            </button>
+            <button class="filter-options px-2 py-1 rounded d-flex align-items-center ms-2">
+                <svg height="15" width="15" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <circle fill="#e26277" r="45" cx="50" cy="50" stroke="grey" stroke-width="3" />
+                </svg>
+                <span class="ms-2">Business</span>
+            </button>
+            <button class="filter-options px-2 py-1 rounded d-flex align-items-center ms-2">
+                <svg height="15" width="15" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <circle fill="#007fc6" r="45" cx="50" cy="50" stroke="grey" stroke-width="3" />
+                </svg>
+                <span class="ms-2">Concierge</span>
+            </button>
+            <button class="filter-options px-2 py-1 rounded d-flex align-items-center ms-2">
+                <svg height="15" width="15" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <circle fill="#9966cd" r="45" cx="50" cy="50" stroke="grey" stroke-width="3" />
+                </svg>
+                <span class="ms-2">VIP</span>
+            </button>
+
+        </div>
+    </div>
+
+</div>
+
+<script src="/js/admin.js"></script>
+
+<script src="https://code.jquery.com/jquery-3.6.1.min.js"
+        integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous">
+</script>
+
+<script>
+
+    $(".status-tab").click(function () {
+        // $(this).find("div:first").after('<svg fill="black" height="10px" width="20px" viewBox="0 0 200 100"><polygon points="0,0 100,100 200,0 " /></svg>');
+        $(this).addClass("active");
+        $(this).children("svg").attr('display', 'block');
+        $('.status-tab').not(this).children("svg").attr('display', 'none');
+        $('.status-tab').not(this).removeClass("active");
+    });
+
+    $("#status-new-tab").click();
+
+</script>

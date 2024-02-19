@@ -1,0 +1,54 @@
+﻿.dark-mode {
+    --primary: white;
+    background-color: #282828;
+}
+
+    .dark-mode .btn:hover {
+        background-color: white;
+        border-color: white;
+    }
+
+    .dark-mode :is(h1, h2, h3, h4,h5, span, label, td) {
+        color: white;
+    }
+
+    .dark-mode .btn:hover svg {
+        fill: black;
+    }
+
+    .dark-mode .btn:hover span {
+        color: black;
+    }
+
+    .dark-mode .form-card {
+        background-color: #454545;
+    }
+
+    .dark-mode textarea, .dark-mode input {
+        background-color: #454545;
+        color: white;
+    }
+
+        .dark-mode input:focus, .dark-mode textarea:focus {
+            background-color: #676767;
+            color: white;
+        }
+
+    .dark-mode .btn:active {
+        background-color: #454545;
+    }
+
+
+    /* Patient Dashboard CSS */
+
+    .dark-mode .nav .active {
+        background-color: #282828 !important;
+    }
+
+    .dark-mode h4 {
+        color: white;
+    }
+
+    .dark-mode .dashboard-card {
+        background-color: #454545;
+    }

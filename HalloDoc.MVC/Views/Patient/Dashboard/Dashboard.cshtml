@@ -4,31 +4,30 @@
     ViewData["Title"] = "Dashboard";
     ViewData["Username"] = Model.UserName;
 }
-@* <div class="modal fade" id="myModal1" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
+<div class="modal fade" id="myModal1" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
      aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-header bg-info">
-                <div class="modal-dark modal-title" id="exampleModalLongTitle">Create New Request</div>
+                <div class="modal-dark modal-title text-white" id="exampleModalLongTitle">Create New Request</div>
                 <button type="button" class="btn-close" aria-label="Close" data-bs-dismiss="modal"></button>
             </div>
             <form>
-                <input type="hidden" name="" id="redirect-value" value="submit_for_me">
                 <div class="modal-body">
                     <span class="modal-head">Here, I want to create new request for ...</span>
                     <div class="modal-flex d-flex justify-content-center my-3">
-                        <div class="btn common-btn cancel-btn create-request-active border border-1 border-info" onclick="toggleButton(this,'submit_for_me')"> Me </div>
-                        <div class="btn common-btn cancel-btn ms-2 border border-1 border-info" onclick="toggleButton(this,'submit_for_other')"> Some One Else</div>
+                        <div class="btn create-request-active create-request-btn border border-1 border-info" onclick="toggleCreateRequest(this)"> Me </div>
+                        <div class="btn ms-2 border border-1 someone-else-btn create-request-btn border-info" onclick="toggleCreateRequest(this)"> Some One Else</div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-info continue-btn" data-bs-dismiss="modal" onclick="redirect()">Continue</button>
+                    <button type="button" class="btn btn-info text-white" data-bs-dismiss="modal" onclick="redirect()">Continue</button>
                     <button type="button" class="btn cancel-btn" data-bs-dismiss="modal">Cancel</button>
                 </div>
             </form>
         </div>
     </div>
-</div> *@
+</div>
 
 <div class="tab-content px-4" id="myTabContent">
     <div class="tab-pane fade show active" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
@@ -43,7 +42,7 @@
                 </a>
             </div>
             <div>
-                <table class="table">
+                <table class="table" id="table_dashboard">
                     <colgroup>
                         <col span="1" style="width: 15%;">
                         <col span="1" style="width: 70%;">
@@ -91,10 +90,69 @@
     </div>
 </div>
 
+
+<script src="/js/site.js"></script>
+
+<script src="https://code.jquery.com/jquery-3.6.1.min.js"
+        integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous">
+</script>
+
+
+<script>
+
+    var isMeRequest = true;
+
+    function toggleCreateRequest(element) {
+        if (element.classList.contains("someone-else-btn")) {
+            isMeRequest = false;
+        }
+        else {
+            isMeRequest = true;
+        }
+
+        if (!element.classList.contains("create-request-active")) {
+            $(".create-request-btn").removeClass("create-request-active");
+            element.classList.add("create-request-active");
+        }
+    }
+
+    function redirect() {
+        console.log("hi1");
+        if (isMeRequest) {
+            $.ajax({
+                url: '/Patient/RequestCheck',
+                type: 'POST',
+                data: { id: isMeRequest }
+            });
+        }
+        else {
+            $.ajax({
+                url: '/Patient/RequestForSomeoneElse',
+                type: 'GET',
+            });
+        }
+    }
+
+
+</script>
 <script>
     var profile = document.getElementById("profile-tab");
     var dashboard = document.getElementById("dashboard-tab");
 
     profile.classList.remove("active");
     dashboard.classList.add("active");
+</script>
+
+
+<script type="text/javascript">
+
+    $(window).on('load', function () {
+        new DataTable('#table_dashboard', {
+            paging: true,
+            ordering: false,
+            scrollX: false,
+            searching: false
+        });
+    });
+
 </script>

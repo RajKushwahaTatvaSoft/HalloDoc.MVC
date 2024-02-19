@@ -181,7 +181,7 @@ html, body {
 
 
 /* Create Patient Request Screen Css */
- .create-patient-request input:focus {
+.create-patient-request input:focus {
     box-shadow: none;
 }
 
@@ -246,9 +246,9 @@ x::-webkit-file-upload-button, input[type=file]:after {
 }
 
 
-/* Patient Dashboard */
+/* Admin Dashboard CSS */
 
-.patient-dashboard {
+.admin-dashboard {
     background-color: #f9f9f9;
 }
 
@@ -283,19 +283,125 @@ x::-webkit-file-upload-button, input[type=file]:after {
     padding-left: 20px;
 }
 
-.dashboard-card{
-    border-radius : 5px;
+.dashboard-card {
+    border-radius: 5px;
 }
 
-.patient-dashboard input:focus {
+.admin-dashboard input:focus {
     box-shadow: none;
 }
 
-.patient-dashboard select:focus {
+.admin-dashboard select:focus {
     box-shadow: none;
 }
 
-.patient-dashboard .create-request-active {
-    background-color: #10bce9;
-    color:white;
+
+.status-tab div {
+    border-radius: 8px;
+}
+
+.status-new {
+    background-color: #e9eaef;
+    color: #203f9a;
+    border: 1px solid #203f9a;
+}
+
+.status-pending {
+    background-color: #e5f2f8;
+    color: #00adef;
+    border: 1px solid #00adef;
+}
+
+.status-active {
+    background-color: #e9f0e8;
+    color: #228c20;
+    border: 1px solid #228c20;
+}
+
+.status-conclude {
+    background-color: #f7e6ee;
+    color: #da0f82;
+    border: 1px solid #da0f82;
+}
+
+.status-to-close {
+    background-color: #e5eef5;
+    color: #0370d7;
+    border: 1px solid #0370d7;
+}
+
+.status-unpaid {
+    background-color: #efeef4;
+    color: #9966cd;
+    border: 1px solid #9966cd;
+}
+
+.active .status-new {
+    background-color: #203f9a;
+    color: white;
+    border: 1px solid #203f9a;
+}
+
+.active .status-pending {
+    background-color: #00adef;
+    color: white;
+    border: 1px solid #00adef;
+}
+
+.active .status-active {
+    background-color: #228c20;
+    color: white;
+    border: 1px solid #228c20;
+}
+
+.active .status-conclude {
+    background-color: #da0f82;
+    color: white;
+    border: 1px solid #da0f82;
+}
+
+.active .status-to-close {
+    background-color: #0370d7;
+    color: white;
+    border: 1px solid #0370d7;
+}
+
+.active .status-unpaid {
+    background-color: #9966cd;
+    color: white;
+    border: 1px solid #9966cd;
+}
+
+.admin-dashboard input {
+    box-shadow: none;
+    border-width: 0px;
+}
+
+    .admin-dashboard input:focus {
+        box-shadow: none;
+    }
+
+.admin-dashboard select:focus {
+    box-shadow: none;
+}
+
+.normal-input {
+    border: 1px solid grey;
+}
+
+    .normal-input:focus-within {
+        border: 1px solid var(--primary);
+    }
+
+.filter-options {
+    height: 30px;
+    border-width: 0px;
+}
+
+    .filter-options:hover {
+        background-color: #e3e3e3;
+    }
+
+.active-filter {
+    border: 1px solid grey;
 }
