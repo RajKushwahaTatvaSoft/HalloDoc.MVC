@@ -8,7 +8,11 @@ using System.Diagnostics;
 using System.IO.Compression;
 using System.Net.Mail;
 using System.Net;
-
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using Microsoft.CodeAnalysis;
+using Microsoft.AspNetCore.Authorization;
 
 namespace HalloDoc.MVC.Controllers
 {
@@ -30,17 +34,17 @@ namespace HalloDoc.MVC.Controllers
         Concierge = 4
     }
 
-
     public class PatientController : Controller
     {
-
         private readonly ApplicationDbContext _context;
         private readonly IWebHostEnvironment _environment;
+        private readonly IConfiguration _config;
 
-        public PatientController(ApplicationDbContext context, IWebHostEnvironment environment)
+        public PatientController(ApplicationDbContext context, IWebHostEnvironment environment, IConfiguration config)
         {
             _context = context;
             _environment = environment;
+            _config = config;
         }
 
         public IActionResult Index()
@@ -83,26 +87,209 @@ namespace HalloDoc.MVC.Controllers
             return View("Error");
         }
 
-        [HttpPost]
-        public IActionResult RequestCheck(bool id)
-        {
-            if (id)
-            {
-                return RedirectToAction("Profile");
-            }
-            else
-            {
-                return RedirectToAction("RequestForMe");
-            }
-        }
-
         public IActionResult RequestForMe()
         {
-            return View("Dashboard/RequestForMe");
+            int? userId = HttpContext.Session.GetInt32("userId");
+
+            if (userId == null)
+            {
+                return View("Error");
+            }
+
+            User user = _context.Users.FirstOrDefault(u => u.Userid == userId);
+
+            string dobDate = user.Intyear + "-" + user.Strmonth + "-" + user.Intdate;
+
+            MeRequestViewModel model = new()
+            {
+                UserId = user.Userid,
+                FirstName = user.Firstname,
+                LastName = user.Lastname,
+                DOB = DateTime.Parse(dobDate),
+                Phone = user.Mobile,
+                Email = user.Email,
+                Street = user.Street,
+                City = user.City,
+                State = user.State,
+                ZipCode = user.Zipcode,
+            };
+            return View("Dashboard/RequestForMe", model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult RequestForMe(MeRequestViewModel meRequestViewModel)
+        {
+            int? userId = HttpContext.Session.GetInt32("userId");
+
+            if (userId == null)
+            {
+                return View("Error");
+            }
+
+            User user = _context.Users.FirstOrDefault(u => u.Userid == userId);
+            string requestIpAddress = GetRequestIP();
+            if (ModelState.IsValid)
+            {
+                string phoneNumber = "+" + meRequestViewModel.Countrycode + '-' + meRequestViewModel.Phone;
+
+                Request request = new()
+                {
+                    Requesttypeid = 2,
+                    Userid = user.Userid,
+                    Confirmationnumber = GenerateConfirmationNumber(user),
+                    Firstname = meRequestViewModel.FirstName,
+                    Lastname = meRequestViewModel.LastName,
+                    Phonenumber = phoneNumber,
+                    Email = meRequestViewModel.Email,
+                    Status = (short)RequestStatus.Unassigned,
+                    Createddate = DateTime.Now,
+                    Patientaccountid = user.Aspnetuserid,
+                    Createduserid = user.Userid,
+                    Ip = requestIpAddress,
+                };
+
+                _context.Requests.Add(request);
+                _context.SaveChanges();
+
+                //Adding request in RequestClient Table
+                Requestclient requestclient = new()
+                {
+                    Requestid = request.Requestid,
+                    Firstname = meRequestViewModel.FirstName,
+                    Lastname = meRequestViewModel.LastName,
+                    Phonenumber = phoneNumber,
+                    Email = meRequestViewModel.Email,
+                    Address = meRequestViewModel.Street,
+                    City = meRequestViewModel.City,
+                    State = meRequestViewModel.State,
+                    Zipcode = meRequestViewModel.ZipCode,
+                    Notes = meRequestViewModel.Symptom,
+                    Ip = requestIpAddress,
+                };
+
+                _context.Requestclients.Add(requestclient);
+                _context.SaveChanges();
+
+                //Adding File Data in RequestWiseFile Table
+                if (meRequestViewModel.File != null)
+                {
+                    InsertRequestWiseFile(meRequestViewModel.File);
+
+                    Requestwisefile requestwisefile = new()
+                    {
+                        Requestid = request.Requestid,
+                        Createddate = DateTime.Now,
+                        Ip = requestIpAddress,
+                        Filename = meRequestViewModel.File.FileName,
+                    };
+
+                    _context.Requestwisefiles.Add(requestwisefile);
+                    _context.SaveChanges();
+                }
+
+
+                return RedirectToAction("PatientDashboard");
+            }
+            return View("MeRequest");
         }
 
         public IActionResult RequestForSomeoneElse()
         {
+            int? userId = HttpContext.Session.GetInt32("userId");
+
+            if (userId == null)
+            {
+                return View("Error");
+            }
+
+            User user = _context.Users.FirstOrDefault(u => u.Userid == userId);
+
+            SomeoneElseRequestViewModel model = new()
+            {
+                Username = user.Firstname + " " + user.Lastname,
+            };
+
+            return View("Dashboard/RequestForSomeoneElse", model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult RequestForSomeoneElse(SomeoneElseRequestViewModel srvm)
+        {
+            int? userId = HttpContext.Session.GetInt32("userId");
+
+            if (userId == null)
+            {
+                return View("Error");
+            }
+
+            User user = _context.Users.FirstOrDefault(u => u.Userid == userId);
+
+            if (ModelState.IsValid)
+            {
+                string requestIpAddress = GetRequestIP();
+                string phoneNumber = "+" + srvm.patientDetails.Countrycode + '-' + srvm.patientDetails.Phone;
+
+                Request request = new()
+                {
+                    Requesttypeid = 2,
+                    Userid = user.Userid,
+                    Confirmationnumber = GenerateConfirmationNumber(user),
+                    Firstname = srvm.patientDetails.FirstName,
+                    Lastname = srvm.patientDetails.LastName,
+                    Phonenumber = phoneNumber,
+                    Email = srvm.patientDetails.Email,
+                    Status = (short)RequestStatus.Unassigned,
+                    Createddate = DateTime.Now,
+                    Patientaccountid = user.Aspnetuserid,
+                    Createduserid = user.Userid,
+                    Ip = requestIpAddress,
+                };
+
+                _context.Requests.Add(request);
+                _context.SaveChanges();
+
+                //Adding request in RequestClient Table
+                Requestclient requestclient = new()
+                {
+                    Requestid = request.Requestid,
+                    Firstname = srvm.patientDetails.FirstName,
+                    Lastname = srvm.patientDetails.LastName,
+                    Phonenumber = phoneNumber,
+                    Email = srvm.patientDetails.Email,
+                    Address = srvm.patientDetails.Street,
+                    City = srvm.patientDetails.City,
+                    State = srvm.patientDetails.State,
+                    Zipcode = srvm.patientDetails.ZipCode,
+                    Notes = srvm.patientDetails.Symptom,
+                    Ip = requestIpAddress,
+                };
+
+                _context.Requestclients.Add(requestclient);
+                _context.SaveChanges();
+
+                //Adding File Data in RequestWiseFile Table
+                if (srvm.patientDetails.File != null)
+                {
+                    InsertRequestWiseFile(srvm.patientDetails.File);
+
+                    Requestwisefile requestwisefile = new()
+                    {
+                        Requestid = request.Requestid,
+                        Createddate = DateTime.Now,
+                        Ip = requestIpAddress,
+                        Filename = srvm.patientDetails.File.FileName,
+                    };
+
+                    _context.Requestwisefiles.Add(requestwisefile);
+                    _context.SaveChanges();
+                }
+
+                return RedirectToAction("PatientDashboard");
+
+            }
+
             return View("Dashboard/RequestForSomeoneElse");
         }
 
@@ -136,7 +323,6 @@ namespace HalloDoc.MVC.Controllers
         {
             if (viewDocumentVM.File != null)
             {
-
                 InsertRequestWiseFile(viewDocumentVM.File);
 
                 Requestwisefile requestwisefile = new()
@@ -296,122 +482,135 @@ namespace HalloDoc.MVC.Controllers
 
         }
 
-        public IActionResult ForgetPassword()
+        public IActionResult ResetPasswordGet(ForgotPasswordViewModel fpvm)
         {
-            return View("Authentication/ForgetPassword");
+            return View("Authentication/ResetPassword", fpvm);
         }
 
-        //public class Message
-        //{
-        //    public List<MailboxAddress> To { get; set; }
-        //    public string Subject { get; set; }
-        //    public string Content { get; set; }
-        //    public Message(IEnumerable<string> to, string subject, string content)
-        //    {
-        //        To = new List<MailboxAddress>();
-        //        To.AddRange(to.Select(x => new MailboxAddress("email", x)));
-        //        Subject = subject;
-        //        Content = content;
-        //    }
-        //}
-
-        //private MimeMessage CreateEmailMessage(Message message)
-        //{
-        //    var emailMessage = new MimeMessage();
-        //    emailMessage.From.Add(new MailboxAddress("email", "raj.kushwaha@etatvasoft.com"));
-        //    emailMessage.To.AddRange(message.To);
-        //    emailMessage.Subject = message.Subject;
-        //    emailMessage.Body = new TextPart(MimeKit.Text.TextFormat.Text) { Text = message.Content };
-        //    return emailMessage;
-        //}
-
-        public void SendEmail(string toEmail, string subject, string emailbody)
+        [HttpGet]
+        public IActionResult ResetPassword(string token)
         {
             try
             {
-                using (SmtpClient smtpClient = new SmtpClient("sandbox.smtp.mailtrap.io"))
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var key = Encoding.ASCII.GetBytes(_config["Jwt:Key"]);
+
+                tokenHandler.ValidateToken(token, new TokenValidationParameters
                 {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateLifetime = true,
+                    ValidateIssuer = true,
+                    ValidateAudience = false,
+                    ValidIssuer = _config["Jwt:Issuer"],
+                    ClockSkew = TimeSpan.Zero
+                }, out SecurityToken validatedToken);
 
-                    smtpClient.UseDefaultCredentials = false;
-                    smtpClient.Credentials = new NetworkCredential("630f82e670dc82", "a5563b851bf560");
-                    smtpClient.Port = 2525;
-                    smtpClient.EnableSsl = true;
+                var jwtToken = (JwtSecurityToken)validatedToken;
+                var email = jwtToken.Claims.First(x => x.Type == "email").Value;
 
-                    using (MailMessage mailMessage = new MailMessage())
-                    {
-                        mailMessage.From = new MailAddress("kunjdabhi0808@gmail.com");
-                        mailMessage.To.Add(new MailAddress(toEmail));
-                        mailMessage.Subject = subject;
-                        mailMessage.Body = emailbody;
-                        mailMessage.IsBodyHtml = true;
+                ForgotPasswordViewModel fpvm = new()
+                {
+                    Email = email,
+                };
 
-                        smtpClient.Send(mailMessage);
-                    }
-                }
+                return ResetPasswordGet(fpvm);
             }
             catch (Exception ex)
             {
-                throw new ApplicationException("Failed to send email", ex);
+                return Content(ex.Message);
             }
+        }
+
+        [HttpPost]
+        public IActionResult ResetPassword(ForgotPasswordViewModel fpvm)
+        {
+            Aspnetuser user = _context.Aspnetusers.FirstOrDefault(u => u.Email == fpvm.Email);
+
+            if (user == null)
+            {
+                return NotFound("Error");
+            }
+
+            if (ModelState.IsValid)
+            {
+                string passHash = GenerateSHA256(fpvm.Password);
+                user.Passwordhash = passHash;
+                user.Modifieddate = DateTime.Now;
+                _context.Update(user);
+                _context.SaveChanges();
+
+                TempData["success"] = "Password Reset Successful";
+                return RedirectToAction("Login");
+
+            }
+            return View();
+        }
+
+
+        public IActionResult ForgetPassword()
+        {
+            return View("Authentication/ForgetPassword");
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult ForgetPassword(ForgotPasswordViewModel forPasVM)
         {
-            string emailFrom = "raj.kushwaha@etatvasoft.com";
-            string pass = "02NSSbcgF1?r";
-            string SmtpServer = "mail.etatvasoft.com";
-            int Port = 465;
-            string subject = "Test";
-            string body = "Testing";
-
             if (ModelState.IsValid)
             {
+                try
+                {
+                    var tokenHandler = new JwtSecurityTokenHandler();
+                    var key = Encoding.ASCII.GetBytes(_config["Jwt:Key"]);
+                    var tokenDescriptor = new SecurityTokenDescriptor
+                    {
+                        Subject = new ClaimsIdentity(new[] { new Claim("email", forPasVM.Email) }),
+                        Expires = DateTime.UtcNow.AddHours(24),
+                        Issuer = _config["Jwt:Issuer"],
+                        SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                    };
+                    var token = tokenHandler.CreateToken(tokenDescriptor);
+                    var jwtToken = tokenHandler.WriteToken(token);
 
-                SendEmail(forPasVM.Email,subject, body);
-                //using var smtp = new MailKit.Net.Smtp.SmtpClient();
-                //smtp.Connect("mail.etatvasoft.com", 587, SecureSocketOptions.StartTls);
-                //smtp.Authenticate(emailFrom, pass);
-                //smtp.Send(CreateEmailMessage(new Message(new string[] { forPasVM.Email }, "test", "content")));
-                //smtp.Disconnect(true);
-                //smtp.Dispose();
+                    var resetLink = Url.Action("ResetPassword", "Patient", new { token = jwtToken }, Request.Scheme);
 
-                //using (var client = new SmtpClient())
-                //{
-                //    try
-                //    {
-                //        //client.CheckCertificateRevocation = false;
-                //        //client.ServerCertificateValidationCallback = (s, c, h, e) => true;
-                //        //client.Connect(SmtpServer, Port, true);
+                    string senderEmail = _config.GetSection("OutlookSMTP")["Sender"];
+                    string senderPassword = _config.GetSection("OutlookSMTP")["Password"];
 
-                //        //client.AuthenticationMechanisms.Remove("XOAUTH2");
-                //        //client.Authenticate(emailFrom, pass);
+                    SmtpClient client = new SmtpClient("smtp.office365.com")
+                    {
+                        Port = 587,
+                        Credentials = new NetworkCredential(senderEmail, senderPassword),
+                        EnableSsl = true,
+                        DeliveryMethod = SmtpDeliveryMethod.Network,
+                        UseDefaultCredentials = false
+                    };
 
-                //        //client.Send(CreateEmailMessage(new Message(new string[] { forPasVM.Email }, "Change Your Password", "Visit www.google.com to change password.")));
-                //    }
-                //    catch
-                //    {
-                //        throw;
-                //    }
-                //    finally
-                //    {
-                //        //client.Disconnect(true);
-                //        //client.Dispose();
-                //    }
-                //}
+                    MailMessage mailMessage = new MailMessage
+                    {
+                        From = new MailAddress(senderEmail, "HalloDoc"),
+                        Subject = "Set up your Account",
+                        IsBodyHtml = true,
+                        Body = "<h1>Hello , world!!</h1><a href=\"" + resetLink + "\" >reset pass link</a>",
+                    };
 
-                return View("Index");
+                    mailMessage.To.Add(forPasVM.Email);
+
+                    client.Send(mailMessage);
+                    TempData["success"] = "Please check " + forPasVM.Email + " for reset password link.";
+
+                }
+                catch (Exception ex)
+                {
+                    TempData["error"] = ex.Message;
+                    return View("Authentication/ForgetPassword");
+                }
             }
-            else
-            {
-                return View();
-            }
 
-            return View();
 
-            TempData["success"] = "Mail Sent successfully. to " + forPasVM.Email;
             return View("Authentication/ForgetPassword");
+
         }
 
         public IActionResult SubmitRequest()

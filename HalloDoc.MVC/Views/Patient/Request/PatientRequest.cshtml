@@ -111,7 +111,7 @@
                         <div class="form-floating mt-3">
                             <input asp-for="Email" class="form-control" placeholder="Leave a comment here"
                                    id="floatingInputemail"></input>
-                            <label for="floatingTextarea2">Email</label>
+                            <label for="floatingInputemail">Email</label>
                         </div>
                     </div>
 
@@ -251,28 +251,6 @@
 
     </div>
 
-    @* <script>
-    $(document).ready(function () {
-    $('#floatingInputemail').on('blur', function () {
-    var inputValue = $('#floatingInputemail').val();
-
-    $.get('/Patient/PatientCheckEmail', { email: inputValue }, function (response) {
-    if (!response.isValid) {
-    const pass = document.getElementsByClassName("hidden-pass");
-    for (let i = 0; i < pass.length; ++i) {
-    pass[i].style.display = "block";
-    }
-    }
-    else {
-    const pass = document.getElementsByClassName("hidden-pass");
-    for (let i = 0; i < pass.length; ++i) {
-    pass[i].style.display = "none";
-    }
-    }
-    });
-    });
-    });
-    </script> *@
 
     <script type="text/javascript">
         $(document).ready(function () {
@@ -312,12 +290,6 @@
     </script>
 
     <script>
-
-
-        // if (document.getElementById("patientDateOfBirth")) {
-        //     var today = new Date().toISOString().split('T')[0];
-        //     document.getElementById("patientDateOfBirth").max = today;
-        // }
 
 
         const phoneInputField = document.getElementById("patient-phone");

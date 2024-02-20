@@ -405,3 +405,41 @@ x::-webkit-file-upload-button, input[type=file]:after {
 .active-filter {
     border: 1px solid grey;
 }
+
+.admin-dashboard .table-head {
+    background-color: lightgrey;
+}
+
+.admin-dashboard tr {
+    font-size: 12px;
+}
+
+.admin-dashboard .patient-request-row {
+    background-color: #5fbc61;
+    color: white;
+}
+
+.admin-dashboard .family-friend-request-row {
+    background-color: #ed9124;
+    color: white;
+}
+
+.admin-dashboard .concierge-request-row {
+    background-color: #e26277;
+    color: white;
+}
+
+.admin-dashboard .business-request-row {
+    background-color: #007fc6;
+    color: white;
+}
+
+.admin-dashboard .vip-request-row {
+    background-color: #9966cd;
+    color: white;
+}
+
+.admin-dashboard .white-border-btn {
+    border: 1px solid white;
+    border-radius: 5px;
+}

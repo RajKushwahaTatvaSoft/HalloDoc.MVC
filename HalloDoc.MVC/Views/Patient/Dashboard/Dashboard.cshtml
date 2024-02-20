@@ -4,6 +4,14 @@
     ViewData["Title"] = "Dashboard";
     ViewData["Username"] = Model.UserName;
 }
+
+@*
+<script src="https://cdn.datatables.net/1.13.10/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/2.0.0/js/dataTables.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.13.10/js/dataTables.bootstrap.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.10/css/dataTables.bootstrap5.min.css"></script>
+ *@
+
 <div class="modal fade" id="myModal1" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
      aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
@@ -17,11 +25,13 @@
                     <span class="modal-head">Here, I want to create new request for ...</span>
                     <div class="modal-flex d-flex justify-content-center my-3">
                         <div class="btn create-request-active create-request-btn border border-1 border-info" onclick="toggleCreateRequest(this)"> Me </div>
+                        <a id="request-me-anchor" asp-controller="Patient" asp-action="RequestForMe" hidden></a>
                         <div class="btn ms-2 border border-1 someone-else-btn create-request-btn border-info" onclick="toggleCreateRequest(this)"> Some One Else</div>
+                        <a id="request-someone-else-anchor" asp-controller="Patient" asp-action="RequestForSomeoneElse" hidden></a>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-info text-white" data-bs-dismiss="modal" onclick="redirect()">Continue</button>
+                    <a type="button" class="btn btn-info text-white" data-bs-dismiss="modal" onclick="redirect()">Continue</a>
                     <button type="button" class="btn cancel-btn" data-bs-dismiss="modal">Cancel</button>
                 </div>
             </form>
@@ -29,7 +39,7 @@
     </div>
 </div>
 
-<div class="tab-content px-4" id="myTabContent">
+<div class="px-4">
     <div class="tab-pane fade show active" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
 
         <h4 class="mt-5">Medical History</h4>
@@ -83,11 +93,7 @@
         <div style="height: 20px;"></div>
 
     </div>
-    <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
-
-        <h4 class="mt-3">Profile</h4>
-
-    </div>
+    
 </div>
 
 
@@ -97,6 +103,12 @@
         integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous">
 </script>
 
+<script>
+    setTimeout(function () {
+        console.log("null successfull");
+        TempData["success"] = null;
+    }, 5000);
+</script>
 
 <script>
 
@@ -117,20 +129,15 @@
     }
 
     function redirect() {
-        console.log("hi1");
+
         if (isMeRequest) {
-            $.ajax({
-                url: '/Patient/RequestCheck',
-                type: 'POST',
-                data: { id: isMeRequest }
-            });
+            console.log("hi");
+            document.getElementById("request-me-anchor").click();
         }
         else {
-            $.ajax({
-                url: '/Patient/RequestForSomeoneElse',
-                type: 'GET',
-            });
+            document.getElementById("request-someone-else-anchor").click();
         }
+
     }
 
 

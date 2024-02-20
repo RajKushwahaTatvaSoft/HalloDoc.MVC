@@ -1,1 +1,190 @@
-﻿<h1>hello me</h1>
+﻿@model MeRequestViewModel
+@{
+    Layout = "_PatientDashboardLayout";
+    ViewData["Title"] = "Patient Upload";
+    ViewData["Username"] = Model.FirstName + " " + Model.LastName;
+}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+
+<script src="https://code.jquery.com/jquery-3.6.1.min.js"
+        integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous">
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
+
+
+<div class="">
+
+    <div class="d-flex justify-content-center mt-3">
+
+        <div class="d-flex justify-content-between col-11 col-md-8">
+            <h4>Submit Information</h4>
+
+            <a asp-controller="Patient" asp-action="Dashboard" class="btn btn-outline-info shadow-none night-mode-btn d-flex align-items-center">
+
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 -960 960 960">
+                    <path d="m142-480 294 294q15 15 14.5 35T435-116q-15 15-35 15t-35-15L57-423q-12-12-18-27t-6-30q0-15 6-30t18-27l308-308q15-15 35.5-14.5T436-844q15 15 15 35t-15 35L142-480Z" />
+                </svg>
+
+                <span>Back</span>
+
+            </a>
+        </div>
+
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="d-flex justify-content-center">
+        <div class="col-11 col-md-8 form-card shadow rounded my-3 px-4 py-3">
+            <h4 class="mb-4">Patient Information</h4>
+
+            <div class="row">
+
+                <div class="form-floating mb-3">
+                    <textarea asp-for="Symptom" class="form-control" placeholder="Leave a comment here" id="floatingTextarea2"
+                              style="height: 100px;"></textarea>
+                    <label class="ms-2" for="floatingTextarea2">Enter brief details of Symptoms (Optional)</label>
+                </div>
+
+            </div>
+
+            <div class="row">
+                <div class="col-lg-4 col-md-6 col-12 form-floating mb-3 ">
+                    <input asp-for="FirstName" type="text" class="form-control " id="floatingInputFirst" placeholder="First Name" aria-label="First Name">
+                    <label class="ms-2 " for="floatingInputFirst">First Name</label>
+                </div>
+                <div class="col-lg-4 col-md-6 col-12  form-floating mb-3 ">
+                    <input asp-for="LastName" type="text" class="form-control " id="floatingInputLast" placeholder="Last Name" aria-label="Last Name">
+                    <label class="ms-2  " for="floatingInputLast">Last Name</label>
+                </div>
+                <div class="col-lg-4 col-md-6 col-12  form-floating  ">
+                    <input asp-for="DOB" type="date" class="form-control " id="floatingInputdate" placeholder="Date Of Birth" aria-label="First Name">
+                    <label class="ms-2 " for="floatingInputdate">Date Of Birth</label>
+                </div>
+            </div>
+
+            <h4 class="mb-4">Patient Contact Information</h4>
+            <div class="row mb-3">
+                <div class="col-md-6 col-12 form-floating mb-3">
+                    <input asp-for="Email" type="email" class="form-control " id="floatingInputemail" placeholder="Email" aria-label="Email">
+                    <label class="ms-2 " for="floatingInputemail">Email</label>
+                </div>
+                <div class="col-md-6 col-12 form-floating mb-3">
+
+                    <input id="patient-phone-country" asp-for="Countrycode" hidden />
+                    <input asp-for="Phone" type="tel" class="phone form-control " id="patient-phone" placeholder="99XXXXXXXX" aria-label="Contact Number">
+                </div>
+            </div>
+
+            <h4 class="mb-4">Patient Location</h4>
+            <div class="row mb-3">
+                <div class="col-lg-4 col-md-6 col-12 form-floating mb-3">
+                    <input asp-for="Street" type="text" class="form-control " id="floatingInputStreet" placeholder="Street" aria-label="Street">
+                    <label class="ms-2 " for="floatingInputStreet">Street</label>
+                </div>
+                <div class="col-lg-4 col-md-6 col-12 form-floating mb-3">
+                    <input asp-for="City" type="text" class="form-control " id="floatingInputCity" placeholder="City" aria-label="City">
+                    <label class="ms-2  " for="floatingInputCity">City</label>
+                </div>
+                <div class="col-lg-4 col-md-6 col-12 form-floating mb-3">
+                    <input asp-for="State" type="text" class="form-control " id="floatingInputState" placeholder="State" aria-label="State">
+                    <label class="ms-2 " for="floatingInputState">State</label>
+                </div>
+                <div class="col-lg-4 col-md-6 col-12 form-floating mb-3">
+                    <input asp-for="ZipCode" type="text" class="form-control " id="floatingInputZipCode" placeholder="Zip Code" aria-label="Zip Code">
+                    <label class="ms-2  " for="floatingInputZipCode">Zip Code</label>
+                </div>
+                <div class="col-lg-4 col-md-6 col-12 form-floating mb-3">
+                    <input asp-for="RoomSuite" type="text" class="form-control " id="floatingInputroom" placeholder="Room # / Suite (Optional)" aria-label="room">
+                    <label class="ms-2" for="floatingInputroom">Room # / Suite (Optional)</label>
+                </div>
+                <div class="col-lg-4 col-md-6 col-12 form-floating mb-3">
+                    <button type="button" class="btn btn-outline-dark border-info p-3 text-info">
+                        <i class="bi bi-geo-alt-fill "></i>
+                        <span>Map</span>
+                    </button>
+                </div>
+
+            </div>
+
+
+            <div class="row mt-3">
+                <h3>Upload Photo or Document (Optional)</h3>
+            </div>
+
+            <div class="row">
+
+                <div class="mb-3">
+
+                    <input asp-for="File" class="form-control" type="file" id="file_input_id" style="opacity:0;height:0;">
+
+                    <div class="input-group mb-3">
+                        <input type="text" id='text_input_id' class="form-control" placeholder="Select File"
+                               style="caret-color: transparent" autocomplete="off">
+
+                        <span class="input-group-text" id="text_input_span_id " style="background-color: #10bce9;">
+                            <div>
+                                <img src="/images/upload_icon.svg" alt="upload-icon">
+                                <span class="ms-1 text-white">Upload</span>
+                            </div>
+                        </span>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="row">
+                <div class=" d-flex justify-content-center justify-content-md-end">
+
+                    <button type="submit" onclick="changeCountryCode()" class="btn" style="background-color: #10bce9;">
+                        <span class="text-white">Submit</span>
+                    </button>
+
+                    <button type="reset" class="btn ms-3" style="border: 1px solid #10bce9;">
+                        <span style="color: #10bce9;">Cancel</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </form>
+
+</div>
+
+
+<script>
+
+    const phoneInputField = document.getElementById("patient-phone");
+    var patientPhoneInput = window.intlTelInput(phoneInputField, {
+        utilsScript:
+            "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+        preferredCountries: ["in"],
+        separateDialCode: true,
+        initialCountry: "in"
+    });
+
+
+    function changeCountryCode() {
+        var countryCode = document.getElementById("patient-phone-country");
+        countryCode.value = patientPhoneInput.getSelectedCountryData().dialCode;
+        console.log(countryCode.value);
+    }
+
+</script>
+
+
+<script>
+    // bind file-input-form click action to text-input-span
+    $('#text_input_span_id').click(function () {
+        $("#file_input_id").trigger('click');
+    })
+    // bind file-input-form click action to text-input-form
+    $('#text_input_id').click(function () {
+        $("#file_input_id").trigger('click');
+    })
+    // display file name in text-input-form
+    $("#file_input_id").change(function () {
+        $('#text_input_id').val(this.value.replace(/C:\\fakepath\\/i, ''))
+    })
+</script>
