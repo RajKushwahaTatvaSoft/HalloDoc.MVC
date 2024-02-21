@@ -10,7 +10,7 @@ namespace Data_Layer.ViewModels
 {
     public class SomeoneElseRequestViewModel
     {
-        public string Username { get; set; }
+        public string? Username { get; set; }
         public PatientRequestViewModel patientDetails { get; set; }
         public string? Relation { get; set; }
     }

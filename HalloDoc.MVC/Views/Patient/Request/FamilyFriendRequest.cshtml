@@ -117,6 +117,8 @@
                     <div class="col-lg-4 col-md-6 col-12">
 
                         <div class="form-floating mt-3">
+
+                            <input id="family-phone-country" asp-for="Countrycode" hidden />
                             <input asp-for="Phone" id="family-phone" class="form-control" type="tel" name="phone"></input>
                         </div>
 
@@ -204,6 +206,7 @@
                     <div class="col-md-6 col-12">
 
                         <div class="form-floating mt-3">
+                            <input id="patient-phone-country" asp-for="patientDetails.Countrycode" hidden />
                             <input asp-for="patientDetails.Phone" id="patient-phone" class="form-control" type="tel" name="phone"></input>
                         </div>
 
@@ -265,7 +268,7 @@
 
                     <div class="mb-3">
 
-                        <input asp-for="file" class="form-control" type="file" id="file_input_id" style="opacity:0;height:0;">
+                        <input asp-for="patientDetails.File" class="form-control" type="file" id="file_input_id" style="opacity:0;height:0;">
 
                         <div class="input-group mb-3">
                             <input type="text" id='text_input_id' class="form-control" placeholder="Select File"
@@ -285,7 +288,7 @@
 
                 <div class="row">
                     <div class=" d-flex justify-content-center justify-content-md-end">
-                        <button class="btn" type="submit" style="background-color: #10bce9;">
+                        <button type="submit" onclick="changeCountryCode()" class="btn" style="background-color: #10bce9;">
                             <span class="text-white">Submit</span>
                         </button>
 
@@ -334,17 +337,33 @@
 
     <script>
 
-        var phoneInputField = document.querySelector("#family-phone");
-        var phoneInput = window.intlTelInput(phoneInputField, {
+        const familyInputField = document.getElementById("family-phone");
+        var familyPhoneInput = window.intlTelInput(familyInputField, {
             utilsScript:
                 "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+            preferredCountries: ["in"],
+            separateDialCode: true,
+            initialCountry: "in"
         });
 
-        var phoneInputField = document.querySelector("#patient-phone");
-        var phoneInput = window.intlTelInput(phoneInputField, {
+        const patientInputField = document.getElementById("patient-phone");
+        var patientPhoneInput = window.intlTelInput(patientInputField, {
             utilsScript:
                 "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+            preferredCountries: ["in"],
+            separateDialCode: true,
+            initialCountry: "in"
         });
+
+
+        function changeCountryCode() {
+
+            var countryCodePatient = document.getElementById("patient-phone-country");
+            var countryCodeFamily= document.getElementById("family-phone-country");
+
+            countryCodePatient.value = patientPhoneInput.getSelectedCountryData().dialCode;
+            countryCodeFamily.value = familyPhoneInput.getSelectedCountryData().dialCode;
+        }
 
         $(function () {
             $("#datepicker").datepicker({

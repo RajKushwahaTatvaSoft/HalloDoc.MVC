@@ -79,7 +79,8 @@
                     <div class="col-lg-4 col-md-6 col-12">
 
                         <div class="form-floating mt-3">
-                            <input asp-for="Phone" id="concierge-phone" class="form-control" type="tel" name="phone"></input>
+                            <input id="con-phone-country" asp-for="Countrycode" hidden />
+                            <input asp-for="Phone" id="con-phone" class="form-control" type="tel"></input>
                         </div>
 
                     </div>
@@ -205,7 +206,8 @@
                     <div class="col-md-6 col-12">
 
                         <div class="form-floating mt-3">
-                            <input asp-for="patientDetails.Phone" id="patient-phone" class="form-control" type="tel" name="phone1"></input>
+                            <input id="patient-phone-country" asp-for="patientDetails.Countrycode" hidden />
+                            <input asp-for="patientDetails.Phone" id="patient-phone" class="form-control" type="tel"></input>
                         </div>
 
                     </div>
@@ -231,7 +233,7 @@
 
                 <div class="row mt-3">
                     <div class=" d-flex justify-content-center justify-content-md-end">
-                        <button class="btn" type="submit" style="background-color: #10bce9;">
+                        <button class="btn" onclick="changeCountryCode()" type="submit" style="background-color: #10bce9;">
                             <span class="text-white">Submit</span>
                         </button>
 
@@ -265,18 +267,33 @@
 
     <script>
 
-        var phoneInputField = document.querySelector("#concierge-phone");
-        var phoneInput = window.intlTelInput(phoneInputField, {
+
+        const conInputField = document.getElementById("con-phone");
+        var conPhoneInput = window.intlTelInput(conInputField, {
             utilsScript:
                 "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+            preferredCountries: ["in"],
+            separateDialCode: true,
+            initialCountry: "in"
         });
 
-
-        var phoneInputField = document.querySelector("#patient-phone");
-        var phoneInput = window.intlTelInput(phoneInputField, {
+        const patientInputField = document.getElementById("patient-phone");
+        var patientPhoneInput = window.intlTelInput(patientInputField, {
             utilsScript:
                 "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+            preferredCountries: ["in"],
+            separateDialCode: true,
+            initialCountry: "in"
         });
+
+        function changeCountryCode() {
+
+            var countryCodePatient = document.getElementById("patient-phone-country");
+            var countryCodeCon= document.getElementById("con-phone-country");
+
+            countryCodePatient.value = patientPhoneInput.getSelectedCountryData().dialCode;
+            countryCodeCon.value = conPhoneInput.getSelectedCountryData().dialCode;
+        }
 
         $(function () {
             $("#datepicker").datepicker({
