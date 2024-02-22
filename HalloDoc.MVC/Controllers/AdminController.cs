@@ -15,9 +15,124 @@ namespace HalloDoc.MVC.Controllers
         {
             _context = context;
         }
-        public ActionResult testPartial()
+
+        public ActionResult PartialTable(int status)
         {
-            return PartialView("NewRequestStatusView");
+            List<AdminRequest> adminRequests = new List<AdminRequest>();
+
+            if (status == (int)DashboardStatus.New)
+            {
+
+                adminRequests = (from r in _context.Requests
+                                 join rc in _context.Requestclients on r.Requestid equals rc.Requestid
+                                 where (r.Status == (short)RequestStatus.Unassigned)
+                                 select new AdminRequest
+                                 {
+                                     PatientName = rc.Firstname + " " + rc.Lastname,
+                                     DateOfBirth = GetPatientDOB(rc),
+                                     RequestType = r.Requesttypeid,
+                                     Requestor = GetRequestType(r) + " " + r.Firstname + " " + r.Lastname,
+                                     RequestDate = r.Createddate.ToString("MMM dd, yyyy"),
+                                     PatientPhone = rc.Phonenumber,
+                                     Phone = r.Phonenumber,
+                                     Address = rc.Address,
+                                     Notes = rc.Notes,
+                                 }).ToList();
+            }
+            else if (status == (int)DashboardStatus.Pending)
+            {
+                adminRequests = (from r in _context.Requests
+                                 join rc in _context.Requestclients on r.Requestid equals rc.Requestid
+                                 where (r.Status == (short)RequestStatus.Accepted)
+                                 select new AdminRequest
+                                 {
+                                     PatientName = rc.Firstname + " " + rc.Lastname,
+                                     DateOfBirth = GetPatientDOB(rc),
+                                     RequestType = r.Requesttypeid,
+                                     Requestor = GetRequestType(r) + " " + r.Firstname + " " + r.Lastname,
+                                     RequestDate = r.Createddate.ToString("MMM dd, yyyy"),
+                                     PatientPhone = rc.Phonenumber,
+                                     Phone = r.Phonenumber,
+                                     Address = rc.Address,
+                                     Notes = rc.Notes,
+                                 }).ToList();
+            }
+            else if (status == (int)DashboardStatus.Active)
+            {
+                adminRequests = (from r in _context.Requests
+                                 join rc in _context.Requestclients on r.Requestid equals rc.Requestid
+                                 where (r.Status == (short)RequestStatus.MDEnRoute) || (r.Status == (short)RequestStatus.MDOnSite)
+                                 select new AdminRequest
+                                 {
+                                     PatientName = rc.Firstname + " " + rc.Lastname,
+                                     DateOfBirth = GetPatientDOB(rc),
+                                     RequestType = r.Requesttypeid,
+                                     Requestor = GetRequestType(r) + " " + r.Firstname + " " + r.Lastname,
+                                     RequestDate = r.Createddate.ToString("MMM dd, yyyy"),
+                                     PatientPhone = rc.Phonenumber,
+                                     Phone = r.Phonenumber,
+                                     Address = rc.Address,
+                                     Notes = rc.Notes,
+                                 }).ToList();
+            }
+            else if (status == (int)DashboardStatus.Conclude)
+            {
+                adminRequests = (from r in _context.Requests
+                                 join rc in _context.Requestclients on r.Requestid equals rc.Requestid
+                                 where (r.Status == (short)RequestStatus.Conclude)
+                                 select new AdminRequest
+                                 {
+                                     PatientName = rc.Firstname + " " + rc.Lastname,
+                                     DateOfBirth = GetPatientDOB(rc),
+                                     RequestType = r.Requesttypeid,
+                                     Requestor = GetRequestType(r) + " " + r.Firstname + " " + r.Lastname,
+                                     RequestDate = r.Createddate.ToString("MMM dd, yyyy"),
+                                     PatientPhone = rc.Phonenumber,
+                                     Phone = r.Phonenumber,
+                                     Address = rc.Address,
+                                     Notes = rc.Notes,
+                                 }).ToList();
+            }
+            else if (status == (int)DashboardStatus.ToClose)
+            {
+                adminRequests = (from r in _context.Requests
+                                 join rc in _context.Requestclients on r.Requestid equals rc.Requestid
+                                 where (r.Status == (short)RequestStatus.Cancelled) || (r.Status == (short)RequestStatus.CancelledByPatient) || (r.Status == (short)RequestStatus.Closed)
+                                 select new AdminRequest
+                                 {
+                                     PatientName = rc.Firstname + " " + rc.Lastname,
+                                     DateOfBirth = GetPatientDOB(rc),
+                                     RequestType = r.Requesttypeid,
+                                     Requestor = GetRequestType(r) + " " + r.Firstname + " " + r.Lastname,
+                                     RequestDate = r.Createddate.ToString("MMM dd, yyyy"),
+                                     PatientPhone = rc.Phonenumber,
+                                     Phone = r.Phonenumber,
+                                     Address = rc.Address,
+                                     Notes = rc.Notes,
+                                 }).ToList();
+            }
+            else if (status == (int)DashboardStatus.Unpaid)
+            {
+                adminRequests = (from r in _context.Requests
+                                 join rc in _context.Requestclients on r.Requestid equals rc.Requestid
+                                 where (r.Status == (short)RequestStatus.Unpaid)
+                                 select new AdminRequest
+                                 {
+                                     PatientName = rc.Firstname + " " + rc.Lastname,
+                                     DateOfBirth = GetPatientDOB(rc),
+                                     RequestType = r.Requesttypeid,
+                                     Requestor = GetRequestType(r) + " " + r.Firstname + " " + r.Lastname,
+                                     RequestDate = r.Createddate.ToString("MMM dd, yyyy"),
+                                     PatientPhone = rc.Phonenumber,
+                                     Phone = r.Phonenumber,
+                                     Address = rc.Address,
+                                     Notes = rc.Notes,
+                                 }).ToList();
+            }
+
+            AdminDashboardViewModel model = new AdminDashboardViewModel();
+            model.adminRequests = adminRequests;
+            return PartialView("PartialTable", model);
         }
 
         public IActionResult Dashboard()
@@ -25,7 +140,8 @@ namespace HalloDoc.MVC.Controllers
             AdminDashboardViewModel model = new AdminDashboardViewModel();
 
             var data = (from r in _context.Requests
-                        join rc in _context.Requestclients on r.Requestid equals rc.Requestid where r.Status == (short) RequestStatus.Unassigned
+                        join rc in _context.Requestclients on r.Requestid equals rc.Requestid
+                        where r.Status == (short)RequestStatus.Unassigned
                         select new AdminRequest
                         {
                             PatientName = rc.Firstname + " " + rc.Lastname,
@@ -40,6 +156,13 @@ namespace HalloDoc.MVC.Controllers
                         }).ToList();
 
             model.adminRequests = data;
+            model.newReqCount = _context.Requests.Count(r => r.Status == (short)RequestStatus.Unassigned);
+            model.pendingReqCount = _context.Requests.Count(r => r.Status == (short)RequestStatus.Accepted);
+            model.activeReqCount = _context.Requests.Count(r => (r.Status == (short)RequestStatus.MDEnRoute) || (r.Status == (short)RequestStatus.MDOnSite));
+            model.concludeReqCount = _context.Requests.Count(r => r.Status == (short)RequestStatus.Conclude);
+            model.toCloseReqCount = _context.Requests.Count(r => (r.Status == (short)RequestStatus.Cancelled) || (r.Status == (short)RequestStatus.CancelledByPatient) || (r.Status == (short)RequestStatus.Closed));
+            model.unpaidReqCount = _context.Requests.Count(r => r.Status == (short)RequestStatus.Unpaid);
+
             return View("Dashboard/Dashboard", model);
 
         }
@@ -47,7 +170,7 @@ namespace HalloDoc.MVC.Controllers
         public static string GetPatientDOB(Requestclient u)
         {
             string udb = u.Intyear + "-" + u.Strmonth + "-" + u.Intdate;
-            if (udb.Equals("--"))
+            if (u.Intyear == null || u.Strmonth == null || u.Intdate == null)
             {
                 return "";
             }
@@ -62,6 +185,7 @@ namespace HalloDoc.MVC.Controllers
 
             return dobString;
         }
+
         public static string GetRequestType(Request request)
         {
             switch (request.Requesttypeid)
@@ -74,6 +198,7 @@ namespace HalloDoc.MVC.Controllers
 
             return null;
         }
+
         public IActionResult NewRequestStatusView()
         {
             return View("StatusPartial/NewRequestStatusView");

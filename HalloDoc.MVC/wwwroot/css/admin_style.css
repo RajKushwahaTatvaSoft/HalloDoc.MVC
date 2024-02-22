@@ -396,6 +396,7 @@ x::-webkit-file-upload-button, input[type=file]:after {
 .filter-options {
     height: 30px;
     border-width: 0px;
+    border: 1px solid transparent;
 }
 
     .filter-options:hover {
@@ -442,4 +443,8 @@ x::-webkit-file-upload-button, input[type=file]:after {
 .admin-dashboard .white-border-btn {
     border: 1px solid white;
     border-radius: 5px;
+}
+
+.admin-dashboard .white-border-btn:hover {
+    background-color:grey
 }

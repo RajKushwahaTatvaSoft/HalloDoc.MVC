@@ -12,9 +12,6 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.CodeAnalysis;
-using Microsoft.AspNetCore.Authorization;
-using System.Security.Policy;
-using System;
 
 namespace HalloDoc.MVC.Controllers
 {
@@ -23,10 +20,25 @@ namespace HalloDoc.MVC.Controllers
         Unassigned = 1,
         Accepted = 2,
         Cancelled = 3,
-        Reserving = 4,
-        MDEnRoute = 5,
-        MDOnSite = 6
+        MDEnRoute = 4,
+        MDOnSite = 5,
+        Conclude = 6,
+        CancelledByPatient = 7,
+        Closed = 8,
+        Unpaid = 9,
+        Clear = 10,
     }
+
+    public enum DashboardStatus
+    {
+        New = 1,
+        Pending = 2,
+        Active = 3,
+        Conclude = 4,
+        ToClose = 5,
+        Unpaid = 6,
+    }
+
     public enum RequestType
     {
         Business = 1,
@@ -685,7 +697,6 @@ namespace HalloDoc.MVC.Controllers
         {
             if (ModelState.IsValid)
             {
-                var obj = _context.Aspnetusers.ToList();
                 var passHash = GenerateSHA256(loginUser.Passwordhash);
                 Aspnetuser user = _context.Aspnetusers.FirstOrDefault(aspnetuser => aspnetuser.Username == loginUser.Username && aspnetuser.Passwordhash == passHash);
 
@@ -865,7 +876,7 @@ namespace HalloDoc.MVC.Controllers
         public void InsertRequestWiseFile(IFormFile document)
         {
             string path = _environment.WebRootPath + "/document";
-            string fileName= document.FileName;
+            string fileName = document.FileName;
 
             if (!Directory.Exists(path))
             {
@@ -940,7 +951,7 @@ namespace HalloDoc.MVC.Controllers
                         // Adding request in Request Table
                         Request request = new()
                         {
-                            Requesttypeid = (int) RequestType.Patient,
+                            Requesttypeid = (int)RequestType.Patient,
                             Userid = user.Userid,
                             Confirmationnumber = GenerateConfirmationNumber(user),
                             Firstname = userViewModel.FirstName,
@@ -1012,7 +1023,7 @@ namespace HalloDoc.MVC.Controllers
                     // Adding request in Request Table
                     Request request = new()
                     {
-                        Requesttypeid = (int) RequestType.Patient,
+                        Requesttypeid = (int)RequestType.Patient,
                         Userid = user.Userid,
                         Confirmationnumber = GenerateConfirmationNumber(user),
                         Firstname = userViewModel.FirstName,
@@ -1168,7 +1179,7 @@ namespace HalloDoc.MVC.Controllers
                     // Adding request in Request Table
                     Request request = new()
                     {
-                        Requesttypeid = (int) RequestType.Family,
+                        Requesttypeid = (int)RequestType.Family,
                         Userid = user.Userid,
                         Confirmationnumber = GenerateConfirmationNumber(user),
                         Firstname = friendViewModel.FirstName,
@@ -1585,7 +1596,7 @@ namespace HalloDoc.MVC.Controllers
                     // Adding request in Request Table
                     Request request = new()
                     {
-                        Requesttypeid = (int)RequestType.Concierge,
+                        Requesttypeid = (int)RequestType.Business,
                         Userid = user.Userid,
                         Confirmationnumber = GenerateConfirmationNumber(user),
                         Firstname = businessViewModel.FirstName,
@@ -1657,7 +1668,7 @@ namespace HalloDoc.MVC.Controllers
                     // Adding request in Request Table
                     Request request = new()
                     {
-                        Requesttypeid = (int)RequestType.Concierge,
+                        Requesttypeid = (int)RequestType.Business,
                         Userid = user.Userid,
                         Confirmationnumber = GenerateConfirmationNumber(user),
                         Firstname = businessViewModel.FirstName,
