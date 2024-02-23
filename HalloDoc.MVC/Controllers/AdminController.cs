@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 namespace HalloDoc.MVC.Controllers
 {
 
-
     public class AdminController : Controller
     {
 
@@ -14,6 +13,51 @@ namespace HalloDoc.MVC.Controllers
         public AdminController(ApplicationDbContext context)
         {
             _context = context;
+        }
+
+        public IActionResult ViewCase(int Requestid)
+        {
+            if (Requestid == null)
+            {
+                return View("Error");
+            }
+
+            Requestclient client = _context.Requestclients.FirstOrDefault(reqFile => reqFile.Requestid == Requestid);
+
+            ViewCaseViewModel VC = new ViewCaseViewModel();
+
+            string dobDate = client.Intyear + "-" + client.Strmonth + "-" + client.Intdate;
+
+            VC.patientName = client.Firstname + " " + client.Lastname;
+            VC.patientFirstName = client.Firstname;
+            VC.patientLastName = client.Lastname;
+            VC.dob = dobDate == "--" ? null : DateTime.Parse(dobDate);
+            VC.patientEmail = client.Email;
+            VC.region = client.Regionid;
+            VC.notes = client.Notes;
+            VC.address = client.Street;
+            return View("Dashboard/ViewCase",VC);
+
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ViewCase(ViewCaseViewModel viewCase)
+        {
+            if (viewCase != null)
+            {
+
+                string phoneNumber = "+" + viewCase.countryCode + '-' + viewCase.patientPhone;
+                
+                Requestclient reqcli = _context.Requestclients.FirstOrDefault( req => req.Requestid == viewCase.requestId);
+                reqcli.Notes = viewCase.notes;
+                _context.Requestclients.Update(reqcli);
+                _context.SaveChanges();
+
+                return ViewCase(viewCase.requestId);
+
+            }
+            return View("Error");
+
         }
 
         public ActionResult PartialTable(int status)
@@ -28,6 +72,7 @@ namespace HalloDoc.MVC.Controllers
                                  where (r.Status == (short)RequestStatus.Unassigned)
                                  select new AdminRequest
                                  {
+                                     RequestId = r.Requestid,
                                      PatientName = rc.Firstname + " " + rc.Lastname,
                                      DateOfBirth = GetPatientDOB(rc),
                                      RequestType = r.Requesttypeid,
@@ -46,6 +91,7 @@ namespace HalloDoc.MVC.Controllers
                                  where (r.Status == (short)RequestStatus.Accepted)
                                  select new AdminRequest
                                  {
+                                     RequestId = r.Requestid,
                                      PatientName = rc.Firstname + " " + rc.Lastname,
                                      DateOfBirth = GetPatientDOB(rc),
                                      RequestType = r.Requesttypeid,
@@ -132,7 +178,8 @@ namespace HalloDoc.MVC.Controllers
 
             AdminDashboardViewModel model = new AdminDashboardViewModel();
             model.adminRequests = adminRequests;
-            return PartialView("PartialTable", model);
+            model.DashboardStatus = status;
+            return PartialView("Partial/PartialTable", model);
         }
 
         public IActionResult Dashboard()
@@ -144,6 +191,7 @@ namespace HalloDoc.MVC.Controllers
                         where r.Status == (short)RequestStatus.Unassigned
                         select new AdminRequest
                         {
+                            RequestId = r.Requestid,
                             PatientName = rc.Firstname + " " + rc.Lastname,
                             DateOfBirth = GetPatientDOB(rc),
                             RequestType = r.Requesttypeid,
@@ -231,9 +279,5 @@ namespace HalloDoc.MVC.Controllers
             return View("Dashboard/Access");
         }
 
-        public IActionResult ViewCase()
-        {
-            return View("Dashboard/ViewCase");
-        }
     }
 }

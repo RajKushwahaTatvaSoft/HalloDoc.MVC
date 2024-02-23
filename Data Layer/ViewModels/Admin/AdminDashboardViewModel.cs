@@ -10,6 +10,7 @@ namespace Data_Layer.ViewModels.Admin
     {
         public List<AdminRequest> adminRequests {  get; set; }
         public string UserName { get; set; }
+        public int DashboardStatus {  get; set; }
         public int newReqCount { get; set; }
         public int pendingReqCount { get; set; }
         public int activeReqCount { get; set; }

@@ -181,23 +181,6 @@ html, body {
 
 
 /* Create Patient Request Screen Css */
-.create-patient-request input:focus {
-    box-shadow: none;
-}
-
-.create-patient-request textarea:focus {
-    box-shadow: none;
-}
-
-.form-floating:focus-within label {
-    color: var(--primary);
-}
-
-.create-patient-request {
-    /* #f9f9f9 */
-    background-color: #f9f9f9;
-}
-
 .iti {
     position: relative;
     height: 100%;
@@ -214,11 +197,6 @@ html, body {
 
 .iti__country-list {
     z-index: 5;
-}
-
-.upload-border {
-    border: 1px solid black;
-    width: 315px;
 }
 
 input[type=file]::-webkit-file-upload-button {
@@ -288,6 +266,10 @@ x::-webkit-file-upload-button, input[type=file]:after {
 }
 
 .admin-dashboard input:focus {
+    box-shadow: none;
+}
+
+.admin-dashboard textarea:focus {
     box-shadow: none;
 }
 
@@ -445,6 +427,6 @@ x::-webkit-file-upload-button, input[type=file]:after {
     border-radius: 5px;
 }
 
-.admin-dashboard .white-border-btn:hover {
-    background-color:grey
+.admin-dashboard .white-border-btn:hover{
+    background-color: #adadad77;
 }

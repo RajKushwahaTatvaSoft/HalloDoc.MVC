@@ -17,7 +17,6 @@ function myFunction() {
 
 // Function to initialize dark mode based on user preference
 function initializeDarkMode() {
-    const prefersDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     const savedDarkMode = localStorage.getItem('darkMode');
 
     if (savedDarkMode !== null) {

@@ -1,0 +1,669 @@
+﻿@model AdminDashboardViewModel
+<div class="table-responsive mt-3">
+    <table class="table">
+
+        @{
+            int dstatus = Model.DashboardStatus;
+        }
+        @if (dstatus == 1 || dstatus == 5)
+        {
+            <colgroup>
+                <col span="1" style="width: 17%;">
+                <col span="1" style="width: 8%;">
+                <col span="1" style="width: 9%;">
+                <col span="1" style="width: 8%;">
+                <col span="1" style="width: 12%;">
+                <col span="1" style="width: 19%;">
+                <col span="1" style="width: 12%;">
+                <col span="1" style="width: 9%;">
+                <col span="1" style="width: 6%;">
+            </colgroup>
+        }
+        else if (dstatus == 2 || dstatus == 3)
+        {
+            <colgroup>
+                <col span="1" style="width: 15%;">
+                <col span="1" style="width: 8%;">
+                <col span="1" style="width: 8%;">
+                <col span="1" style="width: 8%;">
+                <col span="1" style="width: 8%;">
+                <col span="1" style="width: 12%;">
+                <col span="1" style="width: 19%;">
+                <col span="1" style="width: 8%;">
+                <col span="1" style="width: 12%;">
+                <col span="1" style="width: 6%;">
+            </colgroup>
+        }
+        else if (dstatus == 4)
+        {
+            <colgroup>
+                <col span="1" style="width: 17%;">
+                <col span="1" style="width: 8%;">
+                <col span="1" style="width: 9%;">
+                <col span="1" style="width: 8%;">
+                <col span="1" style="width: 12%;">
+                <col span="1" style="width: 12%;">
+                <col span="1" style="width: 9%;">
+                <col span="1" style="width: 6%;">
+            </colgroup>
+        }
+        else if (dstatus == 6)
+        {
+            <colgroup>
+                <col span="1" style="width: 17%;">
+                <col span="1" style="width: 8%;">
+                <col span="1" style="width: 9%;">
+                <col span="1" style="width: 8%;">
+                <col span="1" style="width: 12%;">
+                <col span="1" style="width: 9%;">
+                <col span="1" style="width: 6%;">
+            </colgroup>
+        }
+        @* <colgroup>
+        <col span="1" style="width: 17%;">
+        <col span="1" style="width: 8%;">
+        <col span="1" style="width: 9%;">
+        <col span="1" style="width: 8%;">
+        <col span="1" style="width: 12%;">
+        <col span="1" style="width: 19%;">
+        <col span="1" style="width: 12%;">
+        <col span="1" style="width: 9%;">
+        <col span="1" style="width: 6%;">
+        </colgroup> *@
+
+        <thead class="table-head align-middle">
+            <tr>
+
+                <th>Name</th>
+                @if (dstatus != 6)
+                {
+                    <th>Date Of Birth</th>
+                }
+                @if (dstatus == 1 || dstatus == 2 || dstatus == 3)
+                {
+                    <th>Requestor</th>
+                }
+                @if (dstatus == 5)
+                {
+                    <th>Region</th>
+                }
+                @if (dstatus != 1)
+                {
+                    <th>Physician Name</th>
+                    <th>Date Of Service</th>
+                }
+                @if (dstatus == 1)
+                {
+                    <th>Request Date</th>
+                }
+                @if (dstatus != 5)
+                {
+                    <th>Phone</th>
+                }
+                <th>Address</th>
+                @if (dstatus != 4 && dstatus != 6)
+                {
+                    <th>Notes</th>
+                }
+                <th>Chat With</th>
+                <th style="text-align: center">Actions</th>
+            </tr>
+        </thead>
+
+        <tbody class="align-middle" id="dashboard-table-body">
+            @for (int i = 0; i < Model.adminRequests.Count; i++)
+            {
+                int type = Model.adminRequests[i].RequestType;
+
+                @if (type == 1)
+                {
+                    <tr class="business-request-row">
+                        <td>
+                            <div class="d-flex align-items-center justify-content-between">
+                                <span>@Model.adminRequests[i].PatientName</span>
+                                <div class="white-border-btn p-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 0 24 24"
+                                         width="20px" fill="#FFFFFF">
+                                        <path d="M0 0h24v24H0V0z" fill="none" />
+                                        <path d="M22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6zm-2 0l-8 5-8-5h16zm0 12H4V8l8 5 8-5v10z" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </td>
+                        @if (dstatus != 6)
+                        {
+                            <td>@Model.adminRequests[i].DateOfBirth</td>
+                        }
+                        @if (dstatus == 1 || dstatus == 2 || dstatus == 3)
+                        {
+                            <td>@Model.adminRequests[i].Requestor</td>
+                        }
+                        @if (dstatus == 5)
+                        {
+                            <td>@Model.adminRequests[i].RegionName</td>
+                        }
+                        @if (dstatus != 1)
+                        {
+                            <td>@Model.adminRequests[i].PhysicianName</td>
+                            <td>@Model.adminRequests[i].DateOfService</td>
+                        }
+                        @if (dstatus == 1)
+                        {
+                            <td>@Model.adminRequests[i].RequestDate</td>
+                        }
+                        @if (dstatus != 5)
+                        {
+                            <td>
+                                <div class="white-border-btn px-2 py-1 align-items-center d-flex">
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="15px" viewBox="0 0 24 24" width="15px"
+                                         fill="white">
+                                        <path d="M0 0h24v24H0V0z" fill="none" />
+                                        <path d="M6.54 5c.06.89.21 1.76.45 2.59l-1.2 1.2c-.41-1.2-.67-2.47-.76-3.79h1.51m9.86 12.02c.85.24 1.72.39 2.6.45v1.49c-1.32-.09-2.59-.35-3.8-.75l1.2-1.19M7.5 3H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.49c0-.55-.45-1-1-1-1.24 0-2.45-.2-3.57-.57-.1-.04-.21-.05-.31-.05-.26 0-.51.1-.71.29l-2.2 2.2c-2.83-1.45-5.15-3.76-6.59-6.59l2.2-2.2c.28-.28.36-.67.25-1.02C8.7 6.45 8.5 5.25 8.5 4c0-.55-.45-1-1-1z" />
+                                    </svg>
+                                    <span class="ms-1">@Model.adminRequests[i].PatientPhone</span>
+                                </div>
+                                <div>(Patient)</div>
+                                <div class="white-border-btn px-2 py-1 align-items-center d-flex">
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="15px" viewBox="0 0 24 24" width="15px"
+                                         fill="white">
+                                        <path d="M0 0h24v24H0V0z" fill="none" />
+                                        <path d="M6.54 5c.06.89.21 1.76.45 2.59l-1.2 1.2c-.41-1.2-.67-2.47-.76-3.79h1.51m9.86 12.02c.85.24 1.72.39 2.6.45v1.49c-1.32-.09-2.59-.35-3.8-.75l1.2-1.19M7.5 3H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.49c0-.55-.45-1-1-1-1.24 0-2.45-.2-3.57-.57-.1-.04-.21-.05-.31-.05-.26 0-.51.1-.71.29l-2.2 2.2c-2.83-1.45-5.15-3.76-6.59-6.59l2.2-2.2c.28-.28.36-.67.25-1.02C8.7 6.45 8.5 5.25 8.5 4c0-.55-.45-1-1-1z" />
+                                    </svg>
+                                    <span class="ms-1">@Model.adminRequests[i].Phone</span>
+                                </div>
+                                <div>(Business)</div>
+                            </td>
+                        }
+                        <td>@Model.adminRequests[i].Address</td>
+                        @if (dstatus != 4 && dstatus != 6)
+                        {
+                            <td>@Model.adminRequests[i].Notes</td>
+                        }
+                        <td>
+
+                            <div class="d-flex justify-content-between">
+                                @if (dstatus != 1)
+                                {
+                                    <div class="d-flex flex-grow-1 p-1 white-border-btn justify-content-center align-items-center" style="margin-right:5px">
+                                        <svg xmlns="http://www.w3.org/2000/svg" height="15px" viewBox="0 0 24 24" width="15px"
+                                             fill="white">
+                                            <path d="M0 0h24v24H0V0z" fill="none" />
+                                            <path d="M6.54 5c.06.89.21 1.76.45 2.59l-1.2 1.2c-.41-1.2-.67-2.47-.76-3.79h1.51m9.86 12.02c.85.24 1.72.39 2.6.45v1.49c-1.32-.09-2.59-.35-3.8-.75l1.2-1.19M7.5 3H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.49c0-.55-.45-1-1-1-1.24 0-2.45-.2-3.57-.57-.1-.04-.21-.05-.31-.05-.26 0-.51.1-.71.29l-2.2 2.2c-2.83-1.45-5.15-3.76-6.59-6.59l2.2-2.2c.28-.28.36-.67.25-1.02C8.7 6.45 8.5 5.25 8.5 4c0-.55-.45-1-1-1z" />
+                                        </svg>
+                                        <span class="ms-1">Patient</span>
+                                    </div>
+                                }
+
+                                <div class="d-flex flex-grow-1 p-1 white-border-btn justify-content-center align-items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="15px" viewBox="0 0 24 24" width="15px"
+                                         fill="white">
+                                        <path d="M0 0h24v24H0V0z" fill="none" />
+                                        <path d="M6.54 5c.06.89.21 1.76.45 2.59l-1.2 1.2c-.41-1.2-.67-2.47-.76-3.79h1.51m9.86 12.02c.85.24 1.72.39 2.6.45v1.49c-1.32-.09-2.59-.35-3.8-.75l1.2-1.19M7.5 3H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.49c0-.55-.45-1-1-1-1.24 0-2.45-.2-3.57-.57-.1-.04-.21-.05-.31-.05-.26 0-.51.1-.71.29l-2.2 2.2c-2.83-1.45-5.15-3.76-6.59-6.59l2.2-2.2c.28-.28.36-.67.25-1.02C8.7 6.45 8.5 5.25 8.5 4c0-.55-.45-1-1-1z" />
+                                    </svg>
+                                    <span class="ms-1">Provider</span>
+                                </div>
+                            </div>
+
+                        </td>
+                        <td>
+                            <div class="d-flex justify-content-center" style="margin: 0px 5px 0px 5px">
+                                <div class="dropdown">
+                                    <a class="white-border-btn btn" id="dropdownMenu2" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <span class="text-white">Actions</span>
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="dropdownMenu2">
+                                        @if (dstatus == 1)
+                                        {
+                                            <li><button class="dropdown-item" type="button">Assign Case</button></li>
+                                            <li><button class="dropdown-item" type="button">Cancel Case</button></li>
+                                            <li><a asp-controller="Admin" asp-action="ViewCase" asp-route-Requestid="@Model.adminRequests[i].RequestId" class="dropdown-item">View Case</a></li>
+                                            <li><button class="dropdown-item" type="button">View Notes</button></li>
+                                            <li><button class="dropdown-item" type="button">Block Patient</button></li>
+                                        }
+                                        else
+                                        {
+                                            <li><a asp-controller="Admin" asp-action="ViewCase" asp-route-Requestid="@Model.adminRequests[i].RequestId" class="dropdown-item">View Case</a></li>
+                                            <li><button class="dropdown-item" type="button">View Uploads</button></li>
+                                            <li><button class="dropdown-item" type="button">View Notes</button></li>
+                                        }
+
+                                        @if (dstatus == 2)
+                                        {
+                                            <li><button class="dropdown-item" type="button">Transfer</button></li>
+                                            <li><button class="dropdown-item" type="button">Clear Case</button></li>
+                                            <li><button class="dropdown-item" type="button">Send Agreement</button></li>
+                                        }
+                                        @if (dstatus == 3 || dstatus == 4)
+                                        {
+                                            <li><button class="dropdown-item" type="button">Orders</button></li>
+                                            <li><button class="dropdown-item" type="button">Doctors Note</button></li>
+                                            <li><button class="dropdown-item" type="button">Encounter</button></li>
+                                        }
+                                        @if (dstatus == 5)
+                                        {
+                                            <li><button class="dropdown-item" type="button">Orders</button></li>
+                                            <li><button class="dropdown-item" type="button">Close Case</button></li>
+                                            <li><button class="dropdown-item" type="button">Doctors Note</button></li>
+                                            <li><button class="dropdown-item" type="button">Clear Case</button></li>
+                                            <li><button class="dropdown-item" type="button">Encounter</button></li>
+                                        }
+                                    </ul>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+
+                }
+                else if (type == 2)
+                {
+                    <tr class="patient-request-row">
+                        <td>
+                            <div class="d-flex align-items-center justify-content-between">
+                                <span>@Model.adminRequests[i].PatientName</span>
+                                <div class="white-border-btn p-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 0 24 24"
+                                         width="20px" fill="#FFFFFF">
+                                        <path d="M0 0h24v24H0V0z" fill="none" />
+                                        <path d="M22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6zm-2 0l-8 5-8-5h16zm0 12H4V8l8 5 8-5v10z" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </td>
+                        @if (dstatus != 6)
+                        {
+                            <td>@Model.adminRequests[i].DateOfBirth</td>
+                        }
+                        @if (dstatus == 1 || dstatus == 2 || dstatus == 3)
+                        {
+                            <td>@Model.adminRequests[i].Requestor</td>
+                        }
+                        @if (dstatus == 5)
+                        {
+                            <td>@Model.adminRequests[i].RegionName</td>
+                        }
+                        @if (dstatus != 1)
+                        {
+                            <td>@Model.adminRequests[i].PhysicianName</td>
+                            <td>@Model.adminRequests[i].DateOfService</td>
+                        }
+                        @if (dstatus == 1)
+                        {
+                            <td>@Model.adminRequests[i].RequestDate</td>
+                        }
+                        @if (dstatus != 5)
+                        {
+                            <td>
+                                <div class="white-border-btn px-2 py-1 align-items-center d-flex">
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="15px" viewBox="0 0 24 24" width="15px"
+                                         fill="white">
+                                        <path d="M0 0h24v24H0V0z" fill="none" />
+                                        <path d="M6.54 5c.06.89.21 1.76.45 2.59l-1.2 1.2c-.41-1.2-.67-2.47-.76-3.79h1.51m9.86 12.02c.85.24 1.72.39 2.6.45v1.49c-1.32-.09-2.59-.35-3.8-.75l1.2-1.19M7.5 3H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.49c0-.55-.45-1-1-1-1.24 0-2.45-.2-3.57-.57-.1-.04-.21-.05-.31-.05-.26 0-.51.1-.71.29l-2.2 2.2c-2.83-1.45-5.15-3.76-6.59-6.59l2.2-2.2c.28-.28.36-.67.25-1.02C8.7 6.45 8.5 5.25 8.5 4c0-.55-.45-1-1-1z" />
+                                    </svg>
+                                    <span class="ms-1">@Model.adminRequests[i].PatientPhone</span>
+                                </div>
+                                <div>(Patient)</div>
+                            </td>
+                        }
+                        <td>@Model.adminRequests[i].Address</td>
+                        @if (dstatus != 4 && dstatus != 6)
+                        {
+                            <td>@Model.adminRequests[i].Notes</td>
+                        }
+                        <td>
+
+                            <div class="d-flex justify-content-between">
+                                @if (dstatus != 1)
+                                {
+                                    <div class="d-flex flex-grow-1 p-1 white-border-btn justify-content-center align-items-center" style="margin-right:5px">
+                                        <svg xmlns="http://www.w3.org/2000/svg" height="15px" viewBox="0 0 24 24" width="15px"
+                                             fill="white">
+                                            <path d="M0 0h24v24H0V0z" fill="none" />
+                                            <path d="M6.54 5c.06.89.21 1.76.45 2.59l-1.2 1.2c-.41-1.2-.67-2.47-.76-3.79h1.51m9.86 12.02c.85.24 1.72.39 2.6.45v1.49c-1.32-.09-2.59-.35-3.8-.75l1.2-1.19M7.5 3H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.49c0-.55-.45-1-1-1-1.24 0-2.45-.2-3.57-.57-.1-.04-.21-.05-.31-.05-.26 0-.51.1-.71.29l-2.2 2.2c-2.83-1.45-5.15-3.76-6.59-6.59l2.2-2.2c.28-.28.36-.67.25-1.02C8.7 6.45 8.5 5.25 8.5 4c0-.55-.45-1-1-1z" />
+                                        </svg>
+                                        <span class="ms-1">Patient</span>
+                                    </div>
+                                }
+
+                                <div class="d-flex flex-grow-1 p-1 white-border-btn justify-content-center align-items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="15px" viewBox="0 0 24 24" width="15px"
+                                         fill="white">
+                                        <path d="M0 0h24v24H0V0z" fill="none" />
+                                        <path d="M6.54 5c.06.89.21 1.76.45 2.59l-1.2 1.2c-.41-1.2-.67-2.47-.76-3.79h1.51m9.86 12.02c.85.24 1.72.39 2.6.45v1.49c-1.32-.09-2.59-.35-3.8-.75l1.2-1.19M7.5 3H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.49c0-.55-.45-1-1-1-1.24 0-2.45-.2-3.57-.57-.1-.04-.21-.05-.31-.05-.26 0-.51.1-.71.29l-2.2 2.2c-2.83-1.45-5.15-3.76-6.59-6.59l2.2-2.2c.28-.28.36-.67.25-1.02C8.7 6.45 8.5 5.25 8.5 4c0-.55-.45-1-1-1z" />
+                                    </svg>
+                                    <span class="ms-1">Provider</span>
+                                </div>
+                            </div>
+
+                        </td>
+                        <td>
+                            <div class="d-flex justify-content-center" style="margin: 0px 5px 0px 5px">
+                                <div class="dropdown">
+                                    <a class="white-border-btn btn" id="dropdownMenu2" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <span class="text-white">Actions</span>
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="dropdownMenu2">
+                                        @if (dstatus == 1)
+                                        {
+                                            <li><button class="dropdown-item" type="button">Assign Case</button></li>
+                                            <li><button class="dropdown-item" type="button">Cancel Case</button></li>
+                                            <li><a asp-controller="Admin" asp-action="ViewCase" asp-route-Requestid="@Model.adminRequests[i].RequestId" class="dropdown-item">View Case</a></li>
+                                            <li><button class="dropdown-item" type="button">View Notes</button></li>
+                                            <li><button class="dropdown-item" type="button">Block Patient</button></li>
+                                        }
+                                        else
+                                        {
+                                            <li><a asp-controller="Admin" asp-action="ViewCase" asp-route-Requestid="@Model.adminRequests[i].RequestId" class="dropdown-item">View Case</a></li>
+                                            <li><button class="dropdown-item" type="button">View Uploads</button></li>
+                                            <li><button class="dropdown-item" type="button">View Notes</button></li>
+                                        }
+
+                                        @if (dstatus == 2)
+                                        {
+                                            <li><button class="dropdown-item" type="button">Transfer</button></li>
+                                            <li><button class="dropdown-item" type="button">Clear Case</button></li>
+                                            <li><button class="dropdown-item" type="button">Send Agreement</button></li>
+                                        }
+                                        @if (dstatus == 3 || dstatus == 4)
+                                        {
+                                            <li><button class="dropdown-item" type="button">Orders</button></li>
+                                            <li><button class="dropdown-item" type="button">Doctors Note</button></li>
+                                            <li><button class="dropdown-item" type="button">Encounter</button></li>
+                                        }
+                                        @if (dstatus == 5)
+                                        {
+                                            <li><button class="dropdown-item" type="button">Orders</button></li>
+                                            <li><button class="dropdown-item" type="button">Close Case</button></li>
+                                            <li><button class="dropdown-item" type="button">Doctors Note</button></li>
+                                            <li><button class="dropdown-item" type="button">Clear Case</button></li>
+                                            <li><button class="dropdown-item" type="button">Encounter</button></li>
+                                        }
+                                    </ul>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                else if (type == 3)
+                {
+                    <tr class="family-friend-request-row">
+                        <td>
+                            <div class="d-flex align-items-center justify-content-between">
+                                <span>@Model.adminRequests[i].PatientName</span>
+                                <div class="white-border-btn p-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 0 24 24"
+                                         width="20px" fill="#FFFFFF">
+                                        <path d="M0 0h24v24H0V0z" fill="none" />
+                                        <path d="M22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6zm-2 0l-8 5-8-5h16zm0 12H4V8l8 5 8-5v10z" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </td>
+                        @if (dstatus != 6)
+                        {
+                            <td>@Model.adminRequests[i].DateOfBirth</td>
+                        }
+                        @if (dstatus == 1 || dstatus == 2 || dstatus == 3)
+                        {
+                            <td>@Model.adminRequests[i].Requestor</td>
+                        }
+                        @if (dstatus == 5)
+                        {
+                            <td>@Model.adminRequests[i].RegionName</td>
+                        }
+                        @if (dstatus != 1)
+                        {
+                            <td>@Model.adminRequests[i].PhysicianName</td>
+                            <td>@Model.adminRequests[i].DateOfService</td>
+                        }
+                        @if (dstatus == 1)
+                        {
+                            <td>@Model.adminRequests[i].RequestDate</td>
+                        }
+                        @if (dstatus != 5)
+                        {
+                            <td>
+                                <div class="white-border-btn px-2 py-1 align-items-center d-flex">
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="15px" viewBox="0 0 24 24" width="15px"
+                                         fill="white">
+                                        <path d="M0 0h24v24H0V0z" fill="none" />
+                                        <path d="M6.54 5c.06.89.21 1.76.45 2.59l-1.2 1.2c-.41-1.2-.67-2.47-.76-3.79h1.51m9.86 12.02c.85.24 1.72.39 2.6.45v1.49c-1.32-.09-2.59-.35-3.8-.75l1.2-1.19M7.5 3H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.49c0-.55-.45-1-1-1-1.24 0-2.45-.2-3.57-.57-.1-.04-.21-.05-.31-.05-.26 0-.51.1-.71.29l-2.2 2.2c-2.83-1.45-5.15-3.76-6.59-6.59l2.2-2.2c.28-.28.36-.67.25-1.02C8.7 6.45 8.5 5.25 8.5 4c0-.55-.45-1-1-1z" />
+                                    </svg>
+                                    <span class="ms-1">@Model.adminRequests[i].PatientPhone</span>
+                                </div>
+                                <div>(Patient)</div>
+                                <div class="white-border-btn px-2 py-1 align-items-center d-flex">
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="15px" viewBox="0 0 24 24" width="15px"
+                                         fill="white">
+                                        <path d="M0 0h24v24H0V0z" fill="none" />
+                                        <path d="M6.54 5c.06.89.21 1.76.45 2.59l-1.2 1.2c-.41-1.2-.67-2.47-.76-3.79h1.51m9.86 12.02c.85.24 1.72.39 2.6.45v1.49c-1.32-.09-2.59-.35-3.8-.75l1.2-1.19M7.5 3H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.49c0-.55-.45-1-1-1-1.24 0-2.45-.2-3.57-.57-.1-.04-.21-.05-.31-.05-.26 0-.51.1-.71.29l-2.2 2.2c-2.83-1.45-5.15-3.76-6.59-6.59l2.2-2.2c.28-.28.36-.67.25-1.02C8.7 6.45 8.5 5.25 8.5 4c0-.55-.45-1-1-1z" />
+                                    </svg>
+                                    <span class="ms-1">@Model.adminRequests[i].Phone</span>
+                                </div>
+                                <div>(Family/Friend)</div>
+                            </td>
+                        }
+                        <td>@Model.adminRequests[i].Address</td>
+                        @if (dstatus != 4 && dstatus != 6)
+                        {
+                            <td>@Model.adminRequests[i].Notes</td>
+                        }
+                        <td>
+
+                            <div class="d-flex justify-content-between">
+                                @if (dstatus != 1)
+                                {
+                                    <div class="d-flex flex-grow-1 p-1 white-border-btn justify-content-center align-items-center" style="margin-right:5px">
+                                        <svg xmlns="http://www.w3.org/2000/svg" height="15px" viewBox="0 0 24 24" width="15px"
+                                             fill="white">
+                                            <path d="M0 0h24v24H0V0z" fill="none" />
+                                            <path d="M6.54 5c.06.89.21 1.76.45 2.59l-1.2 1.2c-.41-1.2-.67-2.47-.76-3.79h1.51m9.86 12.02c.85.24 1.72.39 2.6.45v1.49c-1.32-.09-2.59-.35-3.8-.75l1.2-1.19M7.5 3H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.49c0-.55-.45-1-1-1-1.24 0-2.45-.2-3.57-.57-.1-.04-.21-.05-.31-.05-.26 0-.51.1-.71.29l-2.2 2.2c-2.83-1.45-5.15-3.76-6.59-6.59l2.2-2.2c.28-.28.36-.67.25-1.02C8.7 6.45 8.5 5.25 8.5 4c0-.55-.45-1-1-1z" />
+                                        </svg>
+                                        <span class="ms-1">Patient</span>
+                                    </div>
+                                }
+
+                                <div class="d-flex flex-grow-1 p-1 white-border-btn justify-content-center align-items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="15px" viewBox="0 0 24 24" width="15px"
+                                         fill="white">
+                                        <path d="M0 0h24v24H0V0z" fill="none" />
+                                        <path d="M6.54 5c.06.89.21 1.76.45 2.59l-1.2 1.2c-.41-1.2-.67-2.47-.76-3.79h1.51m9.86 12.02c.85.24 1.72.39 2.6.45v1.49c-1.32-.09-2.59-.35-3.8-.75l1.2-1.19M7.5 3H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.49c0-.55-.45-1-1-1-1.24 0-2.45-.2-3.57-.57-.1-.04-.21-.05-.31-.05-.26 0-.51.1-.71.29l-2.2 2.2c-2.83-1.45-5.15-3.76-6.59-6.59l2.2-2.2c.28-.28.36-.67.25-1.02C8.7 6.45 8.5 5.25 8.5 4c0-.55-.45-1-1-1z" />
+                                    </svg>
+                                    <span class="ms-1">Provider</span>
+                                </div>
+                            </div>
+
+                        </td>
+                        <td>
+                            <div class="d-flex justify-content-center" style="margin: 0px 5px 0px 5px">
+                                <div class="dropdown">
+                                    <a class="white-border-btn btn" id="dropdownMenu2" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <span class="text-white">Actions</span>
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="dropdownMenu2">
+                                        @if (dstatus == 1)
+                                        {
+                                            <li><button class="dropdown-item" type="button">Assign Case</button></li>
+                                            <li><button class="dropdown-item" type="button">Cancel Case</button></li>
+                                            <li><a asp-controller="Admin" asp-action="ViewCase" asp-route-Requestid="@Model.adminRequests[i].RequestId" class="dropdown-item">View Case</a></li>
+                                            <li><button class="dropdown-item" type="button">View Notes</button></li>
+                                            <li><button class="dropdown-item" type="button">Block Patient</button></li>
+                                        }
+                                        else
+                                        {
+                                            <li><a asp-controller="Admin" asp-action="ViewCase" asp-route-Requestid="@Model.adminRequests[i].RequestId" class="dropdown-item">View Case</a></li>
+                                            <li><button class="dropdown-item" type="button">View Uploads</button></li>
+                                            <li><button class="dropdown-item" type="button">View Notes</button></li>
+                                        }
+
+                                        @if (dstatus == 2)
+                                        {
+                                            <li><button class="dropdown-item" type="button">Transfer</button></li>
+                                            <li><button class="dropdown-item" type="button">Clear Case</button></li>
+                                            <li><button class="dropdown-item" type="button">Send Agreement</button></li>
+                                        }
+                                        @if (dstatus == 3 || dstatus == 4)
+                                        {
+                                            <li><button class="dropdown-item" type="button">Orders</button></li>
+                                            <li><button class="dropdown-item" type="button">Doctors Note</button></li>
+                                            <li><button class="dropdown-item" type="button">Encounter</button></li>
+                                        }
+                                        @if (dstatus == 5)
+                                        {
+                                            <li><button class="dropdown-item" type="button">Orders</button></li>
+                                            <li><button class="dropdown-item" type="button">Close Case</button></li>
+                                            <li><button class="dropdown-item" type="button">Doctors Note</button></li>
+                                            <li><button class="dropdown-item" type="button">Clear Case</button></li>
+                                            <li><button class="dropdown-item" type="button">Encounter</button></li>
+                                        }
+                                    </ul>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+
+                }
+                else if (type == 4)
+                {
+                    <tr class="concierge-request-row">
+                        <td>
+                            <div class="d-flex align-items-center justify-content-between">
+                                <span>@Model.adminRequests[i].PatientName</span>
+                                <div class="white-border-btn p-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 0 24 24"
+                                         width="20px" fill="#FFFFFF">
+                                        <path d="M0 0h24v24H0V0z" fill="none" />
+                                        <path d="M22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6zm-2 0l-8 5-8-5h16zm0 12H4V8l8 5 8-5v10z" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </td>
+                        @if (dstatus != 6)
+                        {
+                            <td>@Model.adminRequests[i].DateOfBirth</td>
+                        }
+                        @if (dstatus == 1 || dstatus == 2 || dstatus == 3)
+                        {
+                            <td>@Model.adminRequests[i].Requestor</td>
+                        }
+                        @if (dstatus == 5)
+                        {
+                            <td>@Model.adminRequests[i].RegionName</td>
+                        }
+                        @if (dstatus != 1)
+                        {
+                            <td>@Model.adminRequests[i].PhysicianName</td>
+                            <td>@Model.adminRequests[i].DateOfService</td>
+                        }
+                        @if (dstatus == 1)
+                        {
+                            <td>@Model.adminRequests[i].RequestDate</td>
+                        }
+                        @if (dstatus != 5)
+                        {
+                            <td>
+                                <div class="white-border-btn px-2 py-1 align-items-center d-flex">
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="15px" viewBox="0 0 24 24" width="15px"
+                                         fill="white">
+                                        <path d="M0 0h24v24H0V0z" fill="none" />
+                                        <path d="M6.54 5c.06.89.21 1.76.45 2.59l-1.2 1.2c-.41-1.2-.67-2.47-.76-3.79h1.51m9.86 12.02c.85.24 1.72.39 2.6.45v1.49c-1.32-.09-2.59-.35-3.8-.75l1.2-1.19M7.5 3H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.49c0-.55-.45-1-1-1-1.24 0-2.45-.2-3.57-.57-.1-.04-.21-.05-.31-.05-.26 0-.51.1-.71.29l-2.2 2.2c-2.83-1.45-5.15-3.76-6.59-6.59l2.2-2.2c.28-.28.36-.67.25-1.02C8.7 6.45 8.5 5.25 8.5 4c0-.55-.45-1-1-1z" />
+                                    </svg>
+                                    <span class="ms-1">@Model.adminRequests[i].PatientPhone</span>
+                                </div>
+                                <div>(Patient)</div>
+                                <div class="white-border-btn px-2 py-1 align-items-center d-flex">
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="15px" viewBox="0 0 24 24" width="15px"
+                                         fill="white">
+                                        <path d="M0 0h24v24H0V0z" fill="none" />
+                                        <path d="M6.54 5c.06.89.21 1.76.45 2.59l-1.2 1.2c-.41-1.2-.67-2.47-.76-3.79h1.51m9.86 12.02c.85.24 1.72.39 2.6.45v1.49c-1.32-.09-2.59-.35-3.8-.75l1.2-1.19M7.5 3H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.49c0-.55-.45-1-1-1-1.24 0-2.45-.2-3.57-.57-.1-.04-.21-.05-.31-.05-.26 0-.51.1-.71.29l-2.2 2.2c-2.83-1.45-5.15-3.76-6.59-6.59l2.2-2.2c.28-.28.36-.67.25-1.02C8.7 6.45 8.5 5.25 8.5 4c0-.55-.45-1-1-1z" />
+                                    </svg>
+                                    <span class="ms-1">@Model.adminRequests[i].Phone</span>
+                                </div>
+                                <div>(Concierge)</div>
+                            </td>
+                        }
+                        <td>@Model.adminRequests[i].Address</td>
+                        @if (dstatus != 4 && dstatus != 6)
+                        {
+                            <td>@Model.adminRequests[i].Notes</td>
+                        }
+                        <td>
+
+                            <div class="d-flex justify-content-between">
+                                @if (dstatus != 1)
+                                {
+                                    <div class="d-flex flex-grow-1 p-1 white-border-btn justify-content-center align-items-center" style="margin-right:5px">
+                                        <svg xmlns="http://www.w3.org/2000/svg" height="15px" viewBox="0 0 24 24" width="15px"
+                                             fill="white">
+                                            <path d="M0 0h24v24H0V0z" fill="none" />
+                                            <path d="M6.54 5c.06.89.21 1.76.45 2.59l-1.2 1.2c-.41-1.2-.67-2.47-.76-3.79h1.51m9.86 12.02c.85.24 1.72.39 2.6.45v1.49c-1.32-.09-2.59-.35-3.8-.75l1.2-1.19M7.5 3H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.49c0-.55-.45-1-1-1-1.24 0-2.45-.2-3.57-.57-.1-.04-.21-.05-.31-.05-.26 0-.51.1-.71.29l-2.2 2.2c-2.83-1.45-5.15-3.76-6.59-6.59l2.2-2.2c.28-.28.36-.67.25-1.02C8.7 6.45 8.5 5.25 8.5 4c0-.55-.45-1-1-1z" />
+                                        </svg>
+                                        <span class="ms-1">Patient</span>
+                                    </div>
+                                }
+
+                                <div class="d-flex flex-grow-1 p-1 white-border-btn justify-content-center align-items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="15px" viewBox="0 0 24 24" width="15px"
+                                         fill="white">
+                                        <path d="M0 0h24v24H0V0z" fill="none" />
+                                        <path d="M6.54 5c.06.89.21 1.76.45 2.59l-1.2 1.2c-.41-1.2-.67-2.47-.76-3.79h1.51m9.86 12.02c.85.24 1.72.39 2.6.45v1.49c-1.32-.09-2.59-.35-3.8-.75l1.2-1.19M7.5 3H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.49c0-.55-.45-1-1-1-1.24 0-2.45-.2-3.57-.57-.1-.04-.21-.05-.31-.05-.26 0-.51.1-.71.29l-2.2 2.2c-2.83-1.45-5.15-3.76-6.59-6.59l2.2-2.2c.28-.28.36-.67.25-1.02C8.7 6.45 8.5 5.25 8.5 4c0-.55-.45-1-1-1z" />
+                                    </svg>
+                                    <span class="ms-1">Provider</span>
+                                </div>
+                            </div>
+
+                        </td>
+                        <td>
+                            <div class="d-flex justify-content-center" style="margin: 0px 5px 0px 5px">
+                                <div class="dropdown">
+                                    <a class="white-border-btn btn" id="dropdownMenu2" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <span class="text-white">Actions</span>
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="dropdownMenu2">
+                                        @if (dstatus == 1)
+                                        {
+                                            <li><button class="dropdown-item" type="button">Assign Case</button></li>
+                                            <li><button class="dropdown-item" type="button">Cancel Case</button></li>
+                                            <li><a asp-controller="Admin" asp-action="ViewCase" asp-route-Requestid="@Model.adminRequests[i].RequestId" class="dropdown-item">View Case</a></li>
+                                            <li><button class="dropdown-item" type="button">View Notes</button></li>
+                                            <li><button class="dropdown-item" type="button">Block Patient</button></li>
+                                        }
+                                        else
+                                        {
+                                            <li><a asp-controller="Admin" asp-action="ViewCase" asp-route-Requestid="@Model.adminRequests[i].RequestId" class="dropdown-item">View Case</a></li>
+                                            <li><button class="dropdown-item" type="button">View Uploads</button></li>
+                                            <li><button class="dropdown-item" type="button">View Notes</button></li>
+                                        }
+
+                                        @if (dstatus == 2)
+                                        {
+                                            <li><button class="dropdown-item" type="button">Transfer</button></li>
+                                            <li><button class="dropdown-item" type="button">Clear Case</button></li>
+                                            <li><button class="dropdown-item" type="button">Send Agreement</button></li>
+                                        }
+                                        @if (dstatus == 3 || dstatus == 4)
+                                        {
+                                            <li><button class="dropdown-item" type="button">Orders</button></li>
+                                            <li><button class="dropdown-item" type="button">Doctors Note</button></li>
+                                            <li><button class="dropdown-item" type="button">Encounter</button></li>
+                                        }
+                                        @if (dstatus == 5)
+                                        {
+                                            <li><button class="dropdown-item" type="button">Orders</button></li>
+                                            <li><button class="dropdown-item" type="button">Close Case</button></li>
+                                            <li><button class="dropdown-item" type="button">Doctors Note</button></li>
+                                            <li><button class="dropdown-item" type="button">Clear Case</button></li>
+                                            <li><button class="dropdown-item" type="button">Encounter</button></li>
+                                        }
+                                    </ul>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                }
+
+            }
+        </tbody>
+
+    </table>
+</div>
+

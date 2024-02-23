@@ -168,10 +168,12 @@
     </div>
 
     <div class="d-flex align-items-center justify-content-between mt-3">
-
+        @{
+            int dashboardStatus = Model.DashboardStatus;
+        }
         <div class="d-flex align-items-center">
             <h5>Patients</h5>
-            <span class="ms-1 fw-bold" style="color: #404a66; font-size: 12px;">(New)</span>
+            <span class="ms-1 fw-bold" id="status-text" style="color: #404a66; font-size: 12px;">(New)</span>
         </div>
 
         <div class="d-flex align-items-center">
@@ -374,26 +376,33 @@
 
         $('.status-tab').not(this).children("svg").attr('display', 'none');
         $('.status-tab').not(this).removeClass("active");
-
+        
         var id = $(this).attr('id');
         var dashboardStatus = 0;
         if (id == 'status-new-tab') {
             dashboardStatus = 1;
+            $('#status-text').text('(New)');
+
         }
         else if (id == 'status-pending-tab') {
             dashboardStatus = 2;
+            $('#status-text').text('(Pending)');
         }
         else if (id == 'status-active-tab') {
             dashboardStatus = 3;
+            $('#status-text').text('(Active)');
         }
         else if (id == 'status-conclude-tab') {
             dashboardStatus = 4;
+            $('#status-text').text('(Conclude)');
         }
         else if (id == 'status-to-close-tab') {
             dashboardStatus = 5;
+            $('#status-text').text('(To Close)');
         }
         else if (id == 'status-unpaid-tab') {
             dashboardStatus = 6;
+            $('#status-text').text('(Unpaid)');
         }
 
         $.ajax({
