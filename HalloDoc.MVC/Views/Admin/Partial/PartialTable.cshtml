@@ -214,17 +214,17 @@
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenu2">
                                         @if (dstatus == 1)
                                         {
-                                            <li><button class="dropdown-item" type="button">Assign Case</button></li>
-                                            <li><button class="dropdown-item" type="button">Cancel Case</button></li>
+                                            <li><button data-bs-toggle="modal" data-bs-target="#assignModal" class="dropdown-item" type="button">Assign Case</button></li>
+                                            <li><button data-bs-toggle="modal" data-bs-target="#cancelModal" class="dropdown-item" type="button">Cancel Case</button></li>
                                             <li><a asp-controller="Admin" asp-action="ViewCase" asp-route-Requestid="@Model.adminRequests[i].RequestId" class="dropdown-item">View Case</a></li>
-                                            <li><button class="dropdown-item" type="button">View Notes</button></li>
-                                            <li><button class="dropdown-item" type="button">Block Patient</button></li>
+                                            <li><a asp-controller="Admin" asp-action="ViewNotes" asp-route-Requestid="@Model.adminRequests[i].RequestId" class="dropdown-item" type="button">View Notes</a></li>
+                                            <li><button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#blockModal">Block Patient</button></li>
                                         }
                                         else
                                         {
                                             <li><a asp-controller="Admin" asp-action="ViewCase" asp-route-Requestid="@Model.adminRequests[i].RequestId" class="dropdown-item">View Case</a></li>
                                             <li><button class="dropdown-item" type="button">View Uploads</button></li>
-                                            <li><button class="dropdown-item" type="button">View Notes</button></li>
+                                            <li><a asp-controller="Admin" asp-action="ViewNotes" asp-route-Requestid="@Model.adminRequests[i].RequestId" class="dropdown-item" type="button">View Notes</a></li>
                                         }
 
                                         @if (dstatus == 2)
@@ -344,17 +344,17 @@
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenu2">
                                         @if (dstatus == 1)
                                         {
-                                            <li><button class="dropdown-item" type="button">Assign Case</button></li>
-                                            <li><button class="dropdown-item" type="button">Cancel Case</button></li>
+                                            <li><button data-bs-toggle="modal" data-bs-target="#assignModal" class="dropdown-item" type="button">Assign Case</button></li>
+                                            <li><button data-bs-toggle="modal" data-bs-target="#cancelModal" class="dropdown-item" type="button">Cancel Case</button></li>
                                             <li><a asp-controller="Admin" asp-action="ViewCase" asp-route-Requestid="@Model.adminRequests[i].RequestId" class="dropdown-item">View Case</a></li>
-                                            <li><button class="dropdown-item" type="button">View Notes</button></li>
-                                            <li><button class="dropdown-item" type="button">Block Patient</button></li>
+                                            <li><a asp-controller="Admin" asp-action="ViewNotes" asp-route-Requestid="@Model.adminRequests[i].RequestId" class="dropdown-item" type="button">View Notes</a></li>
+                                            <li><button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#blockModal">Block Patient</button></li>
                                         }
                                         else
                                         {
                                             <li><a asp-controller="Admin" asp-action="ViewCase" asp-route-Requestid="@Model.adminRequests[i].RequestId" class="dropdown-item">View Case</a></li>
                                             <li><button class="dropdown-item" type="button">View Uploads</button></li>
-                                            <li><button class="dropdown-item" type="button">View Notes</button></li>
+                                            <li><a asp-controller="Admin" asp-action="ViewNotes" asp-route-Requestid="@Model.adminRequests[i].RequestId" class="dropdown-item" type="button">View Notes</a></li>
                                         }
 
                                         @if (dstatus == 2)
@@ -482,17 +482,17 @@
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenu2">
                                         @if (dstatus == 1)
                                         {
-                                            <li><button class="dropdown-item" type="button">Assign Case</button></li>
-                                            <li><button class="dropdown-item" type="button">Cancel Case</button></li>
+                                            <li><button data-bs-toggle="modal" data-bs-target="#assignModal" class="dropdown-item" type="button">Assign Case</button></li>
+                                            <li><button data-bs-toggle="modal" data-bs-target="#cancelModal" class="dropdown-item" type="button">Cancel Case</button></li>
                                             <li><a asp-controller="Admin" asp-action="ViewCase" asp-route-Requestid="@Model.adminRequests[i].RequestId" class="dropdown-item">View Case</a></li>
-                                            <li><button class="dropdown-item" type="button">View Notes</button></li>
-                                            <li><button class="dropdown-item" type="button">Block Patient</button></li>
+                                            <li><a asp-controller="Admin" asp-action="ViewNotes" asp-route-Requestid="@Model.adminRequests[i].RequestId" class="dropdown-item" type="button">View Notes</a></li>
+                                            <li><button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#blockModal">Block Patient</button></li>
                                         }
                                         else
                                         {
                                             <li><a asp-controller="Admin" asp-action="ViewCase" asp-route-Requestid="@Model.adminRequests[i].RequestId" class="dropdown-item">View Case</a></li>
                                             <li><button class="dropdown-item" type="button">View Uploads</button></li>
-                                            <li><button class="dropdown-item" type="button">View Notes</button></li>
+                                            <li><a asp-controller="Admin" asp-action="ViewNotes" asp-route-Requestid="@Model.adminRequests[i].RequestId" class="dropdown-item" type="button">View Notes</a></li>
                                         }
 
                                         @if (dstatus == 2)
@@ -621,17 +621,17 @@
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenu2">
                                         @if (dstatus == 1)
                                         {
-                                            <li><button class="dropdown-item" type="button">Assign Case</button></li>
-                                            <li><button class="dropdown-item" type="button">Cancel Case</button></li>
+                                            <li><button data-bs-toggle="modal" data-bs-target="#assignModal" class="dropdown-item" type="button">Assign Case</button></li>
+                                            <li><button data-bs-toggle="modal" data-bs-target="#cancelModal" class="dropdown-item" type="button">Cancel Case</button></li>
                                             <li><a asp-controller="Admin" asp-action="ViewCase" asp-route-Requestid="@Model.adminRequests[i].RequestId" class="dropdown-item">View Case</a></li>
-                                            <li><button class="dropdown-item" type="button">View Notes</button></li>
-                                            <li><button class="dropdown-item" type="button">Block Patient</button></li>
+                                            <li><a asp-controller="Admin" asp-action="ViewNotes" asp-route-Requestid="@Model.adminRequests[i].RequestId" class="dropdown-item" type="button">View Notes</a></li>
+                                            <li><button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#blockModal">Block Patient</button></li>
                                         }
                                         else
                                         {
                                             <li><a asp-controller="Admin" asp-action="ViewCase" asp-route-Requestid="@Model.adminRequests[i].RequestId" class="dropdown-item">View Case</a></li>
                                             <li><button class="dropdown-item" type="button">View Uploads</button></li>
-                                            <li><button class="dropdown-item" type="button">View Notes</button></li>
+                                            <li><a asp-controller="Admin" asp-action="ViewNotes" asp-route-Requestid="@Model.adminRequests[i].RequestId" class="dropdown-item" type="button">View Notes</a></li>
                                         }
 
                                         @if (dstatus == 2)

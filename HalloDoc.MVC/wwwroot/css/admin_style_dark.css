@@ -52,3 +52,8 @@
     .dark-mode .dashboard-card {
         background-color: #454545;
     }
+
+    .dark-mode .status-tab:not(.active) div:first-child {
+        background-color: #777777;
+        color: white;
+    }

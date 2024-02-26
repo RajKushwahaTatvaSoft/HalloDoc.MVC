@@ -15,51 +15,6 @@ namespace HalloDoc.MVC.Controllers
             _context = context;
         }
 
-        public IActionResult ViewCase(int Requestid)
-        {
-            if (Requestid == null)
-            {
-                return View("Error");
-            }
-
-            Requestclient client = _context.Requestclients.FirstOrDefault(reqFile => reqFile.Requestid == Requestid);
-
-            ViewCaseViewModel VC = new ViewCaseViewModel();
-
-            string dobDate = client.Intyear + "-" + client.Strmonth + "-" + client.Intdate;
-
-            VC.patientName = client.Firstname + " " + client.Lastname;
-            VC.patientFirstName = client.Firstname;
-            VC.patientLastName = client.Lastname;
-            VC.dob = dobDate == "--" ? null : DateTime.Parse(dobDate);
-            VC.patientEmail = client.Email;
-            VC.region = client.Regionid;
-            VC.notes = client.Notes;
-            VC.address = client.Street;
-            return View("Dashboard/ViewCase",VC);
-
-        }
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult ViewCase(ViewCaseViewModel viewCase)
-        {
-            if (viewCase != null)
-            {
-
-                string phoneNumber = "+" + viewCase.countryCode + '-' + viewCase.patientPhone;
-                
-                Requestclient reqcli = _context.Requestclients.FirstOrDefault( req => req.Requestid == viewCase.requestId);
-                reqcli.Notes = viewCase.notes;
-                _context.Requestclients.Update(reqcli);
-                _context.SaveChanges();
-
-                return ViewCase(viewCase.requestId);
-
-            }
-            return View("Error");
-
-        }
-
         public ActionResult PartialTable(int status)
         {
             List<AdminRequest> adminRequests = new List<AdminRequest>();
@@ -186,24 +141,6 @@ namespace HalloDoc.MVC.Controllers
         {
             AdminDashboardViewModel model = new AdminDashboardViewModel();
 
-            var data = (from r in _context.Requests
-                        join rc in _context.Requestclients on r.Requestid equals rc.Requestid
-                        where r.Status == (short)RequestStatus.Unassigned
-                        select new AdminRequest
-                        {
-                            RequestId = r.Requestid,
-                            PatientName = rc.Firstname + " " + rc.Lastname,
-                            DateOfBirth = GetPatientDOB(rc),
-                            RequestType = r.Requesttypeid,
-                            Requestor = GetRequestType(r) + " " + r.Firstname + " " + r.Lastname,
-                            RequestDate = r.Createddate.ToString("MMM dd, yyyy"),
-                            PatientPhone = rc.Phonenumber,
-                            Phone = r.Phonenumber,
-                            Address = rc.Address,
-                            Notes = rc.Notes,
-                        }).ToList();
-
-            model.adminRequests = data;
             model.newReqCount = _context.Requests.Count(r => r.Status == (short)RequestStatus.Unassigned);
             model.pendingReqCount = _context.Requests.Count(r => r.Status == (short)RequestStatus.Accepted);
             model.activeReqCount = _context.Requests.Count(r => (r.Status == (short)RequestStatus.MDEnRoute) || (r.Status == (short)RequestStatus.MDOnSite));
@@ -277,6 +214,57 @@ namespace HalloDoc.MVC.Controllers
         public IActionResult Access()
         {
             return View("Dashboard/Access");
+        }
+
+
+        public IActionResult ViewCase(int Requestid)
+        {
+            if (Requestid == null)
+            {
+                return View("Error");
+            }
+
+            Requestclient client = _context.Requestclients.FirstOrDefault(reqFile => reqFile.Requestid == Requestid);
+
+            ViewCaseViewModel VC = new ViewCaseViewModel();
+
+            string dobDate = client.Intyear + "-" + client.Strmonth + "-" + client.Intdate;
+
+            VC.patientName = client.Firstname + " " + client.Lastname;
+            VC.patientFirstName = client.Firstname;
+            VC.patientLastName = client.Lastname;
+            VC.dob = dobDate == "--" ? null : DateTime.Parse(dobDate);
+            VC.patientEmail = client.Email;
+            VC.region = client.Regionid;
+            VC.notes = client.Notes;
+            VC.address = client.Street;
+            return View("Action/ViewCase", VC);
+
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ViewCase(ViewCaseViewModel viewCase)
+        {
+            if (viewCase != null)
+            {
+
+                string phoneNumber = "+" + viewCase.countryCode + '-' + viewCase.patientPhone;
+
+                Requestclient reqcli = _context.Requestclients.FirstOrDefault(req => req.Requestid == viewCase.requestId);
+                reqcli.Notes = viewCase.notes;
+                _context.Requestclients.Update(reqcli);
+                _context.SaveChanges();
+
+                return ViewCase(viewCase.requestId);
+
+            }
+            return View("Error");
+
+        }
+
+        public IActionResult ViewNotes()
+        {
+            return View("Action/ViewNotes");
         }
 
     }

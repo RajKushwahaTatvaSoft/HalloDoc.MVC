@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Data_Layer.DataContext;
 using Business_Layer.Repository;
-using Business_Layer.Repository.Interface;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Business_Layer.Interface;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +15,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 options.UseNpgsql(builder.Configuration.GetConnectionString("ApplicationDbContext")));
 
 builder.Services.AddScoped<IRequestRepository, RequestRepository>();
+builder.Services.AddScoped<IPatientDashboardRepository, PatientDashboardRepository>();
+builder.Services.AddScoped<IPatientAuthRepository, PatientAuthRepository>();
 
 builder.Services.AddSession(options =>
 {

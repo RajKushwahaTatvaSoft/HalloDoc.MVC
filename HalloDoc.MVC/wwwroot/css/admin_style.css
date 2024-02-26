@@ -277,9 +277,12 @@ x::-webkit-file-upload-button, input[type=file]:after {
     box-shadow: none;
 }
 
-
 .status-tab div {
     border-radius: 8px;
+    cursor: default;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
 .status-new {
@@ -427,6 +430,6 @@ x::-webkit-file-upload-button, input[type=file]:after {
     border-radius: 5px;
 }
 
-.admin-dashboard .white-border-btn:hover{
-    background-color: #adadad77;
-}
+    .admin-dashboard .white-border-btn:hover {
+        background-color: #adadad77;
+    }
