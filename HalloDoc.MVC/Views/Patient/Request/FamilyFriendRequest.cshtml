@@ -103,6 +103,7 @@
                             <input asp-for="FirstName" class="form-control" placeholder="Leave a comment here"
                                 id="floatingTextarea2"></input>
                             <label for="floatingTextarea2">Your First Name</label>
+                            <span asp-validation-for="FirstName" class="text-danger"></span>
                         </div>
                     </div>
 
@@ -120,6 +121,8 @@
 
                             <input id="family-phone-country" asp-for="Countrycode" hidden />
                             <input asp-for="Phone" id="family-phone" class="form-control" type="tel" name="phone"></input>
+                            <span asp-validation-for="Phone" class="text-danger"></span>
+
                         </div>
 
                     </div>
@@ -129,6 +132,8 @@
                             <input asp-for="Email" class="form-control" placeholder="Leave a comment here"
                                 id="floatingTextarea2"></input>
                             <label for="floatingTextarea2">Your Email</label>
+                            <span asp-validation-for="Email" class="text-danger"></span>
+
                         </div>
                     </div>
 
@@ -137,6 +142,8 @@
                             <input asp-for="Relation" class="form-control" placeholder="Leave a comment here"
                                 id="floatingTextarea2"></input>
                             <label for="floatingTextarea2">Relation With Patient</label>
+                            <span asp-validation-for="Relation" class="text-danger"></span>
+
                         </div>
                     </div>
 
@@ -164,6 +171,8 @@
                             <input asp-for="patientDetails.FirstName" class="form-control" placeholder="Leave a comment here"
                                 id="floatingTextarea2"></input>
                             <label for="floatingTextarea2">First Name</label>
+                            <span asp-validation-for="patientDetails.FirstName" class="text-danger"></span>
+
                         </div>
                     </div>
 

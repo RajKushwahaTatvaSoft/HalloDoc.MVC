@@ -3,6 +3,64 @@
     Layout = "_AdminDashboardLayout";
 }
 
+@* Assign Case *@
+
+<div class="modal fade" id="assignModal1" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <div class="modal-dark modal-title text-white" id="exampleModalLongTitle">
+                    Assign Request
+                </div>
+                <button type="button" class="btn" aria-label="Close" data-bs-dismiss="modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
+                         fill="#FFFFFF">
+                        <path d="M0 0h24v24H0V0z" fill="none" />
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
+                    </svg>
+                </button>
+            </div>
+            <form>
+                <div class="modal-body">
+                    <span class="modal-head">To assign this request, search and select another Physician</span>
+                    <div class="modal-flex my-3">
+
+                        <div class="form-floating mt-3">
+                            <select class="form-select" id="floatingSelectGrid">
+                                <option value="Mobile" selected>Maryland</option>
+                                <option value="Telephone">Tom Halland</option>
+                            </select>
+                            <label for="floatingSelectGrid">Narrow Search By Region</label>
+                        </div>
+
+
+                        <div class="form-floating mt-3">
+                            <select class="form-select" id="floatingSelectGrid">
+                                <option value="Mobile">Maryland</option>
+                                <option value="Telephone">Tom Halland</option>
+                            </select>
+                            <label for="floatingSelectGrid">Select Physician</label>
+                        </div>
+
+                        <div class="form-floating mt-3">
+                            <textarea style="height: 100px;" type="text" class="form-control" id="notes"></textarea>
+                            <label for="notes">Description</label>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a type="button" class="btn btn-info text-white" data-bs-dismiss="modal"
+                       onclick="redirect()">Submit</a>
+                    <button type="button" class="btn cancel-btn" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
 <div class="container-fluid d-flex justify-content-center row ">
 
     <div class="col-8">
@@ -116,18 +174,6 @@
 
                     </div>
 
-
-                    <div class="col-md-6 col-12 mt-3">
-
-                        <button id="editBtn" type="button" onclick="editDetails()" class="btn btn-outline-info h-100" style="color: #10bce9; padding: 0px 30px 0px 30px;">
-                            Edit
-                        </button>
-
-                        <button id="saveBtn" onclick="changeCountryCode()" type="submit" class="btn h-100" style="background-color: #10bce9; color: white; display:none; padding: 0px 30px 0px 30px">
-                            Save
-                        </button>
-
-                    </div>
                 </div>
 
         </form>
@@ -153,10 +199,18 @@
 
             <div class="col-1 mt-3">
 
-                <button type="button" class="btn btn-outline-info w-100 h-100" style="color: #10bce9;">
-                    <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" fill="#10bce9" width="24"><path d="M480-480q33 0 56.5-23.5T560-560q0-33-23.5-56.5T480-640q-33 0-56.5 23.5T400-560q0 33 23.5 56.5T480-480Zm0 294q122-112 181-203.5T720-552q0-109-69.5-178.5T480-800q-101 0-170.5 69.5T240-552q0 71 59 162.5T480-186Zm0 106Q319-217 239.5-334.5T160-552q0-150 96.5-239T480-880q127 0 223.5 89T800-552q0 100-79.5 217.5T480-80Zm0-480Z" /></svg>
+               @* @{
+                    string googleMapsLink = "";
+                }
 
-                </button>
+                @if(Model.street != null && Model.state != null && Model.city != null && Model.zip !=  null)
+                {
+                googleMapsLink = $"https://www.google.com/maps/search/?api=1&query={Uri.EscapeDataString(Model?.street).ToString()},{Uri.EscapeDataString(Model?.city).ToString()},{Uri.EscapeDataString(Model?.state).ToString()},{Uri.EscapeDataString(Model?.zip).ToString()}";
+                }  *@
+
+                <a class="btn btn-outline-info w-100 h-100 align-items-center d-flex justify-content-center" style="color: #10bce9;">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" fill="#10bce9" width="24"><path d="M480-480q33 0 56.5-23.5T560-560q0-33-23.5-56.5T480-640q-33 0-56.5 23.5T400-560q0 33 23.5 56.5T480-480Zm0 294q122-112 181-203.5T720-552q0-109-69.5-178.5T480-800q-101 0-170.5 69.5T240-552q0 71 59 162.5T480-186Zm0 106Q319-217 239.5-334.5T160-552q0-150 96.5-239T480-880q127 0 223.5 89T800-552q0 100-79.5 217.5T480-80Zm0-480Z" /></svg>
+                </a>
 
             </div>
 
@@ -176,11 +230,15 @@
 
         <div class="d-flex justify-content-end mt-3">
 
-            <a asp-controller="Admin" asp-action="ViewNotes" class="btn py-2 px-4" style="background-color: #10bce9; color: white;">
+            <button type="button" data-bs-toggle="modal" data-bs-target="#assignModal1" class="btn py-2 px-4" style="background-color: #10bce9; color: white;">
+                Assign
+            </button>
+
+            <a asp-controller="Admin" asp-action="ViewNotes" class="btn py-2 px-4 ms-3" style="background-color: #10bce9; color: white;">
                 View Notes
             </a>
 
-            <button id="cancelBtn" onclick="" type="submit" class="btn py-2 px-4 ms-3 bg-danger" style="background-color: #10bce9; color: white;">
+            <button id="cancelBtn" onclick="" type="reset" class="btn py-2 px-4 ms-3 bg-danger" style="background-color: #10bce9; color: white;">
                 Cancel
             </button>
 

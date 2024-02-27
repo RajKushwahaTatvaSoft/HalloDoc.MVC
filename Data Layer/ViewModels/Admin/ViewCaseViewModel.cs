@@ -12,21 +12,16 @@ namespace Data_Layer.ViewModels.Admin
         public string? patientNotes { get; set; }
 
         public string? patientName { get; set; }
-
         public string? patientFirstName { get; set; }
-
         public string? patientLastName { get; set; }
-
         public string? patientEmail { get; set; }
         public string? mobileType { get; set; }
-
         public string? patientPhone { get; set; }
         public int? countryCode { get; set; }
         public DateTime? dob { get; set; }
         public int? region { get; set; }
         public string? rooms { get; set; }
         public string? address { get; set; }
-
         public string? zip { get; set; }
         public string? confirmation { get; set; }
 
