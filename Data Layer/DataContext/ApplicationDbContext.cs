@@ -44,6 +44,8 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<Orderdetail> Orderdetails { get; set; }
 
+    public virtual DbSet<Passtoken> Passtokens { get; set; }
+
     public virtual DbSet<Physician> Physicians { get; set; }
 
     public virtual DbSet<Physicianlocation> Physicianlocations { get; set; }
@@ -179,6 +181,11 @@ public partial class ApplicationDbContext : DbContext
         modelBuilder.Entity<Orderdetail>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("orderdetails_pkey");
+        });
+
+        modelBuilder.Entity<Passtoken>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("passtoken_pkey");
         });
 
         modelBuilder.Entity<Physician>(entity =>

@@ -1,47 +1,95 @@
 ﻿using Business_Layer.Interface;
 using Business_Layer.Interface.Admin;
+using Business_Layer.Repository.Admin;
 using Data_Layer.DataContext;
 using Data_Layer.DataModels;
 using Data_Layer.ViewModels.Admin;
 using Microsoft.AspNetCore.Mvc;
+using Org.BouncyCastle.Utilities;
 
 namespace HalloDoc.MVC.Controllers
 {
+    public enum TypeFilter
+    {
+        All = 0,
+        Patient = 1,
+        FamilyFriend = 2,
+        Concierge = 3,
+        Business = 4,
+        VIP = 5,
+    }
 
     public class AdminController : Controller
     {
 
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ApplicationDbContext _context;
         private readonly IDashboardRepository _dashboardRepository;
 
-        public AdminController(IUnitOfWork unitOfWork, IDashboardRepository dashboard)
+        public AdminController(IUnitOfWork unitOfWork, IDashboardRepository dashboard, ApplicationDbContext context)
         {
             _unitOfWork = unitOfWork;
             _dashboardRepository = dashboard;
+            _context = context;
         }
 
-        public ActionResult PartialTable(int status)
+        [HttpPost]
+        public ActionResult PartialTable(int status, int page, int typeFilter, string searchFilter)
         {
-            List<AdminRequest> adminRequests = _dashboardRepository.GetAdminRequest(status);
+            int pageNumber = 1;
+            if (page > 0)
+            {
+                pageNumber = page;
+            }
+
+            DashboardFilter filter = new DashboardFilter()
+            {
+                RequestTypeFilter = typeFilter,
+                PatientSearchText = searchFilter,
+                RegionFilter = 0,
+            };
+
+            List<AdminRequest> adminRequests = _dashboardRepository.GetAdminRequest(status, pageNumber, filter);
 
             AdminDashboardViewModel model = new AdminDashboardViewModel();
             model.adminRequests = adminRequests;
             model.DashboardStatus = status;
+            model.CurrentPage = pageNumber;
+            model.filterOptions = filter;
 
             return PartialView("Partial/PartialTable", model);
         }
 
+        [HttpPost]
+        public ActionResult LoadNextPage(int status, int page, int typeFilter, string searchFilter)
+        {
+            page = page + 1;
+            return PartialTable(status, page, typeFilter, searchFilter);
+        }
+
+        [HttpPost]
+        public ActionResult LoadPreviousPage(int status, int page, int typeFilter, string searchFilter)
+        {
+            page = page - 1;
+            return PartialTable(status, page, typeFilter, searchFilter);
+        }
+
+
         public IActionResult Dashboard()
         {
+
             AdminDashboardViewModel model = new AdminDashboardViewModel();
-
-            model.newReqCount = _unitOfWork.RequestRepository.GetAll().Count(r => r.Status == (short)RequestStatus.Unassigned);
-            model.pendingReqCount = _unitOfWork.RequestRepository.GetAll().Count(r => r.Status == (short)RequestStatus.Accepted);
-            model.activeReqCount = _unitOfWork.RequestRepository.GetAll().Count(r => (r.Status == (short)RequestStatus.MDEnRoute) || (r.Status == (short)RequestStatus.MDOnSite));
-            model.concludeReqCount = _unitOfWork.RequestRepository.GetAll().Count(r => r.Status == (short)RequestStatus.Conclude);
-            model.toCloseReqCount = _unitOfWork.RequestRepository.GetAll().Count(r => (r.Status == (short)RequestStatus.Cancelled) || (r.Status == (short)RequestStatus.CancelledByPatient) || (r.Status == (short)RequestStatus.Closed));
-            model.unpaidReqCount = _unitOfWork.RequestRepository.GetAll().Count(r => r.Status == (short)RequestStatus.Unpaid);
-
+            model.casetags = _unitOfWork.CaseTagRepository.GetAll();
+            model.physicians = _context.Physicians;
+            model.regions = _context.Regions;
+            model.NewReqCount = _unitOfWork.RequestRepository.Count(r => r.Status == (short)RequestStatus.Unassigned);
+            model.PendingReqCount = _unitOfWork.RequestRepository.Count(r => r.Status == (short)RequestStatus.Accepted);
+            model.ActiveReqCount = _unitOfWork.RequestRepository.Count(r => (r.Status == (short)RequestStatus.MDEnRoute) || (r.Status == (short)RequestStatus.MDOnSite));
+            model.ConcludeReqCount = _unitOfWork.RequestRepository.Count(r => r.Status == (short)RequestStatus.Conclude);
+            model.ToCloseReqCount = _unitOfWork.RequestRepository.Count(r => (r.Status == (short)RequestStatus.Cancelled) || (r.Status == (short)RequestStatus.CancelledByPatient) || (r.Status == (short)RequestStatus.Closed));
+            model.UnpaidReqCount = _unitOfWork.RequestRepository.Count(r => r.Status == (short)RequestStatus.Unpaid);
+            model.regions = _context.Regions;
+            model.physicians = _context.Physicians;
             return View("Dashboard/Dashboard", model);
 
         }
@@ -110,6 +158,147 @@ namespace HalloDoc.MVC.Controllers
             return View("Dashboard/Access");
         }
 
+        [HttpPost]
+        public bool CancelCaseModal(int reason, string notes, int requestid)
+        {
+            int adminId = 1;
+            try
+            {
+
+                Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestid);
+                req.Status = (short)RequestStatus.Cancelled;
+                req.Modifieddate = DateTime.Now;
+
+                _unitOfWork.RequestRepository.Update(req);
+                _unitOfWork.Save();
+
+                Requeststatuslog reqStatusLog = new Requeststatuslog()
+                {
+                    Requestid = requestid,
+                    Status = (short)RequestStatus.Cancelled,
+                    Adminid = adminId,
+                    Notes = notes,
+                    Physicianid = req.Physicianid,
+                    Createddate = DateTime.Now,
+                };
+
+                _unitOfWork.RequestStatusLogRepository.Add(reqStatusLog);
+                _unitOfWork.Save();
+
+                TempData["success"] = "Request Successfully Cancelled";
+                return true;
+            }
+            catch (Exception ex)
+            {
+                TempData["error"] = "Error Occured while cancelling request.";
+                return false;
+            }
+
+            return false;
+
+        }
+
+        [HttpPost]
+        public bool AssignCaseModal(string notes, int requestid, int physicianid)
+        {
+            int adminId = 1;
+            if(requestid == null || requestid <= 0 || physicianid == null ||  physicianid <= 0)
+            {
+                TempData["error"] = "Error occured while assigning request.";
+                return false;
+            }
+            try
+            {
+
+                Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestid);
+                req.Status = (short)RequestStatus.Accepted;
+                req.Modifieddate = DateTime.Now;
+                req.Physicianid = physicianid;
+
+                _unitOfWork.RequestRepository.Update(req);
+                _unitOfWork.Save();
+
+                Requeststatuslog reqStatusLog = new Requeststatuslog()
+                {
+                    Requestid = requestid,
+                    Status = (short)RequestStatus.Accepted,
+                    Adminid = adminId,
+                    Notes = notes,
+                    Physicianid = req.Physicianid,
+                    Createddate = DateTime.Now,
+                };
+
+                _unitOfWork.RequestStatusLogRepository.Add(reqStatusLog);
+                _unitOfWork.Save();
+
+
+                TempData["success"] = "Request Successfully Assigned.";
+                return true;
+            }
+            catch (Exception ex)
+            {
+                TempData["error"] = "Error Occured while assigning request.";
+                return false;
+            }
+
+            return false;
+
+        }
+
+        [HttpPost]
+        public bool BlockPatient(string reason, int requestid)
+        {
+            int adminId = 1;
+            try
+            {
+
+                Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestid);
+                req.Status = (short)RequestStatus.Block;
+                req.Modifieddate = DateTime.Now;
+
+                _unitOfWork.RequestRepository.Update(req);
+                _unitOfWork.Save();
+
+
+                Requeststatuslog reqStatusLog = new Requeststatuslog()
+                {
+                    Requestid = requestid,
+                    Status = (short)RequestStatus.Cancelled,
+                    Adminid = adminId,
+                    Notes = reason,
+                    Physicianid = req.Physicianid,
+                    Createddate = DateTime.Now,
+                };
+
+                _unitOfWork.RequestStatusLogRepository.Add(reqStatusLog);
+                _unitOfWork.Save();
+
+                Requestclient reqCli = _unitOfWork.RequestClientRepository.GetFirstOrDefault(reqcli => reqcli.Requestid == requestid);
+
+                Blockrequest blockrequest = new Blockrequest()
+                {
+                    Phonenumber = reqCli.Phonenumber,
+                    Email = reqCli.Email,
+                    Reason = reason,
+                    Requestid = reqCli.Requestid.ToString(),
+                    Createddate = DateTime.Now,
+                };
+
+                _context.Blockrequests.Add(blockrequest);
+                _context.SaveChanges();
+
+                TempData["success"] = "Request Successfully Blocked";
+                return true;
+            }
+            catch (Exception ex)
+            {
+                TempData["error"] = "Error Occured while blocking request.";
+                return false;
+            }
+
+            return false;
+
+        }
 
         public IActionResult ViewCase(int Requestid)
         {
@@ -120,20 +309,19 @@ namespace HalloDoc.MVC.Controllers
 
             Requestclient client = _unitOfWork.RequestClientRepository.GetFirstOrDefault(reqFile => reqFile.Requestid == Requestid);
 
-            ViewCaseViewModel VC = new ViewCaseViewModel();
+            ViewCaseViewModel model = new();
 
             string dobDate = client.Intyear + "-" + client.Strmonth + "-" + client.Intdate;
 
-            VC.patientName = client.Firstname + " " + client.Lastname;
-            VC.patientFirstName = client.Firstname;
-            VC.patientLastName = client.Lastname;
-            VC.dob = dobDate == "--" ? null : DateTime.Parse(dobDate);
-            VC.patientEmail = client.Email;
-            VC.region = client.Regionid;
-            VC.notes = client.Notes;
-            VC.address = client.Street;
-            return View("Action/ViewCase", VC);
-
+            model.patientName = client.Firstname + " " + client.Lastname;
+            model.patientFirstName = client.Firstname;
+            model.patientLastName = client.Lastname;
+            model.dob = dobDate == "--" ? null : DateTime.Parse(dobDate);
+            model.patientEmail = client.Email;
+            model.region = client.Regionid;
+            model.notes = client.Notes;
+            model.address = client.Street;
+            return View("Action/ViewCase", model);
         }
         [HttpPost]
         [ValidateAntiForgeryToken]

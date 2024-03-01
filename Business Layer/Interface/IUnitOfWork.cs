@@ -17,6 +17,9 @@ namespace Business_Layer.Interface
         IRequestConciergeRepo RequestConciergeRepository { get; }
         IBusinessRepo BusinessRepo { get; }
         IRequestBusinessRepo RequestBusinessRepo { get; }
+        ICaseTagRepository CaseTagRepository { get; }
+        IRequestStatusLogRepo RequestStatusLogRepository { get; }
+        IPassTokenRepository PassTokenRepository { get; }
         void Save();
     }
 }

@@ -9,6 +9,6 @@ namespace Business_Layer.Interface.Admin
 {
     public interface IDashboardRepository
     {
-        public List<AdminRequest> GetAdminRequest(int status);
+        public List<AdminRequest> GetAdminRequest(int status, int page, DashboardFilter filters);
     }
 }

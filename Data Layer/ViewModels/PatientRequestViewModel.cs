@@ -11,6 +11,7 @@ namespace Data_Layer.ViewModels
         public string? LastName { get; set; }
         public DateTime? DOB { get; set; }
         [Required(ErrorMessage = "Email cannot be empty")]
+        [RegularExpression("^([\\w\\.\\-]+)@([\\w\\-]+)((\\.(\\w){2,3})+)$", ErrorMessage = "Enter Valid Email")]
         public string? Email { get; set; }
         public string? Countrycode { get; set; }
         [Required(ErrorMessage = "Phone cannot be empty")]
@@ -25,6 +26,7 @@ namespace Data_Layer.ViewModels
         public string? ZipCode { get; set; }
         public string? RoomSuite { get; set; }
         [Required(ErrorMessage = "Password cannot be empty")]
+        [RegularExpression("(?=^.{8,}$)((?=.*\\d)|(?=.*\\W+))(?![.\\n])(?=.*[A-Z])(?=.*[a-z]).*$", ErrorMessage = "Password must contain 1 capital, 1 small, 1 Special symbol and at least 8 characters")]
         public string? Password { get; set; }
         [Compare("Password", ErrorMessage = "Password and Confirm Password should be same.")]
         public string? ConfirmPassword { get; set; }

@@ -14,6 +14,7 @@ using System.Security.Claims;
 using Microsoft.CodeAnalysis;
 using Business_Layer.Interface;
 using Business_Layer.Helpers;
+using NuGet.Common;
 
 namespace HalloDoc.MVC.Controllers
 {
@@ -29,6 +30,7 @@ namespace HalloDoc.MVC.Controllers
         Closed = 8,
         Unpaid = 9,
         Clear = 10,
+        Block = 11,
     }
 
     public enum DashboardStatus
@@ -254,7 +256,6 @@ namespace HalloDoc.MVC.Controllers
 
                 if (isNewUser)
                 {
-
 
                     Guid generatedId = Guid.NewGuid();
 
@@ -729,40 +730,87 @@ namespace HalloDoc.MVC.Controllers
             return View("Authentication/ResetPassword", fpvm);
         }
 
+        //public void JwtTokenCode(string email)
+        //{
+        //    var tokenHandler = new JwtSecurityTokenHandler();
+        //    var key = Encoding.ASCII.GetBytes(_config["Jwt:Key"]);
+        //    var tokenDescriptor = new SecurityTokenDescriptor
+        //    {
+        //        Subject = new ClaimsIdentity(new[] { new Claim("email", email) }),
+        //        Expires = DateTime.UtcNow.AddHours(24),
+        //        Issuer = _config["Jwt:Issuer"],
+        //        SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+        //    };
+        //    var token = tokenHandler.CreateToken(tokenDescriptor);
+        //    var jwtToken = tokenHandler.WriteToken(token);
+
+
+        //    var tokenHandler = new JwtSecurityTokenHandler();
+        //    var key = Encoding.ASCII.GetBytes(_config["Jwt:Key"]);
+
+        //    tokenHandler.ValidateToken(token, new TokenValidationParameters
+        //    {
+        //        ValidateIssuerSigningKey = true,
+        //        IssuerSigningKey = new SymmetricSecurityKey(key),
+        //        ValidateLifetime = true,
+        //        ValidateIssuer = true,
+        //        ValidateAudience = false,
+        //        ValidIssuer = _config["Jwt:Issuer"],
+        //        ClockSkew = TimeSpan.Zero
+        //    }, out SecurityToken validatedToken);
+
+        //    var jwtToken = (JwtSecurityToken)validatedToken;
+        //    var email = jwtToken.Claims.First(x => x.Type == "email").Value;
+        //}
+
         // email token isdeleted createddate aspnetuserid expirydate
         [HttpGet]
         public IActionResult ResetPassword(string token)
         {
             try
             {
-                var tokenHandler = new JwtSecurityTokenHandler();
-                var key = Encoding.ASCII.GetBytes(_config["Jwt:Key"]);
 
-                tokenHandler.ValidateToken(token, new TokenValidationParameters
+                if (ValidateResetPassToken(token))
                 {
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ValidateLifetime = true,
-                    ValidateIssuer = true,
-                    ValidateAudience = false,
-                    ValidIssuer = _config["Jwt:Issuer"],
-                    ClockSkew = TimeSpan.Zero
-                }, out SecurityToken validatedToken);
+                    ForgotPasswordViewModel fpvm = new ForgotPasswordViewModel();
+                    Passtoken pass = _unitOfWork.PassTokenRepository.GetFirstOrDefault(pass => pass.Uniquetoken == token);
 
-                var jwtToken = (JwtSecurityToken)validatedToken;
-                var email = jwtToken.Claims.First(x => x.Type == "email").Value;
+                    fpvm.Email = pass.Email;
 
-                ForgotPasswordViewModel fpvm = new()
+                    return ResetPasswordGet(fpvm);
+                }
+                else
                 {
-                    Email = email,
-                };
+                    return View("Index");
+                }
 
-                return ResetPasswordGet(fpvm);
             }
             catch (Exception ex)
             {
                 return Content(ex.Message);
             }
+        }
+
+        private bool ValidateResetPassToken(string token)
+        {
+            if(token == null)
+            {
+                return false;
+            }
+
+            Passtoken passtoken = _unitOfWork.PassTokenRepository.GetFirstOrDefault(pass => pass.Uniquetoken == token);
+            if(passtoken == null || !passtoken.Isresettoken || passtoken.Isdeleted)
+            {
+                return false;
+            }
+
+            TimeSpan diff = DateTime.Now - passtoken.Createddate;
+            if(diff.Hours > 24)
+            {
+                return false;
+            }
+
+            return true;
         }
 
         [HttpPost]
@@ -780,7 +828,7 @@ namespace HalloDoc.MVC.Controllers
                 string passHash = GenerateSHA256(fpvm.Password);
                 user.Passwordhash = passHash;
                 user.Modifieddate = DateTime.Now;
-                
+
                 _unitOfWork.AspNetUserRepository.Update(user);
                 _unitOfWork.Save();
 
@@ -802,19 +850,23 @@ namespace HalloDoc.MVC.Controllers
         {
             try
             {
-                var tokenHandler = new JwtSecurityTokenHandler();
-                var key = Encoding.ASCII.GetBytes(_config["Jwt:Key"]);
-                var tokenDescriptor = new SecurityTokenDescriptor
-                {
-                    Subject = new ClaimsIdentity(new[] { new Claim("email", email) }),
-                    Expires = DateTime.UtcNow.AddHours(24),
-                    Issuer = _config["Jwt:Issuer"],
-                    SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-                };
-                var token = tokenHandler.CreateToken(tokenDescriptor);
-                var jwtToken = tokenHandler.WriteToken(token);
+                Aspnetuser aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(user => user.Email == email);
 
-                var resetLink = Url.Action(emailAction, emailController, new { token = jwtToken }, Request.Scheme);
+                string resetPassToken = Guid.NewGuid().ToString();
+
+                Passtoken passtoken = new Passtoken()
+                {
+                    Aspnetuserid = aspUser.Id,
+                    Createddate = DateTime.Now,
+                    Email = email,
+                    Isdeleted = false,
+                    Isresettoken = true,
+                    Uniquetoken = resetPassToken,
+                };
+
+                _unitOfWork.PassTokenRepository.Add(passtoken);
+
+                var resetLink = Url.Action(emailAction, emailController, new { token = resetPassToken }, Request.Scheme);
 
                 string senderEmail = _config.GetSection("OutlookSMTP")["Sender"];
                 string senderPassword = _config.GetSection("OutlookSMTP")["Password"];
@@ -882,7 +934,7 @@ namespace HalloDoc.MVC.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult PatientRequest(PatientRequestViewModel userViewModel)
         {
-            if (false)
+            if (ModelState.IsValid)
             {
                 string requestIpAddress = GetRequestIP();
                 string phoneNumber = "+" + userViewModel.Countrycode + '-' + userViewModel.Phone;
@@ -1144,7 +1196,7 @@ namespace HalloDoc.MVC.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult FamilyFriendRequest(FamilyFriendRequestViewModel friendViewModel)
         {
-            if (false)
+            if (true)
             {
 
                 User user = null;

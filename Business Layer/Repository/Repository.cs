@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -31,11 +32,28 @@ namespace Business_Layer.Repository
             return query;
         }
 
-        public T GetFirstOrDefault(System.Linq.Expressions.Expression<Func<T, bool>> filter)
+        public IEnumerable<T> Where(Expression<Func<T, bool>> filter)
         {
             IQueryable<T> query = dbSet;
-            query.Where(filter);
-            return query.FirstOrDefault();
+            return query.Where(filter);
+        }
+
+        public int Count()
+        {
+            IQueryable<T> query = dbSet;
+            return query.Count();
+        }
+
+        public int Count(Expression<Func<T, bool>> filter)
+        {
+            IQueryable<T> query = dbSet;
+            return query.Count(filter);
+        }
+
+        public T GetFirstOrDefault(Expression<Func<T, bool>> filter)
+        {
+            IQueryable<T> query = dbSet;
+            return query.FirstOrDefault(filter);
         }
 
         public void Remove(T entity)

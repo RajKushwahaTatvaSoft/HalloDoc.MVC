@@ -2,6 +2,8 @@
 {
     public class DashboardFilter
     {
-        public string patientSearchText {  get; set; }
+        public string PatientSearchText {  get; set; }
+        public int RegionFilter {  get; set; }
+        public int RequestTypeFilter { get; set; }
     }
 }
