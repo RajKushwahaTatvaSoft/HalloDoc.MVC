@@ -9,6 +9,7 @@ namespace Data_Layer.ViewModels.Admin
     public class AdminRequest
     {
         public int? RequestId { get; set; }
+        public string Email { get; set; }
         public string PatientName { get; set; }
         public int RequestType { get; set; }
         public string DateOfBirth { get; set; }

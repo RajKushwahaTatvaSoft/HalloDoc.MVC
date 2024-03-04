@@ -58,25 +58,27 @@ namespace Business_Layer.Repository.Admin
             switch (status)
             {
                 case (int)DashboardStatus.New:
-                    validRequestTypes.Add(1);
+                    validRequestTypes.Add((short)RequestStatus.Unassigned);
                     break;
                 case (int)DashboardStatus.Pending:
-                    validRequestTypes.Add(2);
+                    validRequestTypes.Add((short)RequestStatus.Accepted);
                     break;
                 case (int)DashboardStatus.Active:
-                    validRequestTypes.Add(4);
-                    validRequestTypes.Add(5);
+                    validRequestTypes.Add((short)RequestStatus.MDEnRoute);
+                    validRequestTypes.Add((short)RequestStatus.MDOnSite);
+
                     break;
                 case (int)DashboardStatus.Conclude:
-                    validRequestTypes.Add(6);
+                    validRequestTypes.Add((short)RequestStatus.Conclude);
                     break;
                 case (int)DashboardStatus.ToClose:
-                    validRequestTypes.Add(3);
-                    validRequestTypes.Add(7);
-                    validRequestTypes.Add(8);
+                    validRequestTypes.Add((short)RequestStatus.Cancelled);
+                    validRequestTypes.Add((short)RequestStatus.CancelledByPatient);
+                    validRequestTypes.Add((short)RequestStatus.Closed);
+
                     break;
                 case (int)DashboardStatus.Unpaid:
-                    validRequestTypes.Add(9);
+                    validRequestTypes.Add((short)RequestStatus.Unpaid);
                     break;
             }
 
@@ -92,6 +94,7 @@ namespace Business_Layer.Repository.Admin
                              select new AdminRequest
                              {
                                  RequestId = r.Requestid,
+                                 Email = rc.Email,
                                  PatientName = rc.Firstname + " " + rc.Lastname,
                                  DateOfBirth = GetPatientDOB(rc),
                                  RequestType = r.Requesttypeid,

@@ -1,7 +1,12 @@
-﻿.dark-mode {
+﻿.dark-mode, .dark-mode .admin-dashboard {
     --primary: white;
     background-color: #282828;
 }
+
+    .dark-mode .iti__country-list {
+        color: white;
+        background-color: #282828 !important;
+    }
 
     .dark-mode .btn:hover {
         background-color: white;

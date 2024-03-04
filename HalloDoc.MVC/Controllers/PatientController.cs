@@ -14,7 +14,6 @@ using System.Security.Claims;
 using Microsoft.CodeAnalysis;
 using Business_Layer.Interface;
 using Business_Layer.Helpers;
-using NuGet.Common;
 
 namespace HalloDoc.MVC.Controllers
 {
@@ -55,16 +54,14 @@ namespace HalloDoc.MVC.Controllers
     {
         private readonly IWebHostEnvironment _environment;
         private readonly IConfiguration _config;
-        private readonly IRequestRepository _requestRepo;
         private readonly IPatientDashboardRepository _dashboardRepo;
         private readonly IPatientAuthRepository _authRepo;
         private readonly IUnitOfWork _unitOfWork;
 
-        public PatientController(IWebHostEnvironment environment, IConfiguration config, IRequestRepository request, IPatientDashboardRepository patientDashboardRepository, IPatientAuthRepository authRepo, IUnitOfWork unitwork)
+        public PatientController(IWebHostEnvironment environment, IConfiguration config, IPatientDashboardRepository patientDashboardRepository, IPatientAuthRepository authRepo, IUnitOfWork unitwork)
         {
             _environment = environment;
             _config = config;
-            _requestRepo = request;
             _dashboardRepo = patientDashboardRepository;
             _authRepo = authRepo;
             _unitOfWork = unitwork;
@@ -438,29 +435,20 @@ namespace HalloDoc.MVC.Controllers
         {
             try
             {
-                var tokenHandler = new JwtSecurityTokenHandler();
-                var key = Encoding.ASCII.GetBytes(_config["Jwt:Key"]);
-
-                tokenHandler.ValidateToken(token, new TokenValidationParameters
+                if (ValidatePassToken(token, false))
                 {
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ValidateLifetime = true,
-                    ValidateIssuer = true,
-                    ValidateAudience = false,
-                    ValidIssuer = _config["Jwt:Issuer"],
-                    ClockSkew = TimeSpan.Zero
-                }, out SecurityToken validatedToken);
+                    ForgotPasswordViewModel fpvm = new ForgotPasswordViewModel();
+                    Passtoken pass = _unitOfWork.PassTokenRepository.GetFirstOrDefault(pass => pass.Uniquetoken == token);
 
-                var jwtToken = (JwtSecurityToken)validatedToken;
-                var email = jwtToken.Claims.First(x => x.Type == "email").Value;
+                    fpvm.Email = pass.Email;
 
-                ForgotPasswordViewModel fpvm = new()
+                    return CreateAccountGet(fpvm);
+                }
+                else
                 {
-                    Email = email,
-                };
+                    return View("Index");
+                }
 
-                return CreateAccountGet(fpvm);
             }
             catch (Exception ex)
             {
@@ -473,73 +461,34 @@ namespace HalloDoc.MVC.Controllers
         public IActionResult CreateAccount(ForgotPasswordViewModel fpvm)
         {
 
+            Aspnetuser user = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(u => u.Email == fpvm.Email);
+
+            if (user == null)
+            {
+                TempData["error"] = "User doesn't exists. Please try again.";
+                return NotFound("Error");
+            }
+
             if (ModelState.IsValid)
             {
-                bool isUserExists = _unitOfWork.UserRepository.IsUserWithEmailExists(fpvm.Email);
-                if (isUserExists)
-                {
-                    _authRepo.CreateUserAccount(fpvm);
-                    TempData["success"] = "Account Successfully Created.";
-                    return RedirectToAction("Login");
-                }
-                else
-                {
-                    TempData["error"] = "User doesn't exists.";
-                    return View("Authentication/CreateAccount");
-                }
+                string passHash = GenerateSHA256(fpvm.Password);
+                user.Passwordhash = passHash;
+                user.Modifieddate = DateTime.Now;
 
+                _unitOfWork.AspNetUserRepository.Update(user);
+                _unitOfWork.Save();
+
+                Passtoken token = _unitOfWork.PassTokenRepository.GetFirstOrDefault(pass => pass.Email == fpvm.Email);
+                token.Isdeleted = true;
+                _unitOfWork.PassTokenRepository.Update(token);
+                _unitOfWork.Save();
+
+                TempData["success"] = "Account Successfully Created.";
+                return RedirectToAction("Login");
 
             }
+
             return View();
-        }
-
-        public void SendMailForCreateAccount(string email)
-        {
-            try
-            {
-                var tokenHandler = new JwtSecurityTokenHandler();
-                var key = Encoding.ASCII.GetBytes(_config["Jwt:Key"]);
-                var tokenDescriptor = new SecurityTokenDescriptor
-                {
-                    Subject = new ClaimsIdentity(new[] { new Claim("email", email) }),
-                    Expires = DateTime.UtcNow.AddHours(24),
-                    Issuer = _config["Jwt:Issuer"],
-                    SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-                };
-                var token = tokenHandler.CreateToken(tokenDescriptor);
-                var jwtToken = tokenHandler.WriteToken(token);
-
-                var createLink = Url.Action("CreateAccount", "Patient", new { token = jwtToken }, Request.Scheme);
-
-                string senderEmail = _config.GetSection("OutlookSMTP")["Sender"];
-                string senderPassword = _config.GetSection("OutlookSMTP")["Password"];
-
-                SmtpClient client = new SmtpClient("smtp.office365.com")
-                {
-                    Port = 587,
-                    Credentials = new NetworkCredential(senderEmail, senderPassword),
-                    EnableSsl = true,
-                    DeliveryMethod = SmtpDeliveryMethod.Network,
-                    UseDefaultCredentials = false
-                };
-
-                MailMessage mailMessage = new MailMessage
-                {
-                    From = new MailAddress(senderEmail, "HalloDoc"),
-                    Subject = "Set up your Account",
-                    IsBodyHtml = true,
-                    Body = "<h1>Create Account By clicking below</h1><a href=\"" + createLink + "\" >Create Account link</a>",
-                };
-
-                mailMessage.To.Add(email);
-
-                client.Send(mailMessage);
-                TempData["success"] = "Email has been successfully sent to " + email + " for create account link.";
-            }
-            catch (Exception ex)
-            {
-                TempData["error"] = ex.Message;
-            }
         }
 
         public IActionResult ViewDocument(int requestId)
@@ -764,13 +713,14 @@ namespace HalloDoc.MVC.Controllers
         //}
 
         // email token isdeleted createddate aspnetuserid expirydate
+
         [HttpGet]
         public IActionResult ResetPassword(string token)
         {
             try
             {
 
-                if (ValidateResetPassToken(token))
+                if (ValidatePassToken(token, true))
                 {
                     ForgotPasswordViewModel fpvm = new ForgotPasswordViewModel();
                     Passtoken pass = _unitOfWork.PassTokenRepository.GetFirstOrDefault(pass => pass.Uniquetoken == token);
@@ -791,22 +741,25 @@ namespace HalloDoc.MVC.Controllers
             }
         }
 
-        private bool ValidateResetPassToken(string token)
+        private bool ValidatePassToken(string token, bool isResetToken)
         {
-            if(token == null)
+            if (token == null)
             {
+                TempData["error"] = "Invalid Token. Cannot Reset Password";
                 return false;
             }
 
             Passtoken passtoken = _unitOfWork.PassTokenRepository.GetFirstOrDefault(pass => pass.Uniquetoken == token);
-            if(passtoken == null || !passtoken.Isresettoken || passtoken.Isdeleted)
+            if (passtoken == null || passtoken.Isresettoken == isResetToken || passtoken.Isdeleted)
             {
+                TempData["error"] = "Invalid Token. Cannot Reset Password";
                 return false;
             }
 
             TimeSpan diff = DateTime.Now - passtoken.Createddate;
-            if(diff.Hours > 24)
+            if (diff.Hours > 24)
             {
+                TempData["error"] = "Token Expired. Cannot Reset Password";
                 return false;
             }
 
@@ -820,6 +773,7 @@ namespace HalloDoc.MVC.Controllers
 
             if (user == null)
             {
+                TempData["error"] = "User doesn't exists. Please try again.";
                 return NotFound("Error");
             }
 
@@ -830,6 +784,11 @@ namespace HalloDoc.MVC.Controllers
                 user.Modifieddate = DateTime.Now;
 
                 _unitOfWork.AspNetUserRepository.Update(user);
+                _unitOfWork.Save();
+
+                Passtoken token = _unitOfWork.PassTokenRepository.GetFirstOrDefault(pass => pass.Email == fpvm.Email);
+                token.Isdeleted = true;
+                _unitOfWork.PassTokenRepository.Update(token);
                 _unitOfWork.Save();
 
                 TempData["success"] = "Password Reset Successful";
@@ -845,6 +804,60 @@ namespace HalloDoc.MVC.Controllers
             return View("Authentication/ForgetPassword");
         }
 
+
+        public void SendMailForCreateAccount(string email)
+        {
+            try
+            {
+                Aspnetuser aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(user => user.Email == email);
+
+                string createAccToken = Guid.NewGuid().ToString();
+
+                Passtoken passtoken = new Passtoken()
+                {
+                    Aspnetuserid = aspUser.Id,
+                    Createddate = DateTime.Now,
+                    Email = email,
+                    Isdeleted = false,
+                    Isresettoken = true,
+                    Uniquetoken = createAccToken,
+                };
+
+                _unitOfWork.PassTokenRepository.Add(passtoken);
+                _unitOfWork.Save();
+
+                var createLink = Url.Action("CreateAccount", "Patient", new { token = createAccToken }, Request.Scheme);
+
+                string senderEmail = _config.GetSection("OutlookSMTP")["Sender"];
+                string senderPassword = _config.GetSection("OutlookSMTP")["Password"];
+
+                SmtpClient client = new SmtpClient("smtp.office365.com")
+                {
+                    Port = 587,
+                    Credentials = new NetworkCredential(senderEmail, senderPassword),
+                    EnableSsl = true,
+                    DeliveryMethod = SmtpDeliveryMethod.Network,
+                    UseDefaultCredentials = false
+                };
+
+                MailMessage mailMessage = new MailMessage
+                {
+                    From = new MailAddress(senderEmail, "HalloDoc"),
+                    Subject = "Set up your Account",
+                    IsBodyHtml = true,
+                    Body = "<h1>Create Account By clicking below</h1><a href=\"" + createLink + "\" >Create Account link</a>",
+                };
+
+                mailMessage.To.Add(email);
+
+                client.Send(mailMessage);
+                TempData["success"] = "Email has been successfully sent to " + email + " for create account link.";
+            }
+            catch (Exception ex)
+            {
+                TempData["error"] = ex.Message;
+            }
+        }
 
         public IActionResult SendMailForForgetPassword(string email, string onSucessAction, string onSucessController, string emailAction, string emailController, string onFailedAction, string onFailedController)
         {
@@ -865,6 +878,7 @@ namespace HalloDoc.MVC.Controllers
                 };
 
                 _unitOfWork.PassTokenRepository.Add(passtoken);
+                _unitOfWork.Save();
 
                 var resetLink = Url.Action(emailAction, emailController, new { token = resetPassToken }, Request.Scheme);
 
@@ -891,7 +905,7 @@ namespace HalloDoc.MVC.Controllers
                 mailMessage.To.Add(email);
 
                 client.Send(mailMessage);
-                TempData["success"] = "Please check " + email + " for reset password link.";
+                TempData["success"] = "Mail sent successfully. Please check " + email + " for reset password link.";
                 return RedirectToAction(onSucessAction, onSucessController);
             }
             catch (Exception ex)

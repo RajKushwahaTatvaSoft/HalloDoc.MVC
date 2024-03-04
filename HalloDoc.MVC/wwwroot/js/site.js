@@ -1,13 +1,4 @@
-﻿localStorage.setItem("isDark", false);
-
-var isDark = false;
-//window.onload = function () {
-//    //Boolean isDark = localStorage.getItem("isDark");
-//    if (isDark) {
-//        document.body.classList.add("dark-mode");
-//    }
-//}
-function myFunction() {
+﻿function myFunction() {
     const body = document.body;
     body.classList.toggle('dark-mode');
     // Save user preference in localStorage
@@ -21,9 +12,8 @@ function initializeDarkMode() {
 
     if (savedDarkMode !== null) {
         document.body.classList.toggle('dark-mode', savedDarkMode === 'true');
-    } else {
-        document.body.classList.toggle('dark-mode', prefersDarkMode);
     }
+
 }
 
 //Initialize dark mode

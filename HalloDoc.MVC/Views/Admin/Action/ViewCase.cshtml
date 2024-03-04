@@ -4,8 +4,7 @@
 }
 
 @* Assign Case *@
-
-<div class="modal fade" id="assignModal1" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
+<div class="modal fade" id="assignModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
      aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
@@ -21,38 +20,99 @@
                     </svg>
                 </button>
             </div>
-            <form>
+            <form method="post">
                 <div class="modal-body">
                     <span class="modal-head">To assign this request, search and select another Physician</span>
                     <div class="modal-flex my-3">
 
+                        <input asp-for="RequestId" id="assignCaseRequestId" hidden />
                         <div class="form-floating mt-3">
-                            <select class="form-select" id="floatingSelectGrid">
-                                <option value="Mobile" selected>Maryland</option>
-                                <option value="Telephone">Tom Halland</option>
+                            <select class="form-select" id="assignCaseRegion">
+                                <option disabled selected value="0"> -- select region -- </option>
+
+                                @foreach (var region in Model.regions)
+                                {
+                                    <option value="@region.Regionid">@region.Name</option>
+                                }
                             </select>
-                            <label for="floatingSelectGrid">Narrow Search By Region</label>
+                            <label for="assignCaseRegion">Narrow Search By Region</label>
                         </div>
 
 
                         <div class="form-floating mt-3">
-                            <select class="form-select" id="floatingSelectGrid">
-                                <option value="Mobile">Maryland</option>
-                                <option value="Telephone">Tom Halland</option>
+                            <select class="form-select" id="assignCasePhysician">
+                                <option disabled selected value="0"> -- select physician -- </option>
+
+                                @foreach (var physician in Model.physicians)
+                                {
+                                    <option value="@physician.Physicianid">@physician.Firstname @physician.Lastname</option>
+                                }
                             </select>
-                            <label for="floatingSelectGrid">Select Physician</label>
+                            <label for="assignCasePhysician">Select Physician</label>
                         </div>
 
                         <div class="form-floating mt-3">
-                            <textarea style="height: 100px;" type="text" class="form-control" id="notes"></textarea>
-                            <label for="notes">Description</label>
+                            <textarea style="height: 100px;" type="text" class="form-control" id="assignCaseNotes"></textarea>
+                            <label for="assignCaseNotes">Description</label>
                         </div>
 
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <a type="button" class="btn btn-info text-white" data-bs-dismiss="modal"
-                       onclick="redirect()">Submit</a>
+                    <button type="submit" id="assign-modal-submit-btn" class="btn btn-info text-white" data-bs-dismiss="modal">Submit</button>
+                    <button type="button" class="btn cancel-btn" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+@* Cancel Case *@
+<div class="modal  fade" id="cancelModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <div class="modal-dark modal-title text-white" id="exampleModalLongTitle">
+                    Confirm Cancellation
+                </div>
+                <button type="button" class="btn" aria-label="Close" data-bs-dismiss="modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
+                         fill="#FFFFFF">
+                        <path d="M0 0h24v24H0V0z" fill="none" />
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
+                    </svg>
+                </button>
+            </div>
+            <form>
+                <div class="modal-body">
+                    <span class="modal-head">Patient Name : <b style="color: var(--primary);">@Model.PatientName</b></span>
+                    <div class="modal-flex my-3">
+
+                        <div class="form-floating mt-3">
+                            <select class="form-select" id="cancelModalCaseTag">
+                                <option disabled selected value="0"> -- select casetag -- </option>
+
+                                @foreach (var casetag in Model.casetags)
+                                {
+                                    <option value="@casetag.Casetagid">@casetag.Name</option>
+                                }
+                            </select>
+                            <label for="cancelModalCaseTag">Reasons for Cancellation</label>
+                        </div>
+
+                        <div class="form-floating mt-3">
+                            <input type="text" asp-for="RequestId" id="cancelCaseRequestId" hidden />
+                            <input type="text" class="form-control" id="cancelCaseNotes">
+                            <label for="cancelCaseNotes">Provide Additional Notes</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="cancel-modal-submit-btn" type="button" class="btn btn-info text-white" data-bs-dismiss="modal">
+                        Continue
+                    </button>
                     <button type="button" class="btn cancel-btn" data-bs-dismiss="modal">Cancel</button>
                 </div>
             </form>
@@ -67,9 +127,64 @@
 
         <div class="d-flex justify-content-between mt-3">
             <div class="d-flex">
-                <h4>View Reservation</h4>
+                @{
+                    string dStatusText = "", requestTypeText = "", requestTypeColor = "";
+                    int requestType = Model.RequestType;
+                    int dashboardStatus = Model.DashboardStatus;
+
+                    switch (requestType)
+                    {
+                        case 1:
+                            requestTypeText = "Business";
+                            requestTypeColor = "#e26277";
+                            break;
+
+                        case 2:
+                            requestTypeText = "Patient";
+                            requestTypeColor = "#5fbc61";
+                            break;
+
+                        case 3:
+                            requestTypeText = "Family/Friend";
+                            requestTypeColor = "#ed9124";
+                            break;
+
+                        case 4:
+                            requestTypeText = "Concierge";
+                            requestTypeColor = "#007fc6";
+                            break;
+                    }
+
+                    switch (dashboardStatus)
+                    {
+                        case 1:
+                            dStatusText = "New";
+                            break;
+
+                        case 2:
+                            dStatusText = "Pending";
+                            break;
+
+                        case 3:
+                            dStatusText = "Active";
+                            break;
+
+                        case 4:
+                            dStatusText = "Conclude";
+                            break;
+
+                        case 5:
+                            dStatusText = "To Close";
+                            break;
+
+                        case 6:
+                            dStatusText = "Unpaid";
+                            break;
+                    }
+                }
+                <h4>@dStatusText Reservation</h4>
                 <span class="ms-2 px-4 btn text-white fw-bold"
-                      style="background-color: #60bb5d; border-radius: 30px;">Patient</span>
+                      style="background-color: @requestTypeColor; border-radius: 30px;">@requestTypeText</span>
             </div>
 
             <a asp-controller="Admin" asp-action="Dashboard" class="btn btn-outline-info shadow-none night-mode-btn d-flex align-items-center">
@@ -95,7 +210,7 @@
                     <div class="col-12">
 
                         <div class="form-floating mt-3">
-                            <textarea asp-for="patientNotes" style="height:100px" class="form-control" placeholder="Leave a comment here" disabled
+                            <textarea asp-for="PatientNotes" style="height:100px" class="form-control" placeholder="Leave a comment here" disabled
                                       id="floatingTextarea2"></textarea>
                             <label for="floatingTextarea2">Patient Notes</label>
                         </div>
@@ -110,7 +225,7 @@
 
                     <div class="col-md-6 col-12">
                         <div class="form-floating mt-3">
-                            <input asp-for="patientFirstName" class="form-control" placeholder="Leave a comment here" disabled
+                            <input asp-for="PatientFirstName" class="form-control" placeholder="Leave a comment here" disabled
                                    id="floatingTextarea2">
                             <label for="floatingTextarea2">First Name</label>
                         </div>
@@ -118,7 +233,7 @@
 
                     <div class="col-md-6 col-12">
                         <div class="form-floating mt-3">
-                            <input asp-for="patientLastName" class="form-control" placeholder="Leave a comment here" disabled
+                            <input asp-for="PatientLastName" class="form-control" placeholder="Leave a comment here" disabled
                                    id="floatingTextarea2">
                             <label for="floatingTextarea2">Last Name</label>
                         </div>
@@ -133,7 +248,7 @@
 
                         <div class="form-floating mt-3">
 
-                            <input asp-for="dob" class="form-control" placeholder="Leave a comment here" type="date"
+                            <input asp-for="Dob" class="form-control" placeholder="Leave a comment here" type="date"
                                    id="floatingTextarea2" disabled>
                             <label for="floatingTextarea2">Date of Birth:</label>
 
@@ -144,8 +259,8 @@
                     <div class="col-md-5 col-12">
 
                         <div class="form-floating d-flex mt-3">
-                            <input id="patient-phone-country" asp-for="countryCode" hidden disabled />
-                            <input id="patient-phone" class="py-4 form-control" type="tel" asp-for="patientPhone" disabled />
+                            <input id="patient-phone-country" asp-for="CountryCode" hidden disabled />
+                            <input id="patient-phone" class="py-4 form-control" type="tel" asp-for="PatientPhone" disabled />
                         </div>
 
                     </div>
@@ -168,7 +283,7 @@
                     <div class="col-md-6 col-12">
 
                         <div class="form-floating mt-3">
-                            <input type="text" class="form-control" id="floatingInputemail" placeholder="name@example.com" asp-for="patientEmail" oninput="checkUser()" disabled />
+                            <input type="text" class="form-control" id="floatingInputemail" placeholder="name@example.com" asp-for="PatientEmail" oninput="checkUser()" disabled />
                             <label for="floatingInputemail">Email address</label>
                         </div>
 
@@ -184,7 +299,7 @@
 
             <div class="col-md-6 col-12">
                 <div class="form-floating mt-3">
-                    <input asp-for="region" class="form-control" placeholder="Leave a comment here" disabled
+                    <input asp-for="Region" class="form-control" placeholder="Leave a comment here" disabled
                            id="floatingTextarea2"></input>
                     <label for="floatingTextarea2">Region</label>
                 </div>
@@ -192,15 +307,15 @@
 
             <div class="col-md-5 col-12">
                 <div class="form-floating mt-3">
-                    <input asp-for="address" class="form-control" placeholder="Leave a comment here" disabled></input>
+                    <input asp-for="Address" class="form-control" placeholder="Leave a comment here" disabled></input>
                     <label for="floatingTextarea2">Name/Address</label>
                 </div>
             </div>
 
             <div class="col-1 mt-3">
 
-               @* @{
-                    string googleMapsLink = "";
+                @* @{
+                string googleMapsLink = "";
                 }
 
                 @if(Model.street != null && Model.state != null && Model.city != null && Model.zip !=  null)
@@ -218,7 +333,7 @@
 
                 <div class="form-floating mt-3">
 
-                    <input asp-for="rooms" class="form-control" placeholder="Leave a comment here" disabled
+                    <input asp-for="Rooms" class="form-control" placeholder="Leave a comment here" disabled
                            id="floatingTextarea2">
                     <label for="floatingTextarea2">Rooms(Optional)</label>
 
@@ -230,17 +345,27 @@
 
         <div class="d-flex justify-content-end mt-3">
 
-            <button type="button" data-bs-toggle="modal" data-bs-target="#assignModal1" class="btn py-2 px-4" style="background-color: #10bce9; color: white;">
-                Assign
-            </button>
+            @if (dashboardStatus == 1)
+            {
+                <button type="button" data-bs-toggle="modal" data-bs-target="#assignModal" class="btn py-2 px-4" style="background-color: #10bce9; color: white;">
+                    Assign
+                </button>
 
-            <a asp-controller="Admin" asp-action="ViewNotes" class="btn py-2 px-4 ms-3" style="background-color: #10bce9; color: white;">
-                View Notes
-            </a>
+                <a asp-controller="Admin" asp-action="ViewNotes" class="btn py-2 px-4 ms-3" style="background-color: #10bce9; color: white;">
+                    View Notes
+                </a>
 
-            <button id="cancelBtn" onclick="" type="reset" class="btn py-2 px-4 ms-3 bg-danger" style="background-color: #10bce9; color: white;">
-                Cancel
-            </button>
+                <button id="cancelBtn" data-bs-toggle="modal" data-bs-target="#cancelModal" type="button" class="btn py-2 px-4 ms-3 bg-danger" style="background-color: #10bce9; color: white;">
+                    Cancel
+                </button>
+            }
+            else
+            {
+                <a asp-controller="Admin" asp-action="ViewNotes" class="btn py-2 px-4 ms-3" style="background-color: #10bce9; color: white;">
+                    View Notes
+                </a>
+            }
+
 
         </div>
 
@@ -251,6 +376,50 @@
 </div>
 
 
+<script>
+
+    $('.admin-tab').removeClass("active");
+    $('#dashboard-tab').addClass("active");
+
+</script>
+
+<script>
+
+
+    $('#cancel-modal-submit-btn').on('click', function () {
+
+        $.ajax({
+            url: "/Admin/CancelCaseModal",
+            data: { reason: $('#cancelModalCaseTag').val(), notes: $('#cancelCaseNotes').val(), requestid: $('#cancelCaseRequestId').val() },
+            type: 'POST',
+            success: function (result) {
+                location.reload();
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
+
+    });
+
+    $('#assign-modal-submit-btn').on('click', function () {
+
+        $.ajax({
+            url: "/Admin/AssignCaseModal",
+            data: { notes: $('#assignCaseNotes').val(), requestid: $('#assignCaseRequestId').val(), physicianid: $('#assignCasePhysician').val() },
+            type: 'POST',
+            success: function (result) {
+                location.reload();
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
+
+    });
+</script>
 <script>
 
     function editDetails() {
