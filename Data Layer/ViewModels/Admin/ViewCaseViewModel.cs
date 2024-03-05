@@ -9,6 +9,7 @@ namespace Data_Layer.ViewModels.Admin
 {
     public class ViewCaseViewModel
     {
+        public string? UserName { get; set; }
         public string? PatientNotes { get; set; }
         public string? PatientName { get; set; }
         public string? PatientFirstName { get; set; }

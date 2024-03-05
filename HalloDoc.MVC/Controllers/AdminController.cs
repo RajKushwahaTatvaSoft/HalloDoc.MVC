@@ -1,12 +1,14 @@
 ﻿using Business_Layer.Interface;
 using Business_Layer.Interface.Admin;
-using Business_Layer.Repository.Admin;
 using Data_Layer.DataContext;
 using Data_Layer.DataModels;
 using Data_Layer.ViewModels.Admin;
 using Microsoft.AspNetCore.Mvc;
-using Org.BouncyCastle.Utilities;
 using System.IO.Compression;
+using System.Net;
+using System.Net.Mail;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace HalloDoc.MVC.Controllers
 {
@@ -27,29 +29,47 @@ namespace HalloDoc.MVC.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IDashboardRepository _dashboardRepository;
         private readonly IWebHostEnvironment _environment;
+        private readonly IConfiguration _config;
 
-        public AdminController(IUnitOfWork unitOfWork, IDashboardRepository dashboard, ApplicationDbContext context, IWebHostEnvironment environment)
+        public AdminController(IUnitOfWork unitOfWork, IDashboardRepository dashboard, ApplicationDbContext context, IWebHostEnvironment environment, IConfiguration config)
         {
             _unitOfWork = unitOfWork;
             _dashboardRepository = dashboard;
             _context = context;
             _environment = environment;
+            _config = config;
         }
 
+        public void InsertRequestWiseFile(IFormFile document)
+        {
+            string path = _environment.WebRootPath + "/document";
+            string fileName = document.FileName;
+
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+            string fullPath = Path.Combine(path, fileName);
+
+            using FileStream stream = new(fullPath, FileMode.Create);
+            document.CopyTo(stream);
+        }
+
+
         [HttpPost]
-        public ActionResult PartialTable(int status, int page, int typeFilter, string searchFilter)
+        public ActionResult PartialTable(int status, int page, int typeFilter, string searchFilter, int regionFilter)
         {
             int pageNumber = 1;
             if (page > 0)
             {
                 pageNumber = page;
             }
-                                                                         
+
             DashboardFilter filter = new DashboardFilter()
             {
                 RequestTypeFilter = typeFilter,
                 PatientSearchText = searchFilter,
-                RegionFilter = 0,
+                RegionFilter = regionFilter,
             };
 
             List<AdminRequest> adminRequests = _dashboardRepository.GetAdminRequest(status, pageNumber, filter);
@@ -63,25 +83,17 @@ namespace HalloDoc.MVC.Controllers
             return PartialView("Partial/PartialTable", model);
         }
 
-        [HttpPost]
-        public ActionResult LoadNextPage(int status, int page, int typeFilter, string searchFilter)
-        {
-            page = page + 1;
-            return PartialTable(status, page, typeFilter, searchFilter);
-        }
-
-        [HttpPost]
-        public ActionResult LoadPreviousPage(int status, int page, int typeFilter, string searchFilter)
-        {
-            page = page - 1;
-            return PartialTable(status, page, typeFilter, searchFilter);
-        }
-
 
         public IActionResult Dashboard()
         {
+            int adminId = (int)HttpContext.Session.GetInt32("adminId");
+            Admin admin = _context.Admins.FirstOrDefault(ad => ad.Adminid == adminId);
 
             AdminDashboardViewModel model = new AdminDashboardViewModel();
+            if (admin != null)
+            {
+                model.UserName = admin.Firstname + " " + admin.Lastname;
+            }
             model.physicians = _context.Physicians;
             model.regions = _context.Regions;
             model.NewReqCount = _unitOfWork.RequestRepository.Count(r => r.Status == (short)RequestStatus.Unassigned);
@@ -161,13 +173,58 @@ namespace HalloDoc.MVC.Controllers
             return View("Dashboard/Access");
         }
 
+        public static string GenerateSHA256(string input)
+        {
+            var bytes = Encoding.UTF8.GetBytes(input);
+            using (var hashEngine = SHA256.Create())
+            {
+                var hashedBytes = hashEngine.ComputeHash(bytes, 0, bytes.Length);
+                var sb = new StringBuilder();
+                foreach (var b in hashedBytes)
+                {
+                    var hex = b.ToString("x2");
+                    sb.Append(hex);
+                }
+                return sb.ToString();
+            }
+        }
+
+        public IActionResult Login()
+        {
+            return View("Authentication/Login");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Login(AdminAuthViewModel authModel)
+        {
+            if (ModelState.IsValid)
+            {
+                var passHash = GenerateSHA256(authModel.Password);
+                Aspnetuser user = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(aspnetuser => aspnetuser.Email == authModel.Email && aspnetuser.Passwordhash == passHash);
+
+                if (user != null)
+                {
+                    Admin adminUser = _context.Admins.FirstOrDefault(u => u.Aspnetuserid == user.Id);
+                    TempData["success"] = "Admin Login Successful";
+                    HttpContext.Session.SetInt32("adminId", adminUser.Adminid);
+                    return RedirectToAction("Dashboard");
+                }
+
+            }
+            TempData["error"] = "Invalid Username or Password";
+
+            return View("Authentication/Login");
+
+        }
+
 
         public async Task<IActionResult> DownloadAllFiles(int requestId)
         {
             try
             {
                 // Fetch all document details for the given request:
-                var documentDetails = _unitOfWork.RequestWiseFileRepository.GetAll().Where(m => m.Requestid == requestId).ToList();
+                var documentDetails = _unitOfWork.RequestWiseFileRepository.Where(m => m.Requestid == requestId && m.Isdeleted != true).ToList();
 
                 if (documentDetails == null || documentDetails.Count == 0)
                 {
@@ -250,7 +307,7 @@ namespace HalloDoc.MVC.Controllers
         public bool AssignCaseModal(string notes, int requestid, int physicianid)
         {
             int adminId = 1;
-            if(requestid == null || requestid <= 0 || physicianid == null ||  physicianid <= 0)
+            if (requestid == null || requestid <= 0 || physicianid == null || physicianid <= 0)
             {
                 TempData["error"] = "Error occured while assigning request.";
                 return false;
@@ -330,7 +387,7 @@ namespace HalloDoc.MVC.Controllers
                     Reason = reason,
                     Requestid = reqCli.Requestid.ToString(),
                     Createddate = DateTime.Now,
-                    Isactive=true,
+                    Isactive = true,
                 };
 
                 _context.Blockrequests.Add(blockrequest);
@@ -348,15 +405,23 @@ namespace HalloDoc.MVC.Controllers
 
         public IActionResult ViewCase(int Requestid)
         {
+            int adminId = (int)HttpContext.Session.GetInt32("adminId");
+            Admin admin = _context.Admins.FirstOrDefault(ad => ad.Adminid == adminId);
+
             if (Requestid == null)
             {
                 return View("Error");
             }
 
-            Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req=> req.Requestid == Requestid);
+            Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == Requestid);
             Requestclient client = _unitOfWork.RequestClientRepository.GetFirstOrDefault(reqCli => reqCli.Requestid == Requestid);
 
             ViewCaseViewModel model = new();
+
+            if (admin != null)
+            {
+                model.UserName = admin.Firstname + " " + admin.Lastname;
+            }
 
             string dobDate = client.Intyear + "-" + client.Strmonth + "-" + client.Intdate;
             model.DashboardStatus = GetDashboardStatus(req.Status);
@@ -378,15 +443,15 @@ namespace HalloDoc.MVC.Controllers
 
         public int GetDashboardStatus(int requestStatus)
         {
-            if(requestStatus == (int) RequestStatus.Unassigned)
+            if (requestStatus == (int)RequestStatus.Unassigned)
             {
-                return  (int)DashboardStatus.New;
+                return (int)DashboardStatus.New;
             }
             else if (requestStatus == (int)RequestStatus.Accepted)
             {
                 return (int)DashboardStatus.Pending;
             }
-            else if (requestStatus == (int)RequestStatus.MDEnRoute || requestStatus == (int)RequestStatus.MDOnSite )
+            else if (requestStatus == (int)RequestStatus.MDEnRoute || requestStatus == (int)RequestStatus.MDOnSite)
             {
                 return (int)DashboardStatus.Active;
             }
@@ -394,7 +459,7 @@ namespace HalloDoc.MVC.Controllers
             {
                 return (int)DashboardStatus.Conclude;
             }
-            else if (requestStatus == (int)RequestStatus.Cancelled  || requestStatus == (int)RequestStatus.Closed || requestStatus == (int)RequestStatus.CancelledByPatient)
+            else if (requestStatus == (int)RequestStatus.Cancelled || requestStatus == (int)RequestStatus.Closed || requestStatus == (int)RequestStatus.CancelledByPatient)
             {
                 return (int)DashboardStatus.ToClose;
             }
@@ -410,6 +475,7 @@ namespace HalloDoc.MVC.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult ViewCase(ViewCaseViewModel viewCase)
         {
+
             if (viewCase != null)
             {
 
@@ -430,18 +496,28 @@ namespace HalloDoc.MVC.Controllers
 
         public IActionResult ViewNotes(int Requestid)
         {
+
+            int adminId = (int)HttpContext.Session.GetInt32("adminId");
+            Admin admin = _context.Admins.FirstOrDefault(ad => ad.Adminid == adminId);
+
+
             IEnumerable<Requeststatuslog> logs = _unitOfWork.RequestStatusLogRepository.Where(log => log.Requestid == Requestid);
             Requestnote notes = _context.Requestnotes.FirstOrDefault(notes => notes.Requestid == Requestid);
 
             ViewNotesViewModel model = new ViewNotesViewModel();
 
-            if(notes != null)
+            if (admin != null)
+            {
+                model.UserName = admin.Firstname + " " + admin.Lastname;
+            }
+
+            if (notes != null)
             {
                 model.AdminNotes = notes.Adminnotes;
                 model.PhysicianNotes = notes.Physiciannotes;
             }
 
-            return View("Action/ViewNotes",model);
+            return View("Action/ViewNotes", model);
         }
 
         [HttpPost]
@@ -450,9 +526,9 @@ namespace HalloDoc.MVC.Controllers
 
             int adminId = 1;
             string adminAspId = "061d38d4-2b2f-48f6-ad21-5a80db6c4e69";
-            Requestnote oldnote = _context.Requestnotes.FirstOrDefault( rn => rn.Requestid == vnvm.RequestId);
+            Requestnote oldnote = _context.Requestnotes.FirstOrDefault(rn => rn.Requestid == vnvm.RequestId);
 
-            if(oldnote != null)
+            if (oldnote != null)
             {
                 oldnote.Adminnotes = vnvm.AdminNotes;
                 oldnote.Modifieddate = DateTime.Now;
@@ -464,7 +540,7 @@ namespace HalloDoc.MVC.Controllers
             }
             else
             {
-                Requestnote curReqNote= new Requestnote()
+                Requestnote curReqNote = new Requestnote()
                 {
                     Requestid = vnvm.RequestId,
                     Adminnotes = vnvm.AdminNotes,
@@ -481,14 +557,22 @@ namespace HalloDoc.MVC.Controllers
 
         public IActionResult ViewUploads(int Requestid)
         {
-            Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == Requestid) ;
-            if(req == null)
+            int adminId = (int)HttpContext.Session.GetInt32("adminId");
+            Admin admin = _context.Admins.FirstOrDefault(ad => ad.Adminid == adminId);
+            if (admin == null)
+            {
+                return View("Error");
+            }
+
+
+            Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == Requestid);
+            if (req == null)
             {
                 return View("Error");
             }
 
             Requestclient reqCli = _unitOfWork.RequestClientRepository.GetFirstOrDefault(reqcli => reqcli.Requestid == req.Requestid);
-            if(reqCli == null)
+            if (reqCli == null)
             {
                 return View("Error");
             }
@@ -508,17 +592,139 @@ namespace HalloDoc.MVC.Controllers
                 ConfirmationNumber = req.Confirmationnumber,
                 RequestId = req.Requestid,
                 extensions = ext,
+                UserName = admin.Firstname + " " + admin.Lastname
             };
 
-            return View("Action/ViewUploads",model);
+            return View("Action/ViewUploads", model);
+        }
+
+        [HttpPost]
+        public bool DeleteAllFiles(int requestId)
+        {
+            try
+            {
+                IEnumerable<Requestwisefile> files = _unitOfWork.RequestWiseFileRepository.Where(file => file.Requestid == requestId);
+
+                foreach (Requestwisefile file in files)
+                {
+                    file.Isdeleted = true;
+                    _unitOfWork.RequestWiseFileRepository.Update(file);
+                }
+
+                _unitOfWork.Save();
+
+                TempData["success"] = "Files deleted Succesfully.";
+                return true;
+            }
+            catch (Exception ex)
+            {
+                TempData["error"] = "Error occured while deleting files.";
+                return false;
+            }
+
+        }
+
+        [HttpPost]
+        public bool DeleteFile(int requestWiseFileId)
+        {
+
+            try
+            {
+                Requestwisefile file = _unitOfWork.RequestWiseFileRepository.GetFirstOrDefault(reqFile => reqFile.Requestwisefileid == requestWiseFileId);
+
+                file.Isdeleted = true;
+                _unitOfWork.RequestWiseFileRepository.Update(file);
+                _unitOfWork.Save();
+
+                TempData["success"] = "File deleted Succesfully.";
+                return true;
+            }
+            catch (Exception e)
+            {
+                TempData["error"] = "Error occured while deleting file.";
+                return false;
+            }
+
         }
 
         [HttpPost]
         public IActionResult ViewUploads(ViewUploadsViewModel uploadsVM)
         {
+            int adminId = (int)HttpContext.Session.GetInt32("adminId");
 
-            return View("Action/ViewUploads");
+            if (uploadsVM.File != null)
+            {
+                InsertRequestWiseFile(uploadsVM.File);
+
+                Requestwisefile requestwisefile = new()
+                {
+                    Requestid = uploadsVM.RequestId,
+                    Filename = uploadsVM.File.FileName,
+                    Createddate = DateTime.Now,
+                    Adminid = adminId,
+                    Ip = "127.0.0.1",
+                };
+
+                _unitOfWork.RequestWiseFileRepository.Add(requestwisefile);
+                _unitOfWork.Save();
+
+                uploadsVM.File = null;
+
+            }
+
+            return ViewUploads(uploadsVM.RequestId);
         }
 
+        [HttpPost]
+        public bool SendFilesViaMail(List<int> fileIds, int requestId)
+        {
+            try
+            {
+
+                Requestclient reqCli = _unitOfWork.RequestClientRepository.GetFirstOrDefault(requestCli => requestCli.Requestid == requestId);
+
+                string senderEmail = _config.GetSection("OutlookSMTP")["Sender"];
+                string senderPassword = _config.GetSection("OutlookSMTP")["Password"];
+
+                SmtpClient client = new SmtpClient("smtp.office365.com")
+                {
+                    Port = 587,
+                    Credentials = new NetworkCredential(senderEmail, senderPassword),
+                    EnableSsl = true,
+                    DeliveryMethod = SmtpDeliveryMethod.Network,
+                    UseDefaultCredentials = false
+                };
+
+                MailMessage mailMessage = new MailMessage
+                {
+                    From = new MailAddress(senderEmail, "HalloDoc"),
+                    Subject = "Hallodoc documents attachments",
+                    IsBodyHtml = true,
+                    Body = "<h3>Admin has sent you documents regarding your request.</h3>",
+                };
+
+                MemoryStream memoryStream;
+                foreach (int fileId in fileIds)
+                {
+                    Requestwisefile file = _unitOfWork.RequestWiseFileRepository.GetFirstOrDefault(reqFile => reqFile.Requestwisefileid == fileId);
+                    string documentPath = Path.Combine(_environment.WebRootPath, "document", file.Filename);
+
+                    byte[] fileBytes = System.IO.File.ReadAllBytes(documentPath);
+                    memoryStream = new MemoryStream(fileBytes);
+                    mailMessage.Attachments.Add(new Attachment(memoryStream, file.Filename));
+                }
+
+                mailMessage.To.Add(reqCli.Email);
+
+                client.Send(mailMessage);
+
+                TempData["success"] = "Email with selected documents has been successfully sent to " + reqCli.Email;
+                return true;
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
+        }
     }
 }

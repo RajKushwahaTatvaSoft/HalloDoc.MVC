@@ -66,7 +66,6 @@ namespace Business_Layer.Repository.Admin
                 case (int)DashboardStatus.Active:
                     validRequestTypes.Add((short)RequestStatus.MDEnRoute);
                     validRequestTypes.Add((short)RequestStatus.MDOnSite);
-
                     break;
                 case (int)DashboardStatus.Conclude:
                     validRequestTypes.Add((short)RequestStatus.Conclude);
@@ -87,9 +86,9 @@ namespace Business_Layer.Repository.Admin
             adminRequests = (from r in _context.Requests
                              join rc in _context.Requestclients on r.Requestid equals rc.Requestid
                              where (validRequestTypes.Contains(r.Status))
-                             && (filters.RequestTypeFilter == 0 ? true : r.Requesttypeid == filters.RequestTypeFilter)
-                             && ((filters.PatientSearchText == null || filters.PatientSearchText == "") ?
-                             true : (rc.Firstname.Contains(filters.PatientSearchText) || rc.Lastname.Contains(filters.PatientSearchText))
+                             && (filters.RequestTypeFilter == 0 || r.Requesttypeid == filters.RequestTypeFilter)
+                             && (filters.RegionFilter == 0 || rc.Regionid == filters.RegionFilter)
+                             && (string.IsNullOrEmpty(filters.PatientSearchText) || (rc.Firstname + " " + rc.Lastname).ToLower().Contains(filters.PatientSearchText.ToLower())
                              )
                              select new AdminRequest
                              {

@@ -300,7 +300,7 @@ public partial class ApplicationDbContext : DbContext
         {
             entity.HasKey(e => e.Requestnotesid).HasName("requestnotes_pkey");
 
-            entity.Property(e => e.Requestnotesid).ValueGeneratedNever();
+            entity.Property(e => e.Requestnotesid).UseIdentityAlwaysColumn();
 
             entity.HasOne(d => d.Request).WithMany(p => p.Requestnotes)
                 .OnDelete(DeleteBehavior.ClientSetNull)

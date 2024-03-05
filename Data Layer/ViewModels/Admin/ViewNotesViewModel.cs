@@ -9,6 +9,7 @@ namespace Data_Layer.ViewModels.Admin
 {
     public class ViewNotesViewModel
     {
+        public string UserName { get; set; }
         public int RequestId { get; set; }
         public string AdminNotes { get; set; }
         public string PhysicianNotes { get; set; }

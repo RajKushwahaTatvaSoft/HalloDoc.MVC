@@ -4,7 +4,14 @@ $('#dashboard-tab').addClass("active");
 
 var dashboardStatus = 0;
 var type_filter = 0;
+var region_filter = 0;
 var search_filter = "";
+
+$("#filter-regions").change(function () {
+    region_filter = $('option:selected', this).val();
+    loadPage();
+});
+
 
 $(".status-tab").click(function () {
 
@@ -41,18 +48,7 @@ $(".status-tab").click(function () {
         $('#status-text').text('(Unpaid)');
     }
 
-    $.ajax({
-        url: "/admin/partialtable",
-        type: 'POST',
-        data: { status: dashboardStatus, page: 1, typeFilter: 0, searchFilter: "" },
-        success: function (result) {
-            $('#partial-table').html(result);
-        },
-        error: function (error) {
-            console.log(error);
-            alert('error fetching details')
-        },
-    });
+    applyFilters();
 });
 
 $("#status-new-tab").click();
@@ -64,10 +60,17 @@ $("#status-new-tab").click();
 //     });
 // });
 
+var searchTimer;
 
 $("#search-filter").on("keyup", function () {
     var searchValue = $(this).val().toLowerCase();
     search_filter = searchValue;
+
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(function () {
+        loadPage();
+    }, 500);
+
 });
 
 $('.filter-options').click(function () {
@@ -95,42 +98,28 @@ $('.filter-options').click(function () {
         type_filter = 5;
     }
 
-    $.ajax({
-        url: "/admin/partialtable",
-        type: 'POST',
-        data: { status: dashboardStatus, page: 1, typeFilter: type_filter, searchFilter: search_filter },
-        success: function (result) {
-            $('#partial-table').html(result);
-        },
-        error: function (error) {
-            console.log(error);
-            alert('error fetching details')
-        },
-    });
+    applyFilters();
+
 });
 
 function loadNextPage(currentpage) {
-
-    $.ajax({
-        url: "/admin/LoadNextPage",
-        type: 'POST',
-        data: { status: dashboardStatus, page: currentpage, typeFilter: type_filter, searchFilter: search_filter },
-        success: function (result) {
-            $('#partial-table').html(result);
-        },
-        error: function (error) {
-            console.log(error);
-            alert('error fetching details')
-        },
-    });
+    loadPage(currentpage + 1);
 }
 
 function loadPreviousPage(currentpage) {
+    loadPage(currentpage - 1);
+}
+
+function applyFilters() {
+    loadPage(1);
+}
+
+function loadPage(pageNo) {
 
     $.ajax({
-        url: "/admin/LoadPreviousPage",
+        url: "/Admin/PartialTable",
         type: 'POST',
-        data: { status: dashboardStatus, page: currentpage, typeFilter: type_filter, searchFilter: search_filter },
+        data: { status: dashboardStatus, page: pageNo, typeFilter: type_filter, searchFilter: search_filter, regionFilter: region_filter },
         success: function (result) {
             $('#partial-table').html(result);
         },
