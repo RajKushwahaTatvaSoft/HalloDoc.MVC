@@ -53,12 +53,12 @@ namespace HalloDoc.MVC.Controllers
 
     public enum AllowRole
     {
-        Admin =1,
+        Admin = 1,
         Patient = 2,
         Physician = 3
     }
 
-    [CustomAuthorize( (int) AllowRole.Patient)]
+    [CustomAuthorize((int)AllowRole.Patient)]
     public class PatientController : Controller
     {
         private readonly IWebHostEnvironment _environment;
@@ -66,6 +66,7 @@ namespace HalloDoc.MVC.Controllers
         private readonly IPatientDashboardRepository _dashboardRepo;
         private readonly IPatientAuthRepository _authRepo;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IJwtService _jwtService;
 
         public PatientController(IWebHostEnvironment environment, IConfiguration config, IPatientDashboardRepository patientDashboardRepository, IPatientAuthRepository authRepo, IUnitOfWork unitwork)
         {
@@ -88,8 +89,9 @@ namespace HalloDoc.MVC.Controllers
 
         public IActionResult Dashboard()
         {
-            int? userId = HttpContext.Session.GetInt32("userId");
-
+            int userId = (int)HttpContext.Session.GetInt32("userId");
+            var token = Request.Cookies["hallodoc"];
+            
             if (userId == null)
             {
                 return View("Error");

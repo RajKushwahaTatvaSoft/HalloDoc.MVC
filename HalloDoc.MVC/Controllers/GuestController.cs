@@ -4,17 +4,20 @@ using Data_Layer.DataContext;
 using Data_Layer.DataModels;
 using HalloDoc.MVC.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace HalloDoc.MVC.Controllers
 {
     public class GuestController : Controller
     {
-        private readonly ApplicationDbContext _context;
         private readonly IJwtService _jwtService;
-        public GuestController(ApplicationDbContext context, IJwtService jwt)
+        private readonly IUnitOfWork _unitOfWork;
+        public GuestController(IUnitOfWork unitOfWork, IJwtService jwt)
         {
-            _context = context;
             _jwtService = jwt;
+            _unitOfWork = unitOfWork;
         }
 
 
@@ -28,10 +31,29 @@ namespace HalloDoc.MVC.Controllers
             return View();
         }
 
+
+        public static string GenerateSHA256(string input)
+        {
+            var bytes = Encoding.UTF8.GetBytes(input);
+            using (var hashEngine = SHA256.Create())
+            {
+                var hashedBytes = hashEngine.ComputeHash(bytes, 0, bytes.Length);
+                var sb = new StringBuilder();
+                foreach (var b in hashedBytes)
+                {
+                    var hex = b.ToString("x2");
+                    sb.Append(hex);
+                }
+                return sb.ToString();
+            }
+        }
+
+
+
         // GET
         public IActionResult PatientLogin()
         {
-            return View();
+            return View("Patient/PatientLogin");
         }
 
         // POST
@@ -41,18 +63,29 @@ namespace HalloDoc.MVC.Controllers
         {
             if (ModelState.IsValid)
             {
-                SessionUser user = new SessionUser()
+                var passHash = GenerateSHA256(loginUser.Passwordhash);
+                Aspnetuser aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(aspnetuser => aspnetuser.Username == loginUser.Username && aspnetuser.Passwordhash == passHash);
+
+                if (aspUser != null)
                 {
-                    UserId = 20,
-                    Email = "admin@gmail.com",
-                    RoleId = (int) AllowRole.Patient,
-                    UserName = "admin admin"
-                };
 
-                var jwtToken = _jwtService.GenerateJwtToken(user);
-                Response.Cookies.Append("hallodoc",jwtToken);
+                    User patientUser = _unitOfWork.UserRepository.GetFirstOrDefault(u => u.Aspnetuserid == aspUser.Id);
+                    TempData["success"] = "Login Successful";
 
-                return RedirectToAction("Dashboard","Patient");
+                    SessionUser sessionUser = new SessionUser()
+                    {
+                        UserId = patientUser.Userid,
+                        Email = patientUser.Email,
+                        RoleId = (int)AllowRole.Patient,
+                        UserName = patientUser.Firstname + (String.IsNullOrEmpty(patientUser.Lastname) ? "" : patientUser.Lastname),
+                    };
+
+                    var jwtToken = _jwtService.GenerateJwtToken(sessionUser);
+                    Response.Cookies.Append("hallodoc", jwtToken);
+                    HttpContext.Session.SetInt32("userId", patientUser.Userid);
+                    return RedirectToAction("Dashboard", "Patient");
+                }
+
             }
 
             TempData["error"] = "Invalid Username or Password";
@@ -73,6 +106,8 @@ namespace HalloDoc.MVC.Controllers
         {
             if (ModelState.IsValid)
             {
+
+
                 SessionUser user = new SessionUser()
                 {
                     UserId = 1,
@@ -81,7 +116,10 @@ namespace HalloDoc.MVC.Controllers
                     UserName = "admin admin"
                 };
 
-                SessionUtils.SetLoggedInUser(HttpContext.Session, user);
+
+                var jwtToken = _jwtService.GenerateJwtToken(user);
+                Response.Cookies.Append("hallodoc", jwtToken);
+                HttpContext.Session.SetInt32("adminId",1);
 
                 return RedirectToAction("Dashboard", "Admin");
 

@@ -16,6 +16,7 @@ namespace HalloDoc.MVC.Services
                 user.UserName = session.GetString("userName");
                 user.RoleId = (int) session.GetInt32("roleId");
             }
+
             return user;
         }
 

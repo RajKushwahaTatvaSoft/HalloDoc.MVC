@@ -25,7 +25,6 @@ namespace Business_Layer.Repository
 
         public PatientDashboardViewModel FetchDashboardDetails(int userId)
         {
-
             User user = GetUserWithID(userId);
 
             PatientDashboardViewModel dashboardVM = new PatientDashboardViewModel();
@@ -33,6 +32,7 @@ namespace Business_Layer.Repository
             dashboardVM.UserName = user.Firstname + " " + user.Lastname;
             dashboardVM.Requests = _context.Requests.Where(req => req.Userid == user.Userid).ToList();
             List<int> fileCounts = new List<int>();
+
             foreach (var request in dashboardVM.Requests)
             {
                 int count = _context.Requestwisefiles.Count(reqFile => reqFile.Requestid == request.Requestid);

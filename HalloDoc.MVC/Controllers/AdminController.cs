@@ -4,6 +4,7 @@ using Data_Layer.DataContext;
 using Data_Layer.DataModels;
 using Data_Layer.ViewModels.Admin;
 using HalloDoc.MVC.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.IO.Compression;
 using System.Net;
@@ -57,6 +58,7 @@ namespace HalloDoc.MVC.Controllers
         }
 
 
+        [AllowAnonymous]
         [HttpPost]
         public ActionResult PartialTable(int status, int page, int typeFilter, string searchFilter, int regionFilter)
         {
@@ -84,10 +86,10 @@ namespace HalloDoc.MVC.Controllers
             return PartialView("Partial/PartialTable", model);
         }
 
-
+        [AllowAnonymous]
         public IActionResult Dashboard()
         {
-            int adminId = (int)HttpContext.Session.GetInt32("userId");
+            int adminId = (int)HttpContext.Session.GetInt32("adminId");
             Admin admin = _context.Admins.FirstOrDefault(ad => ad.Adminid == adminId);
 
             AdminDashboardViewModel model = new AdminDashboardViewModel();
