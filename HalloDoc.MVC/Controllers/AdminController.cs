@@ -3,6 +3,7 @@ using Business_Layer.Interface.Admin;
 using Data_Layer.DataContext;
 using Data_Layer.DataModels;
 using Data_Layer.ViewModels.Admin;
+using HalloDoc.MVC.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.IO.Compression;
 using System.Net;
@@ -22,22 +23,22 @@ namespace HalloDoc.MVC.Controllers
         VIP = 5,
     }
 
+    [CustomAuthorize((int)AllowRole.Admin)]
     public class AdminController : Controller
     {
-
         private readonly IUnitOfWork _unitOfWork;
-        private readonly ApplicationDbContext _context;
         private readonly IDashboardRepository _dashboardRepository;
         private readonly IWebHostEnvironment _environment;
         private readonly IConfiguration _config;
+        private readonly ApplicationDbContext _context;
 
-        public AdminController(IUnitOfWork unitOfWork, IDashboardRepository dashboard, ApplicationDbContext context, IWebHostEnvironment environment, IConfiguration config)
+        public AdminController(IUnitOfWork unitOfWork, IDashboardRepository dashboard, IWebHostEnvironment environment, IConfiguration config, ApplicationDbContext context)
         {
             _unitOfWork = unitOfWork;
             _dashboardRepository = dashboard;
-            _context = context;
             _environment = environment;
             _config = config;
+            _context = context;
         }
 
         public void InsertRequestWiseFile(IFormFile document)
@@ -86,7 +87,7 @@ namespace HalloDoc.MVC.Controllers
 
         public IActionResult Dashboard()
         {
-            int adminId = (int)HttpContext.Session.GetInt32("adminId");
+            int adminId = (int)HttpContext.Session.GetInt32("userId");
             Admin admin = _context.Admins.FirstOrDefault(ad => ad.Adminid == adminId);
 
             AdminDashboardViewModel model = new AdminDashboardViewModel();
@@ -140,7 +141,10 @@ namespace HalloDoc.MVC.Controllers
 
             return null;
         }
-
+        public IActionResult Orders()
+        {
+            return View("Action/Orders");
+        }
         public IActionResult NewRequestStatusView()
         {
             return View("StatusPartial/NewRequestStatusView");
@@ -559,6 +563,7 @@ namespace HalloDoc.MVC.Controllers
         {
             int adminId = (int)HttpContext.Session.GetInt32("adminId");
             Admin admin = _context.Admins.FirstOrDefault(ad => ad.Adminid == adminId);
+
             if (admin == null)
             {
                 return View("Error");
@@ -680,7 +685,11 @@ namespace HalloDoc.MVC.Controllers
         {
             try
             {
-
+                if(fileIds.Count < 1)
+                {
+                    TempData["error"] = "Please select at least one document before sending email.";
+                    return false;
+                }
                 Requestclient reqCli = _unitOfWork.RequestClientRepository.GetFirstOrDefault(requestCli => requestCli.Requestid == requestId);
 
                 string senderEmail = _config.GetSection("OutlookSMTP")["Sender"];
@@ -723,8 +732,10 @@ namespace HalloDoc.MVC.Controllers
             }
             catch (Exception e)
             {
+                TempData["error"] = "Error occured while sending documents. Please try again later.";
                 return false;
             }
         }
+
     }
 }

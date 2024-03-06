@@ -14,6 +14,7 @@ using System.Security.Claims;
 using Microsoft.CodeAnalysis;
 using Business_Layer.Interface;
 using Business_Layer.Helpers;
+using HalloDoc.MVC.Services;
 
 namespace HalloDoc.MVC.Controllers
 {
@@ -50,6 +51,14 @@ namespace HalloDoc.MVC.Controllers
         Concierge = 4
     }
 
+    public enum AllowRole
+    {
+        Admin =1,
+        Patient = 2,
+        Physician = 3
+    }
+
+    [CustomAuthorize( (int) AllowRole.Patient)]
     public class PatientController : Controller
     {
         private readonly IWebHostEnvironment _environment;

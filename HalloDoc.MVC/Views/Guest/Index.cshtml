@@ -1,0 +1,88 @@
+﻿@{
+    ViewData["Title"] = "Submit Request";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body>
+
+    <header>
+        <div class="row d-flex mx-3 align-items-center justify-content-md-between justify-content-center"
+             style="height: 100px;">
+            <div class="col-4"></div>
+            <div class="col-4 d-flex justify-content-center">
+                <img class=" d-none d-md-flex" src="/images/hallo_doc_logo.png" alt="logo_icon" height="100px">
+            </div>
+            <div class="col-4 d-flex justify-content-md-center justify-content-end">
+                <button onclick="myFunction()" class="btn btn-outline-info shadow-none night-mode-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="24px"
+                         viewBox="0 0 24 24" width="24px">
+                        <rect fill="none" height="24" width="24" />
+                        <path d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container-fluid">
+
+        <div class="bg-image d-lg-none"></div>
+        <div class="row mx-2 d-flex flex-column align-items-center">
+
+            <div class="col-12 col-sm-9 col-md-7 col-lg-5 mt-4">
+                <a asp-controller="Patient" asp-action="SubmitRequest" class="text-decoration-none">
+                    <div class="d-flex submit-request-div align-items-center justify-content-center">
+                        <div class="justify-content-center d-flex align-items-center">
+                            <h4 class="fw-normal text-white">Submit A Request</h4>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-12 col-sm-9 col-md-7 col-lg-5 mt-4">
+                <a asp-controller="Guest" asp-action="PatientLogin" class="text-decoration-none">
+                    <div class=" registered-patient-div  align-items-center d-flex justify-content-center">
+                        <div class="justify-content-center d-flex align-items-center">
+                            <h4 class="fw-normal text-white">Registered Patients</h4>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-12 col-sm-9 col-md-7 col-lg-5 mt-4">
+                <a asp-controller="Guest" asp-action="AdminLogin" class="text-decoration-none">
+                    <div class=" bg-warning  align-items-center d-flex justify-content-center">
+                        <div class="justify-content-center d-flex align-items-center">
+                            <h4 class="fw-normal text-white">Admin Login</h4>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+        </div>
+
+        <div class="row align-items-center justify-content-center">
+
+            <footer class="position-fixed bottom-0 py-3" style="background-color: #282828;">
+
+                <div class="justify-content-md-end justify-content-center d-flex">
+                    <a class="text-decoration-none" href=""><span class="text-white">Terms of Conditions</span></a>
+                    <span class="px-2 " style="color: grey;">|</span>
+                    <a class="text-decoration-none" href=""><span class="text-white">Privacy Policy</span></a>
+                </div>
+
+            </footer>
+        </div>
+
+    </div>
+
+</body>
+
+</html>

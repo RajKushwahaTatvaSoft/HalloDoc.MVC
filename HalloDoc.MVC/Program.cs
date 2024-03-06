@@ -22,6 +22,7 @@ builder.Services.AddScoped<IPatientDashboardRepository, PatientDashboardReposito
 builder.Services.AddScoped<IPatientAuthRepository, PatientAuthRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
+builder.Services.AddScoped<IJwtService, JwtService>();
 
 
 builder.Services.AddSession(options =>
@@ -69,6 +70,6 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Patient}/{action=Index}");
+    pattern: "{controller=Guest}/{action=Index}");
 
 app.Run();

@@ -1,0 +1,222 @@
+﻿@model ViewCaseViewModel
+@{
+    Layout = "_AdminDashboardLayout";
+}
+
+<div class="container-fluid d-flex justify-content-center row ">
+
+    <div class="col-8">
+
+        <div class="d-flex justify-content-between mt-3">
+            <div class="d-flex">
+                <h4>Send Order</h4>
+            </div>
+
+            <button onclick="history.back(-1)" class="btn btn-outline-info shadow-none night-mode-btn d-flex align-items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 -960 960 960">
+                    <path d="m142-480 294 294q15 15 14.5 35T435-116q-15 15-35 15t-35-15L57-423q-12-12-18-27t-6-30q0-15 6-30t18-27l308-308q15-15 35.5-14.5T436-844q15 15 15 35t-15 35L142-480Z" />
+                </svg>
+                <span>Back</span>
+            </button>
+
+        </div>
+
+        <form method="post">
+
+            <div class="shadow p-3 dashboard-card mt-4">
+
+                <div class="row">
+
+                    <div class="col-md-6 col-12">
+                        <div class="form-floating mt-3">
+                            <select class="form-select" id="floatingSelectGrid" aria-label="Floating label select example">
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                            </select>
+                            <label for="floatingSelectGrid">Select Profession</label>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 col-12">
+                        <div class="form-floating mt-3">
+                            <input asp-for="PatientLastName" class="form-control" placeholder="Leave a comment here"
+                                   id="floatingTextarea2">
+                            <label for="floatingTextarea2">Business</label>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="row">
+
+                    <div class="col-md-6 col-12">
+
+                        <div class="form-floating mt-3">
+
+                            <input class="form-control" placeholder="Leave a comment here"
+                                   id="floatingTextarea2">
+                            <label for="floatingTextarea2">Business Contact</label>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-6 col-12">
+
+                        <div class="form-floating mt-3">
+                            <input type="text" class="form-control" id="floatingInputemail" placeholder="name@example.com" asp-for="PatientEmail" oninput="checkUser()" />
+                            <label for="floatingInputemail">Email address</label>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="row">
+
+                    <div class="col-md-6 col-12">
+
+                        <div class="form-floating mt-3">
+                            <input type="text" class="form-control" id="floatingInputemail" placeholder="name@example.com" asp-for="PatientEmail" oninput="checkUser()" />
+                            <label for="floatingInputemail">Fax Number</label>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="row">
+
+                    <div class="col-12">
+
+                        <div class="form-floating mt-3">
+                            <textarea asp-for="PatientNotes" style="height:100px" class="form-control" placeholder="Leave a comment here"
+                                      id="floatingTextarea2"></textarea>
+                            <label for="floatingTextarea2">Presciption or Order details</label>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 col-12">
+                        <div class="form-floating mt-3">
+                            <select class="form-select" id="floatingSelectGrid" aria-label="Floating label select example">
+                                <option value="0" selected>Not required</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                            </select>
+                            <label for="floatingSelectGrid">Number Of Refill</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end mt-3">
+
+                    <button type="submit" class="btn py-2 px-4 ms-3" style="background-color: #10bce9; color: white;">
+                        Submit
+                    </button>
+
+                    <button type="reset" class="btn py-2 px-4 ms-3 btn-outline-info">
+                        Cancel
+                    </button>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+    <div style="height: 20px;"></div>
+
+</div>
+
+
+<script>
+
+    $('.admin-tab').removeClass("active");
+    $('#dashboard-tab').addClass("active");
+
+</script>
+
+<script>
+
+
+    $('#cancel-modal-submit-btn').on('click', function () {
+
+        $.ajax({
+            url: "/Admin/CancelCaseModal",
+            data: { reason: $('#cancelModalCaseTag').val(), notes: $('#cancelCaseNotes').val(), requestid: $('#cancelCaseRequestId').val() },
+            type: 'POST',
+            success: function (result) {
+                location.reload();
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
+
+    });
+
+    $('#assign-modal-submit-btn').on('click', function () {
+
+        $.ajax({
+            url: "/Admin/AssignCaseModal",
+            data: { notes: $('#assignCaseNotes').val(), requestid: $('#assignCaseRequestId').val(), physicianid: $('#assignCasePhysician').val() },
+            type: 'POST',
+            success: function (result) {
+                location.reload();
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
+
+    });
+</script>
+<script>
+
+    function editDetails() {
+
+        var inputs = document.querySelectorAll('input ,  textarea');
+        for (var i = 0; i < inputs.length; i++) {
+            inputs[i].disabled = false;
+        }
+
+        var selects = document.getElementsByTagName("select");
+        for (var i = 0; i < selects.length; i++) {
+            selects[i].disabled = false;
+        }
+
+        var editBtn = document.getElementById("editBtn");
+        editBtn.style.display = "none";
+
+        var saveBtn = document.getElementById("saveBtn");
+        saveBtn.style.display = "block";
+
+    }
+
+    const phoneInputField = document.getElementById("patient-phone");
+    var patientPhoneInput = window.intlTelInput(phoneInputField, {
+        utilsScript:
+            "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+        preferredCountries: ["in"],
+        separateDialCode: true,
+        initialCountry: "in"
+    });
+
+
+    function changeCountryCode() {
+        var countryCode = document.getElementById("patient-phone-country");
+        countryCode.value = patientPhoneInput.getSelectedCountryData().dialCode;
+        console.log(countryCode.value);
+    }
+
+</script>

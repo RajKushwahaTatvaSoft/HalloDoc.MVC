@@ -265,13 +265,13 @@
                                     }
                                     @if (dstatus == 3 || dstatus == 4)
                                     {
-                                        <li><button class="dropdown-item" type="button">Orders</button></li>
+                                        <li><a asp-controller="Admin" asp-action="Orders" class="dropdown-item" type="button">Orders</a></li>
                                         <li><button class="dropdown-item" type="button">Doctors Note</button></li>
                                         <li><button class="dropdown-item" type="button">Encounter</button></li>
                                     }
                                     @if (dstatus == 5)
                                     {
-                                        <li><button class="dropdown-item" type="button">Orders</button></li>
+                                        <li><a asp-controller="Admin" asp-action="Orders" class="dropdown-item" type="button">Orders</a></li>
                                         <li><button class="dropdown-item" type="button">Close Case</button></li>
                                         <li><button class="dropdown-item" type="button">Doctors Note</button></li>
                                         <li><button class="dropdown-item" type="button">Clear Case</button></li>
