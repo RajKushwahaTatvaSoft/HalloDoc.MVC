@@ -26,26 +26,32 @@ $(".status-tab").click(function () {
     if (id == 'status-new-tab') {
         dashboardStatus = 1;
         $('#status-text').text('(New)');
+        $("#status-text").css("color", "#203f9a");
     }
     else if (id == 'status-pending-tab') {
         dashboardStatus = 2;
         $('#status-text').text('(Pending)');
+        $("#status-text").css("color", "#00adef");
     }
     else if (id == 'status-active-tab') {
         dashboardStatus = 3;
         $('#status-text').text('(Active)');
+        $("#status-text").css("color", "#228c20");
     }
     else if (id == 'status-conclude-tab') {
         dashboardStatus = 4;
         $('#status-text').text('(Conclude)');
+        $("#status-text").css("color", "#da0f82");
     }
     else if (id == 'status-to-close-tab') {
         dashboardStatus = 5;
         $('#status-text').text('(To Close)');
+        $("#status-text").css("color", "#0370d7");
     }
     else if (id == 'status-unpaid-tab') {
         dashboardStatus = 6;
         $('#status-text').text('(Unpaid)');
+        $("#status-text").css("color", "#9966cd");
     }
 
     applyFilters();

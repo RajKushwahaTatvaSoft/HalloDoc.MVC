@@ -1,16 +1,21 @@
 ﻿using Business_Layer.Interface;
-using Business_Layer.Interface.Admin;
+using Business_Layer.Interface.AdminInterface;
+using Data_Layer.CustomModels;
 using Data_Layer.DataContext;
 using Data_Layer.DataModels;
+using Data_Layer.ViewModels;
 using Data_Layer.ViewModels.Admin;
 using HalloDoc.MVC.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Drawing.Printing;
 using System.IO.Compression;
 using System.Net;
 using System.Net.Mail;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json.Nodes;
+using static NuGet.Packaging.PackagingConstants;
 
 namespace HalloDoc.MVC.Controllers
 {
@@ -58,10 +63,10 @@ namespace HalloDoc.MVC.Controllers
         }
 
 
-        [AllowAnonymous]
         [HttpPost]
         public ActionResult PartialTable(int status, int page, int typeFilter, string searchFilter, int regionFilter)
         {
+
             int pageNumber = 1;
             if (page > 0)
             {
@@ -86,27 +91,25 @@ namespace HalloDoc.MVC.Controllers
             return PartialView("Partial/PartialTable", model);
         }
 
-        [AllowAnonymous]
         public IActionResult Dashboard()
         {
             int adminId = (int)HttpContext.Session.GetInt32("adminId");
-            Admin admin = _context.Admins.FirstOrDefault(ad => ad.Adminid == adminId);
+            Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(ad => ad.Adminid == adminId);
 
             AdminDashboardViewModel model = new AdminDashboardViewModel();
             if (admin != null)
             {
                 model.UserName = admin.Firstname + " " + admin.Lastname;
             }
-            model.physicians = _context.Physicians;
-            model.regions = _context.Regions;
+
+            model.physicians = _unitOfWork.PhysicianRepository.GetAll();
+            model.regions = _unitOfWork.RegionRepository.GetAll();
             model.NewReqCount = _unitOfWork.RequestRepository.Count(r => r.Status == (short)RequestStatus.Unassigned);
             model.PendingReqCount = _unitOfWork.RequestRepository.Count(r => r.Status == (short)RequestStatus.Accepted);
             model.ActiveReqCount = _unitOfWork.RequestRepository.Count(r => (r.Status == (short)RequestStatus.MDEnRoute) || (r.Status == (short)RequestStatus.MDOnSite));
             model.ConcludeReqCount = _unitOfWork.RequestRepository.Count(r => r.Status == (short)RequestStatus.Conclude);
             model.ToCloseReqCount = _unitOfWork.RequestRepository.Count(r => (r.Status == (short)RequestStatus.Cancelled) || (r.Status == (short)RequestStatus.CancelledByPatient) || (r.Status == (short)RequestStatus.Closed));
             model.UnpaidReqCount = _unitOfWork.RequestRepository.Count(r => r.Status == (short)RequestStatus.Unpaid);
-            model.regions = _context.Regions;
-            model.physicians = _context.Physicians;
             model.casetags = _unitOfWork.CaseTagRepository.GetAll();
             return View("Dashboard/Dashboard", model);
 
@@ -143,10 +146,81 @@ namespace HalloDoc.MVC.Controllers
 
             return null;
         }
-        public IActionResult Orders()
+
+        [HttpPost]
+        public JsonArray GetBusinessByType(int professionType)
         {
-            return View("Action/Orders");
+            var result = new JsonArray();
+            IEnumerable<Healthprofessional> businesses = _unitOfWork.HealthProfessionalRepo.Where(prof => prof.Profession == professionType);
+
+            foreach (Healthprofessional business in businesses)
+            {
+                result.Add(new { businessId = business.Vendorid, businessName = business.Vendorname });
+            }
+
+            return result;
         }
+
+
+        [HttpPost]
+        public Healthprofessional GetBusinessDetailsById(int vendorId)
+        {
+            if (vendorId <= 0)
+            {
+                return null;
+            }
+            Healthprofessional business = _unitOfWork.HealthProfessionalRepo.GetFirstOrDefault(prof => prof.Vendorid == vendorId);
+
+            return business;
+        }
+
+        public IActionResult Orders(int requestId)
+        {
+
+            SendOrderViewModel model = new SendOrderViewModel();
+            model.professionalTypeList = _unitOfWork.HealthProfessionalTypeRepo.GetAll();
+            model.RequestId = requestId;
+
+            return View("Action/Orders", model);
+        }
+
+        [HttpPost]
+        public IActionResult Orders(SendOrderViewModel orderViewModel)
+        {
+            int adminId = (int)HttpContext.Session.GetInt32("adminId");
+            Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(ad => ad.Adminid == adminId);
+
+            if (ModelState.IsValid)
+            {
+
+                Orderdetail order = new Orderdetail()
+                {
+                    Vendorid = orderViewModel.SelectedVendor,
+                    Requestid = orderViewModel.RequestId,
+                    Faxnumber = orderViewModel.FaxNumber,
+                    Email = orderViewModel.Email,
+                    Businesscontact = orderViewModel.BusinessContact,
+                    Prescription = orderViewModel.Prescription,
+                    Noofrefill = orderViewModel.NoOfRefills,
+                    Createddate = DateTime.Now,
+                    Createdby = admin.Aspnetuserid,
+                };
+
+                _unitOfWork.OrderDetailRepo.Add(order);
+                _unitOfWork.Save();
+
+                TempData["success"] = "Order Successfully Sent";
+
+            }
+            else
+            {
+                TempData["error"] = "Error occured whlie ordering.";
+            }
+
+            return Orders(orderViewModel.RequestId);
+        }
+
+
         public IActionResult NewRequestStatusView()
         {
             return View("StatusPartial/NewRequestStatusView");
@@ -211,7 +285,7 @@ namespace HalloDoc.MVC.Controllers
 
                 if (user != null)
                 {
-                    Admin adminUser = _context.Admins.FirstOrDefault(u => u.Aspnetuserid == user.Id);
+                    Admin adminUser = _unitOfWork.AdminRepository.GetFirstOrDefault(u => u.Aspnetuserid == user.Id);
                     TempData["success"] = "Admin Login Successful";
                     HttpContext.Session.SetInt32("adminId", adminUser.Adminid);
                     return RedirectToAction("Dashboard");
@@ -289,7 +363,6 @@ namespace HalloDoc.MVC.Controllers
                     Status = (short)RequestStatus.Cancelled,
                     Adminid = adminId,
                     Notes = notes,
-                    Physicianid = req.Physicianid,
                     Createddate = DateTime.Now,
                 };
 
@@ -335,9 +408,58 @@ namespace HalloDoc.MVC.Controllers
                     Status = (short)RequestStatus.Accepted,
                     Adminid = adminId,
                     Notes = notes,
-                    Physicianid = req.Physicianid,
+                    Transtophysicianid = req.Physicianid,
                     Createddate = DateTime.Now,
                 };
+
+                _unitOfWork.RequestStatusLogRepository.Add(reqStatusLog);
+                _unitOfWork.Save();
+
+
+                TempData["success"] = "Request Successfully Assigned.";
+                return true;
+            }
+            catch (Exception ex)
+            {
+                TempData["error"] = "Error Occured while assigning request.";
+                return false;
+            }
+
+            return false;
+
+        }
+
+        [HttpPost]
+        public bool TransferCaseModal(string notes, int requestid, int physicianid)
+        {
+            int adminId = 1;
+            if (requestid == null || requestid <= 0 || physicianid == null || physicianid <= 0)
+            {
+                TempData["error"] = "Error occured while assigning request.";
+                return false;
+            }
+            try
+            {
+
+                Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestid);
+
+                Requeststatuslog reqStatusLog = new Requeststatuslog()
+                {
+                    Requestid = requestid,
+                    Status = (short)RequestStatus.Accepted,
+                    Adminid = adminId,
+                    Notes = notes,
+                    Physicianid = req.Physicianid,
+                    Transtophysicianid = physicianid,
+                    Createddate = DateTime.Now,
+                };
+
+                req.Status = (short)RequestStatus.Accepted;
+                req.Modifieddate = DateTime.Now;
+                req.Physicianid = physicianid;
+
+                _unitOfWork.RequestRepository.Update(req);
+                _unitOfWork.Save();
 
                 _unitOfWork.RequestStatusLogRepository.Add(reqStatusLog);
                 _unitOfWork.Save();
@@ -362,14 +484,12 @@ namespace HalloDoc.MVC.Controllers
             int adminId = 1;
             try
             {
-
                 Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestid);
                 req.Status = (short)RequestStatus.Block;
                 req.Modifieddate = DateTime.Now;
 
                 _unitOfWork.RequestRepository.Update(req);
                 _unitOfWork.Save();
-
 
                 Requeststatuslog reqStatusLog = new Requeststatuslog()
                 {
@@ -391,13 +511,13 @@ namespace HalloDoc.MVC.Controllers
                     Phonenumber = reqCli.Phonenumber,
                     Email = reqCli.Email,
                     Reason = reason,
-                    Requestid = reqCli.Requestid.ToString(),
+                    Requestid = requestid.ToString(),
                     Createddate = DateTime.Now,
                     Isactive = true,
                 };
 
-                _context.Blockrequests.Add(blockrequest);
-                _context.SaveChanges();
+                _unitOfWork.BlockRequestRepo.Add(blockrequest);
+                _unitOfWork.Save();
 
                 TempData["success"] = "Request Successfully Blocked";
                 return true;
@@ -412,7 +532,7 @@ namespace HalloDoc.MVC.Controllers
         public IActionResult ViewCase(int Requestid)
         {
             int adminId = (int)HttpContext.Session.GetInt32("adminId");
-            Admin admin = _context.Admins.FirstOrDefault(ad => ad.Adminid == adminId);
+            Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(ad => ad.Adminid == adminId);
 
             if (Requestid == null)
             {
@@ -440,8 +560,8 @@ namespace HalloDoc.MVC.Controllers
             model.Region = client.Regionid;
             model.Notes = client.Notes;
             model.Address = client.Street;
-            model.regions = _context.Regions;
-            model.physicians = _context.Physicians;
+            model.regions = _unitOfWork.RegionRepository.GetAll();
+            model.physicians = _unitOfWork.PhysicianRepository.GetAll();
             model.casetags = _unitOfWork.CaseTagRepository.GetAll();
 
             return View("Action/ViewCase", model);
@@ -504,11 +624,22 @@ namespace HalloDoc.MVC.Controllers
         {
 
             int adminId = (int)HttpContext.Session.GetInt32("adminId");
-            Admin admin = _context.Admins.FirstOrDefault(ad => ad.Adminid == adminId);
+            Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(ad => ad.Adminid == adminId);
+            IEnumerable<TransferNotesLog> logs = (from rsl in _context.Requeststatuslogs
+                                                  join a in _context.Admins on rsl.Adminid equals a.Adminid into groupedAdmin
+                                                  from subAdmin in groupedAdmin.DefaultIfEmpty()
+                                                  select new TransferNotesLog
+                                                  {
+                                                      Status = rsl.Status,
+                                                      PhysicianId = rsl.Physicianid,
+                                                      PhysicianName =  "",
+                                                      AdminId = rsl.Adminid,
+                                                      AdminName = subAdmin.Firstname + " " + subAdmin.Lastname,
+                                                      Notes = rsl.Notes,
+                                                      CreatedDate = rsl.Createddate
+                                                  });
 
-
-            IEnumerable<Requeststatuslog> logs = _unitOfWork.RequestStatusLogRepository.Where(log => log.Requestid == Requestid);
-            Requestnote notes = _context.Requestnotes.FirstOrDefault(notes => notes.Requestid == Requestid);
+            Requestnote notes = _unitOfWork.RequestNoteRepository.GetFirstOrDefault(notes => notes.Requestid == Requestid);
 
             ViewNotesViewModel model = new ViewNotesViewModel();
 
@@ -532,7 +663,7 @@ namespace HalloDoc.MVC.Controllers
 
             int adminId = 1;
             string adminAspId = "061d38d4-2b2f-48f6-ad21-5a80db6c4e69";
-            Requestnote oldnote = _context.Requestnotes.FirstOrDefault(rn => rn.Requestid == vnvm.RequestId);
+            Requestnote oldnote = _unitOfWork.RequestNoteRepository.GetFirstOrDefault(rn => rn.Requestid == vnvm.RequestId);
 
             if (oldnote != null)
             {
@@ -540,8 +671,8 @@ namespace HalloDoc.MVC.Controllers
                 oldnote.Modifieddate = DateTime.Now;
                 oldnote.Modifiedby = adminAspId;
 
-                _context.Requestnotes.Update(oldnote);
-                _context.SaveChanges();
+                _unitOfWork.RequestNoteRepository.Update(oldnote);
+                _unitOfWork.Save();
 
             }
             else
@@ -554,8 +685,9 @@ namespace HalloDoc.MVC.Controllers
                     Createddate = DateTime.Now,
                 };
 
-                _context.Requestnotes.Add(curReqNote);
-                _context.SaveChanges();
+                _unitOfWork.RequestNoteRepository.Update(oldnote);
+                _unitOfWork.Save();
+
             }
 
             return ViewNotes(vnvm.RequestId);
@@ -564,7 +696,7 @@ namespace HalloDoc.MVC.Controllers
         public IActionResult ViewUploads(int Requestid)
         {
             int adminId = (int)HttpContext.Session.GetInt32("adminId");
-            Admin admin = _context.Admins.FirstOrDefault(ad => ad.Adminid == adminId);
+            Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(ad => ad.Adminid == adminId);
 
             if (admin == null)
             {
@@ -687,7 +819,7 @@ namespace HalloDoc.MVC.Controllers
         {
             try
             {
-                if(fileIds.Count < 1)
+                if (fileIds.Count < 1)
                 {
                     TempData["error"] = "Please select at least one document before sending email.";
                     return false;

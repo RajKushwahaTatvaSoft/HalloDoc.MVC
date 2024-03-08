@@ -9,6 +9,7 @@ namespace Business_Layer.Repository
         public UnitOfWork(ApplicationDbContext context)
         {
             _context = context;
+            AdminRepository = new AdminRepository(_context);
             AspNetUserRepository = new AspNetUserRepository(_context);
             UserRepository = new UserRepository(_context);
             RequestRepository = new RequestRepository(_context);
@@ -21,8 +22,16 @@ namespace Business_Layer.Repository
             CaseTagRepository = new CaseTagRepository(_context);
             RequestStatusLogRepository = new RequestStatusLogRepo(_context);
             PassTokenRepository = new PassTokenRepository(_context);
+            RequestNoteRepository = new RequestNoteRepository(_context);
+            RegionRepository = new RegionRepository(_context);
+            PhysicianRepository = new PhysicianRepository(_context);
+            HealthProfessionalRepo = new HealthProfessionalRepo(_context);
+            HealthProfessionalTypeRepo = new HealthProfessionalTypeRepo(_context);
+            BlockRequestRepo = new BlockRequestRepo(_context);
+            OrderDetailRepo = new OrderDetailRepo(_context);
         }
 
+        public IAdminRepository AdminRepository { get; private set; }
         public IAspNetUserRepository AspNetUserRepository { get; private set; }
         public IUserRepository UserRepository { get; private set; }
         public IRequestRepository RequestRepository { get; private set; }
@@ -35,6 +44,14 @@ namespace Business_Layer.Repository
         public ICaseTagRepository CaseTagRepository { get; private set; }
         public IRequestStatusLogRepo RequestStatusLogRepository { get; private set; }
         public IPassTokenRepository PassTokenRepository { get; private set; }
+        public IRequestNoteRepository RequestNoteRepository { get; private set; }
+        public IRegionRepository RegionRepository { get; private set; }
+        public IPhysicianRepository PhysicianRepository { get; private set; }
+        public IHealthProfessionalRepo HealthProfessionalRepo { get; private set; }
+        public IHealthProfessionalTypeRepo HealthProfessionalTypeRepo { get; private set; }
+        public IBlockRequestRepo BlockRequestRepo { get; private set; }
+        public IOrderDetailRepo OrderDetailRepo { get; private set; }
+
         public void Save()
         {
             _context.SaveChanges();

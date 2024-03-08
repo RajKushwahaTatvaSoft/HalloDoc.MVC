@@ -35,15 +35,16 @@
         <div class="row mt-4">
 
             <div class="col-4">
-                <a asp-action="Index" asp-controller="patient" class="btn btn-outline-info shadow-none">
+                <button onclick="history.back(-1)" class="btn btn-outline-info shadow-none">
                     <div class="d-flex justify-content-center align-items-center back-btn">
                         <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="24">
                             <path d="m142-480 294 294q15 15 14.5 35T435-116q-15 15-35 15t-35-15L57-423q-12-12-18-27t-6-30q0-15 6-30t18-27l308-308q15-15 35.5-14.5T436-844q15 15 15 35t-15 35L142-480Z" />
                         </svg>
                         <span class="h6 p-0 m-0 text-center">Back</span>
                     </div>
-                </a>
+                </button>
             </div>
+
             <div class="col-4 d-flex justify-content-center">
 
                 <h1>I am a...</h1>
@@ -56,7 +57,7 @@
 
         <div class="row mt-4">
             <div class="d-flex justify-content-center">
-                <a asp-controller="Patient" asp-action="PatientRequest" class="text-decoration-none">
+                <a asp-controller="Guest" asp-action="PatientRequest" class="text-decoration-none">
                     <div class="patient-div justify-content-center d-flex align-items-center">
                         <h4 class="text-uppercase">Patient</h4>
                     </div>
@@ -67,7 +68,7 @@
 
         <div class="row mt-4">
             <div class="d-flex justify-content-center">
-                <a asp-controller="Patient" asp-action="FamilyFriendRequest" class="text-decoration-none">
+                <a asp-controller="Guest" asp-action="FamilyFriendRequest" class="text-decoration-none">
                     <div class="family-friend-div justify-content-center d-flex align-items-center">
                         <h4 class="text-uppercase">Family/Friend</h4>
                     </div>
@@ -78,7 +79,7 @@
 
         <div class="row mt-4">
             <div class="d-flex justify-content-center">
-                <a asp-controller="Patient" asp-action="ConciergeRequest" class="text-decoration-none">
+                <a asp-controller="Guest" asp-action="ConciergeRequest" class="text-decoration-none">
                     <div class="concierge-div justify-content-center d-flex align-items-center">
                         <h4 class="text-uppercase">Concierge</h4>
                     </div>
@@ -90,14 +91,13 @@
 
         <div class="row mt-4">
             <div class="d-flex justify-content-center">
-                <a asp-controller="Patient" asp-action="BusinessRequest" class="text-decoration-none">
+                <a asp-controller="Guest" asp-action="BusinessRequest" class="text-decoration-none">
                     <div class="business-partners-div justify-content-center d-flex align-items-center">
                         <h4 class="text-uppercase">Business Partners</h4>
                     </div>
                 </a>
             </div>
         </div>
-
 
         <div class="row align-items-center justify-content-center">
 

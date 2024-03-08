@@ -5,9 +5,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Business_Layer.Interface;
-using Business_Layer.Interface.Admin;
-using Business_Layer.Repository.Admin;
 using Data_Layer.DataModels;
+using Business_Layer.Interface.AdminInterface;
+using Business_Layer.Repository.AdminRepo;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +24,7 @@ builder.Services.AddScoped<IPatientAuthRepository, PatientAuthRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
 builder.Services.AddScoped<IJwtService, JwtService>();
+
 
 
 builder.Services.AddSession(options =>
@@ -71,5 +73,7 @@ app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Guest}/{action=Index}");
+
+// Add method for custom roles
 
 app.Run();

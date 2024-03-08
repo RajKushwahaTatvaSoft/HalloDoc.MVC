@@ -433,3 +433,20 @@ x::-webkit-file-upload-button, input[type=file]:after {
     .admin-dashboard .white-border-btn:hover {
         background-color: #adadad77;
     }
+
+
+@media (max-width: 768px) {
+
+    .status-tab svg {
+        display: none;
+    }
+
+    .status-tab div {
+        border-radius: 0px;
+    }
+
+    .filter-options {
+        font-size: 10px;
+        height: 40px;
+    }
+}

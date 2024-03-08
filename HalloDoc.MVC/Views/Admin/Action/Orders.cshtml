@@ -1,4 +1,4 @@
-﻿@model ViewCaseViewModel
+﻿@model SendOrderViewModel
 @{
     Layout = "_AdminDashboardLayout";
 }
@@ -29,20 +29,23 @@
 
                     <div class="col-md-6 col-12">
                         <div class="form-floating mt-3">
-                            <select class="form-select" id="floatingSelectGrid" aria-label="Floating label select example">
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3">3</option>
+                            <select class="form-select" id="professionTypeList" aria-label="Floating label select example">
+                                <option selected disabled value="0">-- Select Profession --</option>
+                                @foreach(Healthprofessionaltype profession in Model.professionalTypeList)
+                                {
+                                    <option value="@profession.Healthprofessionalid">@profession.Professionname</option>
+                                }
                             </select>
-                            <label for="floatingSelectGrid">Select Profession</label>
+                            <label for="professionTypeList">Select Profession</label>
                         </div>
                     </div>
 
                     <div class="col-md-6 col-12">
                         <div class="form-floating mt-3">
-                            <input asp-for="PatientLastName" class="form-control" placeholder="Leave a comment here"
-                                   id="floatingTextarea2">
-                            <label for="floatingTextarea2">Business</label>
+                            <select asp-for="SelectedVendor" class="form-select" id="businessList" aria-label="Floating label select example">
+                                <option selected disabled value="0">-- Select Business --</option>
+                            </select>
+                            <label for="businessList">Business</label>
                         </div>
                     </div>
 
@@ -54,9 +57,9 @@
 
                         <div class="form-floating mt-3">
 
-                            <input class="form-control" placeholder="Leave a comment here"
-                                   id="floatingTextarea2">
-                            <label for="floatingTextarea2">Business Contact</label>
+                            <input asp-for="BusinessContact" class="form-control" placeholder="Leave a comment here"
+                                   id="businessContact">
+                            <label for="businessContact">Business Contact</label>
 
                         </div>
 
@@ -65,8 +68,8 @@
                     <div class="col-md-6 col-12">
 
                         <div class="form-floating mt-3">
-                            <input type="text" class="form-control" id="floatingInputemail" placeholder="name@example.com" asp-for="PatientEmail" oninput="checkUser()" />
-                            <label for="floatingInputemail">Email address</label>
+                            <input asp-for="Email" type="text" class="form-control" id="businessEmail" />
+                            <label for="businessEmail">Email address</label>
                         </div>
 
                     </div>
@@ -78,8 +81,8 @@
                     <div class="col-md-6 col-12">
 
                         <div class="form-floating mt-3">
-                            <input type="text" class="form-control" id="floatingInputemail" placeholder="name@example.com" asp-for="PatientEmail" oninput="checkUser()" />
-                            <label for="floatingInputemail">Fax Number</label>
+                            <input asp-for="FaxNumber" type="text" class="form-control" id="businessFaxNumber" />
+                            <label for="businessFaxNumber">Fax Number</label>
                         </div>
 
                     </div>
@@ -91,7 +94,7 @@
                     <div class="col-12">
 
                         <div class="form-floating mt-3">
-                            <textarea asp-for="PatientNotes" style="height:100px" class="form-control" placeholder="Leave a comment here"
+                            <textarea asp-for="Prescription" style="height:100px" class="form-control" placeholder="Leave a comment here"
                                       id="floatingTextarea2"></textarea>
                             <label for="floatingTextarea2">Presciption or Order details</label>
                         </div>
@@ -103,7 +106,7 @@
                 <div class="row">
                     <div class="col-md-6 col-12">
                         <div class="form-floating mt-3">
-                            <select class="form-select" id="floatingSelectGrid" aria-label="Floating label select example">
+                            <select asp-for="NoOfRefills" class="form-select" id="floatingSelectGrid" aria-label="Floating label select example">
                                 <option value="0" selected>Not required</option>
                                 <option value="1">1</option>
                                 <option value="2">2</option>
@@ -136,6 +139,7 @@
 
 </div>
 
+<script src="~/js/admin-send-order.js"></script>
 
 <script>
 
@@ -145,78 +149,5 @@
 </script>
 
 <script>
-
-
-    $('#cancel-modal-submit-btn').on('click', function () {
-
-        $.ajax({
-            url: "/Admin/CancelCaseModal",
-            data: { reason: $('#cancelModalCaseTag').val(), notes: $('#cancelCaseNotes').val(), requestid: $('#cancelCaseRequestId').val() },
-            type: 'POST',
-            success: function (result) {
-                location.reload();
-            },
-            error: function (error) {
-                console.log(error);
-                alert('Error Cancelling Request')
-            },
-        });
-
-    });
-
-    $('#assign-modal-submit-btn').on('click', function () {
-
-        $.ajax({
-            url: "/Admin/AssignCaseModal",
-            data: { notes: $('#assignCaseNotes').val(), requestid: $('#assignCaseRequestId').val(), physicianid: $('#assignCasePhysician').val() },
-            type: 'POST',
-            success: function (result) {
-                location.reload();
-            },
-            error: function (error) {
-                console.log(error);
-                alert('Error Cancelling Request')
-            },
-        });
-
-    });
-</script>
-<script>
-
-    function editDetails() {
-
-        var inputs = document.querySelectorAll('input ,  textarea');
-        for (var i = 0; i < inputs.length; i++) {
-            inputs[i].disabled = false;
-        }
-
-        var selects = document.getElementsByTagName("select");
-        for (var i = 0; i < selects.length; i++) {
-            selects[i].disabled = false;
-        }
-
-        var editBtn = document.getElementById("editBtn");
-        editBtn.style.display = "none";
-
-        var saveBtn = document.getElementById("saveBtn");
-        saveBtn.style.display = "block";
-
-    }
-
-    const phoneInputField = document.getElementById("patient-phone");
-    var patientPhoneInput = window.intlTelInput(phoneInputField, {
-        utilsScript:
-            "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
-        preferredCountries: ["in"],
-        separateDialCode: true,
-        initialCountry: "in"
-    });
-
-
-    function changeCountryCode() {
-        var countryCode = document.getElementById("patient-phone-country");
-        countryCode.value = patientPhoneInput.getSelectedCountryData().dialCode;
-        console.log(countryCode.value);
-    }
 
 </script>

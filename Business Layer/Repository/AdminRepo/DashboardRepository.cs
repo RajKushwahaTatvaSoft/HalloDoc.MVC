@@ -1,9 +1,9 @@
-﻿using Business_Layer.Interface.Admin;
+﻿using Business_Layer.Interface.AdminInterface;
 using Data_Layer.DataContext;
 using Data_Layer.DataModels;
 using Data_Layer.ViewModels.Admin;
 
-namespace Business_Layer.Repository.Admin
+namespace Business_Layer.Repository.AdminRepo
 {
     public enum RequestStatus
     {

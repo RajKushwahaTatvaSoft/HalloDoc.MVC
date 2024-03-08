@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Business_Layer.Interface.Admin
+namespace Business_Layer.Interface.AdminInterface
 {
     public interface IDashboardRepository
     {

@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 namespace Business_Layer.Interface
 {
     public interface IUnitOfWork
     {
+        IAdminRepository AdminRepository { get; }
         IAspNetUserRepository AspNetUserRepository { get; }
         IUserRepository UserRepository { get; }
         IRequestRepository RequestRepository { get; }
@@ -20,6 +16,14 @@ namespace Business_Layer.Interface
         ICaseTagRepository CaseTagRepository { get; }
         IRequestStatusLogRepo RequestStatusLogRepository { get; }
         IPassTokenRepository PassTokenRepository { get; }
+        IRequestNoteRepository RequestNoteRepository { get; }
+        IRegionRepository RegionRepository { get; }
+        IPhysicianRepository PhysicianRepository { get; }
+        IHealthProfessionalRepo HealthProfessionalRepo { get; }
+        IHealthProfessionalTypeRepo HealthProfessionalTypeRepo { get; }
+        IBlockRequestRepo BlockRequestRepo { get; }
+        IOrderDetailRepo OrderDetailRepo { get; }
         void Save();
     }
+
 }

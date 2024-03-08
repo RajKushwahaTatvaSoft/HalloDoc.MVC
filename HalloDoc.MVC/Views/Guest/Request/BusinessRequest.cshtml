@@ -42,7 +42,7 @@
     <div class="container-fluid">
 
         <div class="mt-4">
-            <a asp-controller="Patient" asp-action="SubmitRequest" class="btn btn-outline-info shadow-none">
+            <button onclick="history.back(-1)" class="btn btn-outline-info shadow-none">
                 <div class="d-flex justify-content-center align-items-center back-btn">
                     <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="24">
                         <path
@@ -50,7 +50,7 @@
                     </svg>
                     <span class="h6 p-0 m-0 text-center">Back</span>
                 </div>
-            </a>
+            </button>
         </div>
 
         <form method="post">

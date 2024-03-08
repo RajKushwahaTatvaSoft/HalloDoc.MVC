@@ -46,10 +46,22 @@
                         </svg>
                         <div class="ms-2">
                             <h6 class="fw-bold">Transfer Notes</h6>
-                            @if (Model.requeststatuslogs != null && Model.requeststatuslogs.ToList().Count > 0)
+                            @if (Model.transferNotesLogs != null && Model.transferNotesLogs.ToList().Count > 0)
                             {
-                                @foreach (var log in Model.requeststatuslogs)
+                                @foreach (var log in Model.transferNotesLogs)
                                 {
+                                    if (log.IsTransToAdmin)
+                                    {
+                                        <span class="m-0 fw-normal" style="color:grey;">
+                                            @log.PhysicianName transferred request to @log.AdminName
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="m-0 fw-normal" style="color:grey;">
+                                            @log.AdminName transferred request to @log.TransToPhysicianName
+                                        </span>
+                                    }
                                     <span class="m-0 fw-normal" style="color:grey;">
                                         @log.Notes
                                     </span>
