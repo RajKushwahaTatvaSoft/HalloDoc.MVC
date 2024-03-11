@@ -261,7 +261,7 @@
                                     @if (dstatus == 2)
                                     {
                                         <li><button data-bs-toggle="modal" data-bs-target="#transferModal" data-id="@Model.adminRequests[i].RequestId" class="dropdown-item transfer-case-btn" type="button">Transfer</button></li>
-                                        <li><button class="dropdown-item" type="button">Clear Case</button></li>
+                                        <li><button data-bs-toggle="modal" data-bs-target="#ClearCaseModal" class="dropdown-item clear-case-btn" data-id="@Model.adminRequests[i].RequestId" type="button">Clear Case</button></li>
                                         <li><button class="dropdown-item" type="button">Send Agreement</button></li>
                                     }
                                     @if (dstatus == 3 || dstatus == 4)
@@ -307,7 +307,6 @@
 
                         <div class="d-flex justify-content-between w-100 m-2 ">
                             <div class="fs-5">@Model.adminRequests[i].PatientName</div>
-
                             @{
                                 int type = Model.adminRequests[i].RequestType;
                             }
@@ -351,12 +350,12 @@
                             }
 
                         </div>
-                        <div class="d-flex justify-content-between ps-0 w-100 m-2">
+
+                        <div class="d-flex justify-content-between w-100 m-2 data-bs-toggle="collapse" href="@count" data-bs-target="#@count" >
                             <div class="fs-5">@Model.adminRequests[i].Address</div>
 
                             <div class="">
                                 <a class="btn btn-outline-info fw-bold mt-0 mb-3 me-2">
-
 
                                     <span class="mobile">Map</span>
                                 </a>
@@ -387,10 +386,7 @@
 
 
                 </div>
-
-
             </a>
-
         </p>
         <div class="collapse" id="@count">
             <div class=" card-body m-0  " style="background-color:#ebfafd">
@@ -491,7 +487,6 @@
                     }
                     @if (dstatus == 2)
                     {
-
                         <div class="col-6 ">
                             <button class="btn w-100 btn-warning btn-outline-warning btn-outline-light rounded-pill">Send agreement</button>
                         </div>
@@ -499,10 +494,6 @@
                         <div class="col-6 ">
                             <button data-bs-toggle="modal" data-id="@Model.adminRequests[i].RequestId" data-bs-target="#transferModal" class="transfer-btn btn w-100 btn-info btn-outline-info btn-outline-light rounded-pill">Transfer</button>
                         </div>
-
-
-
-
                     }
                     @if (dstatus == 5)
                     {
@@ -517,7 +508,6 @@
                     </div>
                     @if (dstatus == 3 || dstatus == 4)
                     {
-
 
                         <div class="col-6 ">
                             <a asp-controller="Admin" asp-action="Orders" asp-route-RequestID="@Model.adminRequests[i].RequestId" class="btn w-100 btn-warning  btn-outline-warning   btn-outline-light rounded-pill">Orders</a>
@@ -601,6 +591,12 @@
         $('#blockModalPatientName').text(Name);
     });
 
+    $('.clear-case-btn').click(function () {
+        var Id = $(this).data("id");
+        $('#clearCaseRequestId').val(Id);
+
+    });
+
 </script>
 
 <script>
@@ -674,4 +670,92 @@
 
     });
 
+    $('#clear-modal-submit-btn').on('click', function (e) {
+        e.preventDefault();
+
+        $.ajax({
+            url: "/Admin/ClearCaseModal",
+            data: { requestid: $('#clearCaseRequestId').val() },
+            type: 'POST',
+            success: function (result) {
+                location.reload();
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
+
+    });
+</script>
+
+<script>
+
+    $('#assignCaseRegion').change(function (event) {
+        event.preventDefault();
+        var region = $('option:selected', this).val();
+
+        $.ajax({
+            url: '/Admin/GetPhysicianByRegion',
+            type: 'POST',
+            data: {
+                regionId: region,
+            },
+            success: function (result) {
+                $('#assignCasePhysician').empty();
+                $('#assignCasePhysician').append($('<option>', {
+                    value: 0,
+                    text: '-- Select Physician --',
+                    selected: true,
+                    disabled: true
+                }));
+                $.each(result, function (index, object) {
+
+                    $('#assignCasePhysician').append($('<option>', {
+                        value: object["physicianId"],
+                        text: object["physicianName"]
+                    }));
+
+                });
+            },
+            error: function (err) {
+                console.error(err);
+            }
+        });
+
+    });
+
+    $('#transferCaseRegion').change(function (event) {
+        event.preventDefault();
+
+        var region = $('option:selected', this).val();
+
+        $.ajax({
+            url: '/Admin/GetPhysicianByRegion',
+            type: 'POST',
+            data: {
+                regionId: region,
+            },
+            success: function (result) {
+                $('#transferCasePhysician').empty();
+                $('#transferCasePhysician').append($('<option>', {
+                    value: 0,
+                    text: '-- Select Physician --',
+                    selected: true,
+                    disabled: true
+                }));
+                $.each(result, function (index, object) {
+
+                    $('#transferCasePhysician').append($('<option>', {
+                        value: object["physicianId"],
+                        text: object["physicianName"]
+                    }));
+
+                });
+            },
+            error: function (err) {
+                console.error(err);
+            }
+        });
+    });
 </script>

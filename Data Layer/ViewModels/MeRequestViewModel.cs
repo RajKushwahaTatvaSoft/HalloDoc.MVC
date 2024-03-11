@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Data_Layer.DataModels;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -23,9 +24,11 @@ namespace Data_Layer.ViewModels
         public string? State { get; set; }
         public string? ZipCode { get; set; }
         public string? RoomSuite { get; set; }
+        public int? RegionId { get; set; }
         public string? Password { get; set; }
         [Compare(nameof(Password), ErrorMessage = "Password and Confirm Password should be same.")]
         public string? ConfirmPassword { get; set; }
         public IFormFile? File { get; set; }
+        public IEnumerable<Region> regions { get; set; }
     }
 }

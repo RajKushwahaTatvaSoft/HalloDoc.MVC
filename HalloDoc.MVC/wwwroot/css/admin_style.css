@@ -379,7 +379,6 @@ x::-webkit-file-upload-button, input[type=file]:after {
     }
 
 .filter-options {
-    height: 30px;
     border-width: 0px;
     border: 1px solid transparent;
 }
@@ -434,6 +433,11 @@ x::-webkit-file-upload-button, input[type=file]:after {
         background-color: #adadad77;
     }
 
+.info-icon-shadow {
+    box-shadow: 0px 0px 1px 2px #faaa04;
+    border-radius: 100%;
+}
+
 
 @media (max-width: 768px) {
 
@@ -447,6 +451,5 @@ x::-webkit-file-upload-button, input[type=file]:after {
 
     .filter-options {
         font-size: 10px;
-        height: 40px;
     }
 }

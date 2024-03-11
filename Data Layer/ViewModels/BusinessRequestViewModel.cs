@@ -1,4 +1,6 @@
-﻿namespace Data_Layer.ViewModels
+﻿using Data_Layer.DataModels;
+
+namespace Data_Layer.ViewModels
 {
     public class BusinessRequestViewModel
     {
@@ -10,5 +12,6 @@
         public string Email { get; set; }
         public string BusinessOrPropertyName { get; set; }
         public string CaseNumber { get; set; }
+        public IEnumerable<Region> regions {  get; set; }
     }
 }

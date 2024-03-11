@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Data_Layer.DataModels;
+using Microsoft.AspNetCore.Http;
 using System.ComponentModel.DataAnnotations;
 
 namespace Data_Layer.ViewModels
@@ -18,18 +19,18 @@ namespace Data_Layer.ViewModels
         public string? Phone { get; set; }
         [Required(ErrorMessage = "Street cannot be empty")]
         public string? Street { get; set; }
-        [Required(ErrorMessage = "City cannot be empty")]
         public string? City { get; set; }
+        public int? RegionId { get; set; }
         [Required(ErrorMessage = "State cannot be empty")]
         public string? State { get; set; }
         [Required(ErrorMessage = "Zip Code cannot be empty")]
         public string? ZipCode { get; set; }
         public string? RoomSuite { get; set; }
-        [Required(ErrorMessage = "Password cannot be empty")]
         [RegularExpression("(?=^.{8,}$)((?=.*\\d)|(?=.*\\W+))(?![.\\n])(?=.*[A-Z])(?=.*[a-z]).*$", ErrorMessage = "Password must contain 1 capital, 1 small, 1 Special symbol and at least 8 characters")]
         public string? Password { get; set; }
         [Compare("Password", ErrorMessage = "Password and Confirm Password should be same.")]
         public string? ConfirmPassword { get; set; }
         public IFormFile? File {  get; set; }
+        public IEnumerable<Region>? regions { get; set; }
     }
 }

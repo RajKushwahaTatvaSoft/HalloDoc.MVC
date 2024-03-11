@@ -8,7 +8,7 @@ using System.Net.Mail;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
-using static Org.BouncyCastle.Math.EC.ECCurve;
+
 
 namespace HalloDoc.MVC.Controllers
 {
@@ -226,7 +226,12 @@ namespace HalloDoc.MVC.Controllers
         //GET
         public IActionResult PatientRequest()
         {
-            return View("Request/PatientRequest");
+            PatientRequestViewModel model = new PatientRequestViewModel()
+            {
+                regions = _unitOfWork.RegionRepository.GetAll(),
+            };
+
+            return View("Request/PatientRequest", model);
         }
         //POST
         [HttpPost]
@@ -237,8 +242,10 @@ namespace HalloDoc.MVC.Controllers
             {
                 string requestIpAddress = GetRequestIP();
                 string phoneNumber = "+" + userViewModel.Countrycode + '-' + userViewModel.Phone;
+                string city = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == userViewModel.RegionId).Name;
 
                 bool isUserExists = _unitOfWork.UserRepository.IsUserWithEmailExists(userViewModel.Email);
+
                 if (!isUserExists)
                 {
                     if (userViewModel.Password != null)
@@ -271,8 +278,9 @@ namespace HalloDoc.MVC.Controllers
                             Email = userViewModel.Email,
                             Mobile = phoneNumber,
                             Street = userViewModel.Street,
-                            City = userViewModel.City,
                             State = userViewModel.State,
+                            Regionid = userViewModel.RegionId,
+                            City = city,
                             Zipcode = userViewModel.ZipCode,
                             Createddate = DateTime.Now,
                             Createdby = generatedId.ToString(),
@@ -315,7 +323,8 @@ namespace HalloDoc.MVC.Controllers
                             Email = userViewModel.Email,
                             Address = userViewModel.Street + " " + userViewModel.City + " " + userViewModel.State + ", " + userViewModel.ZipCode,
                             Street = userViewModel.Street,
-                            City = userViewModel.City,
+                            Regionid = userViewModel.RegionId,
+                            City = city,
                             State = userViewModel.State,
                             Zipcode = userViewModel.ZipCode,
                             Notes = userViewModel.Symptom,
@@ -394,7 +403,8 @@ namespace HalloDoc.MVC.Controllers
                         Email = userViewModel.Email,
                         Address = userViewModel.Street + " " + userViewModel.City + " " + userViewModel.State + ", " + userViewModel.ZipCode,
                         Street = userViewModel.Street,
-                        City = userViewModel.City,
+                        City = city,
+                        Regionid = userViewModel.RegionId,
                         State = userViewModel.State,
                         Zipcode = userViewModel.ZipCode,
                         Notes = userViewModel.Symptom,
@@ -424,14 +434,14 @@ namespace HalloDoc.MVC.Controllers
                         _unitOfWork.Save();
                     }
 
-
                     TempData["success"] = "Request Created Successfully.";
-                    return RedirectToAction("Login");
+                    return RedirectToAction("PatientLogin");
                 }
 
             }
 
-            return View("Request/PatientRequest");
+            userViewModel.regions = _unitOfWork.RegionRepository.GetAll();
+            return View("Request/PatientRequest", userViewModel);
 
         }
 
@@ -467,7 +477,9 @@ namespace HalloDoc.MVC.Controllers
 
         public IActionResult FamilyFriendRequest()
         {
-            return View("Request/FamilyFriendRequest");
+            FamilyFriendRequestViewModel model = new FamilyFriendRequestViewModel();
+            model.regions = _unitOfWork.RegionRepository.GetAll();
+            return View("Request/FamilyFriendRequest", model);
         }
 
         [HttpPost]
@@ -482,6 +494,7 @@ namespace HalloDoc.MVC.Controllers
                 string requestIpAddress = GetRequestIP();
                 string familyNumber = "+" + friendViewModel.Countrycode + '-' + friendViewModel.Phone;
                 string patientNumber = "+" + friendViewModel.patientDetails.Countrycode + '-' + friendViewModel.patientDetails.Phone;
+                string city = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == friendViewModel.patientDetails.RegionId).Name;
 
                 if (!isUserExists)
                 {
@@ -512,7 +525,8 @@ namespace HalloDoc.MVC.Controllers
                         Email = friendViewModel.patientDetails.Email,
                         Mobile = patientNumber,
                         Street = friendViewModel.patientDetails.Street,
-                        City = friendViewModel.patientDetails.City,
+                        City = city,
+                        Regionid = friendViewModel.patientDetails.RegionId,
                         State = friendViewModel.patientDetails.State,
                         Zipcode = friendViewModel.patientDetails.ZipCode,
                         Createddate = DateTime.Now,
@@ -562,7 +576,8 @@ namespace HalloDoc.MVC.Controllers
                         Email = friendViewModel.patientDetails.Email,
                         Address = friendViewModel.patientDetails.Street + " " + friendViewModel.patientDetails.City + " " + friendViewModel.patientDetails.State + ", " + friendViewModel.patientDetails.ZipCode,
                         Street = friendViewModel.patientDetails.Street,
-                        City = friendViewModel.patientDetails.City,
+                        City = city,
+                        Regionid = friendViewModel.patientDetails.RegionId,
                         State = friendViewModel.patientDetails.State,
                         Zipcode = friendViewModel.patientDetails.ZipCode,
                         Notes = friendViewModel.patientDetails.Symptom,
@@ -636,7 +651,8 @@ namespace HalloDoc.MVC.Controllers
                         Email = friendViewModel.patientDetails.Email,
                         Address = friendViewModel.patientDetails.Street + " " + friendViewModel.patientDetails.City + " " + friendViewModel.patientDetails.State + ", " + friendViewModel.patientDetails.ZipCode,
                         Street = friendViewModel.patientDetails.Street,
-                        City = friendViewModel.patientDetails.City,
+                        City = city,
+                        Regionid = friendViewModel.patientDetails.RegionId,
                         State = friendViewModel.patientDetails.State,
                         Zipcode = friendViewModel.patientDetails.ZipCode,
                         Notes = friendViewModel.patientDetails.Symptom,
@@ -677,12 +693,16 @@ namespace HalloDoc.MVC.Controllers
 
             }
 
-            return View("Request/FamilyFriendRequest");
+            friendViewModel.regions = _unitOfWork.RegionRepository.GetAll();
+
+            return View("Request/FamilyFriendRequest", friendViewModel);
         }
 
         public IActionResult ConciergeRequest()
         {
-            return View("Request/ConciergeRequest");
+            ConciergeRequestViewModel model = new ConciergeRequestViewModel();
+            model.regions = _unitOfWork.RegionRepository.GetAll();
+            return View("Request/ConciergeRequest", model);
         }
 
         [HttpPost]
@@ -698,6 +718,7 @@ namespace HalloDoc.MVC.Controllers
                 string requestIpAddress = GetRequestIP();
                 string conciergeNumber = "+" + conciergeViewModel.Countrycode + '-' + conciergeViewModel.Phone;
                 string patientNumber = "+" + conciergeViewModel.patientDetails.Countrycode + '-' + conciergeViewModel.patientDetails.Phone;
+                string city = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == conciergeViewModel.patientDetails.RegionId).Name;
 
                 if (!isUserExists)
                 {
@@ -728,7 +749,8 @@ namespace HalloDoc.MVC.Controllers
                         Email = conciergeViewModel.patientDetails.Email,
                         Mobile = patientNumber,
                         Street = conciergeViewModel.patientDetails.Street,
-                        City = conciergeViewModel.patientDetails.City,
+                        City = city,
+                        Regionid = conciergeViewModel.patientDetails.RegionId,
                         State = conciergeViewModel.patientDetails.State,
                         Zipcode = conciergeViewModel.patientDetails.ZipCode,
                         Createddate = DateTime.Now,
@@ -781,7 +803,8 @@ namespace HalloDoc.MVC.Controllers
                         Email = conciergeViewModel.patientDetails.Email,
                         Address = conciergeViewModel.patientDetails.Street + " " + conciergeViewModel.patientDetails.City + " " + conciergeViewModel.patientDetails.State + ", " + conciergeViewModel.patientDetails.ZipCode,
                         Street = conciergeViewModel.patientDetails.Street,
-                        City = conciergeViewModel.patientDetails.City,
+                        City = city,
+                        Regionid = conciergeViewModel.patientDetails.RegionId,
                         State = conciergeViewModel.patientDetails.State,
                         Zipcode = conciergeViewModel.patientDetails.ZipCode,
                         Notes = conciergeViewModel.patientDetails.Symptom,
@@ -800,7 +823,8 @@ namespace HalloDoc.MVC.Controllers
                         Conciergename = conciergeViewModel.FirstName,
                         Address = conciergeViewModel.HotelOrPropertyName,
                         Street = conciergeViewModel.Street,
-                        City = conciergeViewModel.City,
+                        City = city,
+                        Regionid = conciergeViewModel.patientDetails.RegionId,
                         State = conciergeViewModel.State,
                         Zipcode = conciergeViewModel.ZipCode,
                         Createddate = DateTime.Now,
@@ -860,7 +884,8 @@ namespace HalloDoc.MVC.Controllers
                         Email = conciergeViewModel.patientDetails.Email,
                         Address = conciergeViewModel.patientDetails.Street + " " + conciergeViewModel.patientDetails.City + " " + conciergeViewModel.patientDetails.State + ", " + conciergeViewModel.patientDetails.ZipCode,
                         Street = conciergeViewModel.patientDetails.Street,
-                        City = conciergeViewModel.patientDetails.City,
+                        City = city,
+                        Regionid = conciergeViewModel.patientDetails.RegionId,
                         State = conciergeViewModel.patientDetails.State,
                         Zipcode = conciergeViewModel.patientDetails.ZipCode,
                         Notes = conciergeViewModel.patientDetails.Symptom,
@@ -879,7 +904,8 @@ namespace HalloDoc.MVC.Controllers
                         Conciergename = conciergeViewModel.FirstName,
                         Address = conciergeViewModel.HotelOrPropertyName,
                         Street = conciergeViewModel.Street,
-                        City = conciergeViewModel.City,
+                        City = city,
+                        Regionid = conciergeViewModel.patientDetails.RegionId,
                         State = conciergeViewModel.State,
                         Zipcode = conciergeViewModel.ZipCode,
                         Createddate = DateTime.Now,
@@ -907,12 +933,16 @@ namespace HalloDoc.MVC.Controllers
                 TempData["success"] = "Request Added Successfully.";
                 return View("Index");
             }
-            return View("Request/ConciergeRequest");
+
+            conciergeViewModel.regions = _unitOfWork.RegionRepository.GetAll();
+            return View("Request/ConciergeRequest", conciergeViewModel);
         }
 
         public IActionResult BusinessRequest()
         {
-            return View("Request/BusinessRequest");
+            BusinessRequestViewModel model = new BusinessRequestViewModel();
+            model.regions = _unitOfWork.RegionRepository.GetAll();
+            return View("Request/BusinessRequest", model);
         }
 
         [HttpPost]
@@ -928,6 +958,7 @@ namespace HalloDoc.MVC.Controllers
                 string requestIpAddress = GetRequestIP();
                 string businessNumber = "+" + businessViewModel.Countrycode + '-' + businessViewModel.Phone;
                 string patientNumber = "+" + businessViewModel.patientDetails.Countrycode + '-' + businessViewModel.patientDetails.Phone;
+                string city = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == businessViewModel.patientDetails.RegionId).Name;
 
                 if (!isUserExists)
                 {
@@ -957,7 +988,8 @@ namespace HalloDoc.MVC.Controllers
                         Email = businessViewModel.patientDetails.Email,
                         Mobile = patientNumber,
                         Street = businessViewModel.patientDetails.Street,
-                        City = businessViewModel.patientDetails.City,
+                        City = city,
+                        Regionid = businessViewModel.patientDetails.RegionId,
                         State = businessViewModel.patientDetails.State,
                         Zipcode = businessViewModel.patientDetails.ZipCode,
                         Createddate = DateTime.Now,
@@ -1007,7 +1039,8 @@ namespace HalloDoc.MVC.Controllers
                         Email = businessViewModel.patientDetails.Email,
                         Address = businessViewModel.patientDetails.Street + " " + businessViewModel.patientDetails.City + " " + businessViewModel.patientDetails.State + ", " + businessViewModel.patientDetails.ZipCode,
                         Street = businessViewModel.patientDetails.Street,
-                        City = businessViewModel.patientDetails.City,
+                        City = city,
+                        Regionid = businessViewModel.patientDetails.RegionId,
                         State = businessViewModel.patientDetails.State,
                         Zipcode = businessViewModel.patientDetails.ZipCode,
                         Notes = businessViewModel.patientDetails.Symptom,
@@ -1027,6 +1060,8 @@ namespace HalloDoc.MVC.Controllers
                         Name = businessViewModel.BusinessOrPropertyName,
                         Phonenumber = businessViewModel.Phone,
                         Createddate = DateTime.Now,
+                        City = city,
+                        Regionid = businessViewModel.patientDetails.RegionId,
                         Ip = requestIpAddress,
                     };
 
@@ -1080,7 +1115,8 @@ namespace HalloDoc.MVC.Controllers
                         Email = businessViewModel.patientDetails.Email,
                         Address = businessViewModel.patientDetails.Street + " " + businessViewModel.patientDetails.City + " " + businessViewModel.patientDetails.State + ", " + businessViewModel.patientDetails.ZipCode,
                         Street = businessViewModel.patientDetails.Street,
-                        City = businessViewModel.patientDetails.City,
+                        City = city,
+                        Regionid = businessViewModel.patientDetails.RegionId,
                         State = businessViewModel.patientDetails.State,
                         Zipcode = businessViewModel.patientDetails.ZipCode,
                         Notes = businessViewModel.patientDetails.Symptom,
@@ -1098,6 +1134,8 @@ namespace HalloDoc.MVC.Controllers
                         Name = businessViewModel.BusinessOrPropertyName,
                         Phonenumber = businessViewModel.Phone,
                         Createddate = DateTime.Now,
+                        City = city,
+                        Regionid = businessViewModel.patientDetails.RegionId,
                         Ip = requestIpAddress,
                     };
 
@@ -1119,15 +1157,21 @@ namespace HalloDoc.MVC.Controllers
                 return View("Index");
 
             }
-            return View("Request/BusinessRequest");
+
+            businessViewModel.regions = _unitOfWork.RegionRepository.GetAll();
+            return View("Request/BusinessRequest", businessViewModel);
         }
 
 
-        public static string GenerateConfirmationNumber(User user)
+        public string GenerateConfirmationNumber(User user)
         {
-            string confirmationNumber = "AD" + user.Createddate.Date.ToString("D2") + user.Createddate.Month.ToString("D2") + user.Lastname.Substring(0, 2).ToUpper() + user.Firstname.Substring(0, 2).ToUpper() + "0001";
+            string regionAbbr = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == user.Regionid).Abbreviation;
+
+            DateTime threshold = DateTime.Now - TimeSpan.FromHours(24);
+            int count = _unitOfWork.RequestRepository.Count(req => req.Createddate > threshold);
+
+            string confirmationNumber = regionAbbr + user.Createddate.Date.ToString("D2") + user.Createddate.Month.ToString("D2") + user.Lastname.Substring(0, 2).ToUpper() + user.Firstname.Substring(0, 2).ToUpper() + (count + 1).ToString("D4");
             return confirmationNumber;
         }
-
     }
 }

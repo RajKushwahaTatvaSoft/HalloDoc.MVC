@@ -18,7 +18,7 @@ namespace Business_Layer.Repository
         }
         public bool IsUserWithEmailExists(string email)
         {
-            bool isUserExists = _context.Aspnetusers.Any(u => u.Email == email);
+            bool isUserExists = _context.Users.Any(u => u.Email == email);
 
             return isUserExists;
 

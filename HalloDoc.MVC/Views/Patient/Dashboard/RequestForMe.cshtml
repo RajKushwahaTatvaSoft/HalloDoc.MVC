@@ -82,10 +82,24 @@
                     <input asp-for="Street" type="text" class="form-control " id="floatingInputStreet" placeholder="Street" aria-label="Street">
                     <label class="ms-2 " for="floatingInputStreet">Street</label>
                 </div>
-                <div class="col-lg-4 col-md-6 col-12 form-floating mb-3">
-                    <input asp-for="City" type="text" class="form-control " id="floatingInputCity" placeholder="City" aria-label="City">
-                    <label class="ms-2  " for="floatingInputCity">City</label>
+
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="form-floating mb-3">
+                        <select asp-for="RegionId" class="form-select" id="patientRequestRegion">
+                            <option disabled value="0"> -- select city -- </option>
+
+                            @foreach (var region in Model.regions)
+                            {
+                                <option value="@region.Regionid">@region.Name</option>
+                            }
+
+                        </select>
+                        <label for="patientRequestRegion">City</label>
+                        <span asp-validation-for="RegionId" class="text-danger"></span>
+
+                    </div>
                 </div>
+
                 <div class="col-lg-4 col-md-6 col-12 form-floating mb-3">
                     <input asp-for="State" type="text" class="form-control " id="floatingInputState" placeholder="State" aria-label="State">
                     <label class="ms-2 " for="floatingInputState">State</label>

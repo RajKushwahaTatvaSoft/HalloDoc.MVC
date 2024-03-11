@@ -128,9 +128,10 @@ namespace HalloDoc.MVC.Controllers
                 Phone = user.Mobile,
                 Email = user.Email,
                 Street = user.Street,
-                City = user.City,
                 State = user.State,
                 ZipCode = user.Zipcode,
+                RegionId = user.Regionid,
+                regions = _unitOfWork.RegionRepository.GetAll(),
             };
 
 
@@ -154,6 +155,7 @@ namespace HalloDoc.MVC.Controllers
                 User user = _unitOfWork.UserRepository.GetUserWithID((int)userId);
                 string requestIpAddress = GetRequestIP();
                 string phoneNumber = "+" + meRequestViewModel.Countrycode + '-' + meRequestViewModel.Phone;
+                string city = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == meRequestViewModel.RegionId).Name;
 
                 Request request = new()
                 {
@@ -183,7 +185,8 @@ namespace HalloDoc.MVC.Controllers
                     Phonenumber = phoneNumber,
                     Email = meRequestViewModel.Email,
                     Address = meRequestViewModel.Street,
-                    City = meRequestViewModel.City,
+                    City = city,
+                    Regionid = meRequestViewModel.RegionId,
                     State = meRequestViewModel.State,
                     Zipcode = meRequestViewModel.ZipCode,
                     Notes = meRequestViewModel.Symptom,
@@ -210,10 +213,10 @@ namespace HalloDoc.MVC.Controllers
                     _unitOfWork.Save();
                 }
 
-
                 TempData["success"] = "Request Added Successfully.";
                 return RedirectToAction("Dashboard");
             }
+            meRequestViewModel.regions = _unitOfWork.RegionRepository.GetAll();
             return View("MeRequest");
         }
 
@@ -231,6 +234,7 @@ namespace HalloDoc.MVC.Controllers
             SomeoneElseRequestViewModel model = new()
             {
                 Username = user.Firstname + " " + user.Lastname,
+                regions = _unitOfWork.RegionRepository.GetAll(),
             };
 
             return View("Dashboard/RequestForSomeoneElse", model);
@@ -240,8 +244,7 @@ namespace HalloDoc.MVC.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult RequestForSomeoneElse(SomeoneElseRequestViewModel srvm)
         {
-            var token = Request.Cookies["hallodoc"];
-            
+
             int? userId = HttpContext.Session.GetInt32("userId");
 
             if (userId == null)
@@ -256,6 +259,7 @@ namespace HalloDoc.MVC.Controllers
                 User relationUser = _unitOfWork.UserRepository.GetUserWithID((int)userId);
                 string requestIpAddress = GetRequestIP();
                 string phoneNumber = "+" + srvm.patientDetails.Countrycode + '-' + srvm.patientDetails.Phone;
+                string city = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == srvm.patientDetails.RegionId).Name;
 
                 User user = null;
 
@@ -287,7 +291,8 @@ namespace HalloDoc.MVC.Controllers
                         Email = srvm.patientDetails.Email,
                         Mobile = phoneNumber,
                         Street = srvm.patientDetails.Street,
-                        City = srvm.patientDetails.City,
+                        City = city,
+                        Regionid = srvm.patientDetails.RegionId,
                         State = srvm.patientDetails.State,
                         Zipcode = srvm.patientDetails.ZipCode,
                         Createddate = DateTime.Now,
@@ -332,7 +337,8 @@ namespace HalloDoc.MVC.Controllers
                         Phonenumber = phoneNumber,
                         Email = srvm.patientDetails.Email,
                         Address = srvm.patientDetails.Street,
-                        City = srvm.patientDetails.City,
+                        City = city,
+                        Regionid = srvm.patientDetails.RegionId,
                         State = srvm.patientDetails.State,
                         Zipcode = srvm.patientDetails.ZipCode,
                         Notes = srvm.patientDetails.Symptom,
@@ -393,7 +399,8 @@ namespace HalloDoc.MVC.Controllers
                         Phonenumber = phoneNumber,
                         Email = srvm.patientDetails.Email,
                         Address = srvm.patientDetails.Street,
-                        City = srvm.patientDetails.City,
+                        City = city,
+                        Regionid = srvm.patientDetails.RegionId,
                         State = srvm.patientDetails.State,
                         Zipcode = srvm.patientDetails.ZipCode,
                         Notes = srvm.patientDetails.Symptom,
@@ -428,7 +435,8 @@ namespace HalloDoc.MVC.Controllers
 
             }
 
-            return View("Dashboard/RequestForSomeoneElse");
+            srvm.regions = _unitOfWork.RegionRepository.GetAll();
+            return View("Dashboard/RequestForSomeoneElse",srvm);
         }
 
 
@@ -685,52 +693,13 @@ namespace HalloDoc.MVC.Controllers
 
         }
 
-        public IActionResult ResetPasswordGet(ForgotPasswordViewModel fpvm)
-        {
-            return View("Authentication/ResetPassword", fpvm);
-        }
-
-        //public void JwtTokenCode(string email)
-        //{
-        //    var tokenHandler = new JwtSecurityTokenHandler();
-        //    var key = Encoding.ASCII.GetBytes(_config["Jwt:Key"]);
-        //    var tokenDescriptor = new SecurityTokenDescriptor
-        //    {
-        //        Subject = new ClaimsIdentity(new[] { new Claim("email", email) }),
-        //        Expires = DateTime.UtcNow.AddHours(24),
-        //        Issuer = _config["Jwt:Issuer"],
-        //        SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-        //    };
-        //    var token = tokenHandler.CreateToken(tokenDescriptor);
-        //    var jwtToken = tokenHandler.WriteToken(token);
-
-
-        //    var tokenHandler = new JwtSecurityTokenHandler();
-        //    var key = Encoding.ASCII.GetBytes(_config["Jwt:Key"]);
-
-        //    tokenHandler.ValidateToken(token, new TokenValidationParameters
-        //    {
-        //        ValidateIssuerSigningKey = true,
-        //        IssuerSigningKey = new SymmetricSecurityKey(key),
-        //        ValidateLifetime = true,
-        //        ValidateIssuer = true,
-        //        ValidateAudience = false,
-        //        ValidIssuer = _config["Jwt:Issuer"],
-        //        ClockSkew = TimeSpan.Zero
-        //    }, out SecurityToken validatedToken);
-
-        //    var jwtToken = (JwtSecurityToken)validatedToken;
-        //    var email = jwtToken.Claims.First(x => x.Type == "email").Value;
-        //}
 
         // email token isdeleted createddate aspnetuserid expirydate
-
         [HttpGet]
         public IActionResult ResetPassword(string token)
         {
             try
             {
-
                 if (ValidatePassToken(token, true))
                 {
                     ForgotPasswordViewModel fpvm = new ForgotPasswordViewModel();
@@ -738,7 +707,7 @@ namespace HalloDoc.MVC.Controllers
 
                     fpvm.Email = pass.Email;
 
-                    return ResetPasswordGet(fpvm);
+                    return View("Authentication/ResetPassword", fpvm);
                 }
                 else
                 {
@@ -948,7 +917,12 @@ namespace HalloDoc.MVC.Controllers
         //GET
         public IActionResult PatientRequest()
         {
-            return View("Request/PatientRequest");
+            PatientRequestViewModel model = new PatientRequestViewModel()
+            {
+                regions = _unitOfWork.RegionRepository.GetAll(),
+            };
+
+            return View("Request/PatientRequest",model);
         }
         //POST
         [HttpPost]
@@ -1116,7 +1090,7 @@ namespace HalloDoc.MVC.Controllers
                         Email = userViewModel.Email,
                         Address = userViewModel.Street + " " + userViewModel.City + " " + userViewModel.State + ", " + userViewModel.ZipCode,
                         Street = userViewModel.Street,
-                        City = userViewModel.City,
+                        Regionid = userViewModel.RegionId,
                         State = userViewModel.State,
                         Zipcode = userViewModel.ZipCode,
                         Notes = userViewModel.Symptom,

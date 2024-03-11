@@ -163,6 +163,21 @@ namespace HalloDoc.MVC.Controllers
 
 
         [HttpPost]
+        public JsonArray GetPhysicianByRegion(int regionId)
+        {
+            var result = new JsonArray();
+            IEnumerable<Physician> physicians = _unitOfWork.PhysicianRepository.Where(phy => phy.Regionid == regionId);
+
+            foreach (Physician physician in physicians)
+            {
+                result.Add(new { physicianId = physician.Physicianid, physicianName = physician.Firstname + " " + physician.Lastname });
+            }
+
+            return result;
+        }
+
+
+        [HttpPost]
         public Healthprofessional GetBusinessDetailsById(int vendorId)
         {
             if (vendorId <= 0)
@@ -347,7 +362,7 @@ namespace HalloDoc.MVC.Controllers
         [HttpPost]
         public bool CancelCaseModal(int reason, string notes, int requestid)
         {
-            int adminId = 1;
+            int adminId = (int)HttpContext.Session.GetInt32("adminId");
             try
             {
                 Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestid);
@@ -385,7 +400,7 @@ namespace HalloDoc.MVC.Controllers
         [HttpPost]
         public bool AssignCaseModal(string notes, int requestid, int physicianid)
         {
-            int adminId = 1;
+            int adminId = (int)HttpContext.Session.GetInt32("adminId");
             if (requestid == null || requestid <= 0 || physicianid == null || physicianid <= 0)
             {
                 TempData["error"] = "Error occured while assigning request.";
@@ -425,14 +440,13 @@ namespace HalloDoc.MVC.Controllers
                 return false;
             }
 
-            return false;
 
         }
 
         [HttpPost]
         public bool TransferCaseModal(string notes, int requestid, int physicianid)
         {
-            int adminId = 1;
+            int adminId = (int)HttpContext.Session.GetInt32("adminId");
             if (requestid == null || requestid <= 0 || physicianid == null || physicianid <= 0)
             {
                 TempData["error"] = "Error occured while assigning request.";
@@ -442,6 +456,9 @@ namespace HalloDoc.MVC.Controllers
             {
 
                 Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestid);
+                req.Status = (short)RequestStatus.Accepted;
+                req.Modifieddate = DateTime.Now;
+                req.Physicianid = physicianid;
 
                 Requeststatuslog reqStatusLog = new Requeststatuslog()
                 {
@@ -449,14 +466,9 @@ namespace HalloDoc.MVC.Controllers
                     Status = (short)RequestStatus.Accepted,
                     Adminid = adminId,
                     Notes = notes,
-                    Physicianid = req.Physicianid,
                     Transtophysicianid = physicianid,
                     Createddate = DateTime.Now,
                 };
-
-                req.Status = (short)RequestStatus.Accepted;
-                req.Modifieddate = DateTime.Now;
-                req.Physicianid = physicianid;
 
                 _unitOfWork.RequestRepository.Update(req);
                 _unitOfWork.Save();
@@ -481,7 +493,7 @@ namespace HalloDoc.MVC.Controllers
         [HttpPost]
         public bool BlockCaseModal(string reason, int requestid)
         {
-            int adminId = 1;
+            int adminId = (int)HttpContext.Session.GetInt32("adminId");
             try
             {
                 Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestid);
@@ -529,6 +541,50 @@ namespace HalloDoc.MVC.Controllers
             }
         }
 
+        [HttpPost]
+        public bool ClearCaseModal(int requestid)
+        {
+            int adminId = (int)HttpContext.Session.GetInt32("adminId");
+            if (adminId != null)
+            {
+                try
+                {
+                    Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestid);
+
+                    req.Status = (short)RequestStatus.Clear;
+                    req.Modifieddate = DateTime.Now;
+
+                    Requeststatuslog reqStatusLog = new Requeststatuslog()
+                    {
+                        Requestid = requestid,
+                        Status = (short)RequestStatus.Clear,
+                        Adminid = adminId,
+                        Notes = "Admin cleared this request",
+                        Createddate = DateTime.Now,
+                    };
+
+                    _unitOfWork.RequestRepository.Update(req);
+                    _unitOfWork.Save();
+
+                    _unitOfWork.RequestStatusLogRepository.Add(reqStatusLog);
+                    _unitOfWork.Save();
+
+                    TempData["success"] = "Request Successfully transferred";
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    TempData["error"] = "Error Occured while transferring request.";
+                    return false;
+                }
+            }
+            else
+            {
+                TempData["error"] = "Admin Not Found";
+                return false;
+            }
+        }
+
         public IActionResult ViewCase(int Requestid)
         {
             int adminId = (int)HttpContext.Session.GetInt32("adminId");
@@ -569,32 +625,27 @@ namespace HalloDoc.MVC.Controllers
 
         public int GetDashboardStatus(int requestStatus)
         {
-            if (requestStatus == (int)RequestStatus.Unassigned)
+
+            switch (requestStatus)
             {
-                return (int)DashboardStatus.New;
-            }
-            else if (requestStatus == (int)RequestStatus.Accepted)
-            {
-                return (int)DashboardStatus.Pending;
-            }
-            else if (requestStatus == (int)RequestStatus.MDEnRoute || requestStatus == (int)RequestStatus.MDOnSite)
-            {
-                return (int)DashboardStatus.Active;
-            }
-            else if (requestStatus == (int)RequestStatus.Conclude)
-            {
-                return (int)DashboardStatus.Conclude;
-            }
-            else if (requestStatus == (int)RequestStatus.Cancelled || requestStatus == (int)RequestStatus.Closed || requestStatus == (int)RequestStatus.CancelledByPatient)
-            {
-                return (int)DashboardStatus.ToClose;
-            }
-            else if (requestStatus == (int)RequestStatus.Unpaid)
-            {
-                return (int)DashboardStatus.Unpaid;
+                case (int)RequestStatus.Unassigned:
+                    return (int)DashboardStatus.New;
+                case (int)RequestStatus.Accepted:
+                    return (int)DashboardStatus.Pending;
+                case (int)RequestStatus.MDOnSite:
+                case (int)RequestStatus.MDEnRoute:
+                    return (int)DashboardStatus.Active;
+                case (int)RequestStatus.Conclude:
+                    return (int)DashboardStatus.Conclude;
+                case (int)RequestStatus.Cancelled:
+                case (int)RequestStatus.Closed:
+                case (int)RequestStatus.CancelledByPatient:
+                    return (int)DashboardStatus.ToClose;
+                case (int)RequestStatus.Unpaid:
+                    return (int)DashboardStatus.Unpaid;
+                default: return -1;
             }
 
-            return -1;
         }
 
         [HttpPost]
@@ -632,7 +683,7 @@ namespace HalloDoc.MVC.Controllers
                                                   {
                                                       Status = rsl.Status,
                                                       PhysicianId = rsl.Physicianid,
-                                                      PhysicianName =  "",
+                                                      PhysicianName = "",
                                                       AdminId = rsl.Adminid,
                                                       AdminName = subAdmin.Firstname + " " + subAdmin.Lastname,
                                                       Notes = rsl.Notes,
@@ -810,7 +861,6 @@ namespace HalloDoc.MVC.Controllers
                 uploadsVM.File = null;
 
             }
-
             return ViewUploads(uploadsVM.RequestId);
         }
 

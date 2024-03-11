@@ -1,4 +1,6 @@
-﻿namespace Data_Layer.ViewModels
+﻿using Data_Layer.DataModels;
+
+namespace Data_Layer.ViewModels
 {
     public class ConciergeRequestViewModel
     {
@@ -13,5 +15,6 @@
         public string City { get; set; }
         public string State { get; set; }
         public string ZipCode { get; set; }
+        public IEnumerable<Region> regions { get; set; }
     }
 }

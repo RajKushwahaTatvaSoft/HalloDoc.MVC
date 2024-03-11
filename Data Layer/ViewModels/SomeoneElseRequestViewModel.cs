@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Data_Layer.DataModels;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -13,5 +14,6 @@ namespace Data_Layer.ViewModels
         public string? Username { get; set; }
         public PatientRequestViewModel patientDetails { get; set; }
         public string? Relation { get; set; }
+        public IEnumerable<Region> regions { get; set; }
     }
 }
