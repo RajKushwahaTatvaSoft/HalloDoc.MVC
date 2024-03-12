@@ -262,13 +262,13 @@
                                     {
                                         <li><button data-bs-toggle="modal" data-bs-target="#transferModal" data-id="@Model.adminRequests[i].RequestId" class="dropdown-item transfer-case-btn" type="button">Transfer</button></li>
                                         <li><button data-bs-toggle="modal" data-bs-target="#ClearCaseModal" class="dropdown-item clear-case-btn" data-id="@Model.adminRequests[i].RequestId" type="button">Clear Case</button></li>
-                                        <li><button class="dropdown-item" type="button">Send Agreement</button></li>
+                                        <li><button data-type="@Model.adminRequests[i].RequestType" data-id="@Model.adminRequests[i].RequestId" data-email="@Model.adminRequests[i].Email" data-number="@Model.adminRequests[i].PatientPhone" data-bs-toggle="modal" data-bs-target="#SendAgreementModal" class="send-agreement-btn dropdown-item" type="button">Send Agreement</button></li>
                                     }
                                     @if (dstatus == 3 || dstatus == 4)
                                     {
                                         <li><a asp-controller="Admin" asp-action="Orders" asp-route-requestId="@Model.adminRequests[i].RequestId" class="dropdown-item" type="button">Orders</a></li>
                                         <li><button class="dropdown-item" type="button">Doctors Note</button></li>
-                                        <li><button class="dropdown-item" type="button">Encounter</button></li>
+                                        <li><a asp-controller="Admin" asp-action="EncounterForm" class="dropdown-item" type="button">Encounter</a></li>
                                     }
                                     @if (dstatus == 5)
                                     {
@@ -351,7 +351,7 @@
 
                         </div>
 
-                        <div class="d-flex justify-content-between w-100 m-2 data-bs-toggle="collapse" href="@count" data-bs-target="#@count" >
+                        <div class="d-flex justify-content-between w-100 m-2 data-bs-toggle="collapse" href="@count" data-bs-target="#@count">
                             <div class="fs-5">@Model.adminRequests[i].Address</div>
 
                             <div class="">
@@ -597,6 +597,37 @@
 
     });
 
+
+    $('.send-agreement-btn').click(function () {
+        var Id = $(this).data("id");
+        $('#sendAgreementRequestId').val(Id);
+
+        var phoneNumber = $(this).data("number");
+        $('#sendAgreementNumber').val(phoneNumber);
+
+        var email = $(this).data("email");
+        $('#sendagreementEmail').val(email);
+
+        var type1 = $(this).data("type");
+        console.log(type1);
+
+        if (type1 == 1) {
+            $('#sendtype').text('Business');
+            $('#circle').css('background-color', '#007fc6');
+        } else if (type1 == 2) {
+
+            $('#sendtype').text('Patient');
+            $('#circle').css('background-color', '#5fbc61');
+        } else if (type1 == 3) {
+            $('#sendtype').text('Concierge');
+            $('#circle').css('background-color', '#e26277');
+        } else {
+            $('#sendtype').text('Family/Friends');
+            $('#circle').css('background-color', '#ed9124');
+        }
+
+    });
+
 </script>
 
 <script>
@@ -653,8 +684,10 @@
 
     });
 
-    $('#block-modal-submit-btn').on('click', function (event) {
-        event.preventDefault();
+    $('#block-modal-submit-btn').on('click', function (e) {
+
+        e.preventDefault();
+
         $.ajax({
             url: "/Admin/BlockCaseModal",
             data: { reason: $('#blockCaseModalNotes').val(), requestid: $('#blockCaseRequestId').val() },
@@ -687,6 +720,25 @@
         });
 
     });
+
+    $('#sendAgreement-modal-submit-btn').click(function (e) {
+        e.preventDefault();
+
+        $.ajax({
+            url: "/Admin/SendAgreementMail",
+            data: { phoneNumber: $('#sendAgreementNumber').val(), email: $('#sendagreementEmail').val(), requestid: $('#sendAgreementRequestId').val() },
+            type: 'POST',
+            success: function (result) {
+                location.reload();
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
+
+    });
+
 </script>
 
 <script>
@@ -758,4 +810,5 @@
             }
         });
     });
+
 </script>

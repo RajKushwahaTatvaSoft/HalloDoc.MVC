@@ -8,6 +8,9 @@ using System.Net.Mail;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.EntityFrameworkCore;
+using Data_Layer.ViewModels.Admin;
+using HalloDoc.MVC.Services;
 
 
 namespace HalloDoc.MVC.Controllers
@@ -31,6 +34,69 @@ namespace HalloDoc.MVC.Controllers
             return View();
         }
 
+        // email token isdeleted createddate aspnetuserid expirydate
+        [HttpGet]
+        public IActionResult CreateAccount(string token)
+        {
+            try
+            {
+                if (ValidatePassToken(token, false))
+                {
+                    ForgotPasswordViewModel fpvm = new ForgotPasswordViewModel();
+                    Passtoken pass = _unitOfWork.PassTokenRepository.GetFirstOrDefault(pass => pass.Uniquetoken == token);
+
+                    fpvm.Email = pass.Email;
+
+                    return View("Patient/CreateAccount", fpvm);
+                }
+                else
+                {
+                    return View("Index");
+                }
+
+            }
+            catch (Exception ex)
+            {
+                return Content(ex.Message);
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult CreateAccount(ForgotPasswordViewModel fpvm)
+        {
+
+            Aspnetuser user = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(u => u.Email == fpvm.Email);
+
+            if (user == null)
+            {
+                TempData["error"] = "User doesn't exists. Please try again.";
+                return NotFound("Error");
+            }
+
+            if (ModelState.IsValid)
+            {
+                string passHash = GenerateSHA256(fpvm.Password);
+                user.Passwordhash = passHash;
+                user.Modifieddate = DateTime.Now;
+
+                _unitOfWork.AspNetUserRepository.Update(user);
+                _unitOfWork.Save();
+
+                Passtoken token = _unitOfWork.PassTokenRepository.GetFirstOrDefault(pass => pass.Email == fpvm.Email);
+                token.Isdeleted = true;
+                _unitOfWork.PassTokenRepository.Update(token);
+                _unitOfWork.Save();
+
+                TempData["success"] = "Account Successfully Created.";
+                return RedirectToAction("PatientLogin");
+
+            }
+
+            return View();
+        }
+
+
 
         public void SendMailForCreateAccount(string email)
         {
@@ -46,14 +112,14 @@ namespace HalloDoc.MVC.Controllers
                     Createddate = DateTime.Now,
                     Email = email,
                     Isdeleted = false,
-                    Isresettoken = true,
+                    Isresettoken = false,
                     Uniquetoken = createAccToken,
                 };
 
                 _unitOfWork.PassTokenRepository.Add(passtoken);
                 _unitOfWork.Save();
 
-                var createLink = Url.Action("CreateAccount", "Patient", new { token = createAccToken }, Request.Scheme);
+                var createLink = Url.Action("CreateAccount", "Guest", new { token = createAccToken }, Request.Scheme);
 
                 string senderEmail = _config.GetSection("OutlookSMTP")["Sender"];
                 string senderPassword = _config.GetSection("OutlookSMTP")["Password"];
@@ -151,18 +217,20 @@ namespace HalloDoc.MVC.Controllers
                     UserId = patientUser.Userid,
                     Email = patientUser.Email,
                     RoleId = (int)AllowRole.Patient,
-                    UserName = patientUser.Firstname + (String.IsNullOrEmpty(patientUser.Lastname) ? "" : patientUser.Lastname),
+                    UserName = patientUser.Firstname + (String.IsNullOrEmpty(patientUser.Lastname) ? "" : " " + patientUser.Lastname),
                 };
 
                 var jwtToken = _jwtService.GenerateJwtToken(sessionUser);
                 Response.Cookies.Append("hallodoc", jwtToken);
                 HttpContext.Session.SetInt32("userId", patientUser.Userid);
+
+
                 return RedirectToAction("Dashboard", "Patient");
 
             }
 
             TempData["error"] = "Invalid Username or Password";
-            return View("Patient/PatientLogin");
+            return View("PatientLogin");
 
         }
 
@@ -200,16 +268,13 @@ namespace HalloDoc.MVC.Controllers
                     UserId = adminUser.Adminid,
                     Email = adminUser.Email,
                     RoleId = (int)AllowRole.Admin,
-                    UserName = adminUser.Firstname + (String.IsNullOrEmpty(adminUser.Lastname) ? "" : adminUser.Lastname),
+                    UserName = adminUser.Firstname + (String.IsNullOrEmpty(adminUser.Lastname) ? "" : " " + adminUser.Lastname),
                 };
 
                 TempData["success"] = "Admin Login Successful";
-                HttpContext.Session.SetInt32("adminId", adminUser.Adminid);
-
 
                 var jwtToken = _jwtService.GenerateJwtToken(sessionUser);
                 Response.Cookies.Append("hallodoc", jwtToken);
-                HttpContext.Session.SetInt32("adminId", adminUser.Adminid);
 
                 return RedirectToAction("Dashboard", "Admin");
 
@@ -1162,16 +1227,298 @@ namespace HalloDoc.MVC.Controllers
             return View("Request/BusinessRequest", businessViewModel);
         }
 
+        public IActionResult ReviewAgreement(string requestId)
+        {
+            try
+            {
+                int decryptedId = Convert.ToInt32(EncryptionService.Decrypt(requestId.Trim()));
+
+                Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == decryptedId);
+
+                if (req.Status != (short)RequestStatus.Accepted)
+                {
+                    TempData["error"] = "Request is no longer in pending state.";
+                    return View("Index");
+                }
+
+                Requestclient client = _unitOfWork.RequestClientRepository.GetFirstOrDefault(cli => cli.Requestid == decryptedId);
+
+
+                SendAgreementViewModel model = new()
+                {
+                    requestId = decryptedId,
+                    PatientName = client.Firstname + (String.IsNullOrEmpty(client.Lastname) ? "" : " " + client.Lastname),
+                };
+                return View(model);
+
+            }
+            catch (Exception e)
+            {
+                TempData["error"] = e.Message.ToString();
+                return View("Index");
+            }
+        }
+
+
+        [HttpPost]
+        public bool AcceptAgreement(int requestId)
+        {
+            try
+            {
+
+                Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestId);
+                if (req == null)
+                {
+                    TempData["error"] = "Request not found. Please try again later.";
+                    return false;
+                }
+
+                req.Status = (short)RequestStatus.MDEnRoute;
+                req.Modifieddate = DateTime.Now;
+
+                Requeststatuslog statuslog = new Requeststatuslog()
+                {
+                    Requestid = req.Requestid,
+                    Status = (short)RequestStatus.MDEnRoute,
+                    Notes = "Patient accepted the agreement",
+                    Createddate = DateTime.Now,
+                    Ip = GetRequestIP(),
+                };
+
+                _unitOfWork.RequestStatusLogRepository.Add(statuslog);
+                _unitOfWork.RequestRepository.Update(req);
+
+                _unitOfWork.Save();
+
+                TempData["success"] = "Agreement Accepted Successfully.";
+
+                return true;
+
+            }
+            catch (Exception ex)
+            {
+                TempData["error"] = ex.Message.ToString();
+                return false;
+            }
+        }
+
+        [HttpPost]
+        public bool CancelAgreement(int requestId, string reason)
+        {
+            try
+            {
+                Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestId);
+                if (req == null)
+                {
+                    TempData["error"] = "Request not found. Please try again later.";
+                    return false;
+                }
+
+                req.Status = (short)RequestStatus.CancelledByPatient;
+                req.Modifieddate = DateTime.Now;
+
+                Requeststatuslog statuslog = new Requeststatuslog()
+                {
+                    Requestid = req.Requestid,
+                    Status = (short)RequestStatus.CancelledByPatient,
+                    Notes = reason,
+                    Createddate = DateTime.Now,
+                    Ip = GetRequestIP(),
+                };
+
+                _unitOfWork.RequestStatusLogRepository.Add(statuslog);
+                _unitOfWork.RequestRepository.Update(req);
+
+                _unitOfWork.Save();
+
+                TempData["success"] = "Agreement Cancelled Successfully.";
+                return true;
+
+            }
+            catch (Exception ex)
+            {
+                TempData["error"] = ex.Message.ToString();
+                return false;
+            }
+        }
+
 
         public string GenerateConfirmationNumber(User user)
         {
             string regionAbbr = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == user.Regionid).Abbreviation;
 
-            DateTime threshold = DateTime.Now - TimeSpan.FromHours(24);
-            int count = _unitOfWork.RequestRepository.Count(req => req.Createddate > threshold);
+            DateTime todayStart = DateTime.Now.Date;
+            int count = _unitOfWork.RequestRepository.Count(req => req.Createddate > todayStart);
 
             string confirmationNumber = regionAbbr + user.Createddate.Date.ToString("D2") + user.Createddate.Month.ToString("D2") + user.Lastname.Substring(0, 2).ToUpper() + user.Firstname.Substring(0, 2).ToUpper() + (count + 1).ToString("D4");
             return confirmationNumber;
         }
+
+
+        // email token isdeleted createddate aspnetuserid expirydate
+        [HttpGet]
+        public IActionResult ResetPassword(string token)
+        {
+            try
+            {
+                if (ValidatePassToken(token, true))
+                {
+                    ForgotPasswordViewModel fpvm = new ForgotPasswordViewModel();
+                    Passtoken pass = _unitOfWork.PassTokenRepository.GetFirstOrDefault(pass => pass.Uniquetoken == token);
+
+                    fpvm.Email = pass.Email;
+
+                    return View("Patient/ResetPassword", fpvm);
+                }
+                else
+                {
+                    return View("Index");
+                }
+
+            }
+            catch (Exception ex)
+            {
+                return Content(ex.Message);
+            }
+        }
+
+        private bool ValidatePassToken(string token, bool isResetToken)
+        {
+            if (token == null)
+            {
+                TempData["error"] = "Invalid Token. Cannot Reset Password";
+                return false;
+            }
+
+            Passtoken passtoken = _unitOfWork.PassTokenRepository.GetFirstOrDefault(pass => pass.Uniquetoken == token);
+            if (passtoken == null || passtoken.Isresettoken != isResetToken || passtoken.Isdeleted)
+            {
+                TempData["error"] = "Invalid Token. Cannot Reset Password";
+                return false;
+            }
+
+            TimeSpan diff = DateTime.Now - passtoken.Createddate;
+            if (diff.Hours > 24)
+            {
+                TempData["error"] = "Token Expired. Cannot Reset Password";
+                return false;
+            }
+
+            return true;
+        }
+
+        [HttpPost]
+        public IActionResult ResetPassword(ForgotPasswordViewModel fpvm)
+        {
+            Aspnetuser user = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(u => u.Email == fpvm.Email);
+
+            if (user == null)
+            {
+                TempData["error"] = "User doesn't exists. Please try again.";
+                return NotFound("Error");
+            }
+
+            if (ModelState.IsValid)
+            {
+                string passHash = GenerateSHA256(fpvm.Password);
+                user.Passwordhash = passHash;
+                user.Modifieddate = DateTime.Now;
+
+                _unitOfWork.AspNetUserRepository.Update(user);
+                _unitOfWork.Save();
+
+                Passtoken token = _unitOfWork.PassTokenRepository.GetFirstOrDefault(pass => pass.Email == fpvm.Email);
+                token.Isdeleted = true;
+
+                _unitOfWork.PassTokenRepository.Update(token);
+                _unitOfWork.Save();
+
+                TempData["success"] = "Password Reset Successful";
+                return RedirectToAction("PatientLogin");
+
+            }
+            return View("Patient/ResetPassword");
+        }
+
+        public IActionResult ForgetPassword()
+        {
+            return View("Patient/ForgetPassword");
+        }
+
+        public IActionResult SendMailForForgetPassword(string email)
+        {
+            try
+            {
+                Aspnetuser aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(user => user.Email == email);
+
+                string resetPassToken = Guid.NewGuid().ToString();
+
+                Passtoken passtoken = new Passtoken()
+                {
+                    Aspnetuserid = aspUser.Id,
+                    Createddate = DateTime.Now,
+                    Email = email,
+                    Isdeleted = false,
+                    Isresettoken = true,
+                    Uniquetoken = resetPassToken,
+                };
+
+                _unitOfWork.PassTokenRepository.Add(passtoken);
+                _unitOfWork.Save();
+
+                var resetLink = Url.Action("ResetPassword", "Guest", new { token = resetPassToken }, Request.Scheme);
+
+                string senderEmail = _config.GetSection("OutlookSMTP")["Sender"];
+                string senderPassword = _config.GetSection("OutlookSMTP")["Password"];
+
+                SmtpClient client = new SmtpClient("smtp.office365.com")
+                {
+                    Port = 587,
+                    Credentials = new NetworkCredential(senderEmail, senderPassword),
+                    EnableSsl = true,
+                    DeliveryMethod = SmtpDeliveryMethod.Network,
+                    UseDefaultCredentials = false
+                };
+
+                MailMessage mailMessage = new MailMessage
+                {
+                    From = new MailAddress(senderEmail, "HalloDoc"),
+                    Subject = "Set up your Account",
+                    IsBodyHtml = true,
+                    Body = "<h1>Hello , world!!</h1><a href=\"" + resetLink + "\" >reset pass link</a>",
+                };
+
+                mailMessage.To.Add(email);
+
+                client.Send(mailMessage);
+                TempData["success"] = "Mail sent successfully. Please check " + email + " for reset password link.";
+                return RedirectToAction("ForgetPassword", "Guest");
+            }
+            catch (Exception ex)
+            {
+                TempData["error"] = ex.Message;
+                return RedirectToAction("ForgetPassword", "Guest");
+            }
+
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ForgetPassword(ForgotPasswordViewModel forPasVM)
+        {
+            if (ModelState.IsValid)
+            {
+                bool isUserExists = _unitOfWork.UserRepository.IsUserWithEmailExists(forPasVM.Email);
+                if (isUserExists)
+                {
+                    return SendMailForForgetPassword(forPasVM.Email);
+                }
+            }
+            TempData["error"] = "User doesn't exist.";
+            return View("Patient/ForgetPassword");
+
+        }
+
+
     }
 }

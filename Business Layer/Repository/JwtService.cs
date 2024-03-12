@@ -24,6 +24,7 @@ namespace Business_Layer.Repository
         {
             var claims = new List<Claim> {
                 new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Role, user.RoleId.ToString()),
                 new Claim("roleId", user.RoleId.ToString()),
                 new Claim("userName", user.UserName),
                 new Claim("userId", user.UserId.ToString()),

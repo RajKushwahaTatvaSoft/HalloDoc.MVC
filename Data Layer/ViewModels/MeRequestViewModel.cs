@@ -29,6 +29,6 @@ namespace Data_Layer.ViewModels
         [Compare(nameof(Password), ErrorMessage = "Password and Confirm Password should be same.")]
         public string? ConfirmPassword { get; set; }
         public IFormFile? File { get; set; }
-        public IEnumerable<Region> regions { get; set; }
+        public IEnumerable<Region>? regions { get; set; }
     }
 }

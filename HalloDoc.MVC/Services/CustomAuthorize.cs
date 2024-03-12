@@ -7,10 +7,6 @@ using System.IdentityModel.Tokens.Jwt;
 
 namespace HalloDoc.MVC.Services
 {
-    public class AuthManager
-    {
-    }
-
     public enum AllowRole
     {
         Admin = 1,
@@ -53,9 +49,14 @@ namespace HalloDoc.MVC.Services
             }
 
             var roleClaim = jwtToken.Claims.FirstOrDefault(claims => claims.Type == "roleId");
+            var userIdClaim = jwtToken.Claims.FirstOrDefault(claims => claims.Type == "userId");
+            var userNameClaim = jwtToken.Claims.FirstOrDefault(claims => claims.Type == "userName");
+            context.HttpContext.Request.Headers.Add("userId",userIdClaim.Value);
+            context.HttpContext.Request.Headers.Add("userName",userNameClaim.Value);
 
             if (roleClaim == null)
             {
+                
                 context.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Guest", action = "Index" }));
                 return;
             }

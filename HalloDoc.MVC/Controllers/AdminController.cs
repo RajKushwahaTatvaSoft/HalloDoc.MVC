@@ -93,13 +93,12 @@ namespace HalloDoc.MVC.Controllers
 
         public IActionResult Dashboard()
         {
-            int adminId = (int)HttpContext.Session.GetInt32("adminId");
-            Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(ad => ad.Adminid == adminId);
+            string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
 
             AdminDashboardViewModel model = new AdminDashboardViewModel();
-            if (admin != null)
+            if (adminName != null)
             {
-                model.UserName = admin.Firstname + " " + admin.Lastname;
+                model.UserName = adminName;
             }
 
             model.physicians = _unitOfWork.PhysicianRepository.GetAll();
@@ -192,9 +191,12 @@ namespace HalloDoc.MVC.Controllers
         public IActionResult Orders(int requestId)
         {
 
+            string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+
             SendOrderViewModel model = new SendOrderViewModel();
             model.professionalTypeList = _unitOfWork.HealthProfessionalTypeRepo.GetAll();
             model.RequestId = requestId;
+            model.UserName = adminName;
 
             return View("Action/Orders", model);
         }
@@ -202,7 +204,7 @@ namespace HalloDoc.MVC.Controllers
         [HttpPost]
         public IActionResult Orders(SendOrderViewModel orderViewModel)
         {
-            int adminId = (int)HttpContext.Session.GetInt32("adminId");
+            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
             Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(ad => ad.Adminid == adminId);
 
             if (ModelState.IsValid)
@@ -284,36 +286,6 @@ namespace HalloDoc.MVC.Controllers
             }
         }
 
-        public IActionResult Login()
-        {
-            return View("Authentication/Login");
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult Login(AdminAuthViewModel authModel)
-        {
-            if (ModelState.IsValid)
-            {
-                var passHash = GenerateSHA256(authModel.Password);
-                Aspnetuser user = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(aspnetuser => aspnetuser.Email == authModel.Email && aspnetuser.Passwordhash == passHash);
-
-                if (user != null)
-                {
-                    Admin adminUser = _unitOfWork.AdminRepository.GetFirstOrDefault(u => u.Aspnetuserid == user.Id);
-                    TempData["success"] = "Admin Login Successful";
-                    HttpContext.Session.SetInt32("adminId", adminUser.Adminid);
-                    return RedirectToAction("Dashboard");
-                }
-
-            }
-            TempData["error"] = "Invalid Username or Password";
-
-            return View("Authentication/Login");
-
-        }
-
-
         public async Task<IActionResult> DownloadAllFiles(int requestId)
         {
             try
@@ -362,7 +334,9 @@ namespace HalloDoc.MVC.Controllers
         [HttpPost]
         public bool CancelCaseModal(int reason, string notes, int requestid)
         {
-            int adminId = (int)HttpContext.Session.GetInt32("adminId");
+
+            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+
             try
             {
                 Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestid);
@@ -393,22 +367,22 @@ namespace HalloDoc.MVC.Controllers
                 return false;
             }
 
-            return false;
-
         }
 
         [HttpPost]
         public bool AssignCaseModal(string notes, int requestid, int physicianid)
         {
-            int adminId = (int)HttpContext.Session.GetInt32("adminId");
+
+            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+
             if (requestid == null || requestid <= 0 || physicianid == null || physicianid <= 0)
             {
                 TempData["error"] = "Error occured while assigning request.";
                 return false;
             }
+
             try
             {
-
                 Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestid);
                 req.Status = (short)RequestStatus.Accepted;
                 req.Modifieddate = DateTime.Now;
@@ -446,7 +420,7 @@ namespace HalloDoc.MVC.Controllers
         [HttpPost]
         public bool TransferCaseModal(string notes, int requestid, int physicianid)
         {
-            int adminId = (int)HttpContext.Session.GetInt32("adminId");
+            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
             if (requestid == null || requestid <= 0 || physicianid == null || physicianid <= 0)
             {
                 TempData["error"] = "Error occured while assigning request.";
@@ -486,14 +460,12 @@ namespace HalloDoc.MVC.Controllers
                 return false;
             }
 
-            return false;
-
         }
 
         [HttpPost]
         public bool BlockCaseModal(string reason, int requestid)
         {
-            int adminId = (int)HttpContext.Session.GetInt32("adminId");
+            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
             try
             {
                 Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestid);
@@ -544,7 +516,7 @@ namespace HalloDoc.MVC.Controllers
         [HttpPost]
         public bool ClearCaseModal(int requestid)
         {
-            int adminId = (int)HttpContext.Session.GetInt32("adminId");
+            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
             if (adminId != null)
             {
                 try
@@ -585,10 +557,50 @@ namespace HalloDoc.MVC.Controllers
             }
         }
 
+        public bool SendAgreementMail(string phoneNumber, string email, int requestid)
+        {
+            try
+            {
+                string encryptedId = EncryptionService.Encrypt(requestid.ToString());
+                var agreementLink = Url.Action("ReviewAgreement", "Guest", new { requestId = encryptedId }, Request.Scheme);
+
+                string senderEmail = _config.GetSection("OutlookSMTP")["Sender"];
+                string senderPassword = _config.GetSection("OutlookSMTP")["Password"];
+
+                SmtpClient client = new SmtpClient("smtp.office365.com")
+                {
+                    Port = 587,
+                    Credentials = new NetworkCredential(senderEmail, senderPassword),
+                    EnableSsl = true,
+                    DeliveryMethod = SmtpDeliveryMethod.Network,
+                    UseDefaultCredentials = false
+                };
+
+                MailMessage mailMessage = new MailMessage
+                {
+                    From = new MailAddress(senderEmail, "HalloDoc"),
+                    Subject = "Set up your Account",
+                    IsBodyHtml = true,
+                    Body = "<h1>Hello , Patient!!</h1><p>You can review your agrrement and accept it to go ahead with the medical process, which  sent by the physician. </p><a href=\"" + agreementLink + "\" >Click here to accept agreement</a>",
+
+                };
+
+                mailMessage.To.Add(email);
+
+                client.Send(mailMessage);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+
+        }
+
         public IActionResult ViewCase(int Requestid)
         {
-            int adminId = (int)HttpContext.Session.GetInt32("adminId");
-            Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(ad => ad.Adminid == adminId);
+            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+            string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
 
             if (Requestid == null)
             {
@@ -600,10 +612,8 @@ namespace HalloDoc.MVC.Controllers
 
             ViewCaseViewModel model = new();
 
-            if (admin != null)
-            {
-                model.UserName = admin.Firstname + " " + admin.Lastname;
-            }
+            model.UserName = adminName;
+
 
             string dobDate = client.Intyear + "-" + client.Strmonth + "-" + client.Intdate;
             model.DashboardStatus = GetDashboardStatus(req.Status);
@@ -674,8 +684,10 @@ namespace HalloDoc.MVC.Controllers
         public IActionResult ViewNotes(int Requestid)
         {
 
-            int adminId = (int)HttpContext.Session.GetInt32("adminId");
-            Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(ad => ad.Adminid == adminId);
+            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+            string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+
+
             IEnumerable<TransferNotesLog> logs = (from rsl in _context.Requeststatuslogs
                                                   join a in _context.Admins on rsl.Adminid equals a.Adminid into groupedAdmin
                                                   from subAdmin in groupedAdmin.DefaultIfEmpty()
@@ -694,10 +706,9 @@ namespace HalloDoc.MVC.Controllers
 
             ViewNotesViewModel model = new ViewNotesViewModel();
 
-            if (admin != null)
-            {
-                model.UserName = admin.Firstname + " " + admin.Lastname;
-            }
+            model.UserName = adminName;
+
+
 
             if (notes != null)
             {
@@ -746,14 +757,8 @@ namespace HalloDoc.MVC.Controllers
 
         public IActionResult ViewUploads(int Requestid)
         {
-            int adminId = (int)HttpContext.Session.GetInt32("adminId");
-            Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(ad => ad.Adminid == adminId);
-
-            if (admin == null)
-            {
-                return View("Error");
-            }
-
+            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+            string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
 
             Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == Requestid);
             if (req == null)
@@ -782,7 +787,7 @@ namespace HalloDoc.MVC.Controllers
                 ConfirmationNumber = req.Confirmationnumber,
                 RequestId = req.Requestid,
                 extensions = ext,
-                UserName = admin.Firstname + " " + admin.Lastname
+                UserName = adminName
             };
 
             return View("Action/ViewUploads", model);
@@ -840,7 +845,7 @@ namespace HalloDoc.MVC.Controllers
         [HttpPost]
         public IActionResult ViewUploads(ViewUploadsViewModel uploadsVM)
         {
-            int adminId = (int)HttpContext.Session.GetInt32("adminId");
+            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
 
             if (uploadsVM.File != null)
             {
@@ -921,5 +926,9 @@ namespace HalloDoc.MVC.Controllers
             }
         }
 
+        public IActionResult EncounterForm()
+        {
+            return View("Action/EncounterForm");
+        }
     }
 }

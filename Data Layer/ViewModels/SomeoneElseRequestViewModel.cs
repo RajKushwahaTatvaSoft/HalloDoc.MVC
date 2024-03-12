@@ -14,6 +14,6 @@ namespace Data_Layer.ViewModels
         public string? Username { get; set; }
         public PatientRequestViewModel patientDetails { get; set; }
         public string? Relation { get; set; }
-        public IEnumerable<Region> regions { get; set; }
+        public IEnumerable<Region>? regions { get; set; }
     }
 }

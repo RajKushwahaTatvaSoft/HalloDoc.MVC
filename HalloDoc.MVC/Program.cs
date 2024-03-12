@@ -5,10 +5,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Business_Layer.Interface;
-using Data_Layer.DataModels;
 using Business_Layer.Interface.AdminInterface;
 using Business_Layer.Repository.AdminRepo;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 var builder = WebApplication.CreateBuilder(args);
 

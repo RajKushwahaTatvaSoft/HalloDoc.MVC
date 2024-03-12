@@ -254,6 +254,54 @@
     </div>
 </div>
 
+@* Send Agreement *@
+<div class="modal fade" id="SendAgreementModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog  modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <h5 class="modal-title text-white" id="exampleModalLongTitle">Send Agreement</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex align-items-center">
+                    <div class="border border-1 rounded-circle m-1 " id="circle" style="width: 15px; height:15px;"></div>
+                    <span class="fs-5" id="sendtype"></span>
+                </div>
+                <form>
+                    <div class="">
+                        <input type="text" id="sendAgreementRequestId" hidden />
+                        <span class="modal-head">To send agreement , make sure you are updating the correct email and phone number.</span>
+                        <div class="modal-flex my-3">
+                            <div class="form-floating mt-3">
+                                <div class="mb-3">
+                                    <label for="sendAgreementNumber" class="form-label">Phone number</label>
+                                    <input type="text" class="form-control" id="sendAgreementNumber" />
+
+                                </div>
+
+                            </div>
+                            <div class="mb-3">
+                                <label for="sendagreementEmail" class="form-label">Email address</label>
+                                <input type="email" class="form-control" id="sendagreementEmail" aria-describedby="emailHelp">
+
+                            </div>
+
+
+
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button id="sendAgreement-modal-submit-btn" type="button" class="btn btn-info text-white" data-bs-dismiss="modal">
+                            Send
+                        </button>
+                        <button type="button" class="btn cancel-btn" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="px-4 admin-dashboard">
 
     <!-- status tabs -->
