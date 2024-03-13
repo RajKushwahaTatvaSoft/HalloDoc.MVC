@@ -1,4 +1,6 @@
 ﻿using Business_Layer.Interface;
+using Business_Layer.Interface.TableInterface;
+using Business_Layer.Repository.TableRepo;
 using Data_Layer.DataContext;
 
 namespace Business_Layer.Repository

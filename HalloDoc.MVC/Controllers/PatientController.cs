@@ -9,9 +9,7 @@ using System.Net.Mail;
 using System.Net;
 using Microsoft.CodeAnalysis;
 using Business_Layer.Interface;
-using Business_Layer.Helpers;
 using HalloDoc.MVC.Services;
-using Microsoft.AspNetCore.Authorization;
 
 namespace HalloDoc.MVC.Controllers
 {
@@ -55,22 +53,19 @@ namespace HalloDoc.MVC.Controllers
         Physician = 3
     }
 
-    [CustomAuthorize( (int) AllowRole.Patient)]
+    [CustomAuthorize((int)AllowRole.Patient)]
     public class PatientController : Controller
     {
         private readonly IWebHostEnvironment _environment;
         private readonly IConfiguration _config;
         private readonly IPatientDashboardRepository _dashboardRepo;
-        private readonly IPatientAuthRepository _authRepo;
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IJwtService _jwtService;
 
-        public PatientController(IWebHostEnvironment environment, IConfiguration config, IPatientDashboardRepository patientDashboardRepository, IPatientAuthRepository authRepo, IUnitOfWork unitwork)
+        public PatientController(IWebHostEnvironment environment, IConfiguration config, IPatientDashboardRepository patientDashboardRepository, IUnitOfWork unitwork)
         {
             _environment = environment;
             _config = config;
             _dashboardRepo = patientDashboardRepository;
-            _authRepo = authRepo;
             _unitOfWork = unitwork;
         }
 
@@ -84,25 +79,33 @@ namespace HalloDoc.MVC.Controllers
             return View("Dashboard/PatientDashboardHeader");
         }
 
-        public IActionResult Dashboard()
+        public async Task<IActionResult> Dashboard()
         {
-            int userId = (int) HttpContext.Session.GetInt32("userId");
 
-            var id = HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value;
-            
+            int userId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+            string userName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+
             if (userId == null)
             {
                 return View("Error");
             }
+            var pagedList = await _dashboardRepo.GetPatientRequestsAsync(userId, 1, 5);
 
-            PatientDashboardViewModel model = _dashboardRepo.FetchDashboardDetails((int)userId);
+            PatientDashboardViewModel model = new PatientDashboardViewModel()
+            {
+                UserId = userId,
+                UserName = userName,
+                pagedList = pagedList,
+            };
 
             return View("Dashboard/Dashboard", model);
         }
 
         public IActionResult RequestForMe()
         {
-            int? userId = HttpContext.Session.GetInt32("userId");
+
+            int userId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+
 
             if (userId == null)
             {
@@ -145,7 +148,9 @@ namespace HalloDoc.MVC.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult RequestForMe(MeRequestViewModel meRequestViewModel)
         {
-            int? userId = HttpContext.Session.GetInt32("userId");
+
+            int userId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+
 
             if (userId == null)
             {
@@ -221,12 +226,13 @@ namespace HalloDoc.MVC.Controllers
             }
 
             meRequestViewModel.regions = _unitOfWork.RegionRepository.GetAll();
-            return View("Dashboard/RequestForMe",meRequestViewModel);
+            return View("Dashboard/RequestForMe", meRequestViewModel);
         }
 
         public IActionResult RequestForSomeoneElse()
         {
-            int? userId = HttpContext.Session.GetInt32("userId");
+
+            int userId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
 
             if (userId == null)
             {
@@ -249,7 +255,8 @@ namespace HalloDoc.MVC.Controllers
         public IActionResult RequestForSomeoneElse(SomeoneElseRequestViewModel srvm)
         {
 
-            int? userId = HttpContext.Session.GetInt32("userId");
+
+            int userId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
 
             if (userId == null)
             {
@@ -440,7 +447,7 @@ namespace HalloDoc.MVC.Controllers
             }
 
             srvm.regions = _unitOfWork.RegionRepository.GetAll();
-            return View("Dashboard/RequestForSomeoneElse",srvm);
+            return View("Dashboard/RequestForSomeoneElse", srvm);
         }
 
 
@@ -513,7 +520,9 @@ namespace HalloDoc.MVC.Controllers
 
         public IActionResult ViewDocument(int requestId)
         {
-            int? userId = HttpContext.Session.GetInt32("userId");
+
+            int userId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+            string userName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
 
             if (userId == null || requestId == null)
             {
@@ -563,7 +572,8 @@ namespace HalloDoc.MVC.Controllers
 
         public IActionResult Profile()
         {
-            int? userId = HttpContext.Session.GetInt32("userId");
+
+            int userId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
             User? user = _unitOfWork.UserRepository.GetFirstOrDefault(u => u.Userid == userId);
 
             if (user != null)
@@ -619,7 +629,7 @@ namespace HalloDoc.MVC.Controllers
             Response.Cookies.Delete("hallodoc");
             TempData["success"] = "Logout Successfull";
 
-            return RedirectToAction("PatientLogin","Guest");
+            return RedirectToAction("PatientLogin", "Guest");
         }
 
         public async Task<IActionResult> DownloadAllFiles(int requestId)
@@ -664,37 +674,6 @@ namespace HalloDoc.MVC.Controllers
             {
                 return BadRequest("Error downloading files");
             }
-        }
-
-        // GET
-        public IActionResult Login()
-        {
-            return View("Authentication/Login");
-        }
-
-        // POST
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult Login(Aspnetuser loginUser)
-        {
-            if (ModelState.IsValid)
-            {
-                var passHash = GenerateSHA256(loginUser.Passwordhash);
-                Aspnetuser user = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(aspnetuser => aspnetuser.Username == loginUser.Username && aspnetuser.Passwordhash == passHash);
-
-                if (user != null)
-                {
-                    User patientUser = _unitOfWork.UserRepository.GetFirstOrDefault(u => u.Aspnetuserid == user.Id);
-                    TempData["success"] = "Login Successful";
-                    HttpContext.Session.SetInt32("userId", patientUser.Userid);
-                    return RedirectToAction("Dashboard");
-                }
-
-            }
-            TempData["error"] = "Invalid Username or Password";
-
-            return View("Authentication/Login");
-
         }
 
 

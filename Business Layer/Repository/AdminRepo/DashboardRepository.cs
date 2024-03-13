@@ -1,4 +1,5 @@
 ﻿using Business_Layer.Interface.AdminInterface;
+using Data_Layer.CustomModels;
 using Data_Layer.DataContext;
 using Data_Layer.DataModels;
 using Data_Layer.ViewModels.Admin;
@@ -17,6 +18,7 @@ namespace Business_Layer.Repository.AdminRepo
         Closed = 8,
         Unpaid = 9,
         Clear = 10,
+        Block = 11,
     }
 
     public enum DashboardStatus
@@ -43,6 +45,68 @@ namespace Business_Layer.Repository.AdminRepo
         public DashboardRepository(ApplicationDbContext context)
         {
             _context = context;
+        }
+
+        public async Task<PagedList<AdminRequest>> GetAdminRequestsAsync(DashboardFilter dashboardParams)
+        {
+            int pageNumber = dashboardParams.pageNumber;
+
+            if (dashboardParams.pageNumber < 1)
+            {
+                pageNumber = 1;
+            }
+
+            List<short> validRequestTypes = new List<short>();
+            switch (dashboardParams.status)
+            {
+                case (int)DashboardStatus.New:
+                    validRequestTypes.Add((short)RequestStatus.Unassigned);
+                    break;
+                case (int)DashboardStatus.Pending:
+                    validRequestTypes.Add((short)RequestStatus.Accepted);
+                    break;
+                case (int)DashboardStatus.Active:
+                    validRequestTypes.Add((short)RequestStatus.MDEnRoute);
+                    validRequestTypes.Add((short)RequestStatus.MDOnSite);
+                    break;
+                case (int)DashboardStatus.Conclude:
+                    validRequestTypes.Add((short)RequestStatus.Conclude);
+                    break;
+                case (int)DashboardStatus.ToClose:
+                    validRequestTypes.Add((short)RequestStatus.Cancelled);
+                    validRequestTypes.Add((short)RequestStatus.CancelledByPatient);
+                    validRequestTypes.Add((short)RequestStatus.Closed);
+
+                    break;
+                case (int)DashboardStatus.Unpaid:
+                    validRequestTypes.Add((short)RequestStatus.Unpaid);
+                    break;
+            }
+
+            var query = (from r in _context.Requests
+                         join rc in _context.Requestclients on r.Requestid equals rc.Requestid
+                         where (validRequestTypes.Contains(r.Status))
+                         && (dashboardParams.RequestTypeFilter == 0 || r.Requesttypeid == dashboardParams.RequestTypeFilter)
+                         && (dashboardParams.RegionFilter == 0 || rc.Regionid == dashboardParams.RegionFilter)
+                         && (string.IsNullOrEmpty(dashboardParams.PatientSearchText) || (rc.Firstname + " " + rc.Lastname).ToLower().Contains(dashboardParams.PatientSearchText.ToLower()))
+                         select new AdminRequest
+                         {
+                             RequestId = r.Requestid,
+                             Email = rc.Email,
+                             PatientName = rc.Firstname + " " + rc.Lastname,
+                             DateOfBirth = GetPatientDOB(rc),
+                             RequestType = r.Requesttypeid,
+                             Requestor = GetRequestType(r) + " " + r.Firstname + " " + r.Lastname,
+                             RequestDate = r.Createddate.ToString("MMM dd, yyyy"),
+                             PatientPhone = rc.Phonenumber,
+                             Phone = r.Phonenumber,
+                             Address = rc.Address,
+                             Notes = rc.Notes,
+                         }).AsQueryable();
+
+            return await PagedList<AdminRequest>.CreateAsync(
+            query, pageNumber, dashboardParams.pageSize);
+
         }
 
         public List<AdminRequest> GetAdminRequest(int status, int page, DashboardFilter filters)
@@ -84,7 +148,9 @@ namespace Business_Layer.Repository.AdminRepo
             List<AdminRequest> adminRequests = new List<AdminRequest>();
 
             adminRequests = (from r in _context.Requests
-                             join rc in _context.Requestclients on r.Requestid equals rc.Requestid
+                             join rc in _context.Requestclients on r.Requestid equals rc.Requestid 
+                             join p in _context.Physicians on r.Physicianid equals p.Physicianid into subgroup
+                             from subitem in subgroup.DefaultIfEmpty()
                              where (validRequestTypes.Contains(r.Status))
                              && (filters.RequestTypeFilter == 0 || r.Requesttypeid == filters.RequestTypeFilter)
                              && (filters.RegionFilter == 0 || rc.Regionid == filters.RegionFilter)
@@ -100,6 +166,7 @@ namespace Business_Layer.Repository.AdminRepo
                                  Requestor = GetRequestType(r) + " " + r.Firstname + " " + r.Lastname,
                                  RequestDate = r.Createddate.ToString("MMM dd, yyyy"),
                                  PatientPhone = rc.Phonenumber,
+                                 PhysicianName = subitem.Firstname,
                                  Phone = r.Phonenumber,
                                  Address = rc.Address,
                                  Notes = rc.Notes,

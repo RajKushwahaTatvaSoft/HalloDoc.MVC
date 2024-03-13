@@ -1,4 +1,5 @@
-﻿using Data_Layer.ViewModels.Admin;
+﻿using Data_Layer.CustomModels;
+using Data_Layer.ViewModels.Admin;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,6 +10,6 @@ namespace Business_Layer.Interface.AdminInterface
 {
     public interface IDashboardRepository
     {
-        public List<AdminRequest> GetAdminRequest(int status, int page, DashboardFilter filters);
+        public Task<PagedList<AdminRequest>> GetAdminRequestsAsync(DashboardFilter dashboardParams);
     }
 }

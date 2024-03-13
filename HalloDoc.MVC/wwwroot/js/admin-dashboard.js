@@ -59,13 +59,6 @@ $(".status-tab").click(function () {
 
 $("#status-new-tab").click();
 
-// $("#search-filter").on("keyup", function () {
-//     var value = $(this).val().toLowerCase();
-//     $("#dashboard-table-body tr").filter(function () {
-//         $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
-//     });
-// });
-
 var searchTimer;
 
 $("#search-filter").on("keyup", function () {
@@ -74,7 +67,7 @@ $("#search-filter").on("keyup", function () {
 
     clearTimeout(searchTimer);
     searchTimer = setTimeout(function () {
-        loadPage();
+        applyFilters();
     }, 500);
 
 });
@@ -122,12 +115,19 @@ function applyFilters() {
 
 function loadPage(pageNo) {
 
+    let loading_div = document.getElementById('loading-animation-div');
+    loading_div.setAttribute('style', 'display:static !important;margin-top:200px;');
+
     $.ajax({
         url: "/Admin/PartialTable",
         type: 'POST',
         data: { status: dashboardStatus, page: pageNo, typeFilter: type_filter, searchFilter: search_filter, regionFilter: region_filter },
         success: function (result) {
             $('#partial-table').html(result);
+        },
+        complete: function () {
+            console.log('complete');
+            loading_div.setAttribute('style', 'display:none !important;margin-top:200px;');
         },
         error: function (error) {
             console.log(error);

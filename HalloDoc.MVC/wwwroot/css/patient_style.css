@@ -41,6 +41,64 @@ html, body {
     background-color: white;
 }
 
+
+.pagination .page-item {
+    color: black;
+    float: left;
+    padding: 8px 16px;
+    text-decoration: none;
+    transition: background-color .3s;
+}
+
+    .pagination .page-item.active {
+        background-color: #10bce9;
+        color: white;
+        border-radius: 5px;
+    }
+
+    .pagination .page-item.disabled {
+        background-color: lightgrey;
+        color: white;
+        border-radius: 5px;
+    }
+
+    .pagination .page-item:hover:not(.active) {
+        background-color: #ddd;
+        border-radius: 5px;
+    }
+
+.loading-animation {
+    border: 16px solid #f3f3f3;
+    border-radius: 50%;
+    border-top: 16px solid #10bce9;
+    width: 120px;
+    height: 120px;
+    -webkit-animation: spin 2s linear infinite; /* Safari */
+    animation: spin 2s linear infinite;
+}
+
+/* Safari */
+@-webkit-keyframes spin {
+    0% {
+        -webkit-transform: rotate(0deg);
+    }
+
+    100% {
+        -webkit-transform: rotate(360deg);
+    }
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+
 /* Patient Authentication Screens Css */
 
 .patient-authentication a {

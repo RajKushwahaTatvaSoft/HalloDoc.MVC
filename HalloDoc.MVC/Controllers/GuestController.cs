@@ -222,7 +222,6 @@ namespace HalloDoc.MVC.Controllers
 
                 var jwtToken = _jwtService.GenerateJwtToken(sessionUser);
                 Response.Cookies.Append("hallodoc", jwtToken);
-                HttpContext.Session.SetInt32("userId", patientUser.Userid);
 
 
                 return RedirectToAction("Dashboard", "Patient");

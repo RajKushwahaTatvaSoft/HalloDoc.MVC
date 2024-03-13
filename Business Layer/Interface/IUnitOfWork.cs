@@ -1,4 +1,6 @@
 ﻿
+using Business_Layer.Interface.TableInterface;
+
 namespace Business_Layer.Interface
 {
     public interface IUnitOfWork

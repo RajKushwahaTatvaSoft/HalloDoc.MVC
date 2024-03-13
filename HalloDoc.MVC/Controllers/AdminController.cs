@@ -3,19 +3,16 @@ using Business_Layer.Interface.AdminInterface;
 using Data_Layer.CustomModels;
 using Data_Layer.DataContext;
 using Data_Layer.DataModels;
-using Data_Layer.ViewModels;
 using Data_Layer.ViewModels.Admin;
 using HalloDoc.MVC.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Drawing.Printing;
 using System.IO.Compression;
 using System.Net;
 using System.Net.Mail;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Nodes;
-using static NuGet.Packaging.PackagingConstants;
+
 
 namespace HalloDoc.MVC.Controllers
 {
@@ -64,9 +61,8 @@ namespace HalloDoc.MVC.Controllers
 
 
         [HttpPost]
-        public ActionResult PartialTable(int status, int page, int typeFilter, string searchFilter, int regionFilter)
+        public async Task<ActionResult> PartialTable(int status, int page, int typeFilter, string searchFilter, int regionFilter)
         {
-
             int pageNumber = 1;
             if (page > 0)
             {
@@ -78,12 +74,15 @@ namespace HalloDoc.MVC.Controllers
                 RequestTypeFilter = typeFilter,
                 PatientSearchText = searchFilter,
                 RegionFilter = regionFilter,
+                pageNumber = pageNumber,
+                pageSize = 2,
+                status = status,
             };
 
-            List<AdminRequest> adminRequests = _dashboardRepository.GetAdminRequest(status, pageNumber, filter);
+            PagedList<AdminRequest> pagedList = await _dashboardRepository.GetAdminRequestsAsync(filter);
 
             AdminDashboardViewModel model = new AdminDashboardViewModel();
-            model.adminRequests = adminRequests;
+            model.pagedList = pagedList;
             model.DashboardStatus = status;
             model.CurrentPage = pageNumber;
             model.filterOptions = filter;
@@ -110,6 +109,8 @@ namespace HalloDoc.MVC.Controllers
             model.ToCloseReqCount = _unitOfWork.RequestRepository.Count(r => (r.Status == (short)RequestStatus.Cancelled) || (r.Status == (short)RequestStatus.CancelledByPatient) || (r.Status == (short)RequestStatus.Closed));
             model.UnpaidReqCount = _unitOfWork.RequestRepository.Count(r => r.Status == (short)RequestStatus.Unpaid);
             model.casetags = _unitOfWork.CaseTagRepository.GetAll();
+
+
             return View("Dashboard/Dashboard", model);
 
         }
@@ -561,6 +562,7 @@ namespace HalloDoc.MVC.Controllers
         {
             try
             {
+                
                 string encryptedId = EncryptionService.Encrypt(requestid.ToString());
                 var agreementLink = Url.Action("ReviewAgreement", "Guest", new { requestId = encryptedId }, Request.Scheme);
 

@@ -1,6 +1,6 @@
 ﻿@model AdminDashboardViewModel
 
-<div class="table-responsive mt-3 d-none d-md-block">
+<div class="table-responsive mt-3 d-none d-md-block" style="height:500px">
     <table class="table">
 
         @{
@@ -113,9 +113,10 @@
         </thead>
 
         <tbody class="align-middle" id="dashboard-table-body">
-            @for (int i = 0; i < Model.adminRequests.Count; i++)
+            @for (int i = 0; i < Model.pagedList.Count; i++)
             {
-                int type = Model.adminRequests[i].RequestType;
+                var currentRequest = Model.pagedList[i];
+                int type = currentRequest.RequestType;
 
                 string className = "", phoneTextName = "";
 
@@ -141,8 +142,8 @@
                 <tr class="@className">
                     <td>
                         <div class="d-flex align-items-center justify-content-between">
-                            <span>@Model.adminRequests[i].PatientName</span>
-                            <a href="mailto:@Model.adminRequests[i].Email">
+                            <span>@currentRequest.PatientName</span>
+                            <a href="mailto:@currentRequest.Email">
                                 <div class="white-border-btn p-1">
                                     <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 0 24 24"
                                          width="20px" fill="#FFFFFF">
@@ -155,50 +156,50 @@
                     </td>
                     @if (dstatus != 6)
                     {
-                        <td>@Model.adminRequests[i].DateOfBirth</td>
+                        <td>@currentRequest.DateOfBirth</td>
                     }
                     @if (dstatus == 1 || dstatus == 2 || dstatus == 3)
                     {
-                        <td>@Model.adminRequests[i].Requestor</td>
+                        <td>@currentRequest.Requestor</td>
                     }
                     @if (dstatus == 5)
                     {
-                        <td>@Model.adminRequests[i].RegionName</td>
+                        <td>@currentRequest.RegionName</td>
                     }
                     @if (dstatus != 1)
                     {
-                        <td>@Model.adminRequests[i].PhysicianName</td>
-                        <td>@Model.adminRequests[i].DateOfService</td>
+                        <td>@currentRequest.PhysicianName</td>
+                        <td>@currentRequest.DateOfService</td>
                     }
                     @if (dstatus == 1)
                     {
-                        <td>@Model.adminRequests[i].RequestDate</td>
+                        <td>@currentRequest.RequestDate</td>
                     }
                     @if (dstatus != 5)
                     {
                         <td>
-                            <a style="text-decoration:none; color: white;" href="tel:@Model.adminRequests[i].PatientPhone">
+                            <a style="text-decoration:none; color: white;" href="tel:@currentRequest.PatientPhone">
                                 <div class="white-border-btn px-2 py-1 align-items-center d-flex">
                                     <svg xmlns="http://www.w3.org/2000/svg" height="15px" viewBox="0 0 24 24" width="15px"
                                          fill="white">
                                         <path d="M0 0h24v24H0V0z" fill="none" />
                                         <path d="M6.54 5c.06.89.21 1.76.45 2.59l-1.2 1.2c-.41-1.2-.67-2.47-.76-3.79h1.51m9.86 12.02c.85.24 1.72.39 2.6.45v1.49c-1.32-.09-2.59-.35-3.8-.75l1.2-1.19M7.5 3H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.49c0-.55-.45-1-1-1-1.24 0-2.45-.2-3.57-.57-.1-.04-.21-.05-.31-.05-.26 0-.51.1-.71.29l-2.2 2.2c-2.83-1.45-5.15-3.76-6.59-6.59l2.2-2.2c.28-.28.36-.67.25-1.02C8.7 6.45 8.5 5.25 8.5 4c0-.55-.45-1-1-1z" />
                                     </svg>
-                                    <span class="ms-1">@Model.adminRequests[i].PatientPhone</span>
+                                    <span class="ms-1">@currentRequest.PatientPhone</span>
                                 </div>
                                 <div>(Patient)</div>
                             </a>
 
                             @if (type != 2)
                             {
-                                <a style="text-decoration:none; color: white;" href="tel:@Model.adminRequests[i].PatientPhone">
+                                <a style="text-decoration:none; color: white;" href="tel:@currentRequest.PatientPhone">
                                     <div class="white-border-btn px-2 py-1 align-items-center d-flex">
                                         <svg xmlns="http://www.w3.org/2000/svg" height="15px" viewBox="0 0 24 24" width="15px"
                                              fill="white">
                                             <path d="M0 0h24v24H0V0z" fill="none" />
                                             <path d="M6.54 5c.06.89.21 1.76.45 2.59l-1.2 1.2c-.41-1.2-.67-2.47-.76-3.79h1.51m9.86 12.02c.85.24 1.72.39 2.6.45v1.49c-1.32-.09-2.59-.35-3.8-.75l1.2-1.19M7.5 3H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.49c0-.55-.45-1-1-1-1.24 0-2.45-.2-3.57-.57-.1-.04-.21-.05-.31-.05-.26 0-.51.1-.71.29l-2.2 2.2c-2.83-1.45-5.15-3.76-6.59-6.59l2.2-2.2c.28-.28.36-.67.25-1.02C8.7 6.45 8.5 5.25 8.5 4c0-.55-.45-1-1-1z" />
                                         </svg>
-                                        <span class="ms-1">@Model.adminRequests[i].Phone</span>
+                                        <span class="ms-1">@currentRequest.Phone</span>
                                     </div>
                                     <div>(@phoneTextName)</div>
                                 </a>
@@ -206,10 +207,10 @@
 
                         </td>
                     }
-                    <td>@Model.adminRequests[i].Address</td>
+                    <td>@currentRequest.Address</td>
                     @if (dstatus != 4 && dstatus != 6)
                     {
-                        <td>@Model.adminRequests[i].Notes</td>
+                        <td>@currentRequest.Notes</td>
                     }
                     <td>
 
@@ -246,33 +247,33 @@
                                 <ul class="dropdown-menu" aria-labelledby="dropdownMenu2">
                                     @if (dstatus == 1)
                                     {
-                                        <li><button data-bs-toggle="modal" data-bs-target="#assignModal" class="dropdown-item assign-case-btn" data-id="@Model.adminRequests[i].RequestId" type="button">Assign Case</button></li>
-                                        <li><button class="dropdown-item cancel-case-btn" type="button" data-name="@Model.adminRequests[i].PatientName" data-id="@Model.adminRequests[i].RequestId" data-bs-target="#cancelModal" data-bs-toggle="modal">Cancel Case</button></li>
-                                        <li><a asp-controller="Admin" asp-action="ViewCase" asp-route-Requestid="@Model.adminRequests[i].RequestId" class="dropdown-item">View Case</a></li>
-                                        <li><a asp-controller="Admin" asp-action="ViewNotes" asp-route-Requestid="@Model.adminRequests[i].RequestId" class="dropdown-item" type="button">View Notes</a></li>
-                                        <li><button class="dropdown-item block-patient-btn" data-name="@Model.adminRequests[i].PatientName" data-id="@Model.adminRequests[i].RequestId" type="button" data-bs-toggle="modal" data-bs-target="#blockModal">Block Patient</button></li>
+                                        <li><button data-bs-toggle="modal" data-bs-target="#assignModal" class="dropdown-item assign-case-btn" data-id="@currentRequest.RequestId" type="button">Assign Case</button></li>
+                                        <li><button class="dropdown-item cancel-case-btn" type="button" data-name="@currentRequest.PatientName" data-id="@currentRequest.RequestId" data-bs-target="#cancelModal" data-bs-toggle="modal">Cancel Case</button></li>
+                                        <li><a asp-controller="Admin" asp-action="ViewCase" asp-route-Requestid="@currentRequest.RequestId" class="dropdown-item">View Case</a></li>
+                                        <li><a asp-controller="Admin" asp-action="ViewNotes" asp-route-Requestid="@currentRequest.RequestId" class="dropdown-item" type="button">View Notes</a></li>
+                                        <li><button class="dropdown-item block-patient-btn" data-name="@currentRequest.PatientName" data-id="@currentRequest.RequestId" type="button" data-bs-toggle="modal" data-bs-target="#blockModal">Block Patient</button></li>
                                     }
                                     else
                                     {
-                                        <li><a asp-controller="Admin" asp-action="ViewCase" asp-route-Requestid="@Model.adminRequests[i].RequestId" class="dropdown-item">View Case</a></li>
-                                        <li><a asp-controller="Admin" asp-action="ViewUploads" asp-route-Requestid="@Model.adminRequests[i].RequestId" class="dropdown-item" type="button">View Uploads</a></li>
-                                        <li><a asp-controller="Admin" asp-action="ViewNotes" asp-route-Requestid="@Model.adminRequests[i].RequestId" class="dropdown-item" type="button">View Notes</a></li>
+                                        <li><a asp-controller="Admin" asp-action="ViewCase" asp-route-Requestid="@currentRequest.RequestId" class="dropdown-item">View Case</a></li>
+                                        <li><a asp-controller="Admin" asp-action="ViewUploads" asp-route-Requestid="@currentRequest.RequestId" class="dropdown-item" type="button">View Uploads</a></li>
+                                        <li><a asp-controller="Admin" asp-action="ViewNotes" asp-route-Requestid="@currentRequest.RequestId" class="dropdown-item" type="button">View Notes</a></li>
                                     }
                                     @if (dstatus == 2)
                                     {
-                                        <li><button data-bs-toggle="modal" data-bs-target="#transferModal" data-id="@Model.adminRequests[i].RequestId" class="dropdown-item transfer-case-btn" type="button">Transfer</button></li>
-                                        <li><button data-bs-toggle="modal" data-bs-target="#ClearCaseModal" class="dropdown-item clear-case-btn" data-id="@Model.adminRequests[i].RequestId" type="button">Clear Case</button></li>
-                                        <li><button data-type="@Model.adminRequests[i].RequestType" data-id="@Model.adminRequests[i].RequestId" data-email="@Model.adminRequests[i].Email" data-number="@Model.adminRequests[i].PatientPhone" data-bs-toggle="modal" data-bs-target="#SendAgreementModal" class="send-agreement-btn dropdown-item" type="button">Send Agreement</button></li>
+                                        <li><button data-bs-toggle="modal" data-bs-target="#transferModal" data-id="@currentRequest.RequestId" class="dropdown-item transfer-case-btn" type="button">Transfer</button></li>
+                                        <li><button data-bs-toggle="modal" data-bs-target="#ClearCaseModal" class="dropdown-item clear-case-btn" data-id="@currentRequest.RequestId" type="button">Clear Case</button></li>
+                                        <li><button data-type="@currentRequest.RequestType" data-id="@currentRequest.RequestId" data-email="@currentRequest.Email" data-number="@currentRequest.PatientPhone" data-bs-toggle="modal" data-bs-target="#SendAgreementModal" class="send-agreement-btn dropdown-item" type="button">Send Agreement</button></li>
                                     }
                                     @if (dstatus == 3 || dstatus == 4)
                                     {
-                                        <li><a asp-controller="Admin" asp-action="Orders" asp-route-requestId="@Model.adminRequests[i].RequestId" class="dropdown-item" type="button">Orders</a></li>
+                                        <li><a asp-controller="Admin" asp-action="Orders" asp-route-requestId="@currentRequest.RequestId" class="dropdown-item" type="button">Orders</a></li>
                                         <li><button class="dropdown-item" type="button">Doctors Note</button></li>
                                         <li><a asp-controller="Admin" asp-action="EncounterForm" class="dropdown-item" type="button">Encounter</a></li>
                                     }
                                     @if (dstatus == 5)
                                     {
-                                        <li><a asp-controller="Admin" asp-action="Orders" asp-route-requestId="@Model.adminRequests[i].RequestId" class="dropdown-item" type="button">Orders</a></li>
+                                        <li><a asp-controller="Admin" asp-action="Orders" asp-route-requestId="@currentRequest.RequestId" class="dropdown-item" type="button">Orders</a></li>
                                         <li><button class="dropdown-item" type="button">Close Case</button></li>
                                         <li><button class="dropdown-item" type="button">Doctors Note</button></li>
                                         <li><button class="dropdown-item" type="button">Clear Case</button></li>
@@ -292,9 +293,9 @@
 </div>
 
 <div class="col-12 mx-2 mt-1 d-md-none " style="background-color:#ebfafd">
-    @for (int i = 0; i < Model.adminRequests.Count; i++)
+    @for (int i = 0; i < Model.pagedList.Count; i++)
     {
-
+        var currentRequest = Model.pagedList[i];
         string count = "hi" + i.ToString();
 
 
@@ -306,9 +307,9 @@
 
 
                         <div class="d-flex justify-content-between w-100 m-2 ">
-                            <div class="fs-5">@Model.adminRequests[i].PatientName</div>
+                            <div class="fs-5">@currentRequest.PatientName</div>
                             @{
-                                int type = Model.adminRequests[i].RequestType;
+                                int type = currentRequest.RequestType;
                             }
                             @if (type == 2)
                             {
@@ -352,7 +353,7 @@
                         </div>
 
                         <div class="d-flex justify-content-between w-100 m-2 data-bs-toggle="collapse" href="@count" data-bs-target="#@count">
-                            <div class="fs-5">@Model.adminRequests[i].Address</div>
+                            <div class="fs-5">@currentRequest.Address</div>
 
                             <div class="">
                                 <a class="btn btn-outline-info fw-bold mt-0 mb-3 me-2">
@@ -378,7 +379,7 @@
 
                         </div>
                         <div class="d-flex m-2">
-                            <a asp-controller="Admin" asp-action="ViewCase" asp-route-RequestID="@Model.adminRequests[i].RequestId" class="btn rounded-pill" style="border:2px solid black;">View Case</a>
+                            <a asp-controller="Admin" asp-action="ViewCase" asp-route-RequestID="@currentRequest.RequestId" class="btn rounded-pill" style="border:2px solid black;">View Case</a>
                         </div>
 
 
@@ -397,7 +398,7 @@
                             <svg class="ms-2" xmlns="http://www.w3.org/2000/svg" height="24" fill="#01bce9" viewBox="0 -960 960 960" width="24"><path d="M200-80q-33 0-56.5-23.5T120-160v-560q0-33 23.5-56.5T200-800h40v-80h80v80h320v-80h80v80h40q33 0 56.5 23.5T840-720v560q0 33-23.5 56.5T760-80H200Zm0-80h560v-400H200v400Zm0-480h560v-80H200v80Zm0 0v-80 80Zm280 240q-17 0-28.5-11.5T440-440q0-17 11.5-28.5T480-480q17 0 28.5 11.5T520-440q0 17-11.5 28.5T480-400Zm-160 0q-17 0-28.5-11.5T280-440q0-17 11.5-28.5T320-480q17 0 28.5 11.5T360-440q0 17-11.5 28.5T320-400Zm320 0q-17 0-28.5-11.5T600-440q0-17 11.5-28.5T640-480q17 0 28.5 11.5T680-440q0 17-11.5 28.5T640-400ZM480-240q-17 0-28.5-11.5T440-280q0-17 11.5-28.5T480-320q17 0 28.5 11.5T520-280q0 17-11.5 28.5T480-240Zm-160 0q-17 0-28.5-11.5T280-280q0-17 11.5-28.5T320-320q17 0 28.5 11.5T360-280q0 17-11.5 28.5T320-240Zm320 0q-17 0-28.5-11.5T600-280q0-17 11.5-28.5T640-320q17 0 28.5 11.5T680-280q0 17-11.5 28.5T640-240Z" /></svg>
 
                             <div class="ms-1">
-                                Date of birth : @Model.adminRequests[i].DateOfBirth
+                                Date of birth : @currentRequest.DateOfBirth
                             </div>
                         </div>
                     }
@@ -405,7 +406,7 @@
                         <svg class="ms-2" xmlns="http://www.w3.org/2000/svg" height="24" fill="#01bce9" viewBox="0 -960 960 960" width="24"><path d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm640-480L501-453q-5 3-10.5 4.5T480-447q-5 0-10.5-1.5T459-453L160-640v400h640v-400ZM480-520l320-200H160l320 200ZM160-640v10-59 1-32 32-.5 58.5-10 400-400Z" /></svg>
 
                         <div class="ms-1">
-                            Email : @Model.adminRequests[i].Email
+                            Email : @currentRequest.Email
                         </div>
                     </div>
 
@@ -416,7 +417,7 @@
                             <svg class="ms-2" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" fill="#01bce9" width="24"><path d="M798-120q-125 0-247-54.5T329-329Q229-429 174.5-551T120-798q0-18 12-30t30-12h162q14 0 25 9.5t13 22.5l26 140q2 16-1 27t-11 19l-97 98q20 37 47.5 71.5T387-386q31 31 65 57.5t72 48.5l94-94q9-9 23.5-13.5T670-390l138 28q14 4 23 14.5t9 23.5v162q0 18-12 30t-30 12ZM241-600l66-66-17-94h-89q5 41 14 81t26 79Zm358 358q39 17 79.5 27t81.5 13v-88l-94-19-67 67ZM241-600Zm358 358Z" /></svg>
 
                             <div class="ms-1">
-                                Patient : @Model.adminRequests[i].PatientPhone;
+                                Patient : @currentRequest.PatientPhone;
                             </div>
                         </div>
                     }
@@ -426,7 +427,7 @@
                             <svg class="ms-2" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" fill="#01bce9" width="24"><path d="M798-120q-125 0-247-54.5T329-329Q229-429 174.5-551T120-798q0-18 12-30t30-12h162q14 0 25 9.5t13 22.5l26 140q2 16-1 27t-11 19l-97 98q20 37 47.5 71.5T387-386q31 31 65 57.5t72 48.5l94-94q9-9 23.5-13.5T670-390l138 28q14 4 23 14.5t9 23.5v162q0 18-12 30t-30 12ZM241-600l66-66-17-94h-89q5 41 14 81t26 79Zm358 358q39 17 79.5 27t81.5 13v-88l-94-19-67 67ZM241-600Zm358 358Z" /></svg>
 
                             <div class="ms-1">
-                                Transfer :Admin transferred to  @Model.adminRequests[i].PhysicianName on @Model.adminRequests[i].RequestDate
+                                Transfer :Admin transferred to  @currentRequest.PhysicianName on @currentRequest.RequestDate
                             </div>
                         </div>
                     }
@@ -435,7 +436,7 @@
                         <div class="d-flex mt-3">
                             <svg class="ms-2" xmlns="http://www.w3.org/2000/svg" height="24" fill="#01bce9" viewBox="0 -960 960 960" width="24"><path d="M200-80q-33 0-56.5-23.5T120-160v-560q0-33 23.5-56.5T200-800h40v-80h80v80h320v-80h80v80h40q33 0 56.5 23.5T840-720v560q0 33-23.5 56.5T760-80H200Zm0-80h560v-400H200v400Zm0-480h560v-80H200v80Zm0 0v-80 80Zm280 240q-17 0-28.5-11.5T440-440q0-17 11.5-28.5T480-480q17 0 28.5 11.5T520-440q0 17-11.5 28.5T480-400Zm-160 0q-17 0-28.5-11.5T280-440q0-17 11.5-28.5T320-480q17 0 28.5 11.5T360-440q0 17-11.5 28.5T320-400Zm320 0q-17 0-28.5-11.5T600-440q0-17 11.5-28.5T640-480q17 0 28.5 11.5T680-440q0 17-11.5 28.5T640-400ZM480-240q-17 0-28.5-11.5T440-280q0-17 11.5-28.5T480-320q17 0 28.5 11.5T520-280q0 17-11.5 28.5T480-240Zm-160 0q-17 0-28.5-11.5T280-280q0-17 11.5-28.5T320-320q17 0 28.5 11.5T360-280q0 17-11.5 28.5T320-240Zm320 0q-17 0-28.5-11.5T600-280q0-17 11.5-28.5T640-320q17 0 28.5 11.5T680-280q0 17-11.5 28.5T640-240Z" /></svg>
                             <div class="ms-1">
-                                Date of Service :@Model.adminRequests[i].DateOfService  ;
+                                Date of Service :@currentRequest.DateOfService  ;
                             </div>
                         </div>
 
@@ -445,7 +446,7 @@
                         <div class="d-flex mt-3">
                             <svg class="ms-2" xmlns="http://www.w3.org/2000/svg" height="24" fill="#01bce9" viewBox="0 -960 960 960" width="24"><path d="M480-480q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47ZM160-240v-32q0-34 17.5-62.5T224-378q62-31 126-46.5T480-440q66 0 130 15.5T736-378q29 15 46.5 43.5T800-272v32q0 33-23.5 56.5T720-160H240q-33 0-56.5-23.5T160-240Zm80 0h480v-32q0-11-5.5-20T700-306q-54-27-109-40.5T480-360q-56 0-111 13.5T260-306q-9 5-14.5 14t-5.5 20v32Zm240-320q33 0 56.5-23.5T560-640q0-33-23.5-56.5T480-720q-33 0-56.5 23.5T400-640q0 33 23.5 56.5T480-560Zm0-80Zm0 400Z" /></svg>
                             <div class="ms-1">
-                                Physician :@Model.adminRequests[i].PhysicianName  ;
+                                Physician :@currentRequest.PhysicianName  ;
                             </div>
                         </div>
 
@@ -455,7 +456,7 @@
                         <div class="d-flex mt-3">
                             <svg class="ms-2" xmlns="http://www.w3.org/2000/svg" height="24" fill="#01bce9" viewBox="0 -960 960 960" width="24"><path d="M480-480q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47ZM160-240v-32q0-34 17.5-62.5T224-378q62-31 126-46.5T480-440q66 0 130 15.5T736-378q29 15 46.5 43.5T800-272v32q0 33-23.5 56.5T720-160H240q-33 0-56.5-23.5T160-240Zm80 0h480v-32q0-11-5.5-20T700-306q-54-27-109-40.5T480-360q-56 0-111 13.5T260-306q-9 5-14.5 14t-5.5 20v32Zm240-320q33 0 56.5-23.5T560-640q0-33-23.5-56.5T480-720q-33 0-56.5 23.5T400-640q0 33 23.5 56.5T480-560Zm0-80Zm0 400Z" /></svg>
                             <div class="ms-1">
-                                Requestor  :@Model.adminRequests[i].Requestor;
+                                Requestor  :@currentRequest.Requestor;
                             </div>
                         </div>
 
@@ -465,7 +466,7 @@
                         <div class="d-flex mt-3">
                             <svg xmlns="http://www.w3.org/2000/svg" height="24" fill="#01bce9" viewBox="0 -960 960 960" width="24"><path d="M480-480q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47ZM160-240v-32q0-34 17.5-62.5T224-378q62-31 126-46.5T480-440q66 0 130 15.5T736-378q29 15 46.5 43.5T800-272v32q0 33-23.5 56.5T720-160H240q-33 0-56.5-23.5T160-240Zm80 0h480v-32q0-11-5.5-20T700-306q-54-27-109-40.5T480-360q-56 0-111 13.5T260-306q-9 5-14.5 14t-5.5 20v32Zm240-320q33 0 56.5-23.5T560-640q0-33-23.5-56.5T480-720q-33 0-56.5 23.5T400-640q0 33 23.5 56.5T480-560Zm0-80Zm0 400Z" /></svg>
                             <div class="ms-1">
-                                Region  :@Model.adminRequests[i].RegionName;
+                                Region  :@currentRequest.RegionName;
                             </div>
                         </div>
                     }
@@ -479,10 +480,10 @@
                             <button data-bs-toggle="modal" data-bs-target="#AssignModal" class="btn w-100 btn-outline-light rounded-pill  " style="background-color:orchid">Assign Case</button>
                         </div>
                         <div class="col-6  ">
-                            <button data-bs-toggle="modal" data-id="@Model.adminRequests[i].RequestId" data-name="@Model.adminRequests[i].PatientName" data-bs-target="#cancelModal" class="cancel-case-btn btn w-100 btn-danger btn-outline-danger  btn-outline-light rounded-pill">Cancel case</button>
+                            <button data-bs-toggle="modal" data-id="@currentRequest.RequestId" data-name="@currentRequest.PatientName" data-bs-target="#cancelModal" class="cancel-case-btn btn w-100 btn-danger btn-outline-danger  btn-outline-light rounded-pill">Cancel case</button>
                         </div>
                         <div class="col-6  ">
-                            <button data-bs-toggle="modal" data-name="@Model.adminRequests[i].PatientName" data-id="@Model.adminRequests[i].RequestId" data-bs-target="#BlockModal" class="block-patient-btn btn w-100 btn-danger btn-outline-danger  btn-outline-light rounded-pill">Block Patient</button>
+                            <button data-bs-toggle="modal" data-name="@currentRequest.PatientName" data-id="@currentRequest.RequestId" data-bs-target="#BlockModal" class="block-patient-btn btn w-100 btn-danger btn-outline-danger  btn-outline-light rounded-pill">Block Patient</button>
                         </div>
                     }
                     @if (dstatus == 2)
@@ -492,7 +493,7 @@
                         </div>
 
                         <div class="col-6 ">
-                            <button data-bs-toggle="modal" data-id="@Model.adminRequests[i].RequestId" data-bs-target="#transferModal" class="transfer-btn btn w-100 btn-info btn-outline-info btn-outline-light rounded-pill">Transfer</button>
+                            <button data-bs-toggle="modal" data-id="@currentRequest.RequestId" data-bs-target="#transferModal" class="transfer-btn btn w-100 btn-info btn-outline-info btn-outline-light rounded-pill">Transfer</button>
                         </div>
                     }
                     @if (dstatus == 5)
@@ -504,13 +505,13 @@
 
                     }
                     <div class="col-6 ">
-                        <a asp-controller="Admin" asp-action="ViewNotes" asp-route-RequestID="@Model.adminRequests[i].RequestId" class="btn w-100 btn-success btn-outline-success btn-outline-light rounded-pill">View Notes</a>
+                        <a asp-controller="Admin" asp-action="ViewNotes" asp-route-RequestID="@currentRequest.RequestId" class="btn w-100 btn-success btn-outline-success btn-outline-light rounded-pill">View Notes</a>
                     </div>
                     @if (dstatus == 3 || dstatus == 4)
                     {
 
                         <div class="col-6 ">
-                            <a asp-controller="Admin" asp-action="Orders" asp-route-RequestID="@Model.adminRequests[i].RequestId" class="btn w-100 btn-warning  btn-outline-warning   btn-outline-light rounded-pill">Orders</a>
+                            <a asp-controller="Admin" asp-action="Orders" asp-route-RequestID="@currentRequest.RequestId" class="btn w-100 btn-warning  btn-outline-warning   btn-outline-light rounded-pill">Orders</a>
                         </div>
 
                     }
@@ -528,7 +529,7 @@
                     @if (dstatus != 1)
                     {
                         <div class="col-6 ">
-                            <a asp-controller="Admin" asp-action="ViewUploads" asp-route-requestId="@Model.adminRequests[i].RequestId" class="btn w-100 btn-success btn-outline-success btn-outline-light rounded-pill">View Uploads</a>
+                            <a asp-controller="Admin" asp-action="ViewUploads" asp-route-requestId="@currentRequest.RequestId" class="btn w-100 btn-success btn-outline-success btn-outline-light rounded-pill">View Uploads</a>
                         </div>
                     }
 
@@ -552,15 +553,32 @@
 
 </div>
 
+<div class="pagination d-flex justify-content-center align-content-center">
 
-<div class="d-flex justify-content-center">
-    <nav aria-label="Page navigation example">
-        <ul class="pagination align-items-center">
-            <li class="page-item"><button onclick="loadPreviousPage(@Model.CurrentPage)" class="page-link">Previous</button></li>
-            <li class="page-item"> <span class="fw-bold mx-2"> @Model.CurrentPage </span></li>
-            <li class="page-item"><button onclick="loadNextPage(@Model.CurrentPage)" class="page-link">Next</button></li>
-        </ul>
-    </nav>
+    @if (Model.pagedList.hasPrevious)
+    {
+        <button class="border-0 mx-1 page-item" onclick="loadPage(1)">❮❮</button>
+        <button class="page-item mx-1 border-0" onclick="loadPreviousPage(@Model.CurrentPage)">❮</button>
+    }
+    else
+    {
+        <button disabled class="disabled border-0 mx-1 page-item">❮❮</button>
+        <button disabled class="disabled page-item mx-1 border-0">❮</button>
+    }
+
+    <button class="page-item mx-1 active border-0">@Model.CurrentPage</button>
+
+    @if (Model.pagedList.hasNext)
+    {
+        <button class="page-item mx-1 border-0" onclick="loadNextPage(@Model.CurrentPage)">❯</button>
+        <button class="page-item mx-1 border-0" onclick="loadPage(@Model.pagedList.TotalPages)">❯❯</button>
+    }
+    else
+    {
+        <button disabled class="page-item disabled mx-1 border-0">❯</button>
+        <button disabled class="page-item disabled mx-1 border-0">❯❯</button>
+    }
+
 </div>
 
 <script>

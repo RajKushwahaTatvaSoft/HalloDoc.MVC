@@ -1,14 +1,11 @@
-﻿using Data_Layer.DataModels;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Data_Layer.CustomModels;
+using Data_Layer.DataModels;
 
 namespace Data_Layer.ViewModels.Admin
 {
     public class AdminDashboardViewModel
     {
+        public PagedList<AdminRequest> pagedList {  get; set; }
         public List<AdminRequest> adminRequests {  get; set; }
         public IEnumerable<Casetag> casetags { get; set; }
         public IEnumerable<Region> regions { get; set; }

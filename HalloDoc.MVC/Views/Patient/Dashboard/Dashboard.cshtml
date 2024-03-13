@@ -67,26 +67,55 @@
                         </tr>
                     </thead>
                     <tbody class="table-body align-middle">
-                        @for (int i = 0; i < Model.Requests.Count; i++)
+                        @for (int i = 0; i < Model.pagedList.Count; i++)
                         {
                             <tr class="table-row">
                                 <td>
-                                    @Model.Requests[i].Createddate.ToString("MMM dd, yyyy")
+                                    @Model.pagedList[i].CreatedDate.ToString("MMM dd, yyyy")
                                 </td>
-                                <td>@Model.Requests[i].Status</td>
+                                <td>@Model.pagedList[i].RequestStatus</td>
                                 <td>
-                                    @if (Model.DocumentCount[i] >= 0)
-                                    {
-                                        <a asp-controller="Patient" asp-action="ViewDocument" asp-route-requestId="@Model.Requests[i].Requestid" class="btn btn-outline-info shadow-none night-mode-btn">
-                                            <span>(@Model.DocumentCount[i]) Documents</span>
-                                        </a>
-                                    }
+                                    <a asp-controller="Patient" asp-action="ViewDocument" asp-route-requestId="@Model.pagedList[i].RequestId" class="btn btn-outline-info shadow-none night-mode-btn">
+                                        <span>(@Model.pagedList[i].FileCount) Documents</span>
+                                    </a>
+
                                 </td>
                             </tr>
                         }
                     </tbody>
                 </table>
+
             </div>
+
+
+        </div>
+
+
+        <div class="pagination d-flex justify-content-center align-content-center">
+
+            @if (Model.pagedList.hasPrevious)
+            {
+                <button class="border-0 mx-1 page-item" onclick="loadPage(1)">❮❮</button>
+                <button class="page-item mx-1 border-0" onclick="loadPreviousPage(@Model.pagedList.CurrentPage)">❮</button>
+            }
+            else
+            {
+                <button disabled class="disabled border-0 mx-1 page-item">❮❮</button>
+                <button disabled class="disabled page-item mx-1 border-0">❮</button>
+            }
+
+            <button class="page-item mx-1 active border-0">@Model.pagedList.CurrentPage</button>
+
+            @if (Model.pagedList.hasNext)
+            {
+                <button class="page-item mx-1 border-0" onclick="loadNextPage(@Model.pagedList.CurrentPage)">❯</button>
+                <button class="page-item mx-1 border-0" onclick="loadPage(@Model.pagedList.TotalPages)">❯❯</button>
+            }
+            else
+            {
+                <button disabled class="page-item disabled mx-1 border-0">❯</button>
+                <button disabled class="page-item disabled mx-1 border-0">❯❯</button>
+            }
 
         </div>
 

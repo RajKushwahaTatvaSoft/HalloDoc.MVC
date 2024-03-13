@@ -7,6 +7,8 @@ using System.Text;
 using Business_Layer.Interface;
 using Business_Layer.Interface.AdminInterface;
 using Business_Layer.Repository.AdminRepo;
+using Business_Layer.Repository.TableRepo;
+using Business_Layer.Interface.TableInterface;
 
 var builder = WebApplication.CreateBuilder(args);
 
