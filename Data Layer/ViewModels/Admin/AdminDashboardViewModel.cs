@@ -9,7 +9,7 @@ namespace Data_Layer.ViewModels.Admin
         public List<AdminRequest> adminRequests {  get; set; }
         public IEnumerable<Casetag> casetags { get; set; }
         public IEnumerable<Region> regions { get; set; }
-        public IEnumerable<Physician> physicians { get; set; }
+        public IEnumerable<DataModels.Physician> physicians { get; set; }
         public DashboardFilter filterOptions { get; set; }
         public string UserName { get; set; }
         public int DashboardStatus {  get; set; }

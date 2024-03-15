@@ -10,11 +10,7 @@ namespace Data_Layer.ViewModels
         public string Countrycode { get; set; }
         public string Phone { get; set; }
         public string Email { get; set; }
-        public string HotelOrPropertyName { get; set; }
-        public string Street { get; set; }
-        public string City { get; set; }
-        public string State { get; set; }
-        public string ZipCode { get; set; }
-        public IEnumerable<Region> regions { get; set; }
+        public string? HotelOrPropertyName { get; set; }
+        public IEnumerable<Region>? regions { get; set; }
     }
 }

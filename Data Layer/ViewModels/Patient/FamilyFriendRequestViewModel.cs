@@ -22,6 +22,6 @@ namespace Data_Layer.ViewModels
         public string? Email { get; set; }
         [Required(ErrorMessage = "Relation cannot be empty")]
         public string? Relation { get; set; }
-        public IEnumerable<Region> regions { get; set; }
+        public IEnumerable<Region>? regions { get; set; }
     }
 }

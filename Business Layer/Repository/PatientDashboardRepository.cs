@@ -64,14 +64,12 @@ namespace Business_Layer.Repository
                     return "MDOnSite";
                 case (int)RequestStatus.Conclude:
                     return "Conclude";
-
                 case (int)RequestStatus.CancelledByPatient:
                     return "CancelledByPatient";
                 case (int)RequestStatus.Closed:
                     return "Closed";
                 case (int)RequestStatus.Unpaid:
                     return "Unpaid";
-
                 case (int)RequestStatus.Clear:
                     return "Clear";
                 case (int)RequestStatus.Block:

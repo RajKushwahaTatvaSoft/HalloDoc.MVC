@@ -15,5 +15,6 @@ namespace Data_Layer.ViewModels.Admin
         public string AdminNotes { get; set; }
         public string PhysicianNotes { get; set; }
         public IEnumerable<TransferNotesLog> transferNotesLogs { get; set; }
+        public IEnumerable<Requeststatuslog> requeststatuslogs { get; set; }
     }
 }

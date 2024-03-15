@@ -16,7 +16,6 @@
                 <col span="1" style="width: 12%;">
                 <col span="1" style="width: 19%;">
                 <col span="1" style="width: 12%;">
-                <col span="1" style="width: 9%;">
                 <col span="1" style="width: 6%;">
             </colgroup>
         }
@@ -31,7 +30,6 @@
                 <col span="1" style="width: 12%;">
                 <col span="1" style="width: 19%;">
                 <col span="1" style="width: 8%;">
-                <col span="1" style="width: 12%;">
                 <col span="1" style="width: 6%;">
             </colgroup>
         }
@@ -44,7 +42,6 @@
                 <col span="1" style="width: 8%;">
                 <col span="1" style="width: 12%;">
                 <col span="1" style="width: 12%;">
-                <col span="1" style="width: 9%;">
                 <col span="1" style="width: 6%;">
             </colgroup>
         }
@@ -56,7 +53,6 @@
                 <col span="1" style="width: 9%;">
                 <col span="1" style="width: 8%;">
                 <col span="1" style="width: 12%;">
-                <col span="1" style="width: 9%;">
                 <col span="1" style="width: 6%;">
             </colgroup>
         }
@@ -107,7 +103,6 @@
                 {
                     <th>Notes</th>
                 }
-                <th>Chat With</th>
                 <th style="text-align: center">Actions</th>
             </tr>
         </thead>
@@ -213,32 +208,6 @@
                         <td>@currentRequest.Notes</td>
                     }
                     <td>
-
-                        <div class="d-flex justify-content-between">
-                            @if (dstatus != 1)
-                            {
-                                <div class="d-flex flex-grow-1 p-1 white-border-btn justify-content-center align-items-center" style="margin-right:5px">
-                                    <svg xmlns="http://www.w3.org/2000/svg" height="15px" viewBox="0 0 24 24" width="15px"
-                                         fill="white">
-                                        <path d="M0 0h24v24H0V0z" fill="none" />
-                                        <path d="M6.54 5c.06.89.21 1.76.45 2.59l-1.2 1.2c-.41-1.2-.67-2.47-.76-3.79h1.51m9.86 12.02c.85.24 1.72.39 2.6.45v1.49c-1.32-.09-2.59-.35-3.8-.75l1.2-1.19M7.5 3H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.49c0-.55-.45-1-1-1-1.24 0-2.45-.2-3.57-.57-.1-.04-.21-.05-.31-.05-.26 0-.51.1-.71.29l-2.2 2.2c-2.83-1.45-5.15-3.76-6.59-6.59l2.2-2.2c.28-.28.36-.67.25-1.02C8.7 6.45 8.5 5.25 8.5 4c0-.55-.45-1-1-1z" />
-                                    </svg>
-                                    <span class="ms-1">Patient</span>
-                                </div>
-                            }
-
-                            <div class="d-flex flex-grow-1 p-1 white-border-btn justify-content-center align-items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" height="15px" viewBox="0 0 24 24" width="15px"
-                                     fill="white">
-                                    <path d="M0 0h24v24H0V0z" fill="none" />
-                                    <path d="M6.54 5c.06.89.21 1.76.45 2.59l-1.2 1.2c-.41-1.2-.67-2.47-.76-3.79h1.51m9.86 12.02c.85.24 1.72.39 2.6.45v1.49c-1.32-.09-2.59-.35-3.8-.75l1.2-1.19M7.5 3H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.49c0-.55-.45-1-1-1-1.24 0-2.45-.2-3.57-.57-.1-.04-.21-.05-.31-.05-.26 0-.51.1-.71.29l-2.2 2.2c-2.83-1.45-5.15-3.76-6.59-6.59l2.2-2.2c.28-.28.36-.67.25-1.02C8.7 6.45 8.5 5.25 8.5 4c0-.55-.45-1-1-1z" />
-                                </svg>
-                                <span class="ms-1">Provider</span>
-                            </div>
-                        </div>
-
-                    </td>
-                    <td>
                         <div class="d-flex justify-content-center" style="margin: 0px 5px 0px 5px">
                             <div class="dropdown">
                                 <a class="white-border-btn btn" id="dropdownMenu2" data-bs-toggle="dropdown" aria-expanded="false">
@@ -247,7 +216,7 @@
                                 <ul class="dropdown-menu" aria-labelledby="dropdownMenu2">
                                     @if (dstatus == 1)
                                     {
-                                        <li><button data-bs-toggle="modal" data-bs-target="#assignModal" class="dropdown-item assign-case-btn" data-id="@currentRequest.RequestId" type="button">Assign Case</button></li>
+                                        <li><button class="dropdown-item assign-case-btn" data-id="@currentRequest.RequestId" type="button">Assign Case</button></li>
                                         <li><button class="dropdown-item cancel-case-btn" type="button" data-name="@currentRequest.PatientName" data-id="@currentRequest.RequestId" data-bs-target="#cancelModal" data-bs-toggle="modal">Cancel Case</button></li>
                                         <li><a asp-controller="Admin" asp-action="ViewCase" asp-route-Requestid="@currentRequest.RequestId" class="dropdown-item">View Case</a></li>
                                         <li><a asp-controller="Admin" asp-action="ViewNotes" asp-route-Requestid="@currentRequest.RequestId" class="dropdown-item" type="button">View Notes</a></li>
@@ -268,16 +237,14 @@
                                     @if (dstatus == 3 || dstatus == 4)
                                     {
                                         <li><a asp-controller="Admin" asp-action="Orders" asp-route-requestId="@currentRequest.RequestId" class="dropdown-item" type="button">Orders</a></li>
-                                        <li><button class="dropdown-item" type="button">Doctors Note</button></li>
-                                        <li><a asp-controller="Admin" asp-action="EncounterForm" class="dropdown-item" type="button">Encounter</a></li>
+                                        <li><a asp-controller="Admin" asp-action="EncounterForm" asp-route-requestid="@currentRequest.RequestId" class="dropdown-item" type="button">Encounter</a></li>
                                     }
                                     @if (dstatus == 5)
                                     {
                                         <li><a asp-controller="Admin" asp-action="Orders" asp-route-requestId="@currentRequest.RequestId" class="dropdown-item" type="button">Orders</a></li>
-                                        <li><button class="dropdown-item" type="button">Close Case</button></li>
-                                        <li><button class="dropdown-item" type="button">Doctors Note</button></li>
-                                        <li><button class="dropdown-item" type="button">Clear Case</button></li>
-                                        <li><button class="dropdown-item" type="button">Encounter</button></li>
+                                        <li><a asp-controller="Admin" asp-action="CloseCase" asp-route-requestid="@currentRequest.RequestId" class="dropdown-item" type="button">Close Case</a></li>
+                                        <li><button data-bs-toggle="modal" data-bs-target="#ClearCaseModal" class="dropdown-item clear-case-btn" data-id="@currentRequest.RequestId" type="button">Clear Case</button></li>
+                                        <li><a asp-controller="Admin" asp-action="EncounterForm" asp-route-requestid="@currentRequest.RequestId" class="dropdown-item" type="button">Encounter</a></li>
                                     }
                                 </ul>
                             </div>
@@ -288,7 +255,6 @@
 
             }
         </tbody>
-
     </table>
 </div>
 
@@ -558,7 +524,7 @@
     @if (Model.pagedList.hasPrevious)
     {
         <button class="border-0 mx-1 page-item" onclick="loadPage(1)">❮❮</button>
-        <button class="page-item mx-1 border-0" onclick="loadPreviousPage(@Model.CurrentPage)">❮</button>
+        <button class="page-item mx-1 border-0" onclick="loadPage(@(Model.CurrentPage-1))">❮</button>
     }
     else
     {
@@ -570,7 +536,7 @@
 
     @if (Model.pagedList.hasNext)
     {
-        <button class="page-item mx-1 border-0" onclick="loadNextPage(@Model.CurrentPage)">❯</button>
+        <button class="page-item mx-1 border-0" onclick="loadPage(@(Model.CurrentPage+1))">❯</button>
         <button class="page-item mx-1 border-0" onclick="loadPage(@Model.pagedList.TotalPages)">❯❯</button>
     }
     else
@@ -584,8 +550,24 @@
 <script>
 
     $('.assign-case-btn').click(function () {
-        var Id = $(this).data("id");
-        $('#assignCaseRequestId').val(Id);
+        let Id = $(this).data("id");
+
+        $.ajax({
+            url: "/Admin/AssignCaseModal",
+            data: { requestId: Id },
+            type: 'GET',
+            success: function (result) {
+                $('#modal-div').html(result);
+                $('#assignModal').modal('show');
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
+
+
+
     });
 
     $('.transfer-case-btn').click(function () {
@@ -760,40 +742,6 @@
 </script>
 
 <script>
-
-    $('#assignCaseRegion').change(function (event) {
-        event.preventDefault();
-        var region = $('option:selected', this).val();
-
-        $.ajax({
-            url: '/Admin/GetPhysicianByRegion',
-            type: 'POST',
-            data: {
-                regionId: region,
-            },
-            success: function (result) {
-                $('#assignCasePhysician').empty();
-                $('#assignCasePhysician').append($('<option>', {
-                    value: 0,
-                    text: '-- Select Physician --',
-                    selected: true,
-                    disabled: true
-                }));
-                $.each(result, function (index, object) {
-
-                    $('#assignCasePhysician').append($('<option>', {
-                        value: object["physicianId"],
-                        text: object["physicianName"]
-                    }));
-
-                });
-            },
-            error: function (err) {
-                console.error(err);
-            }
-        });
-
-    });
 
     $('#transferCaseRegion').change(function (event) {
         event.preventDefault();

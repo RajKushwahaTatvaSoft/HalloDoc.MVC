@@ -44,80 +44,7 @@
 
         <h4 class="mt-5">Medical History</h4>
 
-        <div class="shadow dashboard-card mt-4">
-
-            <div class="p-3 d-flex justify-content-end">
-                <a class="btn btn-outline-info shadow-none night-mode-btn" data-bs-toggle="modal" data-bs-target="#myModal1">
-                    <span>Create New Request</span>
-                </a>
-            </div>
-            <div>
-                <table class="table" id="table_dashboard">
-                    <colgroup>
-                        <col span="1" style="width: 15%;">
-                        <col span="1" style="width: 70%;">
-                        <col span="1" style="width: 15%;">
-                    </colgroup>
-
-                    <thead class="table-head align-middle">
-                        <tr>
-                            <th>Created Date</th>
-                            <th>Current Status</th>
-                            <th>Document</th>
-                        </tr>
-                    </thead>
-                    <tbody class="table-body align-middle">
-                        @for (int i = 0; i < Model.pagedList.Count; i++)
-                        {
-                            <tr class="table-row">
-                                <td>
-                                    @Model.pagedList[i].CreatedDate.ToString("MMM dd, yyyy")
-                                </td>
-                                <td>@Model.pagedList[i].RequestStatus</td>
-                                <td>
-                                    <a asp-controller="Patient" asp-action="ViewDocument" asp-route-requestId="@Model.pagedList[i].RequestId" class="btn btn-outline-info shadow-none night-mode-btn">
-                                        <span>(@Model.pagedList[i].FileCount) Documents</span>
-                                    </a>
-
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-
-            </div>
-
-
-        </div>
-
-
-        <div class="pagination d-flex justify-content-center align-content-center">
-
-            @if (Model.pagedList.hasPrevious)
-            {
-                <button class="border-0 mx-1 page-item" onclick="loadPage(1)">❮❮</button>
-                <button class="page-item mx-1 border-0" onclick="loadPreviousPage(@Model.pagedList.CurrentPage)">❮</button>
-            }
-            else
-            {
-                <button disabled class="disabled border-0 mx-1 page-item">❮❮</button>
-                <button disabled class="disabled page-item mx-1 border-0">❮</button>
-            }
-
-            <button class="page-item mx-1 active border-0">@Model.pagedList.CurrentPage</button>
-
-            @if (Model.pagedList.hasNext)
-            {
-                <button class="page-item mx-1 border-0" onclick="loadNextPage(@Model.pagedList.CurrentPage)">❯</button>
-                <button class="page-item mx-1 border-0" onclick="loadPage(@Model.pagedList.TotalPages)">❯❯</button>
-            }
-            else
-            {
-                <button disabled class="page-item disabled mx-1 border-0">❯</button>
-                <button disabled class="page-item disabled mx-1 border-0">❯❯</button>
-            }
-
-        </div>
+        <div id="partial-table"></div>
 
         <div style="height: 20px;"></div>
 
@@ -126,6 +53,7 @@
 
 
 <script src="/js/site.js"></script>
+<script src="/js/patient-dashboard.js"></script>
 
 <script src="https://code.jquery.com/jquery-3.6.1.min.js"
         integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous">
@@ -136,6 +64,34 @@
         console.log("null successfull");
         TempData["success"] = null;
     }, 5000);
+</script>
+
+<script>
+
+    function loadPage(pageNo) {
+
+        // let loading_div = document.getElementById('loading-animation-div');
+        // loading_div.setAttribute('style', 'display:static !important;margin-top:200px;');
+
+        $.ajax({
+            url: "/Patient/FetchDashboardTable",
+            type: 'POST',
+            data: { page: pageNo },
+            success: function (result) {
+                $('#partial-table').html(result);
+            },
+            complete: function () {
+                // loading_div.setAttribute('style', 'display:none !important;margin-top:200px;');
+            },
+            error: function (error) {
+                console.log(error);
+                alert('error fetching details')
+            },
+        });
+    }
+
+    loadPage(1);
+
 </script>
 
 <script>

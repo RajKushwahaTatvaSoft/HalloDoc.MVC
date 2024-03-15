@@ -112,13 +112,24 @@
 
                     <div class="col-12 col-md-6 ">
                         <div class="form-floating mt-3">
-                            <input asp-for="Street" class="form-control" placeholder="Leave a comment here"
+                            <input asp-for="patientDetails.Street" class="form-control" placeholder="Leave a comment here"
                                    id="floatingTextarea2"></input>
                             <label for="floatingTextarea2">Street</label>
                         </div>
                     </div>
                     <div class="col-12 col-md-6">
                         <div class="form-floating mt-3">
+
+                            <input asp-for="patientDetails.City" class="form-control" placeholder="Leave a comment here"
+                                   id="floatingTextarea2"></input>
+                            <label for="floatingTextarea2">City</label>
+
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-6 ">
+                        <div class="form-floating mt-3">
+
                             <select asp-for="patientDetails.RegionId" class="form-select" id="patientRequestRegion">
                                 <option disabled selected value="0"> -- select city -- </option>
 
@@ -127,22 +138,15 @@
                                     <option value="@region.Regionid">@region.Name</option>
                                 }
                             </select>
-                            <label for="patientRequestRegion">City</label>
+
+                            <label for="patientRequestRegion">State</label>
                             <span asp-validation-for="patientDetails.RegionId" class="text-danger"></span>
 
                         </div>
                     </div>
-
                     <div class="col-12 col-md-6 ">
                         <div class="form-floating mt-3">
-                            <input asp-for="State" class="form-control" placeholder="Leave a comment here"
-                                   id="floatingTextarea2"></input>
-                            <label for="floatingTextarea2">State</label>
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-6 ">
-                        <div class="form-floating mt-3">
-                            <input asp-for="ZipCode" class="form-control" placeholder="Leave a comment here"
+                            <input asp-for="patientDetails.ZipCode" class="form-control" placeholder="Leave a comment here"
                                    id="floatingTextarea2"></input>
                             <label for="floatingTextarea2">Zip Code</label>
                         </div>

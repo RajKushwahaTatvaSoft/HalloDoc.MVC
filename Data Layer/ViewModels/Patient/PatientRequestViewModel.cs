@@ -17,13 +17,10 @@ namespace Data_Layer.ViewModels
         public string? Countrycode { get; set; }
         [Required(ErrorMessage = "Phone cannot be empty")]
         public string? Phone { get; set; }
-        [Required(ErrorMessage = "Street cannot be empty")]
         public string? Street { get; set; }
         public string? City { get; set; }
         public int? RegionId { get; set; }
-        [Required(ErrorMessage = "State cannot be empty")]
         public string? State { get; set; }
-        [Required(ErrorMessage = "Zip Code cannot be empty")]
         public string? ZipCode { get; set; }
         public string? RoomSuite { get; set; }
         [RegularExpression("(?=^.{8,}$)((?=.*\\d)|(?=.*\\W+))(?![.\\n])(?=.*[A-Z])(?=.*[a-z]).*$", ErrorMessage = "Password must contain 1 capital, 1 small, 1 Special symbol and at least 8 characters")]

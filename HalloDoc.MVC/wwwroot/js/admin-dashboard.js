@@ -57,7 +57,7 @@ $(".status-tab").click(function () {
     applyFilters();
 });
 
-$("#status-new-tab").click();
+
 
 var searchTimer;
 
@@ -113,6 +113,32 @@ function applyFilters() {
     loadPage(1);
 }
 
+function loadPageWithStatus(pageNo, status) {
+
+    if (status == 1) {
+        $('#status-new-tab').click();
+    }
+    else if (status == 2) {
+        $('#status-pending-tab').click();
+    }
+    else if (status == 3) {
+        $('#status-active-tab').click();
+            }
+    else if (status == 4) {
+        $('#status-conclude-tab').click();
+
+    }
+    else if (status == 5) {
+        $('#status-to-close-tab').click();
+
+    }
+    else if (status == 6) {
+        $('#status-unpaid-tab').click();
+    }
+
+    loadPage(pageNo);
+}
+
 function loadPage(pageNo) {
 
     let loading_div = document.getElementById('loading-animation-div');
@@ -126,7 +152,6 @@ function loadPage(pageNo) {
             $('#partial-table').html(result);
         },
         complete: function () {
-            console.log('complete');
             loading_div.setAttribute('style', 'display:none !important;margin-top:200px;');
         },
         error: function (error) {

@@ -9,7 +9,6 @@
 // Function to initialize dark mode based on user preference
 function initializeDarkMode() {
     const savedDarkMode = localStorage.getItem('darkMode');
-
     if (savedDarkMode !== null) {
         document.body.classList.toggle('dark-mode', savedDarkMode === 'true');
     }

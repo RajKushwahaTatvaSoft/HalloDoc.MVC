@@ -11,6 +11,7 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Data_Layer.ViewModels.Admin;
 using HalloDoc.MVC.Services;
+using System.Drawing;
 
 
 namespace HalloDoc.MVC.Controllers
@@ -160,6 +161,7 @@ namespace HalloDoc.MVC.Controllers
 
         public IActionResult AccessDenied()
         {
+            ViewData["page"] = "Access Denied";
             return View();
         }
 
@@ -179,62 +181,8 @@ namespace HalloDoc.MVC.Controllers
             }
         }
 
-
         // GET
-        public IActionResult PatientLogin()
-        {
-            return View("Patient/PatientLogin");
-        }
-
-        // POST
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult PatientLogin(Aspnetuser loginUser)
-        {
-            if (ModelState.IsValid)
-            {
-                var passHash = GenerateSHA256(loginUser.Passwordhash);
-                Aspnetuser aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(aspnetuser => aspnetuser.Username == loginUser.Username && aspnetuser.Passwordhash == passHash);
-
-                if (aspUser == null)
-                {
-                    TempData["error"] = "User doesn't exists";
-                    return View("Patient/PatientLogin");
-                }
-
-                User patientUser = _unitOfWork.UserRepository.GetFirstOrDefault(u => u.Aspnetuserid == aspUser.Id);
-                if (patientUser == null)
-                {
-                    TempData["error"] = "User doesn't exists";
-                    return View("Patient/PatientLogin");
-                }
-
-
-                TempData["success"] = "Login Successful";
-
-                SessionUser sessionUser = new SessionUser()
-                {
-                    UserId = patientUser.Userid,
-                    Email = patientUser.Email,
-                    RoleId = (int)AllowRole.Patient,
-                    UserName = patientUser.Firstname + (String.IsNullOrEmpty(patientUser.Lastname) ? "" : " " + patientUser.Lastname),
-                };
-
-                var jwtToken = _jwtService.GenerateJwtToken(sessionUser);
-                Response.Cookies.Append("hallodoc", jwtToken);
-
-
-                return RedirectToAction("Dashboard", "Patient");
-
-            }
-
-            TempData["error"] = "Invalid Username or Password";
-            return View("PatientLogin");
-
-        }
-
-        // GET
-        public IActionResult AdminLogin()
+        public IActionResult Login()
         {
             return View();
         }
@@ -242,7 +190,7 @@ namespace HalloDoc.MVC.Controllers
         // POST
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult AdminLogin(Aspnetuser loginUser)
+        public IActionResult Login(Aspnetuser loginUser)
         {
             if (ModelState.IsValid)
             {
@@ -255,31 +203,86 @@ namespace HalloDoc.MVC.Controllers
                     return View();
                 }
 
-                Admin adminUser = _unitOfWork.AdminRepository.GetFirstOrDefault(u => u.Aspnetuserid == aspUser.Id);
-                if (adminUser == null)
+                SessionUser sessionUser = new SessionUser();
+                string controller = "";
+
+                if (aspUser.Roleid == (int)AllowRole.Patient)
                 {
-                    TempData["error"] = "User doesn't exists";
-                    return View();
+
+                    User patientUser = _unitOfWork.UserRepository.GetFirstOrDefault(u => u.Aspnetuserid == aspUser.Id);
+                    if (patientUser == null)
+                    {
+                        TempData["error"] = "Physician doesn't exists";
+                        return View();
+                    }
+
+                    sessionUser = new SessionUser()
+                    {
+                        UserId = patientUser.Userid,
+                        Email = patientUser.Email,
+                        RoleId = aspUser.Roleid,
+                        UserName = patientUser.Firstname + (String.IsNullOrEmpty(patientUser.Lastname) ? "" : " " + patientUser.Lastname),
+                    };
+
+                    TempData["success"] = "Patient Login Successful";
+
+                    controller = "Patient";
                 }
-
-                SessionUser sessionUser = new SessionUser()
+                else if (aspUser.Roleid == (int)AllowRole.Physician)
                 {
-                    UserId = adminUser.Adminid,
-                    Email = adminUser.Email,
-                    RoleId = (int)AllowRole.Admin,
-                    UserName = adminUser.Firstname + (String.IsNullOrEmpty(adminUser.Lastname) ? "" : " " + adminUser.Lastname),
-                };
 
-                TempData["success"] = "Admin Login Successful";
+                    Physician physicianUser = _unitOfWork.PhysicianRepository.GetFirstOrDefault(u => u.Aspnetuserid == aspUser.Id);
+                    if (physicianUser == null)
+                    {
+                        TempData["error"] = "Physician doesn't exists";
+                        return View();
+                    }
+
+                    sessionUser = new SessionUser()
+                    {
+                        UserId = physicianUser.Physicianid,
+                        Email = physicianUser.Email,
+                        RoleId = aspUser.Roleid,
+                        UserName = physicianUser.Firstname + (String.IsNullOrEmpty(physicianUser.Lastname) ? "" : " " + physicianUser.Lastname),
+                    };
+
+                    TempData["success"] = "Physician Login Successful";
+
+                    controller = "Physician";
+                }
+                else if (aspUser.Roleid == (int)AllowRole.Admin)
+                {
+
+                    Admin adminUser = _unitOfWork.AdminRepository.GetFirstOrDefault(u => u.Aspnetuserid == aspUser.Id);
+                    if (adminUser == null)
+                    {
+                        TempData["error"] = "Admin doesn't exists";
+                        return View();
+                    }
+
+                    sessionUser = new SessionUser()
+                    {
+                        UserId = adminUser.Adminid,
+                        Email = adminUser.Email,
+                        RoleId = aspUser.Roleid,
+                        UserName = adminUser.Firstname + (String.IsNullOrEmpty(adminUser.Lastname) ? "" : " " + adminUser.Lastname),
+                    };
+
+                    controller = "Admin";
+
+                    TempData["success"] = "Admin Login Successful";
+
+                }
+                
+
 
                 var jwtToken = _jwtService.GenerateJwtToken(sessionUser);
                 Response.Cookies.Append("hallodoc", jwtToken);
 
-                return RedirectToAction("Dashboard", "Admin");
-
-
-
+                return RedirectToAction("Dashboard", controller);
             }
+
+
             TempData["error"] = "Invalid Username or Password";
 
             return View();
@@ -306,7 +309,7 @@ namespace HalloDoc.MVC.Controllers
             {
                 string requestIpAddress = GetRequestIP();
                 string phoneNumber = "+" + userViewModel.Countrycode + '-' + userViewModel.Phone;
-                string city = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == userViewModel.RegionId).Name;
+                string state = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == userViewModel.RegionId).Name;
 
                 bool isUserExists = _unitOfWork.UserRepository.IsUserWithEmailExists(userViewModel.Email);
 
@@ -330,6 +333,7 @@ namespace HalloDoc.MVC.Controllers
                             Createddate = DateTime.Now,
                             Ip = requestIpAddress,
                         };
+
                         _unitOfWork.AspNetUserRepository.Add(aspnetuser);
                         _unitOfWork.Save();
 
@@ -342,9 +346,9 @@ namespace HalloDoc.MVC.Controllers
                             Email = userViewModel.Email,
                             Mobile = phoneNumber,
                             Street = userViewModel.Street,
-                            State = userViewModel.State,
+                            State = state,
                             Regionid = userViewModel.RegionId,
-                            City = city,
+                            City = userViewModel.City,
                             Zipcode = userViewModel.ZipCode,
                             Createddate = DateTime.Now,
                             Createdby = generatedId.ToString(),
@@ -388,8 +392,8 @@ namespace HalloDoc.MVC.Controllers
                             Address = userViewModel.Street + " " + userViewModel.City + " " + userViewModel.State + ", " + userViewModel.ZipCode,
                             Street = userViewModel.Street,
                             Regionid = userViewModel.RegionId,
-                            City = city,
-                            State = userViewModel.State,
+                            City = userViewModel.City,
+                            State = state,
                             Zipcode = userViewModel.ZipCode,
                             Notes = userViewModel.Symptom,
                             Ip = requestIpAddress,
@@ -467,9 +471,9 @@ namespace HalloDoc.MVC.Controllers
                         Email = userViewModel.Email,
                         Address = userViewModel.Street + " " + userViewModel.City + " " + userViewModel.State + ", " + userViewModel.ZipCode,
                         Street = userViewModel.Street,
-                        City = city,
+                        City = userViewModel.City,
                         Regionid = userViewModel.RegionId,
-                        State = userViewModel.State,
+                        State = state,
                         Zipcode = userViewModel.ZipCode,
                         Notes = userViewModel.Symptom,
                         Ip = requestIpAddress,
@@ -558,7 +562,7 @@ namespace HalloDoc.MVC.Controllers
                 string requestIpAddress = GetRequestIP();
                 string familyNumber = "+" + friendViewModel.Countrycode + '-' + friendViewModel.Phone;
                 string patientNumber = "+" + friendViewModel.patientDetails.Countrycode + '-' + friendViewModel.patientDetails.Phone;
-                string city = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == friendViewModel.patientDetails.RegionId).Name;
+                string state = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == friendViewModel.patientDetails.RegionId).Name;
 
                 if (!isUserExists)
                 {
@@ -589,9 +593,9 @@ namespace HalloDoc.MVC.Controllers
                         Email = friendViewModel.patientDetails.Email,
                         Mobile = patientNumber,
                         Street = friendViewModel.patientDetails.Street,
-                        City = city,
+                        City = friendViewModel.patientDetails.City,
                         Regionid = friendViewModel.patientDetails.RegionId,
-                        State = friendViewModel.patientDetails.State,
+                        State = state,
                         Zipcode = friendViewModel.patientDetails.ZipCode,
                         Createddate = DateTime.Now,
                         Createdby = generatedId.ToString(),
@@ -640,9 +644,9 @@ namespace HalloDoc.MVC.Controllers
                         Email = friendViewModel.patientDetails.Email,
                         Address = friendViewModel.patientDetails.Street + " " + friendViewModel.patientDetails.City + " " + friendViewModel.patientDetails.State + ", " + friendViewModel.patientDetails.ZipCode,
                         Street = friendViewModel.patientDetails.Street,
-                        City = city,
+                        City = friendViewModel.patientDetails.City,
                         Regionid = friendViewModel.patientDetails.RegionId,
-                        State = friendViewModel.patientDetails.State,
+                        State = state,
                         Zipcode = friendViewModel.patientDetails.ZipCode,
                         Notes = friendViewModel.patientDetails.Symptom,
                         Ip = requestIpAddress,
@@ -700,7 +704,6 @@ namespace HalloDoc.MVC.Controllers
                     };
 
 
-
                     _unitOfWork.RequestRepository.Add(request);
                     _unitOfWork.Save();
 
@@ -715,9 +718,9 @@ namespace HalloDoc.MVC.Controllers
                         Email = friendViewModel.patientDetails.Email,
                         Address = friendViewModel.patientDetails.Street + " " + friendViewModel.patientDetails.City + " " + friendViewModel.patientDetails.State + ", " + friendViewModel.patientDetails.ZipCode,
                         Street = friendViewModel.patientDetails.Street,
-                        City = city,
+                        City = friendViewModel.patientDetails.City,
                         Regionid = friendViewModel.patientDetails.RegionId,
-                        State = friendViewModel.patientDetails.State,
+                        State = state,
                         Zipcode = friendViewModel.patientDetails.ZipCode,
                         Notes = friendViewModel.patientDetails.Symptom,
                         Ip = requestIpAddress,
@@ -775,14 +778,13 @@ namespace HalloDoc.MVC.Controllers
         {
             if (ModelState.IsValid)
             {
-
                 bool isUserExists = _unitOfWork.UserRepository.IsUserWithEmailExists(conciergeViewModel.patientDetails.Email);
 
                 User user = null;
                 string requestIpAddress = GetRequestIP();
                 string conciergeNumber = "+" + conciergeViewModel.Countrycode + '-' + conciergeViewModel.Phone;
                 string patientNumber = "+" + conciergeViewModel.patientDetails.Countrycode + '-' + conciergeViewModel.patientDetails.Phone;
-                string city = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == conciergeViewModel.patientDetails.RegionId).Name;
+                string state = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == conciergeViewModel.patientDetails.RegionId).Name;
 
                 if (!isUserExists)
                 {
@@ -813,9 +815,9 @@ namespace HalloDoc.MVC.Controllers
                         Email = conciergeViewModel.patientDetails.Email,
                         Mobile = patientNumber,
                         Street = conciergeViewModel.patientDetails.Street,
-                        City = city,
+                        City = conciergeViewModel.patientDetails.City,
                         Regionid = conciergeViewModel.patientDetails.RegionId,
-                        State = conciergeViewModel.patientDetails.State,
+                        State = state,
                         Zipcode = conciergeViewModel.patientDetails.ZipCode,
                         Createddate = DateTime.Now,
                         Createdby = generatedId.ToString(),
@@ -867,9 +869,9 @@ namespace HalloDoc.MVC.Controllers
                         Email = conciergeViewModel.patientDetails.Email,
                         Address = conciergeViewModel.patientDetails.Street + " " + conciergeViewModel.patientDetails.City + " " + conciergeViewModel.patientDetails.State + ", " + conciergeViewModel.patientDetails.ZipCode,
                         Street = conciergeViewModel.patientDetails.Street,
-                        City = city,
+                        City = conciergeViewModel.patientDetails.City,
                         Regionid = conciergeViewModel.patientDetails.RegionId,
-                        State = conciergeViewModel.patientDetails.State,
+                        State = state,
                         Zipcode = conciergeViewModel.patientDetails.ZipCode,
                         Notes = conciergeViewModel.patientDetails.Symptom,
                         Ip = requestIpAddress,
@@ -886,11 +888,11 @@ namespace HalloDoc.MVC.Controllers
                     {
                         Conciergename = conciergeViewModel.FirstName,
                         Address = conciergeViewModel.HotelOrPropertyName,
-                        Street = conciergeViewModel.Street,
-                        City = city,
+                        Street = conciergeViewModel.patientDetails.Street,
+                        City = conciergeViewModel.patientDetails.City,
                         Regionid = conciergeViewModel.patientDetails.RegionId,
-                        State = conciergeViewModel.State,
-                        Zipcode = conciergeViewModel.ZipCode,
+                        State = state,
+                        Zipcode = conciergeViewModel.patientDetails.ZipCode,
                         Createddate = DateTime.Now,
                         Ip = requestIpAddress,
                     };
@@ -948,9 +950,9 @@ namespace HalloDoc.MVC.Controllers
                         Email = conciergeViewModel.patientDetails.Email,
                         Address = conciergeViewModel.patientDetails.Street + " " + conciergeViewModel.patientDetails.City + " " + conciergeViewModel.patientDetails.State + ", " + conciergeViewModel.patientDetails.ZipCode,
                         Street = conciergeViewModel.patientDetails.Street,
-                        City = city,
+                        City = conciergeViewModel.patientDetails.City,
                         Regionid = conciergeViewModel.patientDetails.RegionId,
-                        State = conciergeViewModel.patientDetails.State,
+                        State = state,
                         Zipcode = conciergeViewModel.patientDetails.ZipCode,
                         Notes = conciergeViewModel.patientDetails.Symptom,
                         Ip = requestIpAddress,
@@ -967,11 +969,11 @@ namespace HalloDoc.MVC.Controllers
                     {
                         Conciergename = conciergeViewModel.FirstName,
                         Address = conciergeViewModel.HotelOrPropertyName,
-                        Street = conciergeViewModel.Street,
-                        City = city,
+                        Street = conciergeViewModel.patientDetails.Street,
+                        City = conciergeViewModel.patientDetails.City,
                         Regionid = conciergeViewModel.patientDetails.RegionId,
-                        State = conciergeViewModel.State,
-                        Zipcode = conciergeViewModel.ZipCode,
+                        State = state,
+                        Zipcode = conciergeViewModel.patientDetails.ZipCode,
                         Createddate = DateTime.Now,
                         Ip = requestIpAddress,
                     };
@@ -987,10 +989,8 @@ namespace HalloDoc.MVC.Controllers
                         Ip = requestIpAddress,
                     };
 
-
                     _unitOfWork.RequestConciergeRepository.Add(reqConcierge);
                     _unitOfWork.Save();
-
 
                 }
 
@@ -1022,7 +1022,7 @@ namespace HalloDoc.MVC.Controllers
                 string requestIpAddress = GetRequestIP();
                 string businessNumber = "+" + businessViewModel.Countrycode + '-' + businessViewModel.Phone;
                 string patientNumber = "+" + businessViewModel.patientDetails.Countrycode + '-' + businessViewModel.patientDetails.Phone;
-                string city = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == businessViewModel.patientDetails.RegionId).Name;
+                string state = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == businessViewModel.patientDetails.RegionId).Name;
 
                 if (!isUserExists)
                 {
@@ -1052,9 +1052,9 @@ namespace HalloDoc.MVC.Controllers
                         Email = businessViewModel.patientDetails.Email,
                         Mobile = patientNumber,
                         Street = businessViewModel.patientDetails.Street,
-                        City = city,
+                        City = businessViewModel.patientDetails.City,
                         Regionid = businessViewModel.patientDetails.RegionId,
-                        State = businessViewModel.patientDetails.State,
+                        State = state,
                         Zipcode = businessViewModel.patientDetails.ZipCode,
                         Createddate = DateTime.Now,
                         Createdby = generatedId.ToString(),
@@ -1103,9 +1103,9 @@ namespace HalloDoc.MVC.Controllers
                         Email = businessViewModel.patientDetails.Email,
                         Address = businessViewModel.patientDetails.Street + " " + businessViewModel.patientDetails.City + " " + businessViewModel.patientDetails.State + ", " + businessViewModel.patientDetails.ZipCode,
                         Street = businessViewModel.patientDetails.Street,
-                        City = city,
+                        City = businessViewModel.patientDetails.City,
                         Regionid = businessViewModel.patientDetails.RegionId,
-                        State = businessViewModel.patientDetails.State,
+                        State = state,
                         Zipcode = businessViewModel.patientDetails.ZipCode,
                         Notes = businessViewModel.patientDetails.Symptom,
                         Ip = requestIpAddress,
@@ -1114,17 +1114,15 @@ namespace HalloDoc.MVC.Controllers
                         Intyear = businessViewModel.patientDetails.DOB.Value.Year,
                     };
 
-
                     _unitOfWork.RequestClientRepository.Add(requestclient);
                     _unitOfWork.Save();
-
 
                     Business business = new()
                     {
                         Name = businessViewModel.BusinessOrPropertyName,
                         Phonenumber = businessViewModel.Phone,
                         Createddate = DateTime.Now,
-                        City = city,
+                        City = businessViewModel.BusinessOrPropertyName,
                         Regionid = businessViewModel.patientDetails.RegionId,
                         Ip = requestIpAddress,
                     };
@@ -1179,9 +1177,9 @@ namespace HalloDoc.MVC.Controllers
                         Email = businessViewModel.patientDetails.Email,
                         Address = businessViewModel.patientDetails.Street + " " + businessViewModel.patientDetails.City + " " + businessViewModel.patientDetails.State + ", " + businessViewModel.patientDetails.ZipCode,
                         Street = businessViewModel.patientDetails.Street,
-                        City = city,
+                        City = businessViewModel.patientDetails.City,
                         Regionid = businessViewModel.patientDetails.RegionId,
-                        State = businessViewModel.patientDetails.State,
+                        State =state,
                         Zipcode = businessViewModel.patientDetails.ZipCode,
                         Notes = businessViewModel.patientDetails.Symptom,
                         Ip = requestIpAddress,
@@ -1198,7 +1196,7 @@ namespace HalloDoc.MVC.Controllers
                         Name = businessViewModel.BusinessOrPropertyName,
                         Phonenumber = businessViewModel.Phone,
                         Createddate = DateTime.Now,
-                        City = city,
+                        City = businessViewModel.BusinessOrPropertyName,
                         Regionid = businessViewModel.patientDetails.RegionId,
                         Ip = requestIpAddress,
                     };
@@ -1262,9 +1260,20 @@ namespace HalloDoc.MVC.Controllers
         [HttpPost]
         public bool AcceptAgreement(int requestId)
         {
+            Requestclient client = _unitOfWork.RequestClientRepository.GetFirstOrDefault(req => req.Requestid == requestId);
+
+            if (client == null)
+            {
+                TempData["error"] = "Cannot find the request";
+                return false;
+            }
+
+            string clientName = client.Firstname + client.Lastname != null ? " " + client.Lastname : "";
             try
             {
 
+                DateTime currentTime = DateTime.Now;
+            
                 Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestId);
                 if (req == null)
                 {
@@ -1273,14 +1282,16 @@ namespace HalloDoc.MVC.Controllers
                 }
 
                 req.Status = (short)RequestStatus.MDEnRoute;
-                req.Modifieddate = DateTime.Now;
+                req.Modifieddate = currentTime;
+
+                string logNotes = clientName + " accepted the agreement on " + currentTime.ToString("MM/dd/yyyy") + " at " + currentTime.ToString("HH:mm:ss");
 
                 Requeststatuslog statuslog = new Requeststatuslog()
                 {
                     Requestid = req.Requestid,
                     Status = (short)RequestStatus.MDEnRoute,
-                    Notes = "Patient accepted the agreement",
-                    Createddate = DateTime.Now,
+                    Notes = logNotes,
+                    Createddate = currentTime,
                     Ip = GetRequestIP(),
                 };
 
@@ -1304,8 +1315,24 @@ namespace HalloDoc.MVC.Controllers
         [HttpPost]
         public bool CancelAgreement(int requestId, string reason)
         {
+            Requestclient client = _unitOfWork.RequestClientRepository.GetFirstOrDefault(req => req.Requestid == requestId);
+
+
+            if (client == null)
+            {
+                TempData["error"] = "Cannot find the request";
+                return false;
+            }
+
+
+
+            string clientName = client.Firstname + client.Lastname != null ? " " + client.Lastname : "";
+
             try
             {
+
+                DateTime currentTime = DateTime.Now;
+              
                 Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestId);
                 if (req == null)
                 {
@@ -1314,14 +1341,16 @@ namespace HalloDoc.MVC.Controllers
                 }
 
                 req.Status = (short)RequestStatus.CancelledByPatient;
-                req.Modifieddate = DateTime.Now;
+                req.Modifieddate = currentTime;
+
+                string logNotes = clientName + " denied the agreement on " + currentTime.ToString("MM/dd/yyyy") + " at " + currentTime.ToString("HH:mm:ss") + " : " + reason;
 
                 Requeststatuslog statuslog = new Requeststatuslog()
                 {
                     Requestid = req.Requestid,
                     Status = (short)RequestStatus.CancelledByPatient,
-                    Notes = reason,
-                    Createddate = DateTime.Now,
+                    Notes = logNotes,
+                    Createddate = currentTime,
                     Ip = GetRequestIP(),
                 };
 

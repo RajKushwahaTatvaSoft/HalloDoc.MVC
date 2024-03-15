@@ -10,13 +10,16 @@
     <link rel="stylesheet" href="~/css/admin_style_dark.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script src="https://code.jquery.com/jquery-3.6.1.min.js"
+            integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous">
+    </script>
+
 
 </head>
 
-<body>
+<body class="light">
 
     <partial name="_Notification" />
     <partial name="AdminDashboardHeader" />
@@ -25,7 +28,11 @@
         @RenderBody()
     </main>
 
+
     @await RenderSectionAsync("Scripts", required: false);
 
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
 </body>
+
 </html>

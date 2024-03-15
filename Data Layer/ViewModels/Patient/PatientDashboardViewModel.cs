@@ -14,6 +14,5 @@ namespace Data_Layer.ViewModels
         public string UserName { get; set; }
         public List<Request> Requests { get; set; }
         public List<int> DocumentCount { get; set; }
-        public PagedList<PatientDashboardRequest> pagedList { get; set; }
     }
 }

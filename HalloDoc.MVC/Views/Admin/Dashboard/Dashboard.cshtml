@@ -1,10 +1,13 @@
 ﻿@model AdminDashboardViewModel
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor Accessor
 @{
     Layout = "_AdminDashboardLayout";
     ViewData["UserName"] = Model.UserName;
 }
 
 @* MODALS *@
+<div id="modal-div"></div>
 
 @* Cancel Case *@
 <div class="modal  fade" id="cancelModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
@@ -52,65 +55,6 @@
                     <button id="cancel-modal-submit-btn" type="button" class="btn btn-info text-white" data-bs-dismiss="modal">
                         Continue
                     </button>
-                    <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-@* Assign Case *@
-<div class="modal fade" id="assignModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
-     aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-info">
-                <div class="modal-dark modal-title text-white" id="exampleModalLongTitle">
-                    Assign Request
-                </div>
-                <button type="button" class="btn" aria-label="Close" data-bs-dismiss="modal">
-                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
-                         fill="#FFFFFF">
-                        <path d="M0 0h24v24H0V0z" fill="none" />
-                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
-                    </svg>
-                </button>
-            </div>
-            <form>
-                <div class="modal-body">
-                    <span class="modal-head">To assign this request, search and select another Physician</span>
-                    <div class="modal-flex my-3">
-
-                        <input id="assignCaseRequestId" hidden />
-                        <div class="form-floating mt-3">
-                            <select class="form-select" id="assignCaseRegion">
-                                <option disabled selected value="0"> -- select region -- </option>
-
-                                @foreach (var region in Model.regions)
-                                {
-                                    <option value="@region.Regionid">@region.Name</option>
-                                }
-                            </select>
-                            <label for="assignCaseRegion">Narrow Search By Region</label>
-                        </div>
-
-
-                        <div class="form-floating mt-3">
-                            <select class="form-select" id="assignCasePhysician">
-                                <option disabled selected value="0"> -- Select Physician -- </option>
-                            </select>
-                            <label for="assignCasePhysician">Select Physician</label>
-                        </div>
-
-                        <div class="form-floating mt-3">
-                            <textarea style="height: 100px;" type="text" class="form-control" id="assignCaseNotes"></textarea>
-                            <label for="assignCaseNotes">Description</label>
-                        </div>
-
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" id="assign-modal-submit-btn" class="btn btn-info text-white" data-bs-dismiss="modal">Submit</button>
                     <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
                 </div>
             </form>
@@ -524,14 +468,14 @@ C25.163,30.114,24.933,30.163,24.687,30.163z"></path>
                 <span class="ms-1  d-none d-md-inline text-white">Create Request</span>
             </button>
 
-            <button type="submit" class="mx-1 px-2 py-1 btn btn-primary" style="background-color:#10bce9">
+            <a asp-controller="Admin" asp-action="retry"  type="button" class="mx-1 px-2 py-1 btn btn-primary" style="background-color:#10bce9">
                 <svg width="25px" height="25px" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" fill="white"
                      class="bi bi-reply">
                     <path transform="scale(-1, 1) translate(-20,0)"
                           d="M6.598 5.013a.144.144 0 0 1 .202.134V6.3a.5.5 0 0 0 .5.5c.667 0 2.013.005 3.3.822.984.624 1.99 1.76 2.595 3.876-1.02-.983-2.185-1.516-3.205-1.799a8.74 8.74 0 0 0-1.921-.306 7.404 7.404 0 0 0-.798.008h-.013l-.005.001h-.001L7.3 9.9l-.05-.498a.5.5 0 0 0-.45.498v1.153c0 .108-.11.176-.202.134L2.614 8.254a.503.503 0 0 0-.042-.028.147.147 0 0 1 0-.252.499.499 0 0 0 .042-.028l3.984-2.933zM7.8 10.386c.068 0 .143.003.223.006.434.02 1.034.086 1.7.271 1.326.368 2.896 1.202 3.94 3.08a.5.5 0 0 0 .933-.305c-.464-3.71-1.886-5.662-3.46-6.66-1.245-.79-2.527-.942-3.336-.971v-.66a1.144 1.144 0 0 0-1.767-.96l-3.994 2.94a1.147 1.147 0 0 0 0 1.946l3.994 2.94a1.144 1.144 0 0 0 1.767-.96v-.667z" />
                 </svg>
                 <span class="ms-1  d-none d-md-inline text-white">Export</span>
-            </button>
+            </a>
 
             <button type="submit" class="mx-1 px-2 py-1 btn btn-primary" style="background-color:#10bce9">
                 <svg width="25px" height="25px" viewBox="0 0 20 20" fill="white">
@@ -632,7 +576,6 @@ C25.163,30.114,24.933,30.163,24.687,30.163z"></path>
 
     <div id="partial-table"></div>
 
-
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.1.min.js"
@@ -640,3 +583,38 @@ C25.163,30.114,24.933,30.163,24.687,30.163z"></path>
 </script>
 
 <script src="/js/admin-dashboard.js"></script>
+
+<script>
+
+    function exportCurrentData() {
+
+        $.ajax({
+            url: "/Admin/Export",
+            data: { tableHtml : $(".table-responsive").html() },
+            type: 'POST',
+            success: function (result) {
+                console.log('success');
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
+    }
+</script>
+
+<script>
+
+    var currentStatus = @Accessor.HttpContext?.Session.GetInt32("currentStatus");
+    var currentPage = @Accessor.HttpContext?.Session.GetInt32("currentPage");
+    console.log(currentStatus);
+    console.log(currentPage);
+
+    if (currentStatus != null) {
+        loadPageWithStatus(currentPage, currentStatus);
+    }
+    else {
+        $("#status-new-tab").click();
+    }
+
+</script>

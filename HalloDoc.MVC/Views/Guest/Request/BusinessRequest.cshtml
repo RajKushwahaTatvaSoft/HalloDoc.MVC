@@ -204,6 +204,16 @@
 
                     <div class="col-12 col-md-6 col-lg-4">
                         <div class="form-floating mt-3">
+
+                            <input asp-for="patientDetails.State" class="form-control" placeholder="Leave a comment here"
+                                   id="floatingTextarea2"></input>
+                            <label for="floatingTextarea2">State</label>
+
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <div class="form-floating mt-3">
                             <select asp-for="patientDetails.RegionId" class="form-select" id="patientRequestRegion">
                                 <option disabled selected value="0"> -- select city -- </option>
 
@@ -213,17 +223,9 @@
                                 }
 
                             </select>
-                            <label for="patientRequestRegion">City</label>
+                            <label for="patientRequestRegion">State</label>
                             <span asp-validation-for="patientDetails.RegionId" class="text-danger"></span>
 
-                        </div>
-                    </div>
-
-                    <div class="col-12 col-md-6 col-lg-4">
-                        <div class="form-floating mt-3">
-                            <input asp-for="patientDetails.State" class="form-control" placeholder="Leave a comment here"
-                                id="floatingTextarea2"></input>
-                            <label for="floatingTextarea2">State</label>
                         </div>
                     </div>
                     <div class="col-12 col-md-6 col-lg-4">

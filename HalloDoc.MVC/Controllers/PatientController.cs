@@ -79,7 +79,18 @@ namespace HalloDoc.MVC.Controllers
             return View("Dashboard/PatientDashboardHeader");
         }
 
-        public async Task<IActionResult> Dashboard()
+        [HttpPost]
+        public async Task<IActionResult> FetchDashboardTable(int page)
+        {
+            int userId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+            int pageSize = 5;
+
+            var pagedList = await _dashboardRepo.GetPatientRequestsAsync(userId, page, pageSize);
+
+            return PartialView("Partial/DashboardTable",pagedList);
+        }
+
+        public IActionResult Dashboard()
         {
 
             int userId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
@@ -89,14 +100,14 @@ namespace HalloDoc.MVC.Controllers
             {
                 return View("Error");
             }
-            var pagedList = await _dashboardRepo.GetPatientRequestsAsync(userId, 1, 5);
+
 
             PatientDashboardViewModel model = new PatientDashboardViewModel()
             {
                 UserId = userId,
                 UserName = userName,
-                pagedList = pagedList,
             };
+
 
             return View("Dashboard/Dashboard", model);
         }
@@ -151,7 +162,6 @@ namespace HalloDoc.MVC.Controllers
 
             int userId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
 
-
             if (userId == null)
             {
                 return View("Error");
@@ -163,7 +173,7 @@ namespace HalloDoc.MVC.Controllers
                 User user = _unitOfWork.UserRepository.GetUserWithID((int)userId);
                 string requestIpAddress = GetRequestIP();
                 string phoneNumber = "+" + meRequestViewModel.Countrycode + '-' + meRequestViewModel.Phone;
-                string city = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == meRequestViewModel.RegionId).Name;
+                string state = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == meRequestViewModel.RegionId).Name;
 
                 Request request = new()
                 {
@@ -193,9 +203,9 @@ namespace HalloDoc.MVC.Controllers
                     Phonenumber = phoneNumber,
                     Email = meRequestViewModel.Email,
                     Address = meRequestViewModel.Street,
-                    City = city,
+                    City = meRequestViewModel.City,
                     Regionid = meRequestViewModel.RegionId,
-                    State = meRequestViewModel.State,
+                    State = state,
                     Zipcode = meRequestViewModel.ZipCode,
                     Notes = meRequestViewModel.Symptom,
                     Ip = requestIpAddress,
@@ -231,7 +241,6 @@ namespace HalloDoc.MVC.Controllers
 
         public IActionResult RequestForSomeoneElse()
         {
-
             int userId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
 
             if (userId == null)
@@ -255,7 +264,6 @@ namespace HalloDoc.MVC.Controllers
         public IActionResult RequestForSomeoneElse(SomeoneElseRequestViewModel srvm)
         {
 
-
             int userId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
 
             if (userId == null)
@@ -265,16 +273,16 @@ namespace HalloDoc.MVC.Controllers
 
             if (ModelState.IsValid)
             {
-                bool isNewUser = _unitOfWork.UserRepository.IsUserWithEmailExists(srvm.patientDetails.Email);
+                bool isUserExists = _unitOfWork.UserRepository.IsUserWithEmailExists(srvm.patientDetails.Email);
 
                 User relationUser = _unitOfWork.UserRepository.GetUserWithID((int)userId);
                 string requestIpAddress = GetRequestIP();
                 string phoneNumber = "+" + srvm.patientDetails.Countrycode + '-' + srvm.patientDetails.Phone;
-                string city = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == srvm.patientDetails.RegionId).Name;
+                string state = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == srvm.patientDetails.RegionId).Name;
 
                 User user = null;
 
-                if (isNewUser)
+                if (!isUserExists)
                 {
 
                     Guid generatedId = Guid.NewGuid();
@@ -302,9 +310,9 @@ namespace HalloDoc.MVC.Controllers
                         Email = srvm.patientDetails.Email,
                         Mobile = phoneNumber,
                         Street = srvm.patientDetails.Street,
-                        City = city,
+                        City = srvm.patientDetails.City,
                         Regionid = srvm.patientDetails.RegionId,
-                        State = srvm.patientDetails.State,
+                        State = state,
                         Zipcode = srvm.patientDetails.ZipCode,
                         Createddate = DateTime.Now,
                         Createdby = generatedId.ToString(),
@@ -348,9 +356,9 @@ namespace HalloDoc.MVC.Controllers
                         Phonenumber = phoneNumber,
                         Email = srvm.patientDetails.Email,
                         Address = srvm.patientDetails.Street,
-                        City = city,
+                        City = srvm.patientDetails.City,
                         Regionid = srvm.patientDetails.RegionId,
-                        State = srvm.patientDetails.State,
+                        State = state,
                         Zipcode = srvm.patientDetails.ZipCode,
                         Notes = srvm.patientDetails.Symptom,
                         Ip = requestIpAddress,
@@ -410,9 +418,9 @@ namespace HalloDoc.MVC.Controllers
                         Phonenumber = phoneNumber,
                         Email = srvm.patientDetails.Email,
                         Address = srvm.patientDetails.Street,
-                        City = city,
+                        City = srvm.patientDetails.City,
                         Regionid = srvm.patientDetails.RegionId,
-                        State = srvm.patientDetails.State,
+                        State = state,
                         Zipcode = srvm.patientDetails.ZipCode,
                         Notes = srvm.patientDetails.Symptom,
                         Ip = requestIpAddress,
@@ -442,7 +450,7 @@ namespace HalloDoc.MVC.Controllers
 
                 TempData["success"] = "Request Added Successfully";
 
-                return RedirectToAction("PatientDashboard");
+                return RedirectToAction("Dashboard");
 
             }
 
@@ -629,7 +637,7 @@ namespace HalloDoc.MVC.Controllers
             Response.Cookies.Delete("hallodoc");
             TempData["success"] = "Logout Successfull";
 
-            return RedirectToAction("PatientLogin", "Guest");
+            return Redirect("/Guest/Login");
         }
 
         public async Task<IActionResult> DownloadAllFiles(int requestId)

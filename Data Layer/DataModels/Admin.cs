@@ -89,6 +89,9 @@ public partial class Admin
     [InverseProperty("Admin")]
     public virtual ICollection<Emaillog> Emaillogs { get; set; } = new List<Emaillog>();
 
+    [InverseProperty("Admin")]
+    public virtual ICollection<Encounterform> Encounterforms { get; set; } = new List<Encounterform>();
+
     [ForeignKey("Modifiedby")]
     [InverseProperty("AdminModifiedbyNavigations")]
     public virtual Aspnetuser? ModifiedbyNavigation { get; set; }

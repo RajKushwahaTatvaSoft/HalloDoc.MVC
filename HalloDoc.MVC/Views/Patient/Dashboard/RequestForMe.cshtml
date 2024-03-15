@@ -85,24 +85,26 @@
 
                 <div class="col-12 col-md-6 col-lg-4">
                     <div class="form-floating mb-3">
-                        <select asp-for="RegionId" class="form-select" id="patientRequestRegion">
-                            <option disabled value="0"> -- select city -- </option>
 
-                            @foreach (var region in Model.regions)
-                            {
-                                <option value="@region.Regionid">@region.Name</option>
-                            }
-
-                        </select>
-                        <label for="patientRequestRegion">City</label>
-                        <span asp-validation-for="RegionId" class="text-danger"></span>
+                        <input asp-for="City" type="text" class="form-control " id="floatingInputState" placeholder="State" aria-label="State">
+                        <label class="ms-2 " for="floatingInputState">City</label>
 
                     </div>
                 </div>
 
                 <div class="col-lg-4 col-md-6 col-12 form-floating mb-3">
-                    <input asp-for="State" type="text" class="form-control " id="floatingInputState" placeholder="State" aria-label="State">
-                    <label class="ms-2 " for="floatingInputState">State</label>
+                    <select asp-for="RegionId" class="form-select" id="patientRequestRegion">
+                        <option disabled value="0"> -- select city -- </option>
+
+                        @foreach (var region in Model.regions)
+                        {
+                            <option value="@region.Regionid">@region.Name</option>
+                        }
+
+                    </select>
+                    <label for="patientRequestRegion">State</label>
+                    <span asp-validation-for="RegionId" class="text-danger"></span>
+
                 </div>
                 <div class="col-lg-4 col-md-6 col-12 form-floating mb-3">
                     <input asp-for="ZipCode" type="text" class="form-control " id="floatingInputZipCode" placeholder="Zip Code" aria-label="Zip Code">

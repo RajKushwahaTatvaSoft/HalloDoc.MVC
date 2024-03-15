@@ -6,12 +6,17 @@ using Data_Layer.DataModels;
 using Data_Layer.ViewModels.Admin;
 using HalloDoc.MVC.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.Collections.Generic;
+using System.Drawing;
 using System.IO.Compression;
 using System.Net;
 using System.Net.Mail;
+using System.Net.NetworkInformation;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Nodes;
+using NsExcel = Microsoft.Office.Interop.Excel;
 
 
 namespace HalloDoc.MVC.Controllers
@@ -59,10 +64,48 @@ namespace HalloDoc.MVC.Controllers
             document.CopyTo(stream);
         }
 
+        public IActionResult Logout()
+        {
+
+            Response.Cookies.Delete("hallodoc");
+
+            TempData["success"] = "Logout Successfull";
+
+            return Redirect("/Guest/Login");
+        }
+
+
+        [HttpPost]
+        public FileResult Export(string tableHtml)
+        {
+            Microsoft.Office.Interop.Excel.Application excel;
+            Microsoft.Office.Interop.Excel.Workbook excelworkBook;
+            Microsoft.Office.Interop.Excel.Worksheet excelSheet;
+            Microsoft.Office.Interop.Excel.Range excelCellrange;
+
+            excel = new Microsoft.Office.Interop.Excel.Application();
+
+            // for making Excel visible
+            excel.Visible = false;
+            excel.DisplayAlerts = false;
+
+            // Creation a new Workbook
+            excelworkBook = excel.Workbooks.Add(Type.Missing);
+
+            // Work sheet
+            excelSheet = (Microsoft.Office.Interop.Excel.Worksheet)excelworkBook.ActiveSheet;
+            excelSheet.Name = "Test work sheet";
+
+            return File(Encoding.ASCII.GetBytes(tableHtml), "application/vnd.ms-excel", "Grid.xls");
+        }
 
         [HttpPost]
         public async Task<ActionResult> PartialTable(int status, int page, int typeFilter, string searchFilter, int regionFilter)
         {
+
+            HttpContext.Session.SetInt32("currentStatus", status);
+            HttpContext.Session.SetInt32("currentPage", page);
+
             int pageNumber = 1;
             if (page > 0)
             {
@@ -75,7 +118,7 @@ namespace HalloDoc.MVC.Controllers
                 PatientSearchText = searchFilter,
                 RegionFilter = regionFilter,
                 pageNumber = pageNumber,
-                pageSize = 2,
+                pageSize = 5,
                 status = status,
             };
 
@@ -92,7 +135,27 @@ namespace HalloDoc.MVC.Controllers
 
         public IActionResult Dashboard()
         {
+
             string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+            if(adminName == null)
+            {
+                return RedirectToAction("Index","Guest");
+            }
+
+            int? status = HttpContext.Session.GetInt32("currentStatus");
+            if (status == null)
+            {
+                HttpContext.Session.SetInt32("currentStatus", 1);
+                
+            }
+
+            int? page = HttpContext.Session.GetInt32("currentPage");
+
+            if(page == null)
+            {
+                HttpContext.Session.SetInt32("currentPage", 1);
+            }
+
 
             AdminDashboardViewModel model = new AdminDashboardViewModel();
             if (adminName != null)
@@ -337,23 +400,28 @@ namespace HalloDoc.MVC.Controllers
         {
 
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+            string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value;
 
             try
             {
+                DateTime currentTime = DateTime.Now;
+
                 Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestid);
                 req.Status = (short)RequestStatus.Cancelled;
-                req.Modifieddate = DateTime.Now;
+                req.Modifieddate = currentTime;
 
                 _unitOfWork.RequestRepository.Update(req);
                 _unitOfWork.Save();
+
+                string logNotes = adminName + " cancelled this request on " + currentTime.ToString("MM/dd/yyyy") + " at " + currentTime.ToString("HH:mm:ss") + " : " + reason;
 
                 Requeststatuslog reqStatusLog = new Requeststatuslog()
                 {
                     Requestid = requestid,
                     Status = (short)RequestStatus.Cancelled,
                     Adminid = adminId,
-                    Notes = notes,
-                    Createddate = DateTime.Now,
+                    Notes = logNotes,
+                    Createddate = currentTime,
                 };
 
                 _unitOfWork.RequestStatusLogRepository.Add(reqStatusLog);
@@ -370,13 +438,28 @@ namespace HalloDoc.MVC.Controllers
 
         }
 
+        [HttpGet]
+        public IActionResult AssignCaseModal(int requestId)
+        {
+            ModalViewModel.AssignCaseModel model = new ModalViewModel.AssignCaseModel()
+            {
+                RequestId = requestId,
+                regions = _unitOfWork.RegionRepository.GetAll(),
+            };
+
+            return PartialView("Modals/AssignCaseModal",model);
+
+        }
+
+
         [HttpPost]
-        public bool AssignCaseModal(string notes, int requestid, int physicianid)
+        public bool AssignCaseModal(ModalViewModel.AssignCaseModel model)
         {
 
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+            string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
 
-            if (requestid == null || requestid <= 0 || physicianid == null || physicianid <= 0)
+            if (model.RequestId == null || model.RequestId <= 0 || model.PhysicianId == null || model.PhysicianId <= 0)
             {
                 TempData["error"] = "Error occured while assigning request.";
                 return false;
@@ -384,23 +467,29 @@ namespace HalloDoc.MVC.Controllers
 
             try
             {
-                Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestid);
+                DateTime currentTime = DateTime.Now;
+
+                Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == model.RequestId);
                 req.Status = (short)RequestStatus.Accepted;
-                req.Modifieddate = DateTime.Now;
-                req.Physicianid = physicianid;
+                req.Modifieddate = currentTime;
+                req.Physicianid = model.PhysicianId;
 
                 _unitOfWork.RequestRepository.Update(req);
                 _unitOfWork.Save();
 
+                Physician phy = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Physicianid == model.PhysicianId);
+                string logNotes = adminName + " assigned to " + phy.Firstname + " " + phy.Lastname + " on " + currentTime.ToString("MM/dd/yyyy") + " at " + currentTime.ToString("HH:mm:ss") + " : " + model.Notes;
+
                 Requeststatuslog reqStatusLog = new Requeststatuslog()
                 {
-                    Requestid = requestid,
+                    Requestid = model.RequestId,
                     Status = (short)RequestStatus.Accepted,
                     Adminid = adminId,
-                    Notes = notes,
+                    Notes = logNotes,
                     Transtophysicianid = req.Physicianid,
-                    Createddate = DateTime.Now,
+                    Createddate = currentTime,
                 };
+
 
                 _unitOfWork.RequestStatusLogRepository.Add(reqStatusLog);
                 _unitOfWork.Save();
@@ -418,10 +507,13 @@ namespace HalloDoc.MVC.Controllers
 
         }
 
+
         [HttpPost]
         public bool TransferCaseModal(string notes, int requestid, int physicianid)
         {
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+            string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+
             if (requestid == null || requestid <= 0 || physicianid == null || physicianid <= 0)
             {
                 TempData["error"] = "Error occured while assigning request.";
@@ -429,24 +521,30 @@ namespace HalloDoc.MVC.Controllers
             }
             try
             {
+                DateTime currentTime = DateTime.Now;
 
                 Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestid);
                 req.Status = (short)RequestStatus.Accepted;
-                req.Modifieddate = DateTime.Now;
+                req.Modifieddate = currentTime;
                 req.Physicianid = physicianid;
+
+                _unitOfWork.RequestRepository.Update(req);
+                _unitOfWork.Save();
+
+
+                Physician phy = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Physicianid == physicianid);
+
+                string logNotes = adminName + " tranferred to " + phy.Firstname + " " + phy.Lastname + " on " + currentTime.ToString("MM/dd/yyyy") + " at " + currentTime.ToString("HH:mm:ss") + " : " + notes;
 
                 Requeststatuslog reqStatusLog = new Requeststatuslog()
                 {
                     Requestid = requestid,
                     Status = (short)RequestStatus.Accepted,
                     Adminid = adminId,
-                    Notes = notes,
+                    Notes = logNotes,
                     Transtophysicianid = physicianid,
-                    Createddate = DateTime.Now,
+                    Createddate = currentTime,
                 };
-
-                _unitOfWork.RequestRepository.Update(req);
-                _unitOfWork.Save();
 
                 _unitOfWork.RequestStatusLogRepository.Add(reqStatusLog);
                 _unitOfWork.Save();
@@ -467,23 +565,29 @@ namespace HalloDoc.MVC.Controllers
         public bool BlockCaseModal(string reason, int requestid)
         {
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+            string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value;
+
             try
             {
+                DateTime currentTime = DateTime.Now;
+
                 Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestid);
                 req.Status = (short)RequestStatus.Block;
-                req.Modifieddate = DateTime.Now;
+                req.Modifieddate = currentTime;
 
                 _unitOfWork.RequestRepository.Update(req);
                 _unitOfWork.Save();
+
+                string logNotes = adminName + " blocked this request on " + currentTime.ToString("MM/dd/yyyy") + " at " + currentTime.ToString("HH:mm:ss") + " : " + reason;
 
                 Requeststatuslog reqStatusLog = new Requeststatuslog()
                 {
                     Requestid = requestid,
                     Status = (short)RequestStatus.Block,
                     Adminid = adminId,
-                    Notes = reason,
+                    Notes = logNotes,
                     Physicianid = req.Physicianid,
-                    Createddate = DateTime.Now,
+                    Createddate = currentTime,
                 };
 
                 _unitOfWork.RequestStatusLogRepository.Add(reqStatusLog);
@@ -518,22 +622,28 @@ namespace HalloDoc.MVC.Controllers
         public bool ClearCaseModal(int requestid)
         {
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+            string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value;
+
             if (adminId != null)
             {
                 try
                 {
+                    DateTime currentTime = DateTime.Now;
+
                     Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestid);
 
                     req.Status = (short)RequestStatus.Clear;
-                    req.Modifieddate = DateTime.Now;
+                    req.Modifieddate = currentTime;
+
+                    string logNotes = adminName + " cleared this request on " + currentTime.ToString("MM/dd/yyyy") + " at " + currentTime.ToString("HH:mm:ss");
 
                     Requeststatuslog reqStatusLog = new Requeststatuslog()
                     {
                         Requestid = requestid,
                         Status = (short)RequestStatus.Clear,
                         Adminid = adminId,
-                        Notes = "Admin cleared this request",
-                        Createddate = DateTime.Now,
+                        Notes = logNotes,
+                        Createddate = currentTime,
                     };
 
                     _unitOfWork.RequestRepository.Update(req);
@@ -562,7 +672,7 @@ namespace HalloDoc.MVC.Controllers
         {
             try
             {
-                
+
                 string encryptedId = EncryptionService.Encrypt(requestid.ToString());
                 var agreementLink = Url.Action("ReviewAgreement", "Guest", new { requestId = encryptedId }, Request.Scheme);
 
@@ -616,8 +726,8 @@ namespace HalloDoc.MVC.Controllers
 
             model.UserName = adminName;
 
-
             string dobDate = client.Intyear + "-" + client.Strmonth + "-" + client.Intdate;
+            model.Confirmation = req.Confirmationnumber;
             model.DashboardStatus = GetDashboardStatus(req.Status);
             model.RequestType = req.Requesttypeid;
             model.PatientName = client.Firstname + " " + client.Lastname;
@@ -689,28 +799,14 @@ namespace HalloDoc.MVC.Controllers
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
             string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
 
-
-            IEnumerable<TransferNotesLog> logs = (from rsl in _context.Requeststatuslogs
-                                                  join a in _context.Admins on rsl.Adminid equals a.Adminid into groupedAdmin
-                                                  from subAdmin in groupedAdmin.DefaultIfEmpty()
-                                                  select new TransferNotesLog
-                                                  {
-                                                      Status = rsl.Status,
-                                                      PhysicianId = rsl.Physicianid,
-                                                      PhysicianName = "",
-                                                      AdminId = rsl.Adminid,
-                                                      AdminName = subAdmin.Firstname + " " + subAdmin.Lastname,
-                                                      Notes = rsl.Notes,
-                                                      CreatedDate = rsl.Createddate
-                                                  });
+            IEnumerable<Requeststatuslog> statusLogs = _unitOfWork.RequestStatusLogRepository.Where(log => log.Requestid == Requestid).OrderBy(_ => _.Createddate);
 
             Requestnote notes = _unitOfWork.RequestNoteRepository.GetFirstOrDefault(notes => notes.Requestid == Requestid);
 
             ViewNotesViewModel model = new ViewNotesViewModel();
 
             model.UserName = adminName;
-
-
+            model.requeststatuslogs = statusLogs;
 
             if (notes != null)
             {
@@ -749,7 +845,7 @@ namespace HalloDoc.MVC.Controllers
                     Createddate = DateTime.Now,
                 };
 
-                _unitOfWork.RequestNoteRepository.Update(oldnote);
+                _unitOfWork.RequestNoteRepository.Add(curReqNote);
                 _unitOfWork.Save();
 
             }
@@ -928,9 +1024,242 @@ namespace HalloDoc.MVC.Controllers
             }
         }
 
-        public IActionResult EncounterForm()
+        public IActionResult CloseCase(int requestid)
         {
-            return View("Action/EncounterForm");
+            var requestClient = _context.Requestclients.FirstOrDefault(s => s.Requestid == requestid);
+            var docData = _context.Requestwisefiles.Where(s => s.Requestid == requestid).ToList();
+            var Confirmationnum = _context.Requests.FirstOrDefault(s => s.Requestid == requestid).Confirmationnumber;
+
+            string dobDate = null;
+            if (requestClient.Intyear != null || requestClient.Intdate != null || requestClient.Strmonth != null)
+            {
+                dobDate = requestClient.Intyear + "-" + requestClient.Strmonth + "-" + requestClient.Intdate;
+            }
+
+            if (docData != null && requestClient != null)
+            {
+                CloseCaseViewModel closeCase = new CloseCaseViewModel
+                {
+                    FirstName = requestClient.Firstname,
+                    LastName = requestClient.Lastname,
+                    Email = requestClient.Email,
+                    PhoneNumber = requestClient.Phonenumber,
+                    Dob = dobDate != null ? DateTime.Parse(dobDate) : null,
+                    Files = docData,
+                    requestid = requestid,
+                    confirmatioNumber = Confirmationnum,
+                };
+                return View("Action/CloseCase", closeCase);
+            }
+
+            return Ok();
+        }
+
+
+        [HttpPost]
+        public IActionResult CloseCase(CloseCaseViewModel closeCase, int id)
+        {
+            var reqclient = _context.Requestclients.FirstOrDefault(s => s.Requestid == id);
+
+            if (reqclient != null)
+            {
+                reqclient.Phonenumber = closeCase.PhoneNumber;
+                reqclient.Firstname = closeCase.FirstName;
+                reqclient.Lastname = closeCase.LastName;
+                reqclient.Intdate = closeCase.Dob.Value.Day;
+                reqclient.Intyear = closeCase.Dob.Value.Year;
+                reqclient.Strmonth = closeCase.Dob.Value.Month.ToString();
+
+                _context.Update(reqclient);
+                _context.SaveChanges();
+
+            }
+            return RedirectToAction("CloseCase", new { requestid = id });
+        }
+
+        public IActionResult CloseInstance(int reqid)
+        {
+
+            DateTime currentdate = DateTime.Now;
+            string adminName = HttpContext.Request.Headers.Where(a => a.Key == "userName").FirstOrDefault().Value;
+
+            Requestclient reqclient = _context.Requestclients.FirstOrDefault(s => s.Requestid == reqid);
+            Request request = _context.Requests.FirstOrDefault(r => r.Requestid == reqid);
+
+            if (request != null)
+            {
+                request.Status = 9;
+                request.Modifieddate = DateTime.Now;
+                _context.Update(request);
+                _context.SaveChanges();
+
+
+                Requeststatuslog requestStatusLog = new Requeststatuslog();
+                requestStatusLog.Requestid = reqid;
+                requestStatusLog.Status = (short)RequestStatus.Unpaid;
+                requestStatusLog.Notes = adminName + " closed this request on " + currentdate.ToString("MM/dd/yyyy") + " at " + currentdate.ToString("HH:mm:ss");
+                requestStatusLog.Createddate = DateTime.Now;
+
+                _context.Add(requestStatusLog);
+                _context.SaveChanges();
+                return RedirectToAction("Dashboard");
+            }
+            return Ok();
+        }
+
+
+        public IActionResult EncounterForm(int requestid)
+        {
+            Encounterform encounterform = _context.Encounterforms.FirstOrDefault(e => e.Requestid == requestid);
+            Requestclient requestclient = _context.Requestclients.FirstOrDefault(e => e.Requestid == requestid);
+            Request request = _context.Requests.FirstOrDefault(r => r.Requestid == requestid);
+            string dobDate = null;
+
+            if (requestclient.Intyear != null && requestclient.Strmonth != null && requestclient.Intdate != null)
+            {
+                dobDate = requestclient.Intyear + "-" + requestclient.Strmonth + "-" + requestclient.Intdate;
+            }
+
+            EncounterFormViewModel encounterViewModel;
+
+            if (encounterform != null)
+            {
+
+                encounterViewModel = new()
+                {
+                    firstName = requestclient.Firstname,
+                    lastName = requestclient.Lastname,
+                    email = requestclient.Email,
+                    phoneNumber = requestclient.Phonenumber,
+                    dob = dobDate != null ? DateTime.Parse(dobDate) : null,
+                    createdDate = request.Createddate,
+                    location = requestclient.Street + " " + requestclient.City + " " + requestclient.State,
+                    medicalHistorty = encounterform.Medicalhistory,
+                    history = encounterform.Historyofpresentillnessorinjury,
+                    medications = encounterform.Medications,
+                    allergies = encounterform.Allergies,
+                    temp = encounterform.Temp,
+                    hr = encounterform.Hr,
+                    rr = encounterform.Rr,
+                    bpLow = encounterform.Bloodpressuresystolic,
+                    bpHigh = encounterform.Bloodpressuresystolic,
+                    o2 = encounterform.O2,
+                    pain = encounterform.Pain,
+                    heent = encounterform.Heent,
+                    cv = encounterform.Cv,
+                    chest = encounterform.Chest,
+                    abd = encounterform.Abd,
+                    extr = encounterform.Extremities,
+                    skin = encounterform.Skin,
+                    neuro = encounterform.Neuro,
+                    other = encounterform.Other,
+                    diagnosis = encounterform.Diagnosis,
+                    treatmentPlan = encounterform.TreatmentPlan,
+                    procedures = encounterform.Procedures,
+                    medicationsDispensed = encounterform.Medicaldispensed,
+                    folloUps = encounterform.Followup
+
+                };
+
+                return View("Action/EncounterForm", encounterViewModel);
+
+            }
+
+            encounterViewModel = new()
+            {
+                firstName = requestclient.Firstname,
+                lastName = requestclient.Lastname,
+                email = requestclient.Email,
+                phoneNumber = requestclient.Phonenumber,
+                dob = dobDate != null ? DateTime.Parse(dobDate) : null,
+                createdDate = request.Createddate,
+                location = requestclient.Street + " " + requestclient.City + " " + requestclient.State,
+            };
+
+            return View("Action/EncounterForm", encounterViewModel);
+
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult EncounterForm(EncounterFormViewModel model)
+        {
+            string adminName = HttpContext.Request.Headers.Where(a => a.Key == "userName").FirstOrDefault().Value;
+            Admin admin = _context.Admins.FirstOrDefault(a => a.Firstname + " " + a.Lastname == adminName);
+            Request r = _context.Requests.FirstOrDefault(rs => rs.Requestid == model.requestId);
+            if (ModelState.IsValid)
+            {
+                Encounterform encounterform = _context.Encounterforms.FirstOrDefault(e => e.Requestid == model.requestId);
+                if (encounterform == null)
+                {
+                    Encounterform encf = new()
+                    {
+                        Requestid = model.requestId,
+                        Historyofpresentillnessorinjury = model.history,
+                        Medicalhistory = model.medicalHistorty,
+                        Medications = model.medications,
+                        Allergies = model.allergies,
+                        Temp = model.temp,
+                        Hr = model.hr,
+                        Rr = model.rr,
+                        Bloodpressuresystolic = model.bpLow,
+                        Bloodpressurediastolic = model.bpHigh,
+                        O2 = model.o2,
+                        Pain = model.pain,
+                        Skin = model.skin,
+                        Heent = model.heent,
+                        Neuro = model.neuro,
+                        Other = model.other,
+                        Cv = model.cv,
+                        Chest = model.chest,
+                        Abd = model.abd,
+                        Extremities = model.extr,
+                        Diagnosis = model.diagnosis,
+                        TreatmentPlan = model.treatmentPlan,
+                        Procedures = model.procedures,
+                        Adminid = admin.Adminid,
+                        Physicianid = r.Physicianid,
+                        Isfinalize = false
+
+                    };
+                    _context.Encounterforms.Add(encf);
+                    _context.SaveChanges();
+                }
+                else
+                {
+                    encounterform.Requestid = model.requestId;
+                    encounterform.Historyofpresentillnessorinjury = model.history;
+                    encounterform.Medicalhistory = model.medicalHistorty;
+                    encounterform.Medications = model.medications;
+                    encounterform.Allergies = model.allergies;
+                    encounterform.Temp = model.temp;
+                    encounterform.Hr = model.hr;
+                    encounterform.Rr = model.rr;
+                    encounterform.Bloodpressuresystolic = model.bpLow;
+                    encounterform.Bloodpressurediastolic = model.bpHigh;
+                    encounterform.O2 = model.o2;
+                    encounterform.Pain = model.pain;
+                    encounterform.Skin = model.skin;
+                    encounterform.Heent = model.heent;
+                    encounterform.Neuro = model.neuro;
+                    encounterform.Other = model.other;
+                    encounterform.Cv = model.cv;
+                    encounterform.Chest = model.chest;
+                    encounterform.Abd = model.abd;
+                    encounterform.Extremities = model.extr;
+                    encounterform.Diagnosis = model.diagnosis;
+                    encounterform.TreatmentPlan = model.treatmentPlan;
+                    encounterform.Procedures = model.procedures;
+                    encounterform.Adminid = admin.Adminid;
+                    encounterform.Physicianid = r.Physicianid;
+                    encounterform.Isfinalize = false;
+
+                    _context.Encounterforms.Update(encounterform);
+                    _context.SaveChanges();
+                }
+                return EncounterForm((int)model.requestId);
+            }
+            return View("error");
         }
     }
 }
