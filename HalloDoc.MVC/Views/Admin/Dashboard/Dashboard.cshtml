@@ -6,245 +6,8 @@
     ViewData["UserName"] = Model.UserName;
 }
 
-@* MODALS *@
+@* MODALS DIV*@
 <div id="modal-div"></div>
-
-@* Cancel Case *@
-<div class="modal  fade" id="cancelModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
-     aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-info">
-                <div class="modal-dark modal-title text-white" id="exampleModalLongTitle">
-                    Confirm Cancellation
-                </div>
-                <button type="button" class="btn" aria-label="Close" data-bs-dismiss="modal">
-                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
-                         fill="#FFFFFF">
-                        <path d="M0 0h24v24H0V0z" fill="none" />
-                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
-                    </svg>
-                </button>
-            </div>
-            <form>
-                <div class="modal-body">
-                    <span class="modal-head">Patient Name : <b id="cancelModalPatientName" style="color: var(--primary);">test test</b></span>
-                    <div class="modal-flex my-3">
-
-                        <div class="form-floating mt-3">
-                            <select class="form-select" id="cancelModalCaseTag">
-                                <option disabled selected value="0"> -- select casetag -- </option>
-
-                                @foreach (var casetag in Model.casetags)
-                                {
-                                    <option value="@casetag.Casetagid">@casetag.Name</option>
-                                }
-                            </select>
-                            <label for="cancelModalCaseTag">Reasons for Cancellation</label>
-                        </div>
-
-                        <div class="form-floating mt-3">
-                            <input type="text" id="cancelCaseRequestId" hidden />
-                            <input type="text" class="form-control" id="cancelCaseNotes">
-                            <label for="cancelCaseNotes">Provide Additional Notes</label>
-                        </div>
-
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button id="cancel-modal-submit-btn" type="button" class="btn btn-info text-white" data-bs-dismiss="modal">
-                        Continue
-                    </button>
-                    <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-@* Transfer Case *@
-<div class="modal fade" id="transferModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
-     aria-hidden="true">
-
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-
-            <div class="modal-header bg-info">
-                <div class="modal-dark modal-title text-white" id="exampleModalLongTitle">
-                    Transfer Request
-                </div>
-                <button type="button" class="btn" aria-label="Close" data-bs-dismiss="modal">
-                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
-                         fill="#FFFFFF">
-                        <path d="M0 0h24v24H0V0z" fill="none" />
-                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
-                    </svg>
-                </button>
-            </div>
-
-            <form>
-
-                <div class="modal-body">
-                    <span class="modal-head">To assign this request, search and select another Physician</span>
-                    <div class="modal-flex my-3">
-
-                        <input id="transferCaseRequestId" hidden />
-
-                        <div class="form-floating mt-3">
-                            <select class="form-select" id="transferCaseRegion">
-                                <option disabled selected value="0"> -- select region -- </option>
-
-                                @foreach (var region in Model.regions)
-                                {
-                                    <option value="@region.Regionid">@region.Name</option>
-                                }
-                            </select>
-                            <label for="transferCaseRegion">Narrow Search By Region</label>
-                        </div>
-
-                        <div class="form-floating mt-3">
-                            <select class="form-select" id="transferCasePhysician">
-                                <option disabled selected value="0"> -- select physician -- </option>
-
-                            </select>
-                            <label for="transferCasePhysician">Select Physician</label>
-                        </div>
-
-                        <div class="form-floating mt-3">
-                            <textarea style="height: 100px;" type="text" class="form-control" id="transferCaseNotes"></textarea>
-                            <label for="transferCaseNotes">Description</label>
-                        </div>
-
-                    </div>
-                </div>
-
-                <div class="modal-footer">
-                    <button type="button" id="transfer-modal-submit-btn" class="btn btn-info text-white" data-bs-dismiss="modal">Submit</button>
-                    <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
-                </div>
-
-            </form>
-
-        </div>
-    </div>
-</div>
-
-@* Block Case *@
-<div class="modal  fade" id="blockModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
-     aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-info">
-                <div class="modal-dark modal-title text-white" id="exampleModalLongTitle">
-                    Confirm Block
-                </div>
-                <button type="button" class="btn" aria-label="Close" data-bs-dismiss="modal">
-                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
-                         fill="#FFFFFF">
-                        <path d="M0 0h24v24H0V0z" fill="none" />
-                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
-                    </svg>
-                </button>
-            </div>
-            <form>
-                <div class="modal-body">
-                    <span class="modal-head">Patient Name : <b id="blockModalPatientName" style="color: var(--primary);">test test</b></span>
-                    <div class="modal-flex my-3">
-                        <div class="form-floating mt-3">
-                            <input type="text" id="blockCaseRequestId" hidden />
-                            <textarea style="height: 100px;" type="text" class="form-control" id="blockCaseModalNotes"></textarea>
-                            <label for="blockCaseModalNotes">Reason for Block Request</label>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button id="block-modal-submit-btn" type="button" class="btn btn-info text-white" data-bs-dismiss="modal">Continue</button>
-                    <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-@* Clear Case *@
-<div id="ClearCaseModal" class="modal fade" aria-labelledby="exampleModalCenterTitle">
-    <div class="modal-dialog rounded-3 modal-dialog-centered">
-        <div class="modal-content">
-            <form>
-                <div class="mt-4 pt-4 mx-4 modal-body align-items-center d-flex justify-content-center mt-4">
-                    <svg class="info-icon-shadow" xmlns="http://www.w3.org/2000/svg" height="100px" viewBox="0 0 24 24" width="100px"
-                         fill="#faaa04">
-                        <path d="M0 0h24v24H0z" fill="none" />
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
-                    </svg>
-                </div>
-                <h3 class="d-flex justify-content-center">Confirmation for clear case</h3>
-
-                <div class="m-4 p-4 d-flex justify-content-center align-items-center">
-                    <input type="text" id="clearCaseRequestId" hidden />
-                    <p class="text-center ">
-                        Are you sure you want to clear this request? Once cleared , you won't be able to see this request.
-                    </p>
-                </div>
-
-                <div class="modal-footer d-flex justify-content-center">
-                    <button type="button" id="clear-modal-submit-btn" class="btn btn-info text-white" data-bs-dismiss="modal">
-                        Clear
-                    </button>
-                    <button type="button" class="btn cancel-btn" data-bs-dismiss="modal">Cancel</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-@* Send Agreement *@
-<div class="modal fade" id="SendAgreementModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog  modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-info">
-                <h5 class="modal-title text-white" id="exampleModalLongTitle">Send Agreement</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="d-flex align-items-center">
-                    <div class="border border-1 rounded-circle m-1 " id="circle" style="width: 15px; height:15px;"></div>
-                    <span class="fs-5" id="sendtype"></span>
-                </div>
-                <form>
-                    <div class="">
-                        <input type="text" id="sendAgreementRequestId" hidden />
-                        <span class="modal-head">To send agreement , make sure you are updating the correct email and phone number.</span>
-                        <div class="modal-flex my-3">
-                            <div class="form-floating mt-3">
-                                <div class="mb-3">
-                                    <label for="sendAgreementNumber" class="form-label">Phone number</label>
-                                    <input type="text" class="form-control" id="sendAgreementNumber" />
-
-                                </div>
-
-                            </div>
-                            <div class="mb-3">
-                                <label for="sendagreementEmail" class="form-label">Email address</label>
-                                <input type="email" class="form-control" id="sendagreementEmail" aria-describedby="emailHelp">
-
-                            </div>
-
-
-
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button id="sendAgreement-modal-submit-btn" type="button" class="btn btn-info text-white" data-bs-dismiss="modal">
-                            Send
-                        </button>
-                        <button type="button" class="btn cancel-btn" data-bs-dismiss="modal">Cancel</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
 
 <div class="px-4 admin-dashboard">
 
@@ -422,7 +185,7 @@
 
         <div class="d-flex align-items-center">
 
-            <button type="submit" class="mx-1 px-2 py-1 btn btn-primary" style="background-color:#10bce9">
+            <button id="send-link-btn" type="button" class="mx-1 px-2 py-1 btn btn-primary" style="background-color:#10bce9">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="#ffffff" width="24px" height="24px" enable-background="new 0 0 32 32" viewBox="0 0 32 32" id="telegram">
                     <path fill="#ffffff" d="M24.687,30.163c-0.402,0-0.843-0.132-1.32-0.395l-10.803-7.976c-0.121-0.089-0.195-0.228-0.203-0.378
 	c-0.007-0.15,0.053-0.295,0.165-0.396L25.322,9.503c0.205-0.185,0.521-0.169,0.706,0.037c0.185,0.205,0.168,0.521-0.037,0.706
@@ -449,7 +212,7 @@ C25.163,30.114,24.933,30.163,24.687,30.163z"></path>
                 <span class="ms-1 d-none d-md-inline text-white">Send Link</span>
             </button>
 
-            <button type="submit" class="mx-1 px-2 py-1 btn btn-primary" style="background-color:#10bce9">
+            <a asp-controller="Admin" asp-action="CreateRequest" class="mx-1 px-2 py-1 btn btn-primary" style="background-color:#10bce9">
                 <svg fill="#ffffff" version="1.1" width="24px" height="24px" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
                      viewBox="0 0 60 60" xml:space="preserve">
 <g>
@@ -466,18 +229,18 @@ C25.163,30.114,24.933,30.163,24.687,30.163z"></path>
 </g>
 </svg>
                 <span class="ms-1  d-none d-md-inline text-white">Create Request</span>
-            </button>
+            </a>
 
-            <a asp-controller="Admin" asp-action="retry"  type="button" class="mx-1 px-2 py-1 btn btn-primary" style="background-color:#10bce9">
+            <button id="export-filtered-btn" type="button" value="Export" class="mx-1 px-2 py-1 btn btn-primary" style="background-color:#10bce9">
                 <svg width="25px" height="25px" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" fill="white"
                      class="bi bi-reply">
                     <path transform="scale(-1, 1) translate(-20,0)"
                           d="M6.598 5.013a.144.144 0 0 1 .202.134V6.3a.5.5 0 0 0 .5.5c.667 0 2.013.005 3.3.822.984.624 1.99 1.76 2.595 3.876-1.02-.983-2.185-1.516-3.205-1.799a8.74 8.74 0 0 0-1.921-.306 7.404 7.404 0 0 0-.798.008h-.013l-.005.001h-.001L7.3 9.9l-.05-.498a.5.5 0 0 0-.45.498v1.153c0 .108-.11.176-.202.134L2.614 8.254a.503.503 0 0 0-.042-.028.147.147 0 0 1 0-.252.499.499 0 0 0 .042-.028l3.984-2.933zM7.8 10.386c.068 0 .143.003.223.006.434.02 1.034.086 1.7.271 1.326.368 2.896 1.202 3.94 3.08a.5.5 0 0 0 .933-.305c-.464-3.71-1.886-5.662-3.46-6.66-1.245-.79-2.527-.942-3.336-.971v-.66a1.144 1.144 0 0 0-1.767-.96l-3.994 2.94a1.147 1.147 0 0 0 0 1.946l3.994 2.94a1.144 1.144 0 0 0 1.767-.96v-.667z" />
                 </svg>
                 <span class="ms-1  d-none d-md-inline text-white">Export</span>
-            </a>
+            </button>
 
-            <button type="submit" class="mx-1 px-2 py-1 btn btn-primary" style="background-color:#10bce9">
+            <button id="export-all-btn" type="button" class="mx-1 px-2 py-1 btn btn-primary" style="background-color:#10bce9">
                 <svg width="25px" height="25px" viewBox="0 0 20 20" fill="white">
                     <path transform="scale(-1, 1) translate(-20,0)"
                           d="M6.598 5.013a.144.144 0 0 1 .202.134V6.3a.5.5 0 0 0 .5.5c.667 0 2.013.005 3.3.822.984.624 1.99 1.76 2.595 3.876-1.02-.983-2.185-1.516-3.205-1.799a8.74 8.74 0 0 0-1.921-.306 7.404 7.404 0 0 0-.798.008h-.013l-.005.001h-.001L7.3 9.9l-.05-.498a.5.5 0 0 0-.45.498v1.153c0 .108-.11.176-.202.134L2.614 8.254a.503.503 0 0 0-.042-.028.147.147 0 0 1 0-.252.499.499 0 0 0 .042-.028l3.984-2.933zM7.8 10.386c.068 0 .143.003.223.006.434.02 1.034.086 1.7.271 1.326.368 2.896 1.202 3.94 3.08a.5.5 0 0 0 .933-.305c-.464-3.71-1.886-5.662-3.46-6.66-1.245-.79-2.527-.942-3.336-.971v-.66a1.144 1.144 0 0 0-1.767-.96l-3.994 2.94a1.147 1.147 0 0 0 0 1.946l3.994 2.94a1.144 1.144 0 0 0 1.767-.96v-.667z" />
@@ -486,11 +249,6 @@ C25.163,30.114,24.933,30.163,24.687,30.163z"></path>
                 <span class="ms-1 d-none d-md-inline  text-white">Export All</span>
             </button>
 
-            <button type="submit" class="mx-1 px-2 py-1 btn btn-primary" style="background-color:#10bce9">
-                <svg fill="#ffffff" width="24px" height="24px" enable-background="new 0 0 1005.256 1010" id="avatar" version="1.1" viewBox="0 0 1005.256 1010" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g id="avatar-avatar"><rect fill="#ffffff" height="39.5713" width="197.8799" x="576.3586" y="865.3936" /><path d="M982.7023,763.5713c-26.0586-40.6103-92.2773-66.2666-168.9629-96.0332   c-20.459-7.9385-41.627-16.1123-62.7236-24.8535c-62.0615-25.9395-93.2705-40.7764-107.0674-47.7217l-0.6611-72.268   c11.9541-13.0171,34.0429-44.0362,44.5556-104.3497c4.3243-1.4174,8.8829-3.5913,13.5606-6.9458   c21.0976-14.8598,35.3428-45.5244,36.5713-65.3457c0.0244-0.5908,3.3779-60.9043-23.0576-83.7729   c-1.7246-1.4883-3.5196-2.8115-5.4571-3.9688c5.5752-44.9814,7.1817-71.0629,5.5273-87.8837   C706.9084,86.6553,625.2619,0,502.6501,0S298.3913,86.6553,290.3356,170.3575c-1.6777,16.8442-0.0708,42.9257,5.481,87.9545   c-1.8667,1.1573-3.7329,2.4805-5.4341,3.9688c-26.4829,22.8686-23.1519,83.1821-23.0811,83.7729   c1.252,19.8682,15.5689,50.5332,36.5948,65.3457c4.7011,3.3545,9.2841,5.5284,13.5366,6.9458   c10.4892,60.3135,32.5547,91.3326,44.6269,104.3497l-0.7085,72.2202c-13.8442,7.0175-45.0761,21.8535-107.1142,47.7695   c-21.0967,8.7647-42.2642,16.915-62.7232,24.8535c-76.6386,29.7666-142.8344,55.4463-168.9633,96.0332   C-5.3504,807.1123-0.0584,976.4776,1.2883,1010l39.5239-1.6298c-3.0947-78.1504-0.4961-199.1319,15.0727-223.3946   c19.1123-29.7431,82.6621-54.4082,149.8745-80.4892c20.813-8.0557,42.3116-16.3721,63.6685-25.3252   c96.6245-40.2325,120.8872-54.8096,121.8555-55.4004l9.4262-5.7168l1.0396-103.4756l-0.189-9.6626l-7.2998-6.0479   c-0.331-0.2128-30.2397-25.7275-39.9966-101.6098l-2.3388-22.9395l-22.1602,6.355c-7.0166-0.9214-22.1123-23.5771-22.9394-37.0195   c-1.2046-20.0811,3.5439-43.9185,8.4575-50.3443l25.6802,5.3628l-3.6148-27.6645c-4.583-34.7515-9.5679-77.1343-7.6069-96.7661   c6.355-66.1729,72.7402-134.6368,172.9087-134.6368c100.0971,0,166.5542,68.4639,172.9555,134.6602   c1.9131,19.6323-3.0712,61.9912-7.6543,96.7427l-2.5752,26.247l24.5704-4.0161c4.914,6.3077,9.7558,30.2632,8.4804,50.4151   c-0.7793,13.4189-15.875,36.0512-22.2773,37.1377l-22.1367-6.4258l-2.9766,22.8452   c-9.7568,75.9292-39.666,101.4439-39.6894,101.4678l-7.8438,6.0005L604.59,618.044l9.4268,5.7168   c0.9687,0.5908,25.2303,15.1679,121.8086,55.4238c21.4043,8.8828,42.831,17.2461,63.5976,25.2549   c67.3301,26.1279,130.8799,50.793,149.9453,80.4893c15.5919,24.3096,18.1906,145.2911,15.0723,223.4415l39.5,1.6298   C1005.3351,976.501,1010.6027,807.1123,982.7023,763.5713z" fill="#ffffff" /></g>
-</svg>
-                <span class="ms-1 d-none d-md-inline text-white">Request DTY Support</span>
-            </button>
         </div>
 
     </div>
@@ -576,6 +334,8 @@ C25.163,30.114,24.933,30.163,24.687,30.163z"></path>
 
     <div id="partial-table"></div>
 
+    <a id="download-anchor-tag" href="" download></a>
+
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.1.min.js"
@@ -583,25 +343,6 @@ C25.163,30.114,24.933,30.163,24.687,30.163z"></path>
 </script>
 
 <script src="/js/admin-dashboard.js"></script>
-
-<script>
-
-    function exportCurrentData() {
-
-        $.ajax({
-            url: "/Admin/Export",
-            data: { tableHtml : $(".table-responsive").html() },
-            type: 'POST',
-            success: function (result) {
-                console.log('success');
-            },
-            error: function (error) {
-                console.log(error);
-                alert('Error Cancelling Request')
-            },
-        });
-    }
-</script>
 
 <script>
 
@@ -617,4 +358,106 @@ C25.163,30.114,24.933,30.163,24.687,30.163z"></path>
         $("#status-new-tab").click();
     }
 
+</script>
+
+<script>
+
+
+    $('#export-filtered-btn').click(function () {
+
+        $.ajax({
+            url: "/Admin/ExportFilteredData",
+            type: 'POST',
+            data: { status: dashboardStatus, typeFilter: type_filter, searchFilter: search_filter, regionFilter: region_filter },
+            success: function (result) {
+
+                console.log('success');
+
+                var link = document.createElement('a');
+
+                link.href = "data:application/octet-stream;base64," + result;
+                link.target = '_blank';
+                link.download = 'Sample.xlsx';
+                link.click();
+
+            },
+            error: function (error) {
+                console.log(error);
+                alert('error fetching details')
+            },
+        });
+    });
+
+    function base64ToArrayBuffer(base64) {
+
+        var binaryString = window.atob(base64);
+        var binaryLen = binaryString.length;
+        var bytes = new Uint8Array(binaryLen);
+        for (var i = 0; i < binaryLen; i++) {
+            var ascii = binaryString.charCodeAt(i);
+            bytes[i] = ascii;
+        }
+        return bytes;
+    }
+
+    function saveByteArray(reportName, byte) {
+        var blob = new Blob([byte], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+        var link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        var fileName = reportName;
+        link.download = fileName;
+        link.click();
+    };
+
+
+
+    $('#export-all-btn').click(function () {
+        console.log('export all');
+        $.ajax({
+            url: "/Admin/ExportAllExcel",
+            data: { status: dashboardStatus },
+            success: function (result) {
+
+                console.log('success');
+
+                var link = document.createElement('a');
+
+                link.href = "data:application/octet-stream;base64," + result;
+                link.target = '_blank';
+                link.download = 'Sample.xlsx';
+                link.click();
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
+    });
+
+    $('#send-link-btn').click(function () {
+        console.log('hi');
+
+        $.ajax({
+            url: "/Admin/SendLinkModal",
+            data: {},
+            type: 'GET',
+            success: function (result) {
+                $('#modal-div').html(result);
+                $('#sendLinkModal').modal('show');
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
+    });
+
+</script>
+
+<script type="text/javascript">
+    $(function () {
+        $("#export-btn").click(function () {
+            $("input[name='GridHtml']").val($("#partial-table").html());
+        });
+    });
 </script>

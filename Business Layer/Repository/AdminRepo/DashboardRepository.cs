@@ -85,6 +85,8 @@ namespace Business_Layer.Repository.AdminRepo
 
             var query = (from r in _context.Requests
                          join rc in _context.Requestclients on r.Requestid equals rc.Requestid
+                         join phy in _context.Physicians on r.Physicianid equals phy.Physicianid into phyGroup
+                         from phyItem in phyGroup.DefaultIfEmpty()
                          where (validRequestTypes.Contains(r.Status))
                          && (dashboardParams.RequestTypeFilter == 0 || r.Requesttypeid == dashboardParams.RequestTypeFilter)
                          && (dashboardParams.RegionFilter == 0 || rc.Regionid == dashboardParams.RegionFilter)
@@ -99,6 +101,7 @@ namespace Business_Layer.Repository.AdminRepo
                              Requestor = GetRequestType(r) + " " + r.Firstname + " " + r.Lastname,
                              RequestDate = r.Createddate.ToString("MMM dd, yyyy"),
                              PatientPhone = rc.Phonenumber,
+                             PhysicianName = phyItem.Firstname + " " + phyItem.Lastname,
                              Phone = r.Phonenumber,
                              Address = rc.Address,
                              Notes = rc.Notes,
@@ -108,6 +111,64 @@ namespace Business_Layer.Repository.AdminRepo
             query, pageNumber, dashboardParams.pageSize);
 
         }
+
+
+        public List<AdminRequest> GetAllRequestByStatus(int status)
+        {
+
+            List<short> validRequestTypes = new List<short>();
+            switch (status)
+            {
+                case (int)DashboardStatus.New:
+                    validRequestTypes.Add((short)RequestStatus.Unassigned);
+                    break;
+                case (int)DashboardStatus.Pending:
+                    validRequestTypes.Add((short)RequestStatus.Accepted);
+                    break;
+                case (int)DashboardStatus.Active:
+                    validRequestTypes.Add((short)RequestStatus.MDEnRoute);
+                    validRequestTypes.Add((short)RequestStatus.MDOnSite);
+                    break;
+                case (int)DashboardStatus.Conclude:
+                    validRequestTypes.Add((short)RequestStatus.Conclude);
+                    break;
+                case (int)DashboardStatus.ToClose:
+                    validRequestTypes.Add((short)RequestStatus.Cancelled);
+                    validRequestTypes.Add((short)RequestStatus.CancelledByPatient);
+                    validRequestTypes.Add((short)RequestStatus.Closed);
+
+                    break;
+                case (int)DashboardStatus.Unpaid:
+                    validRequestTypes.Add((short)RequestStatus.Unpaid);
+                    break;
+            }
+
+            List<AdminRequest> adminRequests = new List<AdminRequest>();
+
+            adminRequests = (from r in _context.Requests
+                             join rc in _context.Requestclients on r.Requestid equals rc.Requestid
+                             join p in _context.Physicians on r.Physicianid equals p.Physicianid into subgroup
+                             from subitem in subgroup.DefaultIfEmpty()
+                             where validRequestTypes.Contains(r.Status)
+                             select new AdminRequest
+                             {
+                                 RequestId = r.Requestid,
+                                 Email = rc.Email,
+                                 PatientName = rc.Firstname + " " + rc.Lastname,
+                                 DateOfBirth = GetPatientDOB(rc),
+                                 RequestType = r.Requesttypeid,
+                                 Requestor = GetRequestType(r) + " " + r.Firstname + " " + r.Lastname,
+                                 RequestDate = r.Createddate.ToString("MMM dd, yyyy"),
+                                 PatientPhone = rc.Phonenumber,
+                                 PhysicianName = subitem.Firstname,
+                                 Phone = r.Phonenumber,
+                                 Address = rc.Address,
+                                 Notes = rc.Notes,
+                             }).ToList();
+
+            return adminRequests;
+        }
+
 
         public List<AdminRequest> GetAdminRequest(int status, int page, DashboardFilter filters)
         {

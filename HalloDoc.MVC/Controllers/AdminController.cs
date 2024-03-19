@@ -1,14 +1,16 @@
 ﻿using Business_Layer.Interface;
 using Business_Layer.Interface.AdminInterface;
+using ClosedXML.Excel;
+using CsvHelper;
 using Data_Layer.CustomModels;
 using Data_Layer.DataContext;
 using Data_Layer.DataModels;
 using Data_Layer.ViewModels.Admin;
 using HalloDoc.MVC.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.Collections.Generic;
-using System.Drawing;
+using Newtonsoft.Json;
+using System.Data;
+using System.Globalization;
 using System.IO.Compression;
 using System.Net;
 using System.Net.Mail;
@@ -16,19 +18,20 @@ using System.Net.NetworkInformation;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Nodes;
-using NsExcel = Microsoft.Office.Interop.Excel;
 
 
 namespace HalloDoc.MVC.Controllers
 {
-    public enum TypeFilter
+
+    public class NewRequestModel
     {
-        All = 0,
-        Patient = 1,
-        FamilyFriend = 2,
-        Concierge = 3,
-        Business = 4,
-        VIP = 5,
+        public string Name { get; set; }
+        public string DateOfBirth { get; set; }
+        public string Requestor { get; set; }
+        public string RequestedDate { get; set; }
+        public string Phone { get; set; }
+        public string Address { get; set; }
+        public string Notes { get; set; }
     }
 
     [CustomAuthorize((int)AllowRole.Admin)]
@@ -38,7 +41,6 @@ namespace HalloDoc.MVC.Controllers
         private readonly IDashboardRepository _dashboardRepository;
         private readonly IWebHostEnvironment _environment;
         private readonly IConfiguration _config;
-        private readonly ApplicationDbContext _context;
 
         public AdminController(IUnitOfWork unitOfWork, IDashboardRepository dashboard, IWebHostEnvironment environment, IConfiguration config, ApplicationDbContext context)
         {
@@ -46,7 +48,6 @@ namespace HalloDoc.MVC.Controllers
             _dashboardRepository = dashboard;
             _environment = environment;
             _config = config;
-            _context = context;
         }
 
         public void InsertRequestWiseFile(IFormFile document)
@@ -74,31 +75,6 @@ namespace HalloDoc.MVC.Controllers
             return Redirect("/Guest/Login");
         }
 
-
-        [HttpPost]
-        public FileResult Export(string tableHtml)
-        {
-            Microsoft.Office.Interop.Excel.Application excel;
-            Microsoft.Office.Interop.Excel.Workbook excelworkBook;
-            Microsoft.Office.Interop.Excel.Worksheet excelSheet;
-            Microsoft.Office.Interop.Excel.Range excelCellrange;
-
-            excel = new Microsoft.Office.Interop.Excel.Application();
-
-            // for making Excel visible
-            excel.Visible = false;
-            excel.DisplayAlerts = false;
-
-            // Creation a new Workbook
-            excelworkBook = excel.Workbooks.Add(Type.Missing);
-
-            // Work sheet
-            excelSheet = (Microsoft.Office.Interop.Excel.Worksheet)excelworkBook.ActiveSheet;
-            excelSheet.Name = "Test work sheet";
-
-            return File(Encoding.ASCII.GetBytes(tableHtml), "application/vnd.ms-excel", "Grid.xls");
-        }
-
         [HttpPost]
         public async Task<ActionResult> PartialTable(int status, int page, int typeFilter, string searchFilter, int regionFilter)
         {
@@ -124,6 +100,7 @@ namespace HalloDoc.MVC.Controllers
 
             PagedList<AdminRequest> pagedList = await _dashboardRepository.GetAdminRequestsAsync(filter);
 
+
             AdminDashboardViewModel model = new AdminDashboardViewModel();
             model.pagedList = pagedList;
             model.DashboardStatus = status;
@@ -133,25 +110,486 @@ namespace HalloDoc.MVC.Controllers
             return PartialView("Partial/PartialTable", model);
         }
 
+
+        public DataTable getData()
+        {
+            //Creating DataTable  
+            DataTable dt = new DataTable();
+            //Setiing Table Name  
+            dt.TableName = "EmployeeData";
+            //Add Columns  
+            dt.Columns.Add("ID", typeof(int));
+            dt.Columns.Add("Name", typeof(string));
+            dt.Columns.Add("City", typeof(string));
+            //Add Rows in DataTable  
+            dt.Rows.Add(1, "Anoop Kumar Sharma", "Delhi");
+            dt.Rows.Add(2, "Andrew", "U.P.");
+            dt.AcceptChanges();
+            return dt;
+        }
+
+        [HttpPost]
+        public async Task<byte[]> ExportFilteredData(int status, int typeFilter, string searchFilter, int regionFilter)
+        {
+            int page = (int) HttpContext.Session.GetInt32("currentPage");
+
+            int pageNumber = page;
+            if (page < 1)
+            {
+                pageNumber = 1;
+            }
+
+            DashboardFilter filter = new DashboardFilter()
+            {
+                RequestTypeFilter = typeFilter,
+                PatientSearchText = searchFilter,
+                RegionFilter = regionFilter,
+                pageNumber = pageNumber,
+                pageSize = 5,
+                status = status,
+            };
+
+            PagedList<AdminRequest> pagedList = await _dashboardRepository.GetAdminRequestsAsync(filter);
+
+
+            DataTable dt = GetDataTableFromList(pagedList, status);
+
+            //Name of File
+            string fileName = "Sample.xlsx";
+            using (XLWorkbook wb = new XLWorkbook())
+            {
+                //Add DataTable in worksheet  
+                wb.Worksheets.Add(dt);
+                using (MemoryStream stream = new MemoryStream())
+                {
+                    wb.SaveAs(stream);
+                    //Return xlsx Excel File  
+                    return stream.ToArray();
+                }
+            }
+
+            //string path = Path.Combine(_environment.WebRootPath, "export", "filter.csv");
+
+            //using (var writer = new StreamWriter(path))
+
+            //using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
+            //{
+            //    csv.WriteRecords(pagedList);
+            //}
+
+            //return path;
+
+        }
+
+        [HttpPost]
+        public FileResult Export(string GridHtml)
+        {
+            return File(Encoding.ASCII.GetBytes(GridHtml), "application/vnd.ms-excel", "Grid.xls");
+        }
+
+        public DataTable GetDataTableFromList(List<AdminRequest> requestList, int status)
+        {
+
+            DataTable dt = new DataTable();
+            dt.TableName = "EmployeeData";
+
+            if (status == (int)DashboardStatus.New)
+            {
+
+                dt.Columns.Add("Name", typeof(string));
+                dt.Columns.Add("Email", typeof(string));
+                dt.Columns.Add("Date Of Birth", typeof(string));
+                dt.Columns.Add("Requestor", typeof(string));
+                dt.Columns.Add("Request Date", typeof(string));
+                dt.Columns.Add("Phone", typeof(string));
+                dt.Columns.Add("Address", typeof(string));
+                dt.Columns.Add("Notes", typeof(string));
+
+                foreach (var request in requestList)
+                {
+                    string phone = "(Patient) " + request.PatientPhone;
+
+                    if (request.RequestType != (int)RequestType.Patient)
+                    {
+                        phone = phone + " (Requestor) " + request.Phone;
+                    }
+
+                    dt.Rows.Add(request.PatientName,
+                        request.Email,
+                        request.DateOfBirth,
+                        request.Requestor,
+                        request.RequestDate,
+                        phone,
+                        request.Address,
+                        request.Notes
+                        );
+                }
+
+            }
+            else if (status == (int)DashboardStatus.Pending || status == (int)DashboardStatus.Active)
+            {
+
+                dt.Columns.Add("Name", typeof(string));
+                dt.Columns.Add("Email", typeof(string));
+                dt.Columns.Add("Date Of Birth", typeof(string));
+                dt.Columns.Add("Requestor", typeof(string));
+                dt.Columns.Add("Physician Name", typeof(string));
+                dt.Columns.Add("Date Of Service", typeof(string));
+                dt.Columns.Add("Phone", typeof(string));
+                dt.Columns.Add("Address", typeof(string));
+                dt.Columns.Add("Notes", typeof(string));
+
+                foreach (var request in requestList)
+                {
+                    string phone = "(Patient) " + request.PatientPhone;
+
+                    if (request.RequestType != (int)RequestType.Patient)
+                    {
+                        phone = phone + " (Requestor) " + request.Phone;
+                    }
+
+                    dt.Rows.Add(request.PatientName,
+                        request.Email,
+                        request.DateOfBirth,
+                        request.Requestor,
+                        request.PhysicianName,
+                        request.DateOfService,
+                        phone,
+                        request.Address,
+                        request.Notes
+                        );
+                }
+
+            }
+            else if (status == (int)DashboardStatus.Conclude)
+            {
+
+                dt.Columns.Add("Name", typeof(string));
+                dt.Columns.Add("Email", typeof(string));
+                dt.Columns.Add("Date Of Birth", typeof(string));
+                dt.Columns.Add("Physician Name", typeof(string));
+                dt.Columns.Add("Date Of Service", typeof(string));
+                dt.Columns.Add("Phone", typeof(string));
+                dt.Columns.Add("Address", typeof(string));
+
+                foreach (var request in requestList)
+                {
+                    string phone = "(Patient) " + request.PatientPhone;
+
+                    if (request.RequestType != (int)RequestType.Patient)
+                    {
+                        phone = phone + " (Requestor) " + request.Phone;
+                    }
+
+                    dt.Rows.Add(request.PatientName,
+                        request.Email,
+                        request.DateOfBirth,
+                        request.PhysicianName,
+                        request.DateOfService,
+                        phone,
+                        request.Address
+                        );
+                }
+            }
+            else if (status == (int)DashboardStatus.ToClose)
+            {
+
+                dt.Columns.Add("Name", typeof(string));
+                dt.Columns.Add("Email", typeof(string));
+                dt.Columns.Add("Date Of Birth", typeof(string));
+                dt.Columns.Add("Region", typeof(string));
+                dt.Columns.Add("Physician Name", typeof(string));
+                dt.Columns.Add("Date Of Service", typeof(string));
+                dt.Columns.Add("Address", typeof(string));
+                dt.Columns.Add("Notes", typeof(string));
+
+                foreach (var request in requestList)
+                {
+                    dt.Rows.Add(request.PatientName,
+                        request.Email,
+                        request.DateOfBirth,
+                        request.RegionName,
+                        request.PhysicianName,
+                        request.DateOfService,
+                        request.Address,
+                        request.Notes
+                        );
+                }
+
+            }
+            else if (status == (int)DashboardStatus.Unpaid)
+            {
+
+                dt.Columns.Add("Name", typeof(string));
+                dt.Columns.Add("Email", typeof(string));
+                dt.Columns.Add("Physician Name", typeof(string));
+                dt.Columns.Add("Date Of Service", typeof(string));
+                dt.Columns.Add("Phone", typeof(string));
+                dt.Columns.Add("Address", typeof(string));
+
+                foreach (var request in requestList)
+                {
+                    string phone = "(Patient) " + request.PatientPhone;
+
+                    if (request.RequestType != (int)RequestType.Patient)
+                    {
+                        phone = phone + " (Requestor) " + request.Phone;
+                    }
+
+                    dt.Rows.Add(request.PatientName,
+                        request.Email,
+                        request.PhysicianName,
+                        request.DateOfService,
+                        phone,
+                        request.Address
+                        );
+                }
+
+            }
+
+
+            dt.AcceptChanges();
+
+            return dt;
+        }
+
+
+
+        public byte[] ExportAllExcel(int status)
+        {
+            IEnumerable<AdminRequest> allRequest = _dashboardRepository.GetAllRequestByStatus(status);
+
+            DataTable dt = GetDataTableFromList(allRequest.ToList(), status);
+            //Name of File
+            string fileName = "Sample.xlsx";
+            using (XLWorkbook wb = new XLWorkbook())
+            {
+                //Add DataTable in worksheet  
+                wb.Worksheets.Add(dt);
+                using (MemoryStream stream = new MemoryStream())
+                {
+                    wb.SaveAs(stream);
+                    //Return xlsx Excel File  
+                    return stream.ToArray();
+                }
+            }
+
+        }
+
+        [HttpPost]
+        public string ExportAll(int status)
+        {
+            IEnumerable<AdminRequest> allRequest = _dashboardRepository.GetAllRequestByStatus(status);
+
+            string path = Path.Combine(_environment.WebRootPath, "export", "sample.csv");
+
+            using (var writer = new StreamWriter(path))
+
+            using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
+            {
+                csv.WriteRecords(allRequest);
+            }
+
+            return "export/sample.csv";
+
+        }
+
+        public IActionResult CreateRequest()
+        {
+            IEnumerable<Region> regions = _unitOfWork.RegionRepository.GetAll();
+            AdminCreateRequestViewModel model = new AdminCreateRequestViewModel();
+            model.regions = regions;
+            return View("Action/CreateRequest", model);
+        }
+
+        public void SendMailForCreateAccount(string email)
+        {
+            try
+            {
+                Aspnetuser aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(user => user.Email == email);
+
+                string createAccToken = Guid.NewGuid().ToString();
+
+                Passtoken passtoken = new Passtoken()
+                {
+                    Aspnetuserid = aspUser.Id,
+                    Createddate = DateTime.Now,
+                    Email = email,
+                    Isdeleted = false,
+                    Isresettoken = false,
+                    Uniquetoken = createAccToken,
+                };
+
+                _unitOfWork.PassTokenRepository.Add(passtoken);
+                _unitOfWork.Save();
+
+                var createLink = Url.Action("CreateAccount", "Guest", new { token = createAccToken }, Request.Scheme);
+
+                string senderEmail = _config.GetSection("OutlookSMTP")["Sender"];
+                string senderPassword = _config.GetSection("OutlookSMTP")["Password"];
+
+                SmtpClient client = new SmtpClient("smtp.office365.com")
+                {
+                    Port = 587,
+                    Credentials = new NetworkCredential(senderEmail, senderPassword),
+                    EnableSsl = true,
+                    DeliveryMethod = SmtpDeliveryMethod.Network,
+                    UseDefaultCredentials = false
+                };
+
+                MailMessage mailMessage = new MailMessage
+                {
+                    From = new MailAddress(senderEmail, "HalloDoc"),
+                    Subject = "Set up your Account",
+                    IsBodyHtml = true,
+                    Body = "<h1>Create Account By clicking below</h1><a href=\"" + createLink + "\" >Create Account link</a>",
+                };
+
+                mailMessage.To.Add(email);
+
+                client.Send(mailMessage);
+                TempData["success"] = "Email has been successfully sent to " + email + " for create account link.";
+            }
+            catch (Exception ex)
+            {
+                TempData["error"] = ex.Message;
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult CreateRequest(AdminCreateRequestViewModel model)
+        {
+            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
+            Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(a => a.Adminid == adminId);
+            if (adminId != 0)
+            {
+                if (ModelState.IsValid)
+                {
+                    var phoneNumber = "+" + model.countryCode + "-" + model.phoneNumber;
+
+                    // Creating Patient in Aspnetusers Table
+
+                    bool isUserExists = _unitOfWork.UserRepository.IsUserWithEmailExists(model.email);
+
+                    if (!isUserExists)
+                    {
+
+                        Guid generatedId = Guid.NewGuid();
+
+                        Aspnetuser aspnetuser = new()
+                        {
+                            Id = generatedId.ToString(),
+                            Username = model.FirstName,
+                            Passwordhash = null,
+                            Email = model.email,
+                            Phonenumber = phoneNumber,
+                            Createddate = DateTime.Now
+                        };
+
+                        _unitOfWork.AspNetUserRepository.Add(aspnetuser);
+                        _unitOfWork.Save();
+                        User user1 = new()
+                        {
+                            Aspnetuserid = generatedId.ToString(),
+                            Firstname = model.FirstName,
+                            Lastname = model.LastName,
+                            Email = model.email,
+                            Mobile = phoneNumber,
+                            Street = model.street,
+                            City = model.city,
+                            Regionid = model.state,
+                            Zipcode = model.zipCode,
+                            Createddate = DateTime.Now,
+                            Createdby = admin.Aspnetuserid
+                        };
+
+                        // Creating Patient in User Table
+
+
+                        _unitOfWork.UserRepository.Add(user1);
+                        _unitOfWork.Save();
+                        SendMailForCreateAccount(model.email);
+                    }
+
+                    User user = _unitOfWork.UserRepository.GetFirstOrDefault(u => u.Email == model.email);
+
+                    // Adding request in Request Table
+                    Request request = new()
+                    {
+                        Requesttypeid = 2,
+                        Userid = user.Userid,
+                        Firstname = model.FirstName,
+                        Lastname = model.LastName,
+                        Phonenumber = phoneNumber,
+                        Email = model.email,
+                        Status = (short)RequestStatus.Unassigned,
+                        Createddate = DateTime.Now,
+                    };
+
+                    _unitOfWork.RequestRepository.Add(request);
+                    _unitOfWork.Save();
+
+                    //Adding request in RequestClient Table
+                    Requestclient requestclient = new()
+                    {
+                        Requestid = request.Requestid,
+                        Firstname = model.FirstName,
+                        Lastname = model.LastName,
+                        Phonenumber = phoneNumber,
+                        Email = model.email,
+                        Address = model.street,
+                        City = model.city,
+                        Regionid = model.state,
+                        Zipcode = model.zipCode,
+
+                    };
+
+                    _unitOfWork.RequestClientRepository.Add(requestclient);
+                    _unitOfWork.Save();
+                    if (model.notes != null)
+                    {
+                        Requestnote rn = new()
+                        {
+                            Requestid = request.Requestid,
+                            Physiciannotes = null,
+                            Adminnotes = model.notes,
+                            Createdby = admin.Aspnetuserid,
+                            Createddate = DateTime.Now
+                        };
+                        _unitOfWork.RequestNoteRepository.Add(rn);
+                        _unitOfWork.Save();
+                    }
+
+                    model.regions = _unitOfWork.RegionRepository.GetAll();
+                    return View("Action/CreateRequest", model);
+
+                }
+                return View("error");
+            }
+            return View("error");
+
+        }
+
         public IActionResult Dashboard()
         {
 
             string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
-            if(adminName == null)
+            if (adminName == null)
             {
-                return RedirectToAction("Index","Guest");
+                return RedirectToAction("Index", "Guest");
             }
 
             int? status = HttpContext.Session.GetInt32("currentStatus");
             if (status == null)
             {
                 HttpContext.Session.SetInt32("currentStatus", 1);
-                
+
             }
 
             int? page = HttpContext.Session.GetInt32("currentPage");
 
-            if(page == null)
+            if (page == null)
             {
                 HttpContext.Session.SetInt32("currentPage", 1);
             }
@@ -172,7 +610,6 @@ namespace HalloDoc.MVC.Controllers
             model.ToCloseReqCount = _unitOfWork.RequestRepository.Count(r => (r.Status == (short)RequestStatus.Cancelled) || (r.Status == (short)RequestStatus.CancelledByPatient) || (r.Status == (short)RequestStatus.Closed));
             model.UnpaidReqCount = _unitOfWork.RequestRepository.Count(r => r.Status == (short)RequestStatus.Unpaid);
             model.casetags = _unitOfWork.CaseTagRepository.GetAll();
-
 
             return View("Dashboard/Dashboard", model);
 
@@ -306,10 +743,6 @@ namespace HalloDoc.MVC.Controllers
         {
             return View("StatusPartial/NewRequestStatusView");
         }
-        public IActionResult Profile()
-        {
-            return View("Dashboard/Profile");
-        }
         public IActionResult Providers()
         {
             return View("Dashboard/Providers");
@@ -394,30 +827,46 @@ namespace HalloDoc.MVC.Controllers
             }
         }
 
+        #region Modals
+
+        [HttpGet]
+        public IActionResult CancelCaseModal(int requestId, string patientName)
+        {
+            CancelCaseModel model = new CancelCaseModel()
+            {
+                RequestId = requestId,
+                PatientName = patientName,
+                casetags = _unitOfWork.CaseTagRepository.GetAll(),
+            };
+            return PartialView("Modals/CancelCaseModal", model);
+
+        }
+
 
         [HttpPost]
-        public bool CancelCaseModal(int reason, string notes, int requestid)
+        public IActionResult CancelCaseModal(CancelCaseModel model)
         {
-
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
             string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value;
 
             try
             {
+
                 DateTime currentTime = DateTime.Now;
 
-                Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestid);
+                Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == model.RequestId);
                 req.Status = (short)RequestStatus.Cancelled;
+                req.Casetag = _unitOfWork.CaseTagRepository.GetFirstOrDefault(tag => tag.Casetagid == model.ReasonId).Name;
                 req.Modifieddate = currentTime;
 
                 _unitOfWork.RequestRepository.Update(req);
                 _unitOfWork.Save();
 
-                string logNotes = adminName + " cancelled this request on " + currentTime.ToString("MM/dd/yyyy") + " at " + currentTime.ToString("HH:mm:ss") + " : " + reason;
+                string logNotes = adminName + " cancelled this request on " + currentTime.ToString("MM/dd/yyyy") + " at " + currentTime.ToString("HH:mm:ss") + " : " + model.ReasonId;
 
                 Requeststatuslog reqStatusLog = new Requeststatuslog()
                 {
-                    Requestid = requestid,
+                    Requestid = model.RequestId,
                     Status = (short)RequestStatus.Cancelled,
                     Adminid = adminId,
                     Notes = logNotes,
@@ -428,12 +877,12 @@ namespace HalloDoc.MVC.Controllers
                 _unitOfWork.Save();
 
                 TempData["success"] = "Request Successfully Cancelled";
-                return true;
+                return Redirect("/Admin/Dashboard");
             }
             catch (Exception ex)
             {
                 TempData["error"] = "Error Occured while cancelling request.";
-                return false;
+                return Redirect("/Admin/Dashboard");
             }
 
         }
@@ -441,19 +890,18 @@ namespace HalloDoc.MVC.Controllers
         [HttpGet]
         public IActionResult AssignCaseModal(int requestId)
         {
-            ModalViewModel.AssignCaseModel model = new ModalViewModel.AssignCaseModel()
+            AssignCaseModel model = new AssignCaseModel()
             {
                 RequestId = requestId,
                 regions = _unitOfWork.RegionRepository.GetAll(),
             };
 
-            return PartialView("Modals/AssignCaseModal",model);
+            return PartialView("Modals/AssignCaseModal", model);
 
         }
 
-
         [HttpPost]
-        public bool AssignCaseModal(ModalViewModel.AssignCaseModel model)
+        public IActionResult AssignCaseModal(AssignCaseModel model)
         {
 
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
@@ -462,7 +910,7 @@ namespace HalloDoc.MVC.Controllers
             if (model.RequestId == null || model.RequestId <= 0 || model.PhysicianId == null || model.PhysicianId <= 0)
             {
                 TempData["error"] = "Error occured while assigning request.";
-                return false;
+                return Redirect("/Admin/Dashboard");
             }
 
             try
@@ -490,79 +938,100 @@ namespace HalloDoc.MVC.Controllers
                     Createddate = currentTime,
                 };
 
-
                 _unitOfWork.RequestStatusLogRepository.Add(reqStatusLog);
                 _unitOfWork.Save();
 
-
                 TempData["success"] = "Request Successfully Assigned.";
-                return true;
+                return Redirect("/Admin/Dashboard");
             }
             catch (Exception ex)
             {
                 TempData["error"] = "Error Occured while assigning request.";
-                return false;
+                return Redirect("/Admin/Dashboard");
             }
 
+        }
+
+        [HttpGet]
+        public IActionResult TransferCaseModal(int requestId)
+        {
+            AssignCaseModel model = new AssignCaseModel()
+            {
+                RequestId = requestId,
+                regions = _unitOfWork.RegionRepository.GetAll(),
+            };
+
+            return PartialView("Modals/TransferCaseModal", model);
 
         }
 
 
         [HttpPost]
-        public bool TransferCaseModal(string notes, int requestid, int physicianid)
+        public IActionResult TransferCaseModal(AssignCaseModel model)
         {
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+
             string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
 
-            if (requestid == null || requestid <= 0 || physicianid == null || physicianid <= 0)
+            if (model.RequestId == null || model.RequestId <= 0 || model.PhysicianId == null || model.PhysicianId <= 0)
             {
-                TempData["error"] = "Error occured while assigning request.";
-                return false;
+                TempData["error"] = "Error occured while transfering request.";
+                return Redirect("/Admin/Dashboard");
             }
             try
             {
                 DateTime currentTime = DateTime.Now;
 
-                Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestid);
+                Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == model.RequestId);
                 req.Status = (short)RequestStatus.Accepted;
                 req.Modifieddate = currentTime;
-                req.Physicianid = physicianid;
+                req.Physicianid = model.PhysicianId;
 
                 _unitOfWork.RequestRepository.Update(req);
                 _unitOfWork.Save();
 
+                Physician phy = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Physicianid == model.PhysicianId);
 
-                Physician phy = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Physicianid == physicianid);
-
-                string logNotes = adminName + " tranferred to " + phy.Firstname + " " + phy.Lastname + " on " + currentTime.ToString("MM/dd/yyyy") + " at " + currentTime.ToString("HH:mm:ss") + " : " + notes;
+                string logNotes = adminName + " tranferred to " + phy.Firstname + " " + phy.Lastname + " on " + currentTime.ToString("MM/dd/yyyy") + " at " + currentTime.ToString("HH:mm:ss") + " : " + model.Notes;
 
                 Requeststatuslog reqStatusLog = new Requeststatuslog()
                 {
-                    Requestid = requestid,
+                    Requestid = model.RequestId,
                     Status = (short)RequestStatus.Accepted,
                     Adminid = adminId,
                     Notes = logNotes,
-                    Transtophysicianid = physicianid,
+                    Transtophysicianid = model.PhysicianId,
                     Createddate = currentTime,
                 };
 
                 _unitOfWork.RequestStatusLogRepository.Add(reqStatusLog);
                 _unitOfWork.Save();
 
-
-                TempData["success"] = "Request Successfully Assigned.";
-                return true;
+                TempData["success"] = "Request Successfully Transferred.";
+                return Redirect("/Admin/Dashboard");
             }
             catch (Exception ex)
             {
-                TempData["error"] = "Error Occured while assigning request.";
-                return false;
+                TempData["error"] = "Error Occured while transfering request.";
+                return Redirect("/Admin/Dashboard");
             }
 
         }
 
+
+        [HttpGet]
+        public IActionResult BlockCaseModal(int requestId, string patientName)
+        {
+            BlockCaseModel model = new BlockCaseModel()
+            {
+                RequestId = requestId,
+                PatientName = patientName,
+            };
+            return PartialView("Modals/BlockCaseModal", model);
+        }
+
         [HttpPost]
-        public bool BlockCaseModal(string reason, int requestid)
+        public IActionResult BlockCaseModal(BlockCaseModel model)
         {
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
             string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value;
@@ -571,18 +1040,18 @@ namespace HalloDoc.MVC.Controllers
             {
                 DateTime currentTime = DateTime.Now;
 
-                Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestid);
+                Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == model.RequestId);
                 req.Status = (short)RequestStatus.Block;
                 req.Modifieddate = currentTime;
 
                 _unitOfWork.RequestRepository.Update(req);
                 _unitOfWork.Save();
 
-                string logNotes = adminName + " blocked this request on " + currentTime.ToString("MM/dd/yyyy") + " at " + currentTime.ToString("HH:mm:ss") + " : " + reason;
+                string logNotes = adminName + " blocked this request on " + currentTime.ToString("MM/dd/yyyy") + " at " + currentTime.ToString("HH:mm:ss") + " : " + model.Reason;
 
                 Requeststatuslog reqStatusLog = new Requeststatuslog()
                 {
-                    Requestid = requestid,
+                    Requestid = model.RequestId,
                     Status = (short)RequestStatus.Block,
                     Adminid = adminId,
                     Notes = logNotes,
@@ -593,14 +1062,14 @@ namespace HalloDoc.MVC.Controllers
                 _unitOfWork.RequestStatusLogRepository.Add(reqStatusLog);
                 _unitOfWork.Save();
 
-                Requestclient reqCli = _unitOfWork.RequestClientRepository.GetFirstOrDefault(reqcli => reqcli.Requestid == requestid);
+                Requestclient reqCli = _unitOfWork.RequestClientRepository.GetFirstOrDefault(reqcli => reqcli.Requestid == model.RequestId);
 
                 Blockrequest blockrequest = new Blockrequest()
                 {
                     Phonenumber = reqCli.Phonenumber,
                     Email = reqCli.Email,
-                    Reason = reason,
-                    Requestid = requestid.ToString(),
+                    Reason = model.Reason,
+                    Requestid = model.RequestId.ToString(),
                     Createddate = DateTime.Now,
                     Isactive = true,
                 };
@@ -609,17 +1078,27 @@ namespace HalloDoc.MVC.Controllers
                 _unitOfWork.Save();
 
                 TempData["success"] = "Request Successfully Blocked";
-                return true;
+                return Redirect("/Admin/Dashboard");
             }
             catch (Exception ex)
             {
                 TempData["error"] = "Error Occured while blocking request.";
-                return false;
+                return Redirect("/Admin/Dashboard");
             }
         }
 
+        [HttpGet]
+        public IActionResult ClearCaseModal(int requestId)
+        {
+            ClearCaseModel model = new ClearCaseModel()
+            {
+                RequestId = requestId,
+            };
+            return PartialView("Modals/ClearCaseModal", model);
+        }
+
         [HttpPost]
-        public bool ClearCaseModal(int requestid)
+        public IActionResult ClearCaseModal(ClearCaseModel model)
         {
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
             string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value;
@@ -630,7 +1109,7 @@ namespace HalloDoc.MVC.Controllers
                 {
                     DateTime currentTime = DateTime.Now;
 
-                    Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestid);
+                    Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == model.RequestId);
 
                     req.Status = (short)RequestStatus.Clear;
                     req.Modifieddate = currentTime;
@@ -639,7 +1118,7 @@ namespace HalloDoc.MVC.Controllers
 
                     Requeststatuslog reqStatusLog = new Requeststatuslog()
                     {
-                        Requestid = requestid,
+                        Requestid = model.RequestId,
                         Status = (short)RequestStatus.Clear,
                         Adminid = adminId,
                         Notes = logNotes,
@@ -652,28 +1131,42 @@ namespace HalloDoc.MVC.Controllers
                     _unitOfWork.RequestStatusLogRepository.Add(reqStatusLog);
                     _unitOfWork.Save();
 
-                    TempData["success"] = "Request Successfully transferred";
-                    return true;
+                    TempData["success"] = "Request Successfully Cleared";
+                    return Redirect("/Admin/Dashboard");
                 }
                 catch (Exception ex)
                 {
-                    TempData["error"] = "Error Occured while transferring request.";
-                    return false;
+                    TempData["error"] = "Error Occured while clearign request.";
+                    return Redirect("/Admin/Dashboard");
                 }
             }
             else
             {
                 TempData["error"] = "Admin Not Found";
-                return false;
+                return Redirect("/Admin/Dashboard");
             }
         }
 
-        public bool SendAgreementMail(string phoneNumber, string email, int requestid)
+
+        [HttpGet]
+        public IActionResult SendAgreementModal(int requestId, int requestType, string phone, string email)
+        {
+            SendAgreementModel model = new SendAgreementModel()
+            {
+                RequestId = requestId,
+                RequestType = requestType,
+                PatientPhone = phone,
+                PatientEmail = email,
+            };
+            return PartialView("Modals/SendAgreementModal", model);
+        }
+
+        [HttpPost]
+        public IActionResult SendAgreementMail(SendAgreementModel model)
         {
             try
             {
-
-                string encryptedId = EncryptionService.Encrypt(requestid.ToString());
+                string encryptedId = EncryptionService.Encrypt(model.RequestId.ToString());
                 var agreementLink = Url.Action("ReviewAgreement", "Guest", new { requestId = encryptedId }, Request.Scheme);
 
                 string senderEmail = _config.GetSection("OutlookSMTP")["Sender"];
@@ -697,17 +1190,75 @@ namespace HalloDoc.MVC.Controllers
 
                 };
 
-                mailMessage.To.Add(email);
+                mailMessage.To.Add(model.PatientEmail);
 
                 client.Send(mailMessage);
-                return true;
+
+                TempData["success"] = "Agreement Sent Successfully.";
+                return Redirect("/Admin/Dashboard");
             }
             catch (Exception ex)
             {
-                return false;
+                TempData["error"] = "An error occurred while sending agreement.";
+                return Redirect("/Admin/Dashboard");
             }
 
         }
+
+        [HttpGet]
+        public IActionResult SendLinkModal()
+        {
+            return PartialView("Modals/SendLinkModal");
+        }
+
+        [HttpPost]
+        public IActionResult SendLinkForCreateRequest(SendLinkModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    string sendPatientLink = Url.Action("SubmitRequest", "Guest", new { }, Request.Scheme);
+
+                    string senderEmail = _config.GetSection("OutlookSMTP")["Sender"];
+                    string senderPassword = _config.GetSection("OutlookSMTP")["Password"];
+
+                    SmtpClient client = new SmtpClient("smtp.office365.com")
+                    {
+                        Port = 587,
+                        Credentials = new NetworkCredential(senderEmail, senderPassword),
+                        EnableSsl = true,
+                        DeliveryMethod = SmtpDeliveryMethod.Network,
+                        UseDefaultCredentials = false
+                    };
+
+                    MailMessage mailMessage = new MailMessage
+                    {
+                        From = new MailAddress(senderEmail, "HalloDoc"),
+                        Subject = "Set up your Account",
+                        IsBodyHtml = true,
+                        Body = "<h1>Hola , " + model.FirstName + " " + model.LastName + "!!</h1><p>Clink the link below to create request.</p><a href=\"" + sendPatientLink + "\" >Submit Request Link</a>",
+
+                    };
+
+                    mailMessage.To.Add(model.Email);
+
+                    client.Send(mailMessage);
+
+                    return Redirect("/Admin/Dashboard");
+                }
+                catch (Exception e)
+                {
+                    TempData["error"] = "Error occurred : " + e.Message;
+                    return Redirect("/Admin/Dashboard");
+                }
+            }
+
+            TempData["error"] = "Please Fill all details for sending link.";
+            return Redirect("/Admin/Dashboard");
+        }
+
+        #endregion
 
         public IActionResult ViewCase(int Requestid)
         {
@@ -747,7 +1298,6 @@ namespace HalloDoc.MVC.Controllers
 
         public int GetDashboardStatus(int requestStatus)
         {
-
             switch (requestStatus)
             {
                 case (int)RequestStatus.Unassigned:
@@ -914,13 +1464,11 @@ namespace HalloDoc.MVC.Controllers
                 TempData["error"] = "Error occured while deleting files.";
                 return false;
             }
-
         }
 
         [HttpPost]
         public bool DeleteFile(int requestWiseFileId)
         {
-
             try
             {
                 Requestwisefile file = _unitOfWork.RequestWiseFileRepository.GetFirstOrDefault(reqFile => reqFile.Requestwisefileid == requestWiseFileId);
@@ -1026,9 +1574,9 @@ namespace HalloDoc.MVC.Controllers
 
         public IActionResult CloseCase(int requestid)
         {
-            var requestClient = _context.Requestclients.FirstOrDefault(s => s.Requestid == requestid);
-            var docData = _context.Requestwisefiles.Where(s => s.Requestid == requestid).ToList();
-            var Confirmationnum = _context.Requests.FirstOrDefault(s => s.Requestid == requestid).Confirmationnumber;
+            var requestClient = _unitOfWork.RequestClientRepository.GetFirstOrDefault(s => s.Requestid == requestid);
+            var docData = _unitOfWork.RequestWiseFileRepository.Where(s => s.Requestid == requestid).ToList();
+            var Confirmationnum = _unitOfWork.RequestRepository.GetFirstOrDefault(s => s.Requestid == requestid).Confirmationnumber;
 
             string dobDate = null;
             if (requestClient.Intyear != null || requestClient.Intdate != null || requestClient.Strmonth != null)
@@ -1059,19 +1607,19 @@ namespace HalloDoc.MVC.Controllers
         [HttpPost]
         public IActionResult CloseCase(CloseCaseViewModel closeCase, int id)
         {
-            var reqclient = _context.Requestclients.FirstOrDefault(s => s.Requestid == id);
+            var reqclient = _unitOfWork.RequestClientRepository.GetFirstOrDefault(s => s.Requestid == id);
 
             if (reqclient != null)
             {
                 reqclient.Phonenumber = closeCase.PhoneNumber;
                 reqclient.Firstname = closeCase.FirstName;
                 reqclient.Lastname = closeCase.LastName;
-                reqclient.Intdate = closeCase.Dob.Value.Day;
-                reqclient.Intyear = closeCase.Dob.Value.Year;
-                reqclient.Strmonth = closeCase.Dob.Value.Month.ToString();
+                reqclient.Intdate = closeCase.Dob?.Day;
+                reqclient.Intyear = closeCase.Dob?.Year;
+                reqclient.Strmonth = closeCase.Dob?.Month.ToString();
 
-                _context.Update(reqclient);
-                _context.SaveChanges();
+                _unitOfWork.RequestClientRepository.Update(reqclient);
+                _unitOfWork.Save();
 
             }
             return RedirectToAction("CloseCase", new { requestid = id });
@@ -1083,16 +1631,15 @@ namespace HalloDoc.MVC.Controllers
             DateTime currentdate = DateTime.Now;
             string adminName = HttpContext.Request.Headers.Where(a => a.Key == "userName").FirstOrDefault().Value;
 
-            Requestclient reqclient = _context.Requestclients.FirstOrDefault(s => s.Requestid == reqid);
-            Request request = _context.Requests.FirstOrDefault(r => r.Requestid == reqid);
+            Requestclient reqclient = _unitOfWork.RequestClientRepository.GetFirstOrDefault(s => s.Requestid == reqid);
+            Request request = _unitOfWork.RequestRepository.GetFirstOrDefault(r => r.Requestid == reqid);
 
             if (request != null)
             {
                 request.Status = 9;
                 request.Modifieddate = DateTime.Now;
-                _context.Update(request);
-                _context.SaveChanges();
-
+                _unitOfWork.RequestRepository.Update(request);
+                _unitOfWork.Save();
 
                 Requeststatuslog requestStatusLog = new Requeststatuslog();
                 requestStatusLog.Requestid = reqid;
@@ -1100,19 +1647,18 @@ namespace HalloDoc.MVC.Controllers
                 requestStatusLog.Notes = adminName + " closed this request on " + currentdate.ToString("MM/dd/yyyy") + " at " + currentdate.ToString("HH:mm:ss");
                 requestStatusLog.Createddate = DateTime.Now;
 
-                _context.Add(requestStatusLog);
-                _context.SaveChanges();
+                _unitOfWork.RequestStatusLogRepository.Add(requestStatusLog);
+                _unitOfWork.Save();
                 return RedirectToAction("Dashboard");
             }
             return Ok();
         }
 
-
         public IActionResult EncounterForm(int requestid)
         {
-            Encounterform encounterform = _context.Encounterforms.FirstOrDefault(e => e.Requestid == requestid);
-            Requestclient requestclient = _context.Requestclients.FirstOrDefault(e => e.Requestid == requestid);
-            Request request = _context.Requests.FirstOrDefault(r => r.Requestid == requestid);
+            Encounterform encounterform = _unitOfWork.EncounterFormRepository.GetFirstOrDefault(e => e.Requestid == requestid);
+            Requestclient requestclient = _unitOfWork.RequestClientRepository.GetFirstOrDefault(e => e.Requestid == requestid);
+            Request request = _unitOfWork.RequestRepository.GetFirstOrDefault(r => r.Requestid == requestid);
             string dobDate = null;
 
             if (requestclient.Intyear != null && requestclient.Strmonth != null && requestclient.Intdate != null)
@@ -1185,11 +1731,11 @@ namespace HalloDoc.MVC.Controllers
         public IActionResult EncounterForm(EncounterFormViewModel model)
         {
             string adminName = HttpContext.Request.Headers.Where(a => a.Key == "userName").FirstOrDefault().Value;
-            Admin admin = _context.Admins.FirstOrDefault(a => a.Firstname + " " + a.Lastname == adminName);
-            Request r = _context.Requests.FirstOrDefault(rs => rs.Requestid == model.requestId);
+            Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(a => a.Firstname + " " + a.Lastname == adminName);
+            Request r = _unitOfWork.RequestRepository.GetFirstOrDefault(rs => rs.Requestid == model.requestId);
             if (ModelState.IsValid)
             {
-                Encounterform encounterform = _context.Encounterforms.FirstOrDefault(e => e.Requestid == model.requestId);
+                Encounterform encounterform = _unitOfWork.EncounterFormRepository.GetFirstOrDefault(e => e.Requestid == model.requestId);
                 if (encounterform == null)
                 {
                     Encounterform encf = new()
@@ -1222,8 +1768,8 @@ namespace HalloDoc.MVC.Controllers
                         Isfinalize = false
 
                     };
-                    _context.Encounterforms.Add(encf);
-                    _context.SaveChanges();
+                    _unitOfWork.EncounterFormRepository.Add(encf);
+                    _unitOfWork.Save();
                 }
                 else
                 {
@@ -1254,12 +1800,167 @@ namespace HalloDoc.MVC.Controllers
                     encounterform.Physicianid = r.Physicianid;
                     encounterform.Isfinalize = false;
 
-                    _context.Encounterforms.Update(encounterform);
-                    _context.SaveChanges();
+                    _unitOfWork.EncounterFormRepository.Update(encounterform);
+                    _unitOfWork.Save();
                 }
                 return EncounterForm((int)model.requestId);
             }
             return View("error");
+        }
+
+        public IActionResult Profile()
+        {
+            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+            Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(a => a.Adminid == adminId);
+
+
+            if (admin == null)
+            {
+                TempData["failure"] = "Admin not found , please login!";
+                return RedirectToAction("Index");
+            }
+
+            string state = _unitOfWork.RegionRepository.GetFirstOrDefault(r => r.Regionid == admin.Regionid).Name;
+
+            IEnumerable<Region> regions = _unitOfWork.RegionRepository.GetAll();
+            IEnumerable<int> adminRegions = _unitOfWork.AdminRegionRepo.Where(region => region.Adminid == adminId).ToList().Select(x => (int)x.Regionid);
+
+            AdminProfileViewModel model = new()
+            {
+                Username = admin.Firstname + " " + admin.Lastname,
+                Status = admin.Status,
+                Role = admin.Roleid,
+                FirstName = admin.Firstname,
+                Email = admin.Email,
+                ConfirmEmail = admin.Email,
+                PhoneNumber = admin.Mobile,
+                AltPhoneNumber = admin.Altphone,
+                LastName = admin.Lastname,
+                regions = regions,
+                Address1 = admin.Address1,
+                Address2 = admin.Address2,
+                City = admin.City,
+                State = state,
+                Zip = admin.Zip,
+                RegionId = (int)admin.Regionid,
+                selectedRegions = adminRegions,
+            };
+
+            return View("Dashboard/Profile", model);
+
+        }
+
+        [HttpPost]
+        public bool SaveAdministratorInfo(List<int> regions, string firstName, string lastName, string email, string phone)
+        {
+            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
+            Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(a => a.Adminid == adminId);
+
+            if (admin == null)
+            {
+                TempData["failure"] = "Admin not found";
+                return false;
+            }
+
+            try
+            {
+                admin.Firstname = firstName;
+                admin.Lastname = lastName;
+                admin.Mobile = phone;
+
+                _unitOfWork.AdminRepository.Update(admin);
+
+                _unitOfWork.Save();
+
+                List<int> adminRegions = _unitOfWork.AdminRegionRepo.Where(region => region.Adminid == adminId).ToList().Select(x => (int)x.Regionid).ToList();
+
+                List<int> commonRegions = new List<int>();
+
+                // Finding common regions in both new and old lists
+                foreach (int region in adminRegions)
+                {
+                    if (regions.Contains(region))
+                    {
+                        commonRegions.Add(region);
+                    }
+                }
+
+                // Removing them from both lists
+                foreach (int region in commonRegions)
+                {
+                    adminRegions.Remove(region);
+                    regions.Remove(region);
+                }
+
+                // From difference we will remove regions that were in old list but not in new list
+                foreach (int region in adminRegions)
+                {
+                    Adminregion ar = _unitOfWork.AdminRegionRepo.GetFirstOrDefault(ar => ar.Regionid == region);
+                    _unitOfWork.AdminRegionRepo.Remove(ar);
+                }
+
+                // And Add the regions that were in new list but not in old list
+                foreach (int region in regions)
+                {
+                    Adminregion adminregion = new Adminregion()
+                    {
+                        Adminid = adminId,
+                        Regionid = region,
+                    };
+
+                    _unitOfWork.AdminRegionRepo.Add(adminregion);
+                }
+
+                _unitOfWork.Save();
+
+                return true;
+
+            }
+            catch (Exception ex)
+            {
+
+                return false;
+
+            }
+
+        }
+
+        [HttpPost]
+        public bool SaveAdminBillingInfo(string Address1, string Address2, string City, string Zip, string AltCountryCode, string AltPhoneNumber, int RegionId)
+        {
+
+            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
+            Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(a => a.Adminid == adminId);
+
+            if (admin == null)
+            {
+                TempData["failure"] = "Admin not found";
+                return false;
+            }
+
+            try
+            {
+
+                string phone = "+" + AltCountryCode + "-" + AltPhoneNumber;
+                admin.Address1 = Address1;
+                admin.Address2 = Address2;
+                admin.City = City;
+                admin.Regionid = RegionId;
+                admin.Altphone = phone;
+                admin.Zip = Zip;
+
+                _unitOfWork.AdminRepository.Update(admin);
+                _unitOfWork.Save();
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                return false;
+
+            }
+
+            return false;
         }
     }
 }

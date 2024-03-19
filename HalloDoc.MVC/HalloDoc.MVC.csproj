@@ -7,6 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="ClosedXML" Version="0.104.0-preview2" />
+    <PackageReference Include="CsvHelper" Version="31.0.2" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.15" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Features" Version="6.0.0-preview.4.21253.5" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.15">
@@ -27,6 +29,10 @@
   <ItemGroup>
     <ProjectReference Include="..\Business Layer\HalloDoc.MVC.BAL.csproj" />
     <ProjectReference Include="..\Data Layer\HalloDoc.MVC.DAL.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\export\" />
   </ItemGroup>
 
 </Project>

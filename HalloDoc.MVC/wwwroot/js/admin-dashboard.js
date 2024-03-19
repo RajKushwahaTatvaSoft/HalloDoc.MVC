@@ -1,4 +1,3 @@
-
 $('.admin-tab').removeClass("active");
 $('#dashboard-tab').addClass("active");
 
@@ -6,6 +5,8 @@ var dashboardStatus = 0;
 var type_filter = 0;
 var region_filter = 0;
 var search_filter = "";
+
+//Pagination And Backend Filters
 
 $("#filter-regions").change(function () {
     region_filter = $('option:selected', this).val();

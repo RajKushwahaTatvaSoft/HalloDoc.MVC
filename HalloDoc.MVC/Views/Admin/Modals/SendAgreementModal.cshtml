@@ -1,0 +1,70 @@
+﻿@model SendAgreementModel
+
+@* Send Agreement *@
+<div class="modal fade" id="sendAgreementModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog  modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <h5 class="modal-title text-white" id="exampleModalLongTitle">Send Agreement</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="d-flex align-items-center">
+                    <div class="border border-1 rounded-circle m-1 " id="circle" style="width: 15px; height:15px;"></div>
+                    <span class="fs-5" id="sendtype"></span>
+                </div>
+
+                <form method="post" asp-controller="Admin" asp-action="SendAgreementMail">
+                    <div class="">
+                        <input type="text" asp-for="RequestId" hidden />
+                        <span class="modal-head">To send agreement , make sure you are updating the correct email and phone number.</span>
+                        <div class="modal-flex my-3">
+
+                            <div class="form-floating mt-3">
+                                <div class="mb-3">
+                                    <label for="sendAgreementNumber" class="form-label">Phone number</label>
+                                    <input type="text" class="form-control" asp-for="PatientPhone" id="sendAgreementNumber" />
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="sendagreementEmail" class="form-label">Email address</label>
+                                <input type="email" class="form-control" asp-for="PatientEmail" id="sendagreementEmail" aria-describedby="emailHelp">
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-info text-white" data-bs-dismiss="modal">
+                            Send
+                        </button>
+                        <button type="button" class="btn cancel-btn" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    var type1 = @Model.RequestType;
+    console.log(type1);
+
+    if (type1 == 1) {
+        $('#sendtype').text('Business');
+        $('#circle').css('background-color', '#e26277');
+    } else if (type1 == 2) {
+        $('#sendtype').text('Patient');
+        $('#circle').css('background-color', '#5fbc61');
+    } else if (type1 == 3) {
+        $('#sendtype').text('Family/Friends');
+        $('#circle').css('background-color', '#ed9124');
+    } else {
+        $('#sendtype').text('Concierge');
+        $('#circle').css('background-color', '#007fc6');
+    }
+
+</script>

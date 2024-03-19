@@ -11,5 +11,7 @@ namespace Business_Layer.Interface.AdminInterface
     public interface IDashboardRepository
     {
         public Task<PagedList<AdminRequest>> GetAdminRequestsAsync(DashboardFilter dashboardParams);
+
+        public List<AdminRequest> GetAllRequestByStatus(int status);
     }
 }

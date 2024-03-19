@@ -31,6 +31,8 @@ namespace Business_Layer.Repository
             HealthProfessionalTypeRepo = new HealthProfessionalTypeRepo(_context);
             BlockRequestRepo = new BlockRequestRepo(_context);
             OrderDetailRepo = new OrderDetailRepo(_context);
+            EncounterFormRepository = new EncounterFormRepository(_context);
+            AdminRegionRepo = new AdminRegionRepo(_context);
         }
 
         public IAdminRepository AdminRepository { get; private set; }
@@ -53,6 +55,8 @@ namespace Business_Layer.Repository
         public IHealthProfessionalTypeRepo HealthProfessionalTypeRepo { get; private set; }
         public IBlockRequestRepo BlockRequestRepo { get; private set; }
         public IOrderDetailRepo OrderDetailRepo { get; private set; }
+        public IEncounterFormRepository EncounterFormRepository {  get; private set; }
+        public IAdminRegionRepo AdminRegionRepo { get; private set; }
 
         public void Save()
         {

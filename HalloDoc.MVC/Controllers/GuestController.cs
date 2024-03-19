@@ -90,7 +90,7 @@ namespace HalloDoc.MVC.Controllers
                 _unitOfWork.Save();
 
                 TempData["success"] = "Account Successfully Created.";
-                return RedirectToAction("PatientLogin");
+                return RedirectToAction("Login");
 
             }
 
@@ -273,7 +273,6 @@ namespace HalloDoc.MVC.Controllers
                     TempData["success"] = "Admin Login Successful";
 
                 }
-                
 
 
                 var jwtToken = _jwtService.GenerateJwtToken(sessionUser);
@@ -300,6 +299,7 @@ namespace HalloDoc.MVC.Controllers
 
             return View("Request/PatientRequest", model);
         }
+
         //POST
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -353,9 +353,9 @@ namespace HalloDoc.MVC.Controllers
                             Createddate = DateTime.Now,
                             Createdby = generatedId.ToString(),
                             Ip = requestIpAddress,
-                            Intdate = userViewModel.DOB.Value.Day,
-                            Strmonth = userViewModel.DOB.Value.Month.ToString(),
-                            Intyear = userViewModel.DOB.Value.Year,
+                            Intdate = userViewModel.DOB?.Day,
+                            Strmonth = userViewModel.DOB?.Month.ToString(),
+                            Intyear = userViewModel.DOB?.Year,
                         };
 
                         _unitOfWork.UserRepository.Add(user);
@@ -397,9 +397,9 @@ namespace HalloDoc.MVC.Controllers
                             Zipcode = userViewModel.ZipCode,
                             Notes = userViewModel.Symptom,
                             Ip = requestIpAddress,
-                            Intdate = userViewModel.DOB.Value.Day,
-                            Strmonth = userViewModel.DOB.Value.Month.ToString(),
-                            Intyear = userViewModel.DOB.Value.Year,
+                            Intdate = userViewModel.DOB?.Day,
+                            Strmonth = userViewModel.DOB?.Month.ToString(),
+                            Intyear = userViewModel.DOB?.Year,
                         };
 
                         _unitOfWork.RequestClientRepository.Add(requestclient);
@@ -477,9 +477,9 @@ namespace HalloDoc.MVC.Controllers
                         Zipcode = userViewModel.ZipCode,
                         Notes = userViewModel.Symptom,
                         Ip = requestIpAddress,
-                        Intdate = userViewModel.DOB.Value.Day,
-                        Strmonth = userViewModel.DOB.Value.Month.ToString(),
-                        Intyear = userViewModel.DOB.Value.Year,
+                        Intdate = userViewModel.DOB?.Day,
+                        Strmonth = userViewModel.DOB?.Month.ToString(),
+                        Intyear = userViewModel.DOB?.Year,
                     };
 
                     _unitOfWork.RequestClientRepository.Add(requestclient);
@@ -503,7 +503,7 @@ namespace HalloDoc.MVC.Controllers
                     }
 
                     TempData["success"] = "Request Created Successfully.";
-                    return RedirectToAction("PatientLogin");
+                    return RedirectToAction("Login");
                 }
 
             }
@@ -600,9 +600,9 @@ namespace HalloDoc.MVC.Controllers
                         Createddate = DateTime.Now,
                         Createdby = generatedId.ToString(),
                         Ip = requestIpAddress,
-                        Intdate = friendViewModel.patientDetails.DOB.Value.Day,
-                        Strmonth = friendViewModel.patientDetails.DOB.Value.Month.ToString(),
-                        Intyear = friendViewModel.patientDetails.DOB.Value.Year,
+                        Intdate = friendViewModel.patientDetails.DOB?.Day,
+                        Strmonth = friendViewModel.patientDetails.DOB?.Month.ToString(),
+                        Intyear = friendViewModel.patientDetails.DOB?.Year,
                     };
 
 
@@ -650,12 +650,10 @@ namespace HalloDoc.MVC.Controllers
                         Zipcode = friendViewModel.patientDetails.ZipCode,
                         Notes = friendViewModel.patientDetails.Symptom,
                         Ip = requestIpAddress,
-                        Intdate = friendViewModel.patientDetails.DOB.Value.Day,
-                        Strmonth = friendViewModel.patientDetails.DOB.Value.Month.ToString(),
-                        Intyear = friendViewModel.patientDetails.DOB.Value.Year,
+                        Intdate = friendViewModel.patientDetails.DOB?.Day,
+                        Strmonth = friendViewModel.patientDetails.DOB?.Month.ToString(),
+                        Intyear = friendViewModel.patientDetails.DOB?.Year,
                     };
-
-
 
                     _unitOfWork.RequestClientRepository.Add(requestclient);
                     _unitOfWork.Save();
@@ -724,9 +722,9 @@ namespace HalloDoc.MVC.Controllers
                         Zipcode = friendViewModel.patientDetails.ZipCode,
                         Notes = friendViewModel.patientDetails.Symptom,
                         Ip = requestIpAddress,
-                        Intdate = friendViewModel.patientDetails.DOB.Value.Day,
-                        Strmonth = friendViewModel.patientDetails.DOB.Value.Month.ToString(),
-                        Intyear = friendViewModel.patientDetails.DOB.Value.Year,
+                        Intdate = friendViewModel.patientDetails.DOB?.Day,
+                        Strmonth = friendViewModel.patientDetails.DOB?.Month.ToString(),
+                        Intyear = friendViewModel.patientDetails.DOB?.Year,
                     };
 
 
@@ -822,9 +820,9 @@ namespace HalloDoc.MVC.Controllers
                         Createddate = DateTime.Now,
                         Createdby = generatedId.ToString(),
                         Ip = requestIpAddress,
-                        Intdate = conciergeViewModel.patientDetails.DOB.Value.Day,
-                        Strmonth = conciergeViewModel.patientDetails.DOB.Value.Month.ToString(),
-                        Intyear = conciergeViewModel.patientDetails.DOB.Value.Year,
+                        Intdate = conciergeViewModel.patientDetails.DOB?.Day,
+                        Strmonth = conciergeViewModel.patientDetails.DOB?.Month.ToString(),
+                        Intyear = conciergeViewModel.patientDetails.DOB?.Year,
                     };
 
                     _unitOfWork.UserRepository.Add(user);
@@ -875,9 +873,9 @@ namespace HalloDoc.MVC.Controllers
                         Zipcode = conciergeViewModel.patientDetails.ZipCode,
                         Notes = conciergeViewModel.patientDetails.Symptom,
                         Ip = requestIpAddress,
-                        Intdate = conciergeViewModel.patientDetails.DOB.Value.Day,
-                        Strmonth = conciergeViewModel.patientDetails.DOB.Value.Month.ToString(),
-                        Intyear = conciergeViewModel.patientDetails.DOB.Value.Year,
+                        Intdate = conciergeViewModel.patientDetails.DOB?.Day,
+                        Strmonth = conciergeViewModel.patientDetails.DOB?.Month.ToString(),
+                        Intyear = conciergeViewModel.patientDetails.DOB?.Year,
                     };
 
 
@@ -956,9 +954,9 @@ namespace HalloDoc.MVC.Controllers
                         Zipcode = conciergeViewModel.patientDetails.ZipCode,
                         Notes = conciergeViewModel.patientDetails.Symptom,
                         Ip = requestIpAddress,
-                        Intdate = conciergeViewModel.patientDetails.DOB.Value.Day,
-                        Strmonth = conciergeViewModel.patientDetails.DOB.Value.Month.ToString(),
-                        Intyear = conciergeViewModel.patientDetails.DOB.Value.Year,
+                        Intdate = conciergeViewModel.patientDetails.DOB?.Day,
+                        Strmonth = conciergeViewModel.patientDetails.DOB?.Month.ToString(),
+                        Intyear = conciergeViewModel.patientDetails.DOB?.Year,
                     };
 
 
@@ -1059,9 +1057,9 @@ namespace HalloDoc.MVC.Controllers
                         Createddate = DateTime.Now,
                         Createdby = generatedId.ToString(),
                         Ip = requestIpAddress,
-                        Intdate = businessViewModel.patientDetails.DOB.Value.Day,
-                        Strmonth = businessViewModel.patientDetails.DOB.Value.Month.ToString(),
-                        Intyear = businessViewModel.patientDetails.DOB.Value.Year,
+                        Intdate = businessViewModel.patientDetails.DOB?.Day,
+                        Strmonth = businessViewModel.patientDetails.DOB?.Month.ToString(),
+                        Intyear = businessViewModel.patientDetails.DOB?.Year,
                     };
 
                     _unitOfWork.UserRepository.Add(user);
@@ -1109,9 +1107,9 @@ namespace HalloDoc.MVC.Controllers
                         Zipcode = businessViewModel.patientDetails.ZipCode,
                         Notes = businessViewModel.patientDetails.Symptom,
                         Ip = requestIpAddress,
-                        Intdate = businessViewModel.patientDetails.DOB.Value.Day,
-                        Strmonth = businessViewModel.patientDetails.DOB.Value.Month.ToString(),
-                        Intyear = businessViewModel.patientDetails.DOB.Value.Year,
+                        Intdate = businessViewModel.patientDetails.DOB?.Day,
+                        Strmonth = businessViewModel.patientDetails.DOB?.Month.ToString(),
+                        Intyear = businessViewModel.patientDetails.DOB?.Year,
                     };
 
                     _unitOfWork.RequestClientRepository.Add(requestclient);
@@ -1179,13 +1177,13 @@ namespace HalloDoc.MVC.Controllers
                         Street = businessViewModel.patientDetails.Street,
                         City = businessViewModel.patientDetails.City,
                         Regionid = businessViewModel.patientDetails.RegionId,
-                        State =state,
+                        State = state,
                         Zipcode = businessViewModel.patientDetails.ZipCode,
                         Notes = businessViewModel.patientDetails.Symptom,
                         Ip = requestIpAddress,
-                        Intdate = businessViewModel.patientDetails.DOB.Value.Day,
-                        Strmonth = businessViewModel.patientDetails.DOB.Value.Month.ToString(),
-                        Intyear = businessViewModel.patientDetails.DOB.Value.Year,
+                        Intdate = businessViewModel.patientDetails.DOB?.Day,
+                        Strmonth = businessViewModel.patientDetails.DOB?.Month.ToString(),
+                        Intyear = businessViewModel.patientDetails.DOB?.Year,
                     };
 
                     _unitOfWork.RequestClientRepository.Add(requestclient);
@@ -1273,7 +1271,7 @@ namespace HalloDoc.MVC.Controllers
             {
 
                 DateTime currentTime = DateTime.Now;
-            
+
                 Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestId);
                 if (req == null)
                 {
@@ -1332,7 +1330,7 @@ namespace HalloDoc.MVC.Controllers
             {
 
                 DateTime currentTime = DateTime.Now;
-              
+
                 Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestId);
                 if (req == null)
                 {
@@ -1462,7 +1460,7 @@ namespace HalloDoc.MVC.Controllers
                 _unitOfWork.Save();
 
                 TempData["success"] = "Password Reset Successful";
-                return RedirectToAction("PatientLogin");
+                return RedirectToAction("Login");
 
             }
             return View("Patient/ResetPassword");

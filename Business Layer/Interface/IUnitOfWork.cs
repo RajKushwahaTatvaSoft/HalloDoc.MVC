@@ -14,6 +14,7 @@ namespace Business_Layer.Interface
         IConciergeRepository ConciergeRepository { get; }
         IRequestConciergeRepo RequestConciergeRepository { get; }
         IBusinessRepo BusinessRepo { get; }
+        IEncounterFormRepository EncounterFormRepository { get; }
         IRequestBusinessRepo RequestBusinessRepo { get; }
         ICaseTagRepository CaseTagRepository { get; }
         IRequestStatusLogRepo RequestStatusLogRepository { get; }
@@ -25,6 +26,7 @@ namespace Business_Layer.Interface
         IHealthProfessionalTypeRepo HealthProfessionalTypeRepo { get; }
         IBlockRequestRepo BlockRequestRepo { get; }
         IOrderDetailRepo OrderDetailRepo { get; }
+        IAdminRegionRepo AdminRegionRepo { get; }
         void Save();
     }
 

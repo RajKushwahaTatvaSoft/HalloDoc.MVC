@@ -1,0 +1,53 @@
+﻿@model CancelCaseModel
+
+@* Cancel Case *@
+<div class="modal  fade" id="cancelModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <div class="modal-dark modal-title text-white" id="exampleModalLongTitle">
+                    Confirm Cancellation
+                </div>
+                <button type="button" class="btn" aria-label="Close" data-bs-dismiss="modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
+                         fill="#FFFFFF">
+                        <path d="M0 0h24v24H0V0z" fill="none" />
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
+                    </svg>
+                </button>
+            </div>
+            <form method="post" asp-controller="Admin" asp-action="CancelCaseModal">
+                <div class="modal-body">
+                    <span class="modal-head">Patient Name : <b style="color: var(--primary);">@Model.PatientName</b></span>
+                    <div class="modal-flex my-3">
+
+                        <div class="form-floating mt-3">
+                            <select class="form-select" id="cancelModalCaseTag" asp-for="ReasonId">
+                                <option disabled selected value="0"> -- select casetag -- </option>
+
+                                @foreach (var casetag in Model.casetags)
+                                {
+                                    <option value="@casetag.Casetagid">@casetag.Name</option>
+                                }
+                            </select>
+                            <label for="cancelModalCaseTag">Reasons for Cancellation</label>
+                        </div>
+
+                        <div class="form-floating mt-3">
+                            <input type="text" asp-for="RequestId" hidden />
+                            <input type="text" class="form-control" asp-for="Notes">
+                            <label for="cancelCaseNotes">Provide Additional Notes</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-info text-white" data-bs-dismiss="modal">
+                        Continue
+                    </button>
+                    <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
