@@ -12,12 +12,10 @@ namespace HalloDoc.MVC.Services
             _config = config;
         }
 
-        public bool SendMail(string subject, string body, string fromEmail, string toEmail)
+        public static bool SendMail(string subject,bool isHtml, string body, string fromEmail, string toEmail, string senderEmail, string senderPassword)
         {
             try
             {
-                string senderEmail = _config.GetSection("OutlookSMTP")["Sender"];
-                string senderPassword = _config.GetSection("OutlookSMTP")["Password"];
 
                 SmtpClient client = new SmtpClient("smtp.office365.com")
                 {
@@ -32,7 +30,7 @@ namespace HalloDoc.MVC.Services
                 {
                     From = new MailAddress(fromEmail, "HalloDoc"),
                     Subject = subject,
-                    IsBodyHtml = true,
+                    IsBodyHtml = isHtml,
                     Body = body,
                 };
 

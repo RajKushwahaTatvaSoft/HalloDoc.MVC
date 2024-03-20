@@ -1,4 +1,5 @@
-﻿using Business_Layer.Interface;
+﻿using Business_Layer.Helpers;
+using Business_Layer.Interface;
 using Business_Layer.Interface.AdminInterface;
 using ClosedXML.Excel;
 using CsvHelper;
@@ -6,33 +7,21 @@ using Data_Layer.CustomModels;
 using Data_Layer.DataContext;
 using Data_Layer.DataModels;
 using Data_Layer.ViewModels.Admin;
+using DocumentFormat.OpenXml.Spreadsheet;
 using HalloDoc.MVC.Services;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
+using Microsoft.CodeAnalysis;
 using System.Data;
 using System.Globalization;
 using System.IO.Compression;
 using System.Net;
 using System.Net.Mail;
-using System.Net.NetworkInformation;
-using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Nodes;
 
 
 namespace HalloDoc.MVC.Controllers
 {
-
-    public class NewRequestModel
-    {
-        public string Name { get; set; }
-        public string DateOfBirth { get; set; }
-        public string Requestor { get; set; }
-        public string RequestedDate { get; set; }
-        public string Phone { get; set; }
-        public string Address { get; set; }
-        public string Notes { get; set; }
-    }
 
     [CustomAuthorize((int)AllowRole.Admin)]
     public class AdminController : Controller
@@ -41,13 +30,85 @@ namespace HalloDoc.MVC.Controllers
         private readonly IDashboardRepository _dashboardRepository;
         private readonly IWebHostEnvironment _environment;
         private readonly IConfiguration _config;
+        private readonly IEmailService _emailService;
 
-        public AdminController(IUnitOfWork unitOfWork, IDashboardRepository dashboard, IWebHostEnvironment environment, IConfiguration config, ApplicationDbContext context)
+        public AdminController(IUnitOfWork unitOfWork, IDashboardRepository dashboard, IWebHostEnvironment environment, IConfiguration config, ApplicationDbContext context, IEmailService emailService)
         {
             _unitOfWork = unitOfWork;
             _dashboardRepository = dashboard;
             _environment = environment;
             _config = config;
+            _emailService = emailService;
+        }
+
+
+        #region Header
+
+        public IActionResult Profile()
+        {
+            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+            Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(a => a.Adminid == adminId);
+
+
+            if (admin == null)
+            {
+                TempData["error"] = "Admin not found , please login!";
+                return RedirectToAction("Index");
+            }
+
+            string state = _unitOfWork.RegionRepository.GetFirstOrDefault(r => r.Regionid == admin.Regionid).Name;
+
+            IEnumerable<Region> regions = _unitOfWork.RegionRepository.GetAll();
+            IEnumerable<int> adminRegions = _unitOfWork.AdminRegionRepo.Where(region => region.Adminid == adminId).ToList().Select(x => (int)x.Regionid);
+
+            AdminProfileViewModel model = new()
+            {
+                Username = admin.Firstname + " " + admin.Lastname,
+                StatusId = admin.Status,
+                RoleId = admin.Roleid,
+                FirstName = admin.Firstname,
+                Email = admin.Email,
+                ConfirmEmail = admin.Email,
+                PhoneNumber = admin.Mobile,
+                AltPhoneNumber = admin.Altphone,
+                LastName = admin.Lastname,
+                regions = regions,
+                Address1 = admin.Address1,
+                Address2 = admin.Address2,
+                City = admin.City,
+                State = state,
+                Zip = admin.Zip,
+                RegionId = (int)admin.Regionid,
+                selectedRegions = adminRegions,
+            };
+
+            return View("Header/Profile", model);
+
+        }
+
+        public IActionResult Providers()
+        {
+            return View("Header/Providers");
+        }
+
+        public IActionResult Partners()
+        {
+            return View("Header/Partners");
+        }
+
+        public IActionResult ProviderLocation()
+        {
+            return View("Header/ProviderLocation");
+        }
+
+        public IActionResult Records()
+        {
+            return View("Header/Records");
+        }
+
+        public IActionResult Access()
+        {
+            return View("Header/Access");
         }
 
         public void InsertRequestWiseFile(IFormFile document)
@@ -63,6 +124,23 @@ namespace HalloDoc.MVC.Controllers
 
             using FileStream stream = new(fullPath, FileMode.Create);
             document.CopyTo(stream);
+        }
+
+        public DataTable getData()
+        {
+            //Creating DataTable  
+            DataTable dt = new DataTable();
+            //Setiing Table Name  
+            dt.TableName = "EmployeeData";
+            //Add Columns  
+            dt.Columns.Add("ID", typeof(int));
+            dt.Columns.Add("Name", typeof(string));
+            dt.Columns.Add("City", typeof(string));
+            //Add Rows in DataTable  
+            dt.Rows.Add(1, "Anoop Kumar Sharma", "Delhi");
+            dt.Rows.Add(2, "Andrew", "U.P.");
+            dt.AcceptChanges();
+            return dt;
         }
 
         public IActionResult Logout()
@@ -100,7 +178,6 @@ namespace HalloDoc.MVC.Controllers
 
             PagedList<AdminRequest> pagedList = await _dashboardRepository.GetAdminRequestsAsync(filter);
 
-
             AdminDashboardViewModel model = new AdminDashboardViewModel();
             model.pagedList = pagedList;
             model.DashboardStatus = status;
@@ -110,28 +187,10 @@ namespace HalloDoc.MVC.Controllers
             return PartialView("Partial/PartialTable", model);
         }
 
-
-        public DataTable getData()
-        {
-            //Creating DataTable  
-            DataTable dt = new DataTable();
-            //Setiing Table Name  
-            dt.TableName = "EmployeeData";
-            //Add Columns  
-            dt.Columns.Add("ID", typeof(int));
-            dt.Columns.Add("Name", typeof(string));
-            dt.Columns.Add("City", typeof(string));
-            //Add Rows in DataTable  
-            dt.Rows.Add(1, "Anoop Kumar Sharma", "Delhi");
-            dt.Rows.Add(2, "Andrew", "U.P.");
-            dt.AcceptChanges();
-            return dt;
-        }
-
         [HttpPost]
         public async Task<byte[]> ExportFilteredData(int status, int typeFilter, string searchFilter, int regionFilter)
         {
-            int page = (int) HttpContext.Session.GetInt32("currentPage");
+            int page = (int)HttpContext.Session.GetInt32("currentPage");
 
             int pageNumber = page;
             if (page < 1)
@@ -353,8 +412,6 @@ namespace HalloDoc.MVC.Controllers
             return dt;
         }
 
-
-
         public byte[] ExportAllExcel(int status)
         {
             IEnumerable<AdminRequest> allRequest = _dashboardRepository.GetAllRequestByStatus(status);
@@ -399,7 +456,7 @@ namespace HalloDoc.MVC.Controllers
             IEnumerable<Region> regions = _unitOfWork.RegionRepository.GetAll();
             AdminCreateRequestViewModel model = new AdminCreateRequestViewModel();
             model.regions = regions;
-            return View("Action/CreateRequest", model);
+            return View("Dashboard/CreateRequest", model);
         }
 
         public void SendMailForCreateAccount(string email)
@@ -427,27 +484,11 @@ namespace HalloDoc.MVC.Controllers
 
                 string senderEmail = _config.GetSection("OutlookSMTP")["Sender"];
                 string senderPassword = _config.GetSection("OutlookSMTP")["Password"];
+                string subject = "Set up your Account";
+                string body = "<h1>Create Account By clicking below</h1><a href=\"" + createLink + "\" >Create Account link</a>";
 
-                SmtpClient client = new SmtpClient("smtp.office365.com")
-                {
-                    Port = 587,
-                    Credentials = new NetworkCredential(senderEmail, senderPassword),
-                    EnableSsl = true,
-                    DeliveryMethod = SmtpDeliveryMethod.Network,
-                    UseDefaultCredentials = false
-                };
+                MailService.SendMail(subject, true, body, senderEmail, email, senderEmail, senderPassword);
 
-                MailMessage mailMessage = new MailMessage
-                {
-                    From = new MailAddress(senderEmail, "HalloDoc"),
-                    Subject = "Set up your Account",
-                    IsBodyHtml = true,
-                    Body = "<h1>Create Account By clicking below</h1><a href=\"" + createLink + "\" >Create Account link</a>",
-                };
-
-                mailMessage.To.Add(email);
-
-                client.Send(mailMessage);
                 TempData["success"] = "Email has been successfully sent to " + email + " for create account link.";
             }
             catch (Exception ex)
@@ -467,6 +508,7 @@ namespace HalloDoc.MVC.Controllers
                 if (ModelState.IsValid)
                 {
                     var phoneNumber = "+" + model.countryCode + "-" + model.phoneNumber;
+                    string state = _unitOfWork.RegionRepository.GetFirstOrDefault(reg => reg.Regionid == model.state).Name;
 
                     // Creating Patient in Aspnetusers Table
 
@@ -489,6 +531,7 @@ namespace HalloDoc.MVC.Controllers
 
                         _unitOfWork.AspNetUserRepository.Add(aspnetuser);
                         _unitOfWork.Save();
+
                         User user1 = new()
                         {
                             Aspnetuserid = generatedId.ToString(),
@@ -498,17 +541,20 @@ namespace HalloDoc.MVC.Controllers
                             Mobile = phoneNumber,
                             Street = model.street,
                             City = model.city,
+                            State = state,
                             Regionid = model.state,
                             Zipcode = model.zipCode,
                             Createddate = DateTime.Now,
-                            Createdby = admin.Aspnetuserid
+                            Createdby = admin.Aspnetuserid,
+                            Strmonth = model.dob?.Month.ToString(),
+                            Intdate = model.dob?.Day,
+                            Intyear = model.dob?.Year
                         };
-
-                        // Creating Patient in User Table
 
 
                         _unitOfWork.UserRepository.Add(user1);
                         _unitOfWork.Save();
+
                         SendMailForCreateAccount(model.email);
                     }
 
@@ -525,6 +571,8 @@ namespace HalloDoc.MVC.Controllers
                         Email = model.email,
                         Status = (short)RequestStatus.Unassigned,
                         Createddate = DateTime.Now,
+                        Confirmationnumber = GenerateConfirmationNumber(user),
+                        Patientaccountid = user.Aspnetuserid,
                     };
 
                     _unitOfWork.RequestRepository.Add(request);
@@ -540,9 +588,12 @@ namespace HalloDoc.MVC.Controllers
                         Email = model.email,
                         Address = model.street,
                         City = model.city,
+                        State = state,
                         Regionid = model.state,
                         Zipcode = model.zipCode,
-
+                        Strmonth = model.dob?.Month.ToString(),
+                        Intdate = model.dob?.Day,
+                        Intyear = model.dob?.Year
                     };
 
                     _unitOfWork.RequestClientRepository.Add(requestclient);
@@ -562,7 +613,7 @@ namespace HalloDoc.MVC.Controllers
                     }
 
                     model.regions = _unitOfWork.RegionRepository.GetAll();
-                    return View("Action/CreateRequest", model);
+                    return View("Dashboard/CreateRequest", model);
 
                 }
                 return View("error");
@@ -570,6 +621,20 @@ namespace HalloDoc.MVC.Controllers
             return View("error");
 
         }
+
+
+        public string GenerateConfirmationNumber(User user)
+        {
+            string regionAbbr = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == user.Regionid).Abbreviation;
+
+            DateTime todayStart = DateTime.Now.Date;
+            int count = _unitOfWork.RequestRepository.Count(req => req.Createddate > todayStart);
+
+            string confirmationNumber = regionAbbr + user.Createddate.Date.ToString("D2") + user.Createddate.Month.ToString("D2") + user.Lastname.Substring(0, 2).ToUpper() + user.Firstname.Substring(0, 2).ToUpper() + (count + 1).ToString("D4");
+            return confirmationNumber;
+        }
+
+
 
         public IActionResult Dashboard()
         {
@@ -611,9 +676,80 @@ namespace HalloDoc.MVC.Controllers
             model.UnpaidReqCount = _unitOfWork.RequestRepository.Count(r => r.Status == (short)RequestStatus.Unpaid);
             model.casetags = _unitOfWork.CaseTagRepository.GetAll();
 
-            return View("Dashboard/Dashboard", model);
+            return View("Header/Dashboard", model);
 
         }
+
+
+
+        #endregion
+
+        #region Providers
+
+        public IActionResult ProviderMenu()
+        {
+            string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+
+            ProviderMenuViewModel model = new ProviderMenuViewModel()
+            {
+                UserName = adminName,
+                physicians = _unitOfWork.PhysicianRepository.GetAll(),
+            };
+            return View("Providers/ProviderMenu", model);
+        }
+
+
+        public IActionResult ContactYourProviderModal(int physicianId)
+        {
+            ContactYourProviderModel model = new ContactYourProviderModel()
+            {
+                PhysicianId = physicianId,
+            };
+            return PartialView("Modals/ContactYourProvider", model);
+        }
+
+        [HttpPost]
+        public IActionResult ContactYourProviderModal(ContactYourProviderModel model)
+        {
+            try
+            {
+
+                if (ModelState.IsValid)
+                {
+                    Physician physician = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Physicianid == model.PhysicianId);
+                    if (model.CommunicationType == 2 || model.CommunicationType == 3)
+                    {
+                        string subject = "Contacting Provider";
+                        string body = "<h2>Admin Message</h2><h5>" + model.Message + "</h5>";
+                        string toEmail = physician.Email;
+                        _emailService.SendMail(toEmail, body, subject);
+                    }
+                }
+
+                TempData["success"] = "Messages sent successfully.";
+
+            }
+            catch(Exception e)
+            {
+                TempData["error"] = e.Message;
+            }
+            return Redirect("/Admin/ProviderMenu");
+        }
+
+        public IActionResult Scheduling()
+        {
+            return View("Providers/Scheduling");
+        }
+
+        public IActionResult Invoicing()
+        {
+            return View("Providers/Invoicing");
+        }
+
+        #endregion
+
+        #region HelperFunctions
+
 
         public static string GetPatientDOB(Requestclient u)
         {
@@ -689,143 +825,8 @@ namespace HalloDoc.MVC.Controllers
             return business;
         }
 
-        public IActionResult Orders(int requestId)
-        {
 
-            string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
-
-            SendOrderViewModel model = new SendOrderViewModel();
-            model.professionalTypeList = _unitOfWork.HealthProfessionalTypeRepo.GetAll();
-            model.RequestId = requestId;
-            model.UserName = adminName;
-
-            return View("Action/Orders", model);
-        }
-
-        [HttpPost]
-        public IActionResult Orders(SendOrderViewModel orderViewModel)
-        {
-            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-            Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(ad => ad.Adminid == adminId);
-
-            if (ModelState.IsValid)
-            {
-
-                Orderdetail order = new Orderdetail()
-                {
-                    Vendorid = orderViewModel.SelectedVendor,
-                    Requestid = orderViewModel.RequestId,
-                    Faxnumber = orderViewModel.FaxNumber,
-                    Email = orderViewModel.Email,
-                    Businesscontact = orderViewModel.BusinessContact,
-                    Prescription = orderViewModel.Prescription,
-                    Noofrefill = orderViewModel.NoOfRefills,
-                    Createddate = DateTime.Now,
-                    Createdby = admin.Aspnetuserid,
-                };
-
-                _unitOfWork.OrderDetailRepo.Add(order);
-                _unitOfWork.Save();
-
-                TempData["success"] = "Order Successfully Sent";
-
-            }
-            else
-            {
-                TempData["error"] = "Error occured whlie ordering.";
-            }
-
-            return Orders(orderViewModel.RequestId);
-        }
-
-
-        public IActionResult NewRequestStatusView()
-        {
-            return View("StatusPartial/NewRequestStatusView");
-        }
-        public IActionResult Providers()
-        {
-            return View("Dashboard/Providers");
-        }
-        public IActionResult Partners()
-        {
-            return View("Dashboard/Partners");
-        }
-
-        public IActionResult ProviderLocation()
-        {
-            return View("Dashboard/ProviderLocation");
-        }
-
-        public IActionResult Records()
-        {
-            return View("Dashboard/Records");
-        }
-
-        public IActionResult Access()
-        {
-            return View("Dashboard/Access");
-        }
-
-        public static string GenerateSHA256(string input)
-        {
-            var bytes = Encoding.UTF8.GetBytes(input);
-            using (var hashEngine = SHA256.Create())
-            {
-                var hashedBytes = hashEngine.ComputeHash(bytes, 0, bytes.Length);
-                var sb = new StringBuilder();
-                foreach (var b in hashedBytes)
-                {
-                    var hex = b.ToString("x2");
-                    sb.Append(hex);
-                }
-                return sb.ToString();
-            }
-        }
-
-        public async Task<IActionResult> DownloadAllFiles(int requestId)
-        {
-            try
-            {
-                // Fetch all document details for the given request:
-                var documentDetails = _unitOfWork.RequestWiseFileRepository.Where(m => m.Requestid == requestId && m.Isdeleted != true).ToList();
-
-                if (documentDetails == null || documentDetails.Count == 0)
-                {
-                    return NotFound("No documents found for download");
-                }
-
-                // Create a unique zip file name
-                var zipFileName = $"Documents_{DateTime.Now:yyyyMMddHHmmss}.zip";
-                var zipFilePath = Path.Combine(_environment.WebRootPath, "DownloadableZips", zipFileName);
-
-                // Create the directory if it doesn't exist
-                var zipDirectory = Path.GetDirectoryName(zipFilePath);
-                if (!Directory.Exists(zipDirectory))
-                {
-                    Directory.CreateDirectory(zipDirectory);
-                }
-
-                // Create a new zip archive
-                using (var zipArchive = ZipFile.Open(zipFilePath, ZipArchiveMode.Create))
-                {
-                    // Add each document to the zip archive
-                    foreach (var document in documentDetails)
-                    {
-                        var documentPath = Path.Combine(_environment.WebRootPath, "document", document.Filename);
-                        zipArchive.CreateEntryFromFile(documentPath, document.Filename);
-                    }
-                }
-
-                // Return the zip file for download
-                var zipFileBytes = await System.IO.File.ReadAllBytesAsync(zipFilePath);
-                return File(zipFileBytes, "application/zip", zipFileName);
-            }
-            catch
-            {
-                return BadRequest("Error downloading files");
-            }
-        }
+        #endregion
 
         #region Modals
 
@@ -1260,6 +1261,103 @@ namespace HalloDoc.MVC.Controllers
 
         #endregion
 
+        #region Dashboard
+
+
+        public IActionResult Orders(int requestId)
+        {
+
+            string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+
+            SendOrderViewModel model = new SendOrderViewModel();
+            model.professionalTypeList = _unitOfWork.HealthProfessionalTypeRepo.GetAll();
+            model.RequestId = requestId;
+            model.UserName = adminName;
+
+            return View("Dashboard/Orders", model);
+        }
+
+        [HttpPost]
+        public IActionResult Orders(SendOrderViewModel orderViewModel)
+        {
+            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+            Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(ad => ad.Adminid == adminId);
+
+            if (ModelState.IsValid)
+            {
+
+                Orderdetail order = new Orderdetail()
+                {
+                    Vendorid = orderViewModel.SelectedVendor,
+                    Requestid = orderViewModel.RequestId,
+                    Faxnumber = orderViewModel.FaxNumber,
+                    Email = orderViewModel.Email,
+                    Businesscontact = orderViewModel.BusinessContact,
+                    Prescription = orderViewModel.Prescription,
+                    Noofrefill = orderViewModel.NoOfRefills,
+                    Createddate = DateTime.Now,
+                    Createdby = admin.Aspnetuserid,
+                };
+
+                _unitOfWork.OrderDetailRepo.Add(order);
+                _unitOfWork.Save();
+
+                TempData["success"] = "Order Successfully Sent";
+
+            }
+            else
+            {
+                TempData["error"] = "Error occured whlie ordering.";
+            }
+
+            return Orders(orderViewModel.RequestId);
+        }
+
+        public async Task<IActionResult> DownloadAllFiles(int requestId)
+        {
+            try
+            {
+                // Fetch all document details for the given request:
+                var documentDetails = _unitOfWork.RequestWiseFileRepository.Where(m => m.Requestid == requestId && m.Isdeleted != true).ToList();
+
+                if (documentDetails == null || documentDetails.Count == 0)
+                {
+                    return NotFound("No documents found for download");
+                }
+
+                // Create a unique zip file name
+                var zipFileName = $"Documents_{DateTime.Now:yyyyMMddHHmmss}.zip";
+                var zipFilePath = Path.Combine(_environment.WebRootPath, "DownloadableZips", zipFileName);
+
+                // Create the directory if it doesn't exist
+                var zipDirectory = Path.GetDirectoryName(zipFilePath);
+                if (!Directory.Exists(zipDirectory))
+                {
+                    Directory.CreateDirectory(zipDirectory);
+                }
+
+                // Create a new zip archive
+                using (var zipArchive = ZipFile.Open(zipFilePath, ZipArchiveMode.Create))
+                {
+                    // Add each document to the zip archive
+                    foreach (var document in documentDetails)
+                    {
+                        var documentPath = Path.Combine(_environment.WebRootPath, "document", document.Filename);
+                        zipArchive.CreateEntryFromFile(documentPath, document.Filename);
+                    }
+                }
+
+                // Return the zip file for download
+                var zipFileBytes = await System.IO.File.ReadAllBytesAsync(zipFilePath);
+                return File(zipFileBytes, "application/zip", zipFileName);
+            }
+            catch
+            {
+                return BadRequest("Error downloading files");
+            }
+        }
+
+
         public IActionResult ViewCase(int Requestid)
         {
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
@@ -1293,7 +1391,7 @@ namespace HalloDoc.MVC.Controllers
             model.physicians = _unitOfWork.PhysicianRepository.GetAll();
             model.casetags = _unitOfWork.CaseTagRepository.GetAll();
 
-            return View("Action/ViewCase", model);
+            return View("Dashboard/ViewCase", model);
         }
 
         public int GetDashboardStatus(int requestStatus)
@@ -1364,7 +1462,7 @@ namespace HalloDoc.MVC.Controllers
                 model.PhysicianNotes = notes.Physiciannotes;
             }
 
-            return View("Action/ViewNotes", model);
+            return View("Dashboard/ViewNotes", model);
         }
 
         [HttpPost]
@@ -1438,7 +1536,7 @@ namespace HalloDoc.MVC.Controllers
                 UserName = adminName
             };
 
-            return View("Action/ViewUploads", model);
+            return View("Dashboard/ViewUploads", model);
         }
 
         [HttpPost]
@@ -1597,7 +1695,7 @@ namespace HalloDoc.MVC.Controllers
                     requestid = requestid,
                     confirmatioNumber = Confirmationnum,
                 };
-                return View("Action/CloseCase", closeCase);
+                return View("Dashboard/CloseCase", closeCase);
             }
 
             return Ok();
@@ -1707,7 +1805,7 @@ namespace HalloDoc.MVC.Controllers
 
                 };
 
-                return View("Action/EncounterForm", encounterViewModel);
+                return View("Dashboard/EncounterForm", encounterViewModel);
 
             }
 
@@ -1722,7 +1820,7 @@ namespace HalloDoc.MVC.Controllers
                 location = requestclient.Street + " " + requestclient.City + " " + requestclient.State,
             };
 
-            return View("Action/EncounterForm", encounterViewModel);
+            return View("Dashboard/EncounterForm", encounterViewModel);
 
         }
 
@@ -1808,45 +1906,49 @@ namespace HalloDoc.MVC.Controllers
             return View("error");
         }
 
-        public IActionResult Profile()
-        {
-            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-            Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(a => a.Adminid == adminId);
 
+        #endregion
+
+        #region Profile
+
+
+        [HttpPost]
+        public bool SaveAdminAccountInfo(string password)
+        {
+
+            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
+            Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(a => a.Adminid == adminId);
 
             if (admin == null)
             {
-                TempData["failure"] = "Admin not found , please login!";
-                return RedirectToAction("Index");
+                TempData["error"] = "Admin not found";
+                return false;
             }
 
-            string state = _unitOfWork.RegionRepository.GetFirstOrDefault(r => r.Regionid == admin.Regionid).Name;
-
-            IEnumerable<Region> regions = _unitOfWork.RegionRepository.GetAll();
-            IEnumerable<int> adminRegions = _unitOfWork.AdminRegionRepo.Where(region => region.Adminid == adminId).ToList().Select(x => (int)x.Regionid);
-
-            AdminProfileViewModel model = new()
+            Aspnetuser aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(asp => asp.Id == admin.Aspnetuserid);
+            if (aspUser == null)
             {
-                Username = admin.Firstname + " " + admin.Lastname,
-                Status = admin.Status,
-                Role = admin.Roleid,
-                FirstName = admin.Firstname,
-                Email = admin.Email,
-                ConfirmEmail = admin.Email,
-                PhoneNumber = admin.Mobile,
-                AltPhoneNumber = admin.Altphone,
-                LastName = admin.Lastname,
-                regions = regions,
-                Address1 = admin.Address1,
-                Address2 = admin.Address2,
-                City = admin.City,
-                State = state,
-                Zip = admin.Zip,
-                RegionId = (int)admin.Regionid,
-                selectedRegions = adminRegions,
-            };
+                TempData["error"] = "Asp User not found";
+                return false;
+            }
 
-            return View("Dashboard/Profile", model);
+            try
+            {
+
+                string passHash = AuthHelper.GenerateSHA256(password);
+
+                aspUser.Passwordhash = passHash;
+                _unitOfWork.AspNetUserRepository.Update(aspUser);
+                _unitOfWork.Save();
+
+                TempData["success"] = "Password Reset Successfully";
+                return true;
+            }
+            catch (Exception ex)
+            {
+                TempData["error"] = ex.Message;
+                return false;
+            }
 
         }
 
@@ -1858,7 +1960,7 @@ namespace HalloDoc.MVC.Controllers
 
             if (admin == null)
             {
-                TempData["failure"] = "Admin not found";
+                TempData["error"] = "Admin not found";
                 return false;
             }
 
@@ -1934,7 +2036,7 @@ namespace HalloDoc.MVC.Controllers
 
             if (admin == null)
             {
-                TempData["failure"] = "Admin not found";
+                TempData["error"] = "Admin not found";
                 return false;
             }
 
@@ -1962,5 +2064,8 @@ namespace HalloDoc.MVC.Controllers
 
             return false;
         }
+
+
+        #endregion
     }
 }

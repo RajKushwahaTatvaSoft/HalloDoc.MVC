@@ -3,57 +3,82 @@
     background-color: #282828;
 }
 
-.dark-mode .iti__country-list {
-    color: white;
-    background-color: #282828 !important;
-}
+    .dark-mode .iti__country-list {
+        color: white;
+        background-color: #282828 !important;
+    }
 
-.dark-mode .btn:hover {
-    background-color: white;
-    border-color: white;
-}
+    .dark-mode .btn:hover {
+        background-color: white;
+        border-color: white;
+    }
 
-.dark-mode :is(h1, h2, h3, h4, span, label, td) {
-    color: white;
-}
+    .dark-mode :is(h1, h2, h3, h4, span, label, td) {
+        color: white;
+    }
 
-.dark-mode .btn:hover svg {
-    fill: black;
-}
+    .dark-mode .btn:hover svg {
+        fill: black;
+    }
 
-.dark-mode .btn:hover span {
-    color: black;
-}
+    .dark-mode .btn:hover span {
+        color: black;
+    }
 
-.dark-mode .form-card {
-    background-color: #454545;
-}
+    .dark-mode .form-card {
+        background-color: #454545;
+    }
 
-.dark-mode textarea, .dark-mode input {
-    background-color: #454545;
-    color: white;
-}
+    .dark-mode textarea, .dark-mode input, .dark-mode select {
+        background-color: #454545;
+        color: white;
+    }
 
-    .dark-mode input:focus, .dark-mode textarea:focus {
+        .dark-mode input:disabled, .dark-mode textarea:disabled, .dark-mode select:disabled {
+            background-color: #766f71;
+            color: white;
+        }
+
+    .dark-mode .modal-body {
+        background-color: #282828
+    }
+
+    .dark-mode .modal-footer, .dark-mode .modal-header {
+        background-color: #484848 !important;
+        color: #10bce9
+    }
+
+    .dark-mode .create-request-btn {
+        background-color: grey;
+        color: white;
+    }
+
+    .dark-mode .create-request-active {
+        background-color: #10bce9;
+        color: white;
+    }
+
+
+    .dark-mode input:focus, .dark-mode textarea:focus, .dark-mode select:focus {
         background-color: #676767;
         color: white;
     }
 
-.dark-mode .btn:active {
-    background-color: #454545;
-}
+    .dark-mode .btn:active {
+        background-color: #454545;
+    }
 
 
-/* Patient Dashboard CSS */
+    /* Patient Dashboard CSS */
 
-.dark-mode .nav .active {
-    background-color: #282828 !important;
-}
+    .dark-mode .nav .active {
+        background-color: #282828 !important;
+    }
 
-.dark-mode h4 {
-    color: white;
-}
+    .dark-mode h4 {
+        color: white;
+    }
 
-.dark-mode .dashboard-card {
-    background-color: #454545;
-}
+    .dark-mode .dashboard-card {
+        background-color: #454545;
+    }

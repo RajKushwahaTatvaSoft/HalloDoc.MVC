@@ -17,8 +17,8 @@ namespace Data_Layer.ViewModels.Admin
         public string? CountryCode { get; set; }
         public string? PhoneNumber { get; set; }
         public string? Username { get; set; }
-        public short? Status { get; set; }
-        public int? Role { get; set; }
+        public int? StatusId { get; set; }
+        public int? RoleId { get; set; }
         public IEnumerable<Region>? regions { get; set; }
         public IEnumerable<int>? selectedRegions { get; set; }
         public string? Address1 { get; set; }

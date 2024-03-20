@@ -16,54 +16,62 @@
             </button>
 
         </div>
-        <div class="shadow container mt-4 p-2">
-            <div class="row   border-2">
-                <h4 class="mt-4 col-12  fs-6">Account Information</h4>
+        <div class="shadow dashboard-card container mt-4 px-3">
 
-                <div class="col-md-6 mt-4 ">
-                    <div class=" floating-label form-floating">
-                        <input asp-for="Username" type="text" class="form-control" placeholder="Username" id="floatingInput" disabled>
-                        <label for="floatingInput">Username</label>
+            <form method="post" id="admin-account-info-form" >
+
+                <div class="row border-2">
+
+                    <h4 class="mt-4 col-12  fs-6">Account Information</h4>
+
+                    <div class="col-md-6 mt-4 ">
+                        <div class=" floating-label form-floating">
+                            <input asp-for="Username" type="text" class="form-control" placeholder="Username" id="floatingInput" disabled>
+                            <label for="floatingInput">Username</label>
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-6 mt-4 ">
+                        <div class="floating-label form-floating">
+                            <input asp-for="Password" type="text" class="form-control" placeholder="Password" id="floatingInput">
+                            <label for="floatingInput">Password</label>
+                        </div>
+
+                    </div>
+
+                    <div class=" col-md-6 col-12 mt-4">
+                        <select disabled asp-for="StatusId" class="form-select" id="adminStatusSelect" style="height:60px;">
+                            <option selected value="0">-- Select Status --</option>
+                            <option value="1">Active</option>
+                            <option value="2">Pending</option>
+                            <option value="3">F</option>
+                            <option value="4">Sleepy</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6 col-12 mt-4">
+                        <select disabled asp-for="RoleId" class="form-select" id="adminStatusSelect" style="height:60px;">
+                            <option value="1">Role 1</option>
+                            <option value="1">Role 2</option>
+                            <option value="1">Role 3</option>
+                        </select>
+                    </div>
+
+                    <div class=" d-flex justify-content-end mt-4">
+
+                        <button class="btn btn-outline-info" type="submit">
+
+                            <span>Reset Password</span>
+
+                        </button>
+
                     </div>
 
                 </div>
-                <div class="col-md-6 mt-4 ">
-                    <div class="floating-label form-floating">
-                        <input asp-for="Password" type="Password" class="form-control" placeholder="Password" id="floatingInput" disabled>
-                        <label for="floatingInput">Password</label>
-                    </div>
 
-                </div>
+            </form>
 
-                <div class=" col-md-6 col-12 mt-4">
-
-                    <select asp-for="Status" class="form-select" id="adminStatusSelect" style="height:60px;">
-                        <option disabled selected value="0">-- Select Status --</option>
-                        <option value="1">Active</option>
-                        <option value="4">Pending</option>
-                        <option value="5">Acve</option>
-                    </select>
-
-                </div>
-                <div class="col-md-6 col-12 mt-4">
-                    <select asp-for="Role" class="form-select" id="adminStatusSelect" style="height:60px;">
-                        <option disabled selected value="0">-- Select Role --</option>
-                        <option value="1">Role 1</option>
-                        <option value="1">Role 2</option>
-                        <option value="1">Role 3</option>
-                    </select>
-                </div>
-
-                <div class=" d-flex justify-content-end mt-4">
-
-                    <a class="btn btn-outline-info " asp-controller="Admin" asp-action="AdminDashboard">
-
-                        <span>Reset Password</span>
-                    </a>
-
-                </div>
-
-            </div>
 
             <form method="post" asp-controller="Admin" asp-action="AdministratorInfo">
 
@@ -176,7 +184,7 @@
                     <div class="col-md-6 col-12 mt-4 form-floating floating-label">
                         <select disabled class="form-select billingChange" placeholder="State" id="patientRequestRegion">
                             <option selected disabled value="0">State</option>
-                             
+
                             @foreach (var region in Model.regions)
                             {
                                 <option value="@region.Regionid">@region.Name</option>
@@ -274,6 +282,27 @@
 </script>
 
 <script>
+
+    $('#admin-account-info-form').submit(function (e) {
+        e.preventDefault();
+
+        let formData = $(this).serialize();
+        console.log(formData);
+
+        $.ajax({
+            url: "/Admin/SaveAdminAccountInfo",
+            data: formData,
+            type: 'POST',
+            success: function (result) {
+                location.reload();
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
+
+    });
 
     $('#admin-billing-info-form').submit(function (e) {
         e.preventDefault();

@@ -104,7 +104,7 @@ namespace Business_Layer.Repository.AdminRepo
                              PhysicianName = phyItem.Firstname + " " + phyItem.Lastname,
                              Phone = r.Phonenumber,
                              Address = rc.Address,
-                             Notes = rc.Notes,
+                             Notes = _context.Requeststatuslogs.Where(log => log.Requestid == r.Requestid).OrderByDescending(_ => _.Createddate).First().Notes,
                          }).AsQueryable();
 
             return await PagedList<AdminRequest>.CreateAsync(

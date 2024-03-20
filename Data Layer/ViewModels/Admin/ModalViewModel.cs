@@ -52,4 +52,11 @@ namespace Data_Layer.ViewModels.Admin
         public string Email { get; set; }
     }
 
+    public class ContactYourProviderModel
+    {
+        public int PhysicianId { get; set;}
+        public int CommunicationType {  get; set; }
+        public string Message { get; set; }
+    }
+
 }

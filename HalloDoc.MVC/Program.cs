@@ -9,6 +9,7 @@ using Business_Layer.Interface.AdminInterface;
 using Business_Layer.Repository.AdminRepo;
 using Business_Layer.Repository.TableRepo;
 using Business_Layer.Interface.TableInterface;
+using Business_Layer.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +25,7 @@ builder.Services.AddScoped<IPatientAuthRepository, PatientAuthRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
 builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
 builder.Services.AddSession(options =>

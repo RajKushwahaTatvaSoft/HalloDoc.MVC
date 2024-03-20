@@ -12,6 +12,8 @@ using Microsoft.EntityFrameworkCore;
 using Data_Layer.ViewModels.Admin;
 using HalloDoc.MVC.Services;
 using System.Drawing;
+using Business_Layer.Repository;
+using System.IdentityModel.Tokens.Jwt;
 
 
 namespace HalloDoc.MVC.Controllers
@@ -32,7 +34,36 @@ namespace HalloDoc.MVC.Controllers
 
         public IActionResult Index()
         {
+            var token = HttpContext.Request.Cookies["hallodoc"];
+            if (token == null)
+            {
+                return View();
+            }
+
+            bool isTokenValid = _jwtService.ValidateToken(token, out JwtSecurityToken jwtToken);
+            if (!isTokenValid)
+            {
+                return View();
+            }
+
+            var roleClaim = jwtToken.Claims.FirstOrDefault(claims => claims.Type == "roleId");
+            int roleId = Convert.ToInt32(roleClaim?.Value);
+
+            if(roleId == (int)AllowRole.Patient)
+            {
+                return RedirectToAction("Dashboard","Patient");
+            }
+            else if(roleId == (int)AllowRole.Physician)
+            {
+                return RedirectToAction("Dashboard", "Physician");
+            }
+            else if (roleId == (int)AllowRole.Admin)
+            {
+                return RedirectToAction("Dashboard", "Admin");
+            }
+
             return View();
+
         }
 
         // email token isdeleted createddate aspnetuserid expirydate
@@ -421,8 +452,6 @@ namespace HalloDoc.MVC.Controllers
                             _unitOfWork.RequestWiseFileRepository.Add(requestwisefile);
                             _unitOfWork.Save();
                         }
-
-
 
                         TempData["success"] = "Request Created Successfully.";
                         return RedirectToAction("Login");

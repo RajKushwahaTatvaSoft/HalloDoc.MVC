@@ -58,11 +58,21 @@
             <span class="tabHeader py-2 px-3">My Profile</span>
         </a>
     </li>
-    <li class="nav-item" role="presentation">
-        <a asp-controller="Admin" asp-action="Providers" class="nav-link px-0 admin-tab" id="provider-tab">
+
+    <li class="admin-tab nav-item" role="presentation">
+     
+        <a style="cursor:pointer" class="nav-link active admin-tab px-0 " id="provider-tab" data-bs-toggle="dropdown">
             <span class="tabHeader py-2 px-3">Providers</span>
         </a>
+
+        <ul class="dropdown-menu" aria-labelledby="provider-tab">
+            <li><a class="dropdown-item" asp-controller="Admin" asp-action="ProviderMenu">Providers</a></li>
+            <li><a class="dropdown-item" asp-controller="Admin" asp-action="Scheduling">Scheduling</a></li>
+            <li><a class="dropdown-item" asp-controller="Admin" asp-action="Invoicing">Invoicing</a></li>
+        </ul>
+
     </li>
+
     <li class="nav-item" role="presentation">
         <a asp-controller="Admin" asp-action="Partners" class="nav-link px-0 admin-tab" id="partner-tab">
             <span class="tabHeader py-2 px-3">Partners</span>
