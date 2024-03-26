@@ -1,6 +1,4 @@
 ﻿using Business_Layer.Interface;
-using Data_Layer.CustomModels;
-using Data_Layer.DataModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using System.IdentityModel.Tokens.Jwt;

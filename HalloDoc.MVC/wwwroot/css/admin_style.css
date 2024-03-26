@@ -8,6 +8,15 @@ html, body {
     height: 100%;
 }
 
+input[type="checkbox"]:disabled {
+    background-color : #AAAAAA;
+}
+
+input[type="checkbox"]:checked {
+    background-color: #10BCE9 !important;
+}
+
+
 .btn-primary {
     background-color: var(--primary);
     border: 0px solid white;
@@ -130,75 +139,6 @@ html, body {
     background-color: #e3e3e3;
 }
 
-/* Submit Request Screen Css */
-
-.patient-div {
-    width: 350px;
-    height: 50px;
-    background-color: #e8eaf1;
-    border: 1px solid #4367d3;
-    border-radius: 5px;
-}
-
-    .patient-div h4 {
-        color: #4367d3;
-    }
-
-    .patient-div:hover {
-        background-color: #4367d3;
-    }
-
-        .patient-div:hover h4, .family-friend-div:hover h4, .concierge-div:hover h4, .business-partners-div:hover h4 {
-            color: white;
-        }
-
-.family-friend-div {
-    width: 350px;
-    height: 50px;
-    background-color: #e5f3f8;
-    border: 1px solid #00adef;
-    border-radius: 5px;
-}
-
-    .family-friend-div h4 {
-        color: #00adef;
-    }
-
-    .family-friend-div:hover {
-        background-color: #00adef;
-    }
-
-.concierge-div {
-    width: 350px;
-    height: 50px;
-    background-color: #e8f0e8;
-    border: 1px solid #228b22;
-    border-radius: 5px;
-}
-
-    .concierge-div h4 {
-        color: #228b22;
-    }
-
-    .concierge-div:hover {
-        background-color: #228b22;
-    }
-
-.business-partners-div {
-    width: 350px;
-    height: 50px;
-    background-color: #f6e6ef;
-    border: 1px solid #d90f81;
-    border-radius: 5px;
-}
-
-    .business-partners-div h4 {
-        color: #d90f81;
-    }
-
-    .business-partners-div:hover {
-        background-color: #d90f81;
-    }
 
 .footer-bg {
     background-color: #282828;

@@ -5,41 +5,42 @@
 }
 
 @* MODALS *@
-
-@* Cancel Case *@
-<div class="modal fade" id="transferNotesModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
-     aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
+<div class="modal fade" id="transferNotesModal" aria-labelledby="exampleModalCenterTitle">
+    <div class="modal-dialog rounded-3 modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header bg-info">
-                <div class="modal-dark modal-title text-white" id="exampleModalLongTitle">
-                    Confirm Cancellation
-                </div>
-                <button type="button" class="btn" aria-label="Close" data-bs-dismiss="modal">
-                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
-                         fill="#FFFFFF">
-                        <path d="M0 0h24v24H0V0z" fill="none" />
-                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
-                    </svg>
-                </button>
+                <h5 class="modal-title text-white" id="exampleModalLongTitle">Transfer Notes</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-
-            <div class="modal-body">
-                <span class="modal-head">Patient Name : <b id="cancelModalPatientName" style="color: var(--primary);">test test</b></span>
-                <div class="modal-flex my-3">
-
+            <div class="m-4 modal-body align-items-center  mt-4">
+                @if (Model.requeststatuslogs != null && Model.requeststatuslogs.Any())
+                {
                     @foreach (var log in Model.requeststatuslogs)
                     {
-                        <div>@log.Notes</div>
+                        @if (log.Notes != null)
+                        {
+                            <div class="d-flex">
+                                <div class=" border-1 rounded-circle  mt-2" id="" style="width: 10px; height:10px; background-color:black;">
+                                </div>
+                                <div class="ms-2 fw-normal" style="color:grey;">
+                                    @log.Notes
+                                </div>
+                            </div>
+                        }
                     }
+                }
+                else
+                {
+                    <div class="m-0 fw-normal" style="color:grey;">
+                        No transfer notes yet
+                    </div>
+                }
 
-                </div>
             </div>
+
             <div class="modal-footer">
-                <button id="cancel-modal-submit-btn" type="button" class="btn btn-info text-white" data-bs-dismiss="modal">
-                    Continue
-                </button>
-                <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
+
+                <button type="button" class="btn cancel-btn" data-bs-dismiss="modal">Cancel</button>
             </div>
 
         </div>
@@ -49,7 +50,7 @@
 
 <div class="container-fluid d-flex justify-content-center row ">
 
-    <div class="col-8">
+    <div class="col-md-8 col-12">
 
         <div class="d-flex justify-content-between mt-3">
 
@@ -69,7 +70,7 @@
 
             <div class="row">
 
-                <div class="col-6">
+                <div class="col-md-6 col-12">
                     <div class="shadow dashboard-card d-flex w-100 p-3 mx-1" data-bs-toggle="modal" data-bs-target="#transferNotesModal">
 
                         <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -89,14 +90,24 @@
                         </svg>
                         <div class="ms-2">
                             <h6 class="fw-bold">Transfer Notes</h6>
-                            <span class="m-0 fw-normal" style="color:grey;">
-                                @Model.transferNotesLogs.First().Notes
-                            </span>
+
+                            @if( Model.transferNotesLogs != null &&  Model.transferNotesLogs.Any())
+                            {
+                                <span class="m-0 fw-normal" style="color:grey;">
+                                    @Model.transferNotesLogs.First().Notes
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="m-0 fw-normal" style="color:grey;">
+                                    No Transfer Notes Yet
+                                </span>                                
+                            }
                         </div>
                     </div>
                 </div>
 
-                <div class="col-6">
+                <div class="col-md-6 col-12">
                     <div class="shadow dashboard-card d-flex w-100 p-3 mx-1">
 
                         <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -131,7 +142,7 @@
             </div>
 
             <div class="row mt-3">
-                <div class="col-6">
+                <div class="col-md-6 col-12">
                     <div class="d-flex shadow dashboard-card w-100 p-3 mx-1">
 
                         <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1"

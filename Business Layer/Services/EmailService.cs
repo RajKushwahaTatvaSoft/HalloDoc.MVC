@@ -16,8 +16,8 @@ namespace Business_Layer.Services
         public void SendMail(string toEmail, string body, string subject)
         {
 
-            string senderEmail = _config.GetSection("OutlookSMTP")["Sender"];
-            string senderPassword = _config.GetSection("OutlookSMTP")["Password"];
+            string? senderEmail = _config.GetSection("OutlookSMTP")["Sender"];
+            string? senderPassword = _config.GetSection("OutlookSMTP")["Password"];
 
             SmtpClient client = new SmtpClient("smtp.office365.com")
             {

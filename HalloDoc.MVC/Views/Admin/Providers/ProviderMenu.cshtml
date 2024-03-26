@@ -9,16 +9,17 @@
 <div class="container mt-5">
     <div class="justify-content-between d-flex container-fluid mb-2 position-relative ">
         <div class="">
-            <h3> Provider Information <span class="badge badge-success p-2">Success</span> </h3>
+            <h3> Provider Information</h3>
         </div>
         <div>
-            <a asp-action="AdminDashboard" class="btn btn-outline-info"> ❮  Back </a>
+            <button onclick="history.back(-1)" class="btn btn-outline-info"> ❮  Back </button>
         </div>
     </div>
-    <div class="card border-0 shadow p-4 mb-5 rounded">
+    <div class="dashboard-card border-0 shadow p-4 mb-5 rounded">
         <div class="row justify-content-between">
 
             <div class="col-12 col-lg-4 ms-2 d-flex normal-input rounded align-items-center ps-2">
+
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 50 50">
                     <path d="M 21 3 C 11.654545 3 4 10.654545 4 20 C 4 29.345455 11.654545 37 21 37 C 24.701287 37 28.127393 35.786719 30.927734 33.755859 L 44.085938 46.914062 L 46.914062 44.085938 L 33.875 31.046875 C 36.43682 28.068316 38 24.210207 38 20 C 38 10.654545 30.345455 3 21 3 z M 21 5 C 29.254545 5 36 11.745455 36 20 C 36 28.254545 29.254545 35 21 35 C 12.745455 35 6 28.254545 6 20 C 6 11.745455 12.745455 5 21 5 z">
                     </path>
@@ -29,7 +30,7 @@
             </div>
 
             <div class="d-flex col-3 mr-0">
-                <a class="btn btn-outline-info mx-2" style="width:fit-content">
+                <a asp-controller="Admin" asp-action="CreatePhysicianAccount" class="btn btn-outline-info mx-2" style="width:fit-content">
                     <span>Create Provider Account</span>
                 </a>
             </div>
@@ -61,28 +62,36 @@
 
                 <tbody>
 
-                    @foreach (var physician in Model.physicians)
+                    @foreach (var physician in Model.physicianList)
                     {
                         <tr>
                             <td class="align-middle">
-                                <input type="checkbox" />
+
+                                @if (physician.IsNotificationStopped)
+                                {
+                                    <input onchange="toggleStopNotification(@physician.PhysicianId)" checked type="checkbox" />
+                                }
+                                else
+                                {
+                                    <input onchange="toggleStopNotification(@physician.PhysicianId)" type="checkbox" />
+                                }
                             </td>
 
                             <td>
-                                @physician.Firstname @physician.Lastname
+                                @physician.PhysicianName
                             </td>
                             <td>
-                                @physician.Roleid
+                                @physician.Role
+                            </td>
+                            <td>
+                                @physician.OnCallStatus
                             </td>
                             <td>
                                 @physician.Status
                             </td>
                             <td>
-                                @physician.Status
-                            </td>
-                            <td>
-                                <button class="btn btn-outline-info contact-provider-btn" data-physician-id="@physician.Physicianid">Contact</button>
-                                <button class="btn btn-outline-info">Edit</button>
+                                <button class="btn btn-outline-info contact-provider-btn" data-physician-id="@physician.PhysicianId">Contact</button>
+                                <a class="btn btn-outline-info" asp-controller="Admin" asp-action="EditPhysicianAccount" asp-route-physicianId="@physician.PhysicianId">Edit</a>
                             </td>
                         </tr>
                     }
@@ -100,12 +109,32 @@
 
 <script>
 
+    function toggleStopNotification(phyId) {
+
+        $.ajax({
+            url: "/Admin/StopNotification",
+            data: { physicianId: phyId },
+            type: 'POST',
+            success: function (result) {
+                location.reload();
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Fetching Request')
+            },
+        });
+
+    }
+
+</script>
+<script>
+
     $('.contact-provider-btn').click(function () {
         var phyId = $(this).data("physician-id");
 
         $.ajax({
             url: "/Admin/ContactYourProviderModal",
-            data: { physicianId : phyId },
+            data: { physicianId: phyId },
             type: 'GET',
             success: function (result) {
                 $('#modal-div').html(result);

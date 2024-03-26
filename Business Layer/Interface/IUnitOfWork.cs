@@ -27,6 +27,8 @@ namespace Business_Layer.Interface
         IBlockRequestRepo BlockRequestRepo { get; }
         IOrderDetailRepo OrderDetailRepo { get; }
         IAdminRegionRepo AdminRegionRepo { get; }
+        IRoleRepository RoleRepo { get; }
+        IPhysicianRegionRepo PhysicianRegionRepo { get; }
         void Save();
     }
 

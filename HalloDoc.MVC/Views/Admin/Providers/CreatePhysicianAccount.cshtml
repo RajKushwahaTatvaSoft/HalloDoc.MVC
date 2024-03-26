@@ -1,0 +1,378 @@
+﻿@model EditPhysicianViewModel
+@{
+    Layout = "_AdminDashboardLayout";
+    ViewData["Title"] = "Physician Account";
+}
+
+<div class="EditPhysicianAccount">
+    <div class="container-fluid d-flex justify-content-between mt-4" style="max-width:1000px">
+        <h4 class="fw-bold">
+            Create Provider
+        </h4>
+        <div class="d-inline-flex">
+
+            <button onclick="history.back(-1)" class="btn btn-outline-info m-2 text-decoration-none float-end"
+                    id="back-btn">
+                Back
+            </button>
+
+        </div>
+    </div>
+
+    <div class="container-fluid d-flex justify-content-center p-3" style="max-width:1000px">
+        <form method="post" enctype="multipart/form-data" id="createProviderForm" class="viewCaseForm form-floating shadow patient-request-form p-3">
+
+            <h5 class="">Account Information</h5>
+            <fieldset id="fieldset1">
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" placeholder="User Name(MD.Lastname.F)">
+                            <label for="">User Name(MD.Lastname.F)</label>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" placeholder="Password">
+                            <label for="floatingSelectGrid">Password</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-floating w-100 h-100">
+                            <select asp-for="RegionId" class="form-select border-0" aria-label="Default select example">
+                                <option disabled selected value="0">-- Select Role --</option>
+                                @foreach (var region in Model.regions)
+                                {
+                                    <option value="@region.Regionid">@region.Name</option>
+                                }
+                            </select>
+                            <label for="">Select Role</label>
+                        </div>
+                    </div>
+
+                </div>
+            </fieldset>
+
+
+            <h5 class="mt-2">Provider Information</h5>
+            <fieldset id="fieldset1">
+
+                <div class="row g-2 m-1">
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" placeholder="First Name">
+                            <label for="">First Name</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="text" class="form-control">
+                            <label for="floatingSelectGrid">Last Name</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="email" class="form-control">
+                            <label for="">Email</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating phone-div w-100 h-100 ">
+                            <input type="password" class=" form-control w-100 h-100">
+                            <label for="">Password</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+
+                        <div class="form-floating d-flex " style="height:58px;">
+                            <input id="patient-phone-country" asp-for="CountryCode" hidden />
+
+                            <input id="patient-phone" class="py-4 form-control" type="tel" asp-for="Phone" />
+                        </div>
+
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="email" class="form-control">
+                            <label for="">Medical License Number</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="email" class="form-control">
+                            <label for="">NPI Number</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="email" class="form-control">
+                            <label for="">Synchronization Email Address</label>
+                        </div>
+                    </div>
+                    <div class="col-6 d-flex justify-content-start flex-wrap mt-4">
+                        <div>
+                            @*    @foreach (var item in Model.RegionList)
+                            {
+                            <input class="form-check-input" type="checkbox" value="@item.Regionid" id="flexCheckDefault">
+                            <label class="form-check-label" for="flexCheckDefault">
+                            @item.Name
+                            </label>
+                            } *@
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+
+            <h5 class="fw-bold">Mailing & Billing Information</h5>
+            <fieldset id="fieldset2">
+
+                <div class="row g-2 m-1">
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" placeholder="">
+                            <label for="">Address1</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" placeholder="">
+                            <label for="floatingSelectGrid">Address2</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" placeholder="">
+                            <label for="">City</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating phone-div w-100 h-100 ">
+                            <select asp-for="RegionId" class="form-select border-0" aria-label="Default select example">
+                                @foreach (var region in Model.regions)
+                                {
+                                    <option value="@region.Regionid">@region.Name</option>
+                                }
+                            </select>
+                            <label for="">Select A Region</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" placeholder="">
+                            <label for="">Zip</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating d-flex " style="height:58px;">
+                            <input id="phone-country" asp-for="MailCountryCode" hidden />
+                            <input id="phone" class="py-4 form-control" type="tel" asp-for="MailPhone" />
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+            <div class="my-3"></div>
+            <h5 class="fw-bold d-flex">Select provider's service regions</h5>
+            <div class="d-flex">
+                @foreach (var region in Model.regions)
+                {
+                    <div class="form-floating mt-1 me-3 checkColor ">
+
+                        <input class="check form-check-input" value="@region.Regionid" type="checkbox" style="" />
+
+
+                        <span>@region.Name</span>
+
+                    </div>
+                }
+            </div>
+            <div class="my-3"></div>
+            <h5 class="fw-bold">Provider Profile</h5>
+            <fieldset id="fieldset3">
+
+                <div class="row g-2 m-1">
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" placeholder="">
+                            <label for="">Business name</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" placeholder="">
+                            <label for="floatingSelectGrid">Business Website</label>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <input type="file" class="form-control" placeholder="Select Photo">
+                    </div>
+
+                    <div class="col-md-4">
+                        <input type="file" class="form-control" placeholder="Select Signature">
+                    </div>
+                    <button type="button" class="btn float-end login-button m-1 col-1">Create</button>
+                    <div class="col-12 form-floating">
+                        <textarea class="form-control" placeholder="Leave a comment here" id="floatingTextarea2"
+                                  style="height: 100px" asp-for="AdminNotes"></textarea>
+                        <label for="floatingTextarea2">Leave a comment here</label>
+
+                    </div>
+                </div>
+
+            </fieldset>
+
+
+
+
+            <div class="my-4"></div>
+
+            <div class="border-bottom border-5"></div>
+
+            <h5 class="fw-bold">Onboarding</h5>
+
+            <div class="row my-1">
+                <div class="wrapper d-flex">
+                    <div class="col-1 m-1">
+                        <input type="checkbox" style="height:20px;width:20px" class="btn-outline-info" />
+                    </div>
+                    <div class="col-4">
+                        <span>Independent Contract Agreement</span>
+                    </div>
+                    <div class="col-4">
+                        <input type="file" class="btn" placeholder="">
+                    </div>
+
+                </div>
+            </div>
+            <div class="row my-1">
+                <div class="wrapper d-flex">
+                    <div class="col-1 m-1">
+                        <input type="checkbox" style="height:20px;width:20px" class="btn-outline-info" />
+                    </div>
+                    <div class="col-4">
+                        <span>Background Check</span>
+                    </div>
+                    <div class="col-4">
+                        <input type="file" class="btn " placeholder="">
+                    </div>
+                </div>
+            </div>
+            <div class="row my-1">
+                <div class="wrapper d-flex">
+                    <div class="col-1 m-1">
+                        <input type="checkbox" style="height:20px;width:20px" class="btn-outline-info" />
+                    </div>
+                    <div class="col-4">
+                        <span>HIPAA Compliance</span>
+                    </div>
+                    <div class="col-4">
+                        <input type="file" class="btn " placeholder="">
+                    </div>
+                </div>
+            </div>
+            <div class="row my-1">
+                <div class="wrapper d-flex">
+                    <div class="col-1 m-1">
+                        <input type="checkbox" style="height:20px;width:20px" class="btn-outline-info" />
+                    </div>
+                    <div class="col-4">
+                        <span>Non-disclosure agreement</span>
+                    </div>
+                    <div class="col-4">
+                        <input type="file" class="btn " placeholder="">
+                    </div>
+                </div>
+            </div>
+            <div class="row my-1">
+                <div class="wrapper d-flex">
+                    <div class="col-1 m-1">
+                        <input type="checkbox" style="height:20px;width:20px" class="btn-outline-info" />
+                    </div>
+                    <div class="col-4">
+                        <span>License Document</span>
+                    </div>
+                    <div class="col-4">
+                        <input type="file" class="btn" placeholder="">
+                    </div>
+                </div>
+            </div>
+            <div class="border-bottom border-5"></div>
+            <button type="submit" class="btn login-button float-end m-1 ">Submit</button>
+            <button type="reset" class="btn login-button float-end m-1 ">Reset</button><br />
+        </form>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.1.min.js"
+        integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous">
+</script>
+<script>
+
+    $('.header-tab').removeClass("active-header");
+    $('#provider-tab').addClass("active-header");
+    $('#provider-tab').removeClass("text-grey")
+
+    const phoneInputField1 = document.getElementById("patient-phone");
+    var patientPhoneInput1 = window.intlTelInput(phoneInputField1, {
+        utilsScript:
+            "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+        preferredCountries: ["in"],
+        separateDialCode: true,
+        initialCountry: "in"
+    });
+
+
+    function changeCountryCode1() {
+        var countryCode1 = document.getElementById("patient-phone-country");
+        countryCode1.value = patientPhoneInput1.getSelectedCountryData().dialCode;
+        console.log(countryCode1.value);
+    }
+
+
+    const phoneInputField2 = document.getElementById("phone");
+    var patientPhoneInput2 = window.intlTelInput(phoneInputField2, {
+        utilsScript:
+            "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+        preferredCountries: ["in"],
+        separateDialCode: true,
+        initialCountry: "in"
+    });
+
+
+    function changeCountryCode2() {
+        var countryCode2 = document.getElementById("phone-country");
+        countryCode2.value = patientPhoneInput2.getSelectedCountryData().dialCode;
+        console.log(countryCode2.value);
+    }
+
+    $('#createProviderForm').submit(function (e) {
+        e.preventDefault();
+
+        let countryCode1 = document.getElementById("patient-phone-country");
+        countryCode1.value = patientPhoneInput1.getSelectedCountryData().dialCode;
+        console.log(countryCode1);
+        let countryCode1 = document.getElementById("phone-country");
+        countryCode1.value = patientPhoneInput1.getSelectedCountryData().dialCode;
+        console.log(countryCode1);
+
+        let formData = $(this).serialize();
+        console.log(formData);
+
+        $.ajax({
+            url: "/Admin/CreateProviderAccount",
+            data: formData,
+            type: 'POST',
+            success: function (result) {
+                location.reload();
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
+
+    });
+</script>

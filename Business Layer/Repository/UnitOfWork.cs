@@ -33,6 +33,8 @@ namespace Business_Layer.Repository
             OrderDetailRepo = new OrderDetailRepo(_context);
             EncounterFormRepository = new EncounterFormRepository(_context);
             AdminRegionRepo = new AdminRegionRepo(_context);
+            RoleRepo = new RoleRepository(_context);
+            PhysicianRegionRepo = new PhysicianRegionRepository(_context);
         }
 
         public IAdminRepository AdminRepository { get; private set; }
@@ -57,6 +59,8 @@ namespace Business_Layer.Repository
         public IOrderDetailRepo OrderDetailRepo { get; private set; }
         public IEncounterFormRepository EncounterFormRepository {  get; private set; }
         public IAdminRegionRepo AdminRegionRepo { get; private set; }
+        public IPhysicianRegionRepo PhysicianRegionRepo { get; private set; }
+        public IRoleRepository RoleRepo { get; private set; }
 
         public void Save()
         {

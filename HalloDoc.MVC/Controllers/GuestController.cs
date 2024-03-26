@@ -8,11 +8,8 @@ using System.Net.Mail;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.EntityFrameworkCore;
 using Data_Layer.ViewModels.Admin;
 using HalloDoc.MVC.Services;
-using System.Drawing;
-using Business_Layer.Repository;
 using System.IdentityModel.Tokens.Jwt;
 
 
@@ -671,7 +668,7 @@ namespace HalloDoc.MVC.Controllers
                         Lastname = friendViewModel.patientDetails.LastName,
                         Phonenumber = patientNumber,
                         Email = friendViewModel.patientDetails.Email,
-                        Address = friendViewModel.patientDetails.Street + " " + friendViewModel.patientDetails.City + " " + friendViewModel.patientDetails.State + ", " + friendViewModel.patientDetails.ZipCode,
+                        Address = friendViewModel.patientDetails.Street + " " + friendViewModel.patientDetails.City + " " + state + ", " + friendViewModel.patientDetails.ZipCode,
                         Street = friendViewModel.patientDetails.Street,
                         City = friendViewModel.patientDetails.City,
                         Regionid = friendViewModel.patientDetails.RegionId,
@@ -743,7 +740,7 @@ namespace HalloDoc.MVC.Controllers
                         Lastname = friendViewModel.patientDetails.LastName,
                         Phonenumber = patientNumber,
                         Email = friendViewModel.patientDetails.Email,
-                        Address = friendViewModel.patientDetails.Street + " " + friendViewModel.patientDetails.City + " " + friendViewModel.patientDetails.State + ", " + friendViewModel.patientDetails.ZipCode,
+                        Address = friendViewModel.patientDetails.Street + " " + friendViewModel.patientDetails.City + " " + state + ", " + friendViewModel.patientDetails.ZipCode,
                         Street = friendViewModel.patientDetails.Street,
                         City = friendViewModel.patientDetails.City,
                         Regionid = friendViewModel.patientDetails.RegionId,
@@ -894,7 +891,7 @@ namespace HalloDoc.MVC.Controllers
                         Lastname = conciergeViewModel.patientDetails.LastName,
                         Phonenumber = patientNumber,
                         Email = conciergeViewModel.patientDetails.Email,
-                        Address = conciergeViewModel.patientDetails.Street + " " + conciergeViewModel.patientDetails.City + " " + conciergeViewModel.patientDetails.State + ", " + conciergeViewModel.patientDetails.ZipCode,
+                        Address = conciergeViewModel.patientDetails.Street + " " + conciergeViewModel.patientDetails.City + " " + state + ", " + conciergeViewModel.patientDetails.ZipCode,
                         Street = conciergeViewModel.patientDetails.Street,
                         City = conciergeViewModel.patientDetails.City,
                         Regionid = conciergeViewModel.patientDetails.RegionId,
@@ -975,7 +972,7 @@ namespace HalloDoc.MVC.Controllers
                         Lastname = conciergeViewModel.patientDetails.LastName,
                         Phonenumber = patientNumber,
                         Email = conciergeViewModel.patientDetails.Email,
-                        Address = conciergeViewModel.patientDetails.Street + " " + conciergeViewModel.patientDetails.City + " " + conciergeViewModel.patientDetails.State + ", " + conciergeViewModel.patientDetails.ZipCode,
+                        Address = conciergeViewModel.patientDetails.Street + " " + conciergeViewModel.patientDetails.City + " " + state + ", " + conciergeViewModel.patientDetails.ZipCode,
                         Street = conciergeViewModel.patientDetails.Street,
                         City = conciergeViewModel.patientDetails.City,
                         Regionid = conciergeViewModel.patientDetails.RegionId,
@@ -1128,7 +1125,7 @@ namespace HalloDoc.MVC.Controllers
                         Lastname = businessViewModel.patientDetails.LastName,
                         Phonenumber = patientNumber,
                         Email = businessViewModel.patientDetails.Email,
-                        Address = businessViewModel.patientDetails.Street + " " + businessViewModel.patientDetails.City + " " + businessViewModel.patientDetails.State + ", " + businessViewModel.patientDetails.ZipCode,
+                        Address = businessViewModel.patientDetails.Street + " " + businessViewModel.patientDetails.City + " " + state + ", " + businessViewModel.patientDetails.ZipCode,
                         Street = businessViewModel.patientDetails.Street,
                         City = businessViewModel.patientDetails.City,
                         Regionid = businessViewModel.patientDetails.RegionId,
@@ -1202,7 +1199,7 @@ namespace HalloDoc.MVC.Controllers
                         Lastname = businessViewModel.patientDetails.LastName,
                         Phonenumber = patientNumber,
                         Email = businessViewModel.patientDetails.Email,
-                        Address = businessViewModel.patientDetails.Street + " " + businessViewModel.patientDetails.City + " " + businessViewModel.patientDetails.State + ", " + businessViewModel.patientDetails.ZipCode,
+                        Address = businessViewModel.patientDetails.Street + " " + businessViewModel.patientDetails.City + " " + state + ", " + businessViewModel.patientDetails.ZipCode,
                         Street = businessViewModel.patientDetails.Street,
                         City = businessViewModel.patientDetails.City,
                         Regionid = businessViewModel.patientDetails.RegionId,

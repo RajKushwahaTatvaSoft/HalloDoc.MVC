@@ -4,10 +4,11 @@ using Business_Layer.Interface.AdminInterface;
 using ClosedXML.Excel;
 using CsvHelper;
 using Data_Layer.CustomModels;
+using Data_Layer.CustomModels.TableRow.Admin;
 using Data_Layer.DataContext;
 using Data_Layer.DataModels;
 using Data_Layer.ViewModels.Admin;
-using DocumentFormat.OpenXml.Spreadsheet;
+using DocumentFormat.OpenXml.Wordprocessing;
 using HalloDoc.MVC.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis;
@@ -16,6 +17,8 @@ using System.Globalization;
 using System.IO.Compression;
 using System.Net;
 using System.Net.Mail;
+using System.Numerics;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Text.Json.Nodes;
 
@@ -31,6 +34,7 @@ namespace HalloDoc.MVC.Controllers
         private readonly IWebHostEnvironment _environment;
         private readonly IConfiguration _config;
         private readonly IEmailService _emailService;
+        private readonly ApplicationDbContext _context;
 
         public AdminController(IUnitOfWork unitOfWork, IDashboardRepository dashboard, IWebHostEnvironment environment, IConfiguration config, ApplicationDbContext context, IEmailService emailService)
         {
@@ -39,6 +43,7 @@ namespace HalloDoc.MVC.Controllers
             _environment = environment;
             _config = config;
             _emailService = emailService;
+            _context = context;
         }
 
 
@@ -86,11 +91,6 @@ namespace HalloDoc.MVC.Controllers
 
         }
 
-        public IActionResult Providers()
-        {
-            return View("Header/Providers");
-        }
-
         public IActionResult Partners()
         {
             return View("Header/Partners");
@@ -111,38 +111,6 @@ namespace HalloDoc.MVC.Controllers
             return View("Header/Access");
         }
 
-        public void InsertRequestWiseFile(IFormFile document)
-        {
-            string path = _environment.WebRootPath + "/document";
-            string fileName = document.FileName;
-
-            if (!Directory.Exists(path))
-            {
-                Directory.CreateDirectory(path);
-            }
-            string fullPath = Path.Combine(path, fileName);
-
-            using FileStream stream = new(fullPath, FileMode.Create);
-            document.CopyTo(stream);
-        }
-
-        public DataTable getData()
-        {
-            //Creating DataTable  
-            DataTable dt = new DataTable();
-            //Setiing Table Name  
-            dt.TableName = "EmployeeData";
-            //Add Columns  
-            dt.Columns.Add("ID", typeof(int));
-            dt.Columns.Add("Name", typeof(string));
-            dt.Columns.Add("City", typeof(string));
-            //Add Rows in DataTable  
-            dt.Rows.Add(1, "Anoop Kumar Sharma", "Delhi");
-            dt.Rows.Add(2, "Andrew", "U.P.");
-            dt.AcceptChanges();
-            return dt;
-        }
-
         public IActionResult Logout()
         {
 
@@ -159,6 +127,9 @@ namespace HalloDoc.MVC.Controllers
 
             HttpContext.Session.SetInt32("currentStatus", status);
             HttpContext.Session.SetInt32("currentPage", page);
+            HttpContext.Session.SetInt32("currentTypeFilter", typeFilter);
+            HttpContext.Session.SetInt32("currentRegionFilter", regionFilter);
+            HttpContext.Session.SetString("currentSearchFilter", searchFilter ?? "");
 
             int pageNumber = 1;
             if (page > 0)
@@ -187,477 +158,55 @@ namespace HalloDoc.MVC.Controllers
             return PartialView("Partial/PartialTable", model);
         }
 
-        [HttpPost]
-        public async Task<byte[]> ExportFilteredData(int status, int typeFilter, string searchFilter, int regionFilter)
-        {
-            int page = (int)HttpContext.Session.GetInt32("currentPage");
-
-            int pageNumber = page;
-            if (page < 1)
-            {
-                pageNumber = 1;
-            }
-
-            DashboardFilter filter = new DashboardFilter()
-            {
-                RequestTypeFilter = typeFilter,
-                PatientSearchText = searchFilter,
-                RegionFilter = regionFilter,
-                pageNumber = pageNumber,
-                pageSize = 5,
-                status = status,
-            };
-
-            PagedList<AdminRequest> pagedList = await _dashboardRepository.GetAdminRequestsAsync(filter);
-
-
-            DataTable dt = GetDataTableFromList(pagedList, status);
-
-            //Name of File
-            string fileName = "Sample.xlsx";
-            using (XLWorkbook wb = new XLWorkbook())
-            {
-                //Add DataTable in worksheet  
-                wb.Worksheets.Add(dt);
-                using (MemoryStream stream = new MemoryStream())
-                {
-                    wb.SaveAs(stream);
-                    //Return xlsx Excel File  
-                    return stream.ToArray();
-                }
-            }
-
-            //string path = Path.Combine(_environment.WebRootPath, "export", "filter.csv");
-
-            //using (var writer = new StreamWriter(path))
-
-            //using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
-            //{
-            //    csv.WriteRecords(pagedList);
-            //}
-
-            //return path;
-
-        }
-
-        [HttpPost]
-        public FileResult Export(string GridHtml)
-        {
-            return File(Encoding.ASCII.GetBytes(GridHtml), "application/vnd.ms-excel", "Grid.xls");
-        }
-
-        public DataTable GetDataTableFromList(List<AdminRequest> requestList, int status)
-        {
-
-            DataTable dt = new DataTable();
-            dt.TableName = "EmployeeData";
-
-            if (status == (int)DashboardStatus.New)
-            {
-
-                dt.Columns.Add("Name", typeof(string));
-                dt.Columns.Add("Email", typeof(string));
-                dt.Columns.Add("Date Of Birth", typeof(string));
-                dt.Columns.Add("Requestor", typeof(string));
-                dt.Columns.Add("Request Date", typeof(string));
-                dt.Columns.Add("Phone", typeof(string));
-                dt.Columns.Add("Address", typeof(string));
-                dt.Columns.Add("Notes", typeof(string));
-
-                foreach (var request in requestList)
-                {
-                    string phone = "(Patient) " + request.PatientPhone;
-
-                    if (request.RequestType != (int)RequestType.Patient)
-                    {
-                        phone = phone + " (Requestor) " + request.Phone;
-                    }
-
-                    dt.Rows.Add(request.PatientName,
-                        request.Email,
-                        request.DateOfBirth,
-                        request.Requestor,
-                        request.RequestDate,
-                        phone,
-                        request.Address,
-                        request.Notes
-                        );
-                }
-
-            }
-            else if (status == (int)DashboardStatus.Pending || status == (int)DashboardStatus.Active)
-            {
-
-                dt.Columns.Add("Name", typeof(string));
-                dt.Columns.Add("Email", typeof(string));
-                dt.Columns.Add("Date Of Birth", typeof(string));
-                dt.Columns.Add("Requestor", typeof(string));
-                dt.Columns.Add("Physician Name", typeof(string));
-                dt.Columns.Add("Date Of Service", typeof(string));
-                dt.Columns.Add("Phone", typeof(string));
-                dt.Columns.Add("Address", typeof(string));
-                dt.Columns.Add("Notes", typeof(string));
-
-                foreach (var request in requestList)
-                {
-                    string phone = "(Patient) " + request.PatientPhone;
-
-                    if (request.RequestType != (int)RequestType.Patient)
-                    {
-                        phone = phone + " (Requestor) " + request.Phone;
-                    }
-
-                    dt.Rows.Add(request.PatientName,
-                        request.Email,
-                        request.DateOfBirth,
-                        request.Requestor,
-                        request.PhysicianName,
-                        request.DateOfService,
-                        phone,
-                        request.Address,
-                        request.Notes
-                        );
-                }
-
-            }
-            else if (status == (int)DashboardStatus.Conclude)
-            {
-
-                dt.Columns.Add("Name", typeof(string));
-                dt.Columns.Add("Email", typeof(string));
-                dt.Columns.Add("Date Of Birth", typeof(string));
-                dt.Columns.Add("Physician Name", typeof(string));
-                dt.Columns.Add("Date Of Service", typeof(string));
-                dt.Columns.Add("Phone", typeof(string));
-                dt.Columns.Add("Address", typeof(string));
-
-                foreach (var request in requestList)
-                {
-                    string phone = "(Patient) " + request.PatientPhone;
-
-                    if (request.RequestType != (int)RequestType.Patient)
-                    {
-                        phone = phone + " (Requestor) " + request.Phone;
-                    }
-
-                    dt.Rows.Add(request.PatientName,
-                        request.Email,
-                        request.DateOfBirth,
-                        request.PhysicianName,
-                        request.DateOfService,
-                        phone,
-                        request.Address
-                        );
-                }
-            }
-            else if (status == (int)DashboardStatus.ToClose)
-            {
-
-                dt.Columns.Add("Name", typeof(string));
-                dt.Columns.Add("Email", typeof(string));
-                dt.Columns.Add("Date Of Birth", typeof(string));
-                dt.Columns.Add("Region", typeof(string));
-                dt.Columns.Add("Physician Name", typeof(string));
-                dt.Columns.Add("Date Of Service", typeof(string));
-                dt.Columns.Add("Address", typeof(string));
-                dt.Columns.Add("Notes", typeof(string));
-
-                foreach (var request in requestList)
-                {
-                    dt.Rows.Add(request.PatientName,
-                        request.Email,
-                        request.DateOfBirth,
-                        request.RegionName,
-                        request.PhysicianName,
-                        request.DateOfService,
-                        request.Address,
-                        request.Notes
-                        );
-                }
-
-            }
-            else if (status == (int)DashboardStatus.Unpaid)
-            {
-
-                dt.Columns.Add("Name", typeof(string));
-                dt.Columns.Add("Email", typeof(string));
-                dt.Columns.Add("Physician Name", typeof(string));
-                dt.Columns.Add("Date Of Service", typeof(string));
-                dt.Columns.Add("Phone", typeof(string));
-                dt.Columns.Add("Address", typeof(string));
-
-                foreach (var request in requestList)
-                {
-                    string phone = "(Patient) " + request.PatientPhone;
-
-                    if (request.RequestType != (int)RequestType.Patient)
-                    {
-                        phone = phone + " (Requestor) " + request.Phone;
-                    }
-
-                    dt.Rows.Add(request.PatientName,
-                        request.Email,
-                        request.PhysicianName,
-                        request.DateOfService,
-                        phone,
-                        request.Address
-                        );
-                }
-
-            }
-
-
-            dt.AcceptChanges();
-
-            return dt;
-        }
-
-        public byte[] ExportAllExcel(int status)
-        {
-            IEnumerable<AdminRequest> allRequest = _dashboardRepository.GetAllRequestByStatus(status);
-
-            DataTable dt = GetDataTableFromList(allRequest.ToList(), status);
-            //Name of File
-            string fileName = "Sample.xlsx";
-            using (XLWorkbook wb = new XLWorkbook())
-            {
-                //Add DataTable in worksheet  
-                wb.Worksheets.Add(dt);
-                using (MemoryStream stream = new MemoryStream())
-                {
-                    wb.SaveAs(stream);
-                    //Return xlsx Excel File  
-                    return stream.ToArray();
-                }
-            }
-
-        }
-
-        [HttpPost]
-        public string ExportAll(int status)
-        {
-            IEnumerable<AdminRequest> allRequest = _dashboardRepository.GetAllRequestByStatus(status);
-
-            string path = Path.Combine(_environment.WebRootPath, "export", "sample.csv");
-
-            using (var writer = new StreamWriter(path))
-
-            using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
-            {
-                csv.WriteRecords(allRequest);
-            }
-
-            return "export/sample.csv";
-
-        }
-
-        public IActionResult CreateRequest()
-        {
-            IEnumerable<Region> regions = _unitOfWork.RegionRepository.GetAll();
-            AdminCreateRequestViewModel model = new AdminCreateRequestViewModel();
-            model.regions = regions;
-            return View("Dashboard/CreateRequest", model);
-        }
-
-        public void SendMailForCreateAccount(string email)
-        {
-            try
-            {
-                Aspnetuser aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(user => user.Email == email);
-
-                string createAccToken = Guid.NewGuid().ToString();
-
-                Passtoken passtoken = new Passtoken()
-                {
-                    Aspnetuserid = aspUser.Id,
-                    Createddate = DateTime.Now,
-                    Email = email,
-                    Isdeleted = false,
-                    Isresettoken = false,
-                    Uniquetoken = createAccToken,
-                };
-
-                _unitOfWork.PassTokenRepository.Add(passtoken);
-                _unitOfWork.Save();
-
-                var createLink = Url.Action("CreateAccount", "Guest", new { token = createAccToken }, Request.Scheme);
-
-                string senderEmail = _config.GetSection("OutlookSMTP")["Sender"];
-                string senderPassword = _config.GetSection("OutlookSMTP")["Password"];
-                string subject = "Set up your Account";
-                string body = "<h1>Create Account By clicking below</h1><a href=\"" + createLink + "\" >Create Account link</a>";
-
-                MailService.SendMail(subject, true, body, senderEmail, email, senderEmail, senderPassword);
-
-                TempData["success"] = "Email has been successfully sent to " + email + " for create account link.";
-            }
-            catch (Exception ex)
-            {
-                TempData["error"] = ex.Message;
-            }
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult CreateRequest(AdminCreateRequestViewModel model)
-        {
-            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
-            Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(a => a.Adminid == adminId);
-            if (adminId != 0)
-            {
-                if (ModelState.IsValid)
-                {
-                    var phoneNumber = "+" + model.countryCode + "-" + model.phoneNumber;
-                    string state = _unitOfWork.RegionRepository.GetFirstOrDefault(reg => reg.Regionid == model.state).Name;
-
-                    // Creating Patient in Aspnetusers Table
-
-                    bool isUserExists = _unitOfWork.UserRepository.IsUserWithEmailExists(model.email);
-
-                    if (!isUserExists)
-                    {
-
-                        Guid generatedId = Guid.NewGuid();
-
-                        Aspnetuser aspnetuser = new()
-                        {
-                            Id = generatedId.ToString(),
-                            Username = model.FirstName,
-                            Passwordhash = null,
-                            Email = model.email,
-                            Phonenumber = phoneNumber,
-                            Createddate = DateTime.Now
-                        };
-
-                        _unitOfWork.AspNetUserRepository.Add(aspnetuser);
-                        _unitOfWork.Save();
-
-                        User user1 = new()
-                        {
-                            Aspnetuserid = generatedId.ToString(),
-                            Firstname = model.FirstName,
-                            Lastname = model.LastName,
-                            Email = model.email,
-                            Mobile = phoneNumber,
-                            Street = model.street,
-                            City = model.city,
-                            State = state,
-                            Regionid = model.state,
-                            Zipcode = model.zipCode,
-                            Createddate = DateTime.Now,
-                            Createdby = admin.Aspnetuserid,
-                            Strmonth = model.dob?.Month.ToString(),
-                            Intdate = model.dob?.Day,
-                            Intyear = model.dob?.Year
-                        };
-
-
-                        _unitOfWork.UserRepository.Add(user1);
-                        _unitOfWork.Save();
-
-                        SendMailForCreateAccount(model.email);
-                    }
-
-                    User user = _unitOfWork.UserRepository.GetFirstOrDefault(u => u.Email == model.email);
-
-                    // Adding request in Request Table
-                    Request request = new()
-                    {
-                        Requesttypeid = 2,
-                        Userid = user.Userid,
-                        Firstname = model.FirstName,
-                        Lastname = model.LastName,
-                        Phonenumber = phoneNumber,
-                        Email = model.email,
-                        Status = (short)RequestStatus.Unassigned,
-                        Createddate = DateTime.Now,
-                        Confirmationnumber = GenerateConfirmationNumber(user),
-                        Patientaccountid = user.Aspnetuserid,
-                    };
-
-                    _unitOfWork.RequestRepository.Add(request);
-                    _unitOfWork.Save();
-
-                    //Adding request in RequestClient Table
-                    Requestclient requestclient = new()
-                    {
-                        Requestid = request.Requestid,
-                        Firstname = model.FirstName,
-                        Lastname = model.LastName,
-                        Phonenumber = phoneNumber,
-                        Email = model.email,
-                        Address = model.street,
-                        City = model.city,
-                        State = state,
-                        Regionid = model.state,
-                        Zipcode = model.zipCode,
-                        Strmonth = model.dob?.Month.ToString(),
-                        Intdate = model.dob?.Day,
-                        Intyear = model.dob?.Year
-                    };
-
-                    _unitOfWork.RequestClientRepository.Add(requestclient);
-                    _unitOfWork.Save();
-                    if (model.notes != null)
-                    {
-                        Requestnote rn = new()
-                        {
-                            Requestid = request.Requestid,
-                            Physiciannotes = null,
-                            Adminnotes = model.notes,
-                            Createdby = admin.Aspnetuserid,
-                            Createddate = DateTime.Now
-                        };
-                        _unitOfWork.RequestNoteRepository.Add(rn);
-                        _unitOfWork.Save();
-                    }
-
-                    model.regions = _unitOfWork.RegionRepository.GetAll();
-                    return View("Dashboard/CreateRequest", model);
-
-                }
-                return View("error");
-            }
-            return View("error");
-
-        }
-
-
-        public string GenerateConfirmationNumber(User user)
-        {
-            string regionAbbr = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == user.Regionid).Abbreviation;
-
-            DateTime todayStart = DateTime.Now.Date;
-            int count = _unitOfWork.RequestRepository.Count(req => req.Createddate > todayStart);
-
-            string confirmationNumber = regionAbbr + user.Createddate.Date.ToString("D2") + user.Createddate.Month.ToString("D2") + user.Lastname.Substring(0, 2).ToUpper() + user.Firstname.Substring(0, 2).ToUpper() + (count + 1).ToString("D4");
-            return confirmationNumber;
-        }
-
-
-
         public IActionResult Dashboard()
         {
 
-            string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+            string? adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
             if (adminName == null)
             {
                 return RedirectToAction("Index", "Guest");
             }
 
             int? status = HttpContext.Session.GetInt32("currentStatus");
+            int? page = HttpContext.Session.GetInt32("currentPage");
+            int? region = HttpContext.Session.GetInt32("currentRegionFilter");
+            int? type = HttpContext.Session.GetInt32("currentTypeFilter");
+            string? search = HttpContext.Session.GetString("currentSearchFilter");
+
+
+
             if (status == null)
             {
+                status = 1;
                 HttpContext.Session.SetInt32("currentStatus", 1);
-
             }
-
-            int? page = HttpContext.Session.GetInt32("currentPage");
-
             if (page == null)
             {
+                page = 1;
                 HttpContext.Session.SetInt32("currentPage", 1);
             }
+            if (region == null)
+            {
+                region = 0;
+                HttpContext.Session.SetInt32("currentRegionFilter", 0);
+            }
+            if (type == null)
+            {
+                type = 0;
+                HttpContext.Session.SetInt32("currentTypeFilter", 0);
+            }
+            if (search == null)
+            {
+                search = "";
+                HttpContext.Session.SetString("currentSearchFilter", "");
+            }
+
+            DashboardFilter initialFilter = new DashboardFilter();
+            initialFilter.status = (int)status;
+            initialFilter.pageNumber = (int)page;
+            initialFilter.RegionFilter = (int)region;
+            initialFilter.RequestTypeFilter = (int)type;
+            initialFilter.PatientSearchText = (string)search;
 
 
             AdminDashboardViewModel model = new AdminDashboardViewModel();
@@ -675,158 +224,15 @@ namespace HalloDoc.MVC.Controllers
             model.ToCloseReqCount = _unitOfWork.RequestRepository.Count(r => (r.Status == (short)RequestStatus.Cancelled) || (r.Status == (short)RequestStatus.CancelledByPatient) || (r.Status == (short)RequestStatus.Closed));
             model.UnpaidReqCount = _unitOfWork.RequestRepository.Count(r => r.Status == (short)RequestStatus.Unpaid);
             model.casetags = _unitOfWork.CaseTagRepository.GetAll();
+            model.filterOptions = initialFilter;
 
             return View("Header/Dashboard", model);
 
         }
 
-
-
         #endregion
 
-        #region Providers
-
-        public IActionResult ProviderMenu()
-        {
-            string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
-
-            ProviderMenuViewModel model = new ProviderMenuViewModel()
-            {
-                UserName = adminName,
-                physicians = _unitOfWork.PhysicianRepository.GetAll(),
-            };
-            return View("Providers/ProviderMenu", model);
-        }
-
-
-        public IActionResult ContactYourProviderModal(int physicianId)
-        {
-            ContactYourProviderModel model = new ContactYourProviderModel()
-            {
-                PhysicianId = physicianId,
-            };
-            return PartialView("Modals/ContactYourProvider", model);
-        }
-
-        [HttpPost]
-        public IActionResult ContactYourProviderModal(ContactYourProviderModel model)
-        {
-            try
-            {
-
-                if (ModelState.IsValid)
-                {
-                    Physician physician = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Physicianid == model.PhysicianId);
-                    if (model.CommunicationType == 2 || model.CommunicationType == 3)
-                    {
-                        string subject = "Contacting Provider";
-                        string body = "<h2>Admin Message</h2><h5>" + model.Message + "</h5>";
-                        string toEmail = physician.Email;
-                        _emailService.SendMail(toEmail, body, subject);
-                    }
-                }
-
-                TempData["success"] = "Messages sent successfully.";
-
-            }
-            catch(Exception e)
-            {
-                TempData["error"] = e.Message;
-            }
-            return Redirect("/Admin/ProviderMenu");
-        }
-
-        public IActionResult Scheduling()
-        {
-            return View("Providers/Scheduling");
-        }
-
-        public IActionResult Invoicing()
-        {
-            return View("Providers/Invoicing");
-        }
-
-        #endregion
-
-        #region HelperFunctions
-
-
-        public static string GetPatientDOB(Requestclient u)
-        {
-            string udb = u.Intyear + "-" + u.Strmonth + "-" + u.Intdate;
-            if (u.Intyear == null || u.Strmonth == null || u.Intdate == null)
-            {
-                return "";
-            }
-
-            DateTime dobDate = DateTime.Parse(udb);
-            string dob = dobDate.ToString("MMM dd, yyyy");
-            var today = DateTime.Today;
-            var age = today.Year - dobDate.Year;
-            if (dobDate.Date > today.AddYears(-age)) age--;
-
-            string dobString = dob + " (" + age + ")";
-
-            return dobString;
-        }
-
-        public static string GetRequestType(Request request)
-        {
-            switch (request.Requesttypeid)
-            {
-                case (int)RequestType.Business: return "Business";
-                case (int)RequestType.Patient: return "Patient";
-                case (int)RequestType.Concierge: return "Concierge";
-                case (int)RequestType.Family: return "Relative/Family";
-            }
-
-            return null;
-        }
-
-        [HttpPost]
-        public JsonArray GetBusinessByType(int professionType)
-        {
-            var result = new JsonArray();
-            IEnumerable<Healthprofessional> businesses = _unitOfWork.HealthProfessionalRepo.Where(prof => prof.Profession == professionType);
-
-            foreach (Healthprofessional business in businesses)
-            {
-                result.Add(new { businessId = business.Vendorid, businessName = business.Vendorname });
-            }
-
-            return result;
-        }
-
-
-        [HttpPost]
-        public JsonArray GetPhysicianByRegion(int regionId)
-        {
-            var result = new JsonArray();
-            IEnumerable<Physician> physicians = _unitOfWork.PhysicianRepository.Where(phy => phy.Regionid == regionId);
-
-            foreach (Physician physician in physicians)
-            {
-                result.Add(new { physicianId = physician.Physicianid, physicianName = physician.Firstname + " " + physician.Lastname });
-            }
-
-            return result;
-        }
-
-
-        [HttpPost]
-        public Healthprofessional GetBusinessDetailsById(int vendorId)
-        {
-            if (vendorId <= 0)
-            {
-                return null;
-            }
-            Healthprofessional business = _unitOfWork.HealthProfessionalRepo.GetFirstOrDefault(prof => prof.Vendorid == vendorId);
-
-            return business;
-        }
-
-
-        #endregion
+        #region Dashboard
 
         #region Modals
 
@@ -1259,9 +665,411 @@ namespace HalloDoc.MVC.Controllers
             return Redirect("/Admin/Dashboard");
         }
 
+
         #endregion
 
-        #region Dashboard
+        #region ExportingExcel
+
+
+        [HttpPost]
+        public async Task<byte[]> ExportFilteredData(int status, int typeFilter, string searchFilter, int regionFilter)
+        {
+            int page = (int)HttpContext.Session.GetInt32("currentPage");
+
+            int pageNumber = page;
+            if (page < 1)
+            {
+                pageNumber = 1;
+            }
+
+            DashboardFilter filter = new DashboardFilter()
+            {
+                RequestTypeFilter = typeFilter,
+                PatientSearchText = searchFilter,
+                RegionFilter = regionFilter,
+                pageNumber = pageNumber,
+                pageSize = 5,
+                status = status,
+            };
+
+            PagedList<AdminRequest> pagedList = await _dashboardRepository.GetAdminRequestsAsync(filter);
+
+
+            DataTable dt = GetDataTableFromList(pagedList, status);
+
+            //Name of File
+            string fileName = "Sample.xlsx";
+            using (XLWorkbook wb = new XLWorkbook())
+            {
+                //Add DataTable in worksheet  
+                wb.Worksheets.Add(dt);
+                using (MemoryStream stream = new MemoryStream())
+                {
+                    wb.SaveAs(stream);
+                    //Return xlsx Excel File  
+                    return stream.ToArray();
+                }
+            }
+
+            //string path = Path.Combine(_environment.WebRootPath, "export", "filter.csv");
+
+            //using (var writer = new StreamWriter(path))
+
+            //using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
+            //{
+            //    csv.WriteRecords(pagedList);
+            //}
+
+            //return path;
+
+        }
+
+        [HttpPost]
+        public FileResult Export(string GridHtml)
+        {
+            return File(Encoding.ASCII.GetBytes(GridHtml), "application/vnd.ms-excel", "Grid.xls");
+        }
+
+        public DataTable GetDataTableFromList(List<AdminRequest> requestList, int status)
+        {
+
+            DataTable dt = new DataTable();
+            dt.TableName = "EmployeeData";
+
+            if (status == (int)DashboardStatus.New)
+            {
+
+                dt.Columns.Add("Name", typeof(string));
+                dt.Columns.Add("Email", typeof(string));
+                dt.Columns.Add("Date Of Birth", typeof(string));
+                dt.Columns.Add("Requestor", typeof(string));
+                dt.Columns.Add("Request Date", typeof(string));
+                dt.Columns.Add("Phone", typeof(string));
+                dt.Columns.Add("Address", typeof(string));
+                dt.Columns.Add("Notes", typeof(string));
+
+                foreach (var request in requestList)
+                {
+                    string phone = "(Patient) " + request.PatientPhone;
+
+                    if (request.RequestType != (int)RequestType.Patient)
+                    {
+                        phone = phone + " (Requestor) " + request.Phone;
+                    }
+
+                    dt.Rows.Add(request.PatientName,
+                        request.Email,
+                        request.DateOfBirth,
+                        request.Requestor,
+                        request.RequestDate,
+                        phone,
+                        request.Address,
+                        request.Notes
+                        );
+                }
+
+            }
+            else if (status == (int)DashboardStatus.Pending || status == (int)DashboardStatus.Active)
+            {
+
+                dt.Columns.Add("Name", typeof(string));
+                dt.Columns.Add("Email", typeof(string));
+                dt.Columns.Add("Date Of Birth", typeof(string));
+                dt.Columns.Add("Requestor", typeof(string));
+                dt.Columns.Add("Physician Name", typeof(string));
+                dt.Columns.Add("Date Of Service", typeof(string));
+                dt.Columns.Add("Phone", typeof(string));
+                dt.Columns.Add("Address", typeof(string));
+                dt.Columns.Add("Notes", typeof(string));
+
+                foreach (var request in requestList)
+                {
+                    string phone = "(Patient) " + request.PatientPhone;
+
+                    if (request.RequestType != (int)RequestType.Patient)
+                    {
+                        phone = phone + " (Requestor) " + request.Phone;
+                    }
+
+                    dt.Rows.Add(request.PatientName,
+                        request.Email,
+                        request.DateOfBirth,
+                        request.Requestor,
+                        request.PhysicianName,
+                        request.DateOfService,
+                        phone,
+                        request.Address,
+                        request.Notes
+                        );
+                }
+
+            }
+            else if (status == (int)DashboardStatus.Conclude)
+            {
+
+                dt.Columns.Add("Name", typeof(string));
+                dt.Columns.Add("Email", typeof(string));
+                dt.Columns.Add("Date Of Birth", typeof(string));
+                dt.Columns.Add("Physician Name", typeof(string));
+                dt.Columns.Add("Date Of Service", typeof(string));
+                dt.Columns.Add("Phone", typeof(string));
+                dt.Columns.Add("Address", typeof(string));
+
+                foreach (var request in requestList)
+                {
+                    string phone = "(Patient) " + request.PatientPhone;
+
+                    if (request.RequestType != (int)RequestType.Patient)
+                    {
+                        phone = phone + " (Requestor) " + request.Phone;
+                    }
+
+                    dt.Rows.Add(request.PatientName,
+                        request.Email,
+                        request.DateOfBirth,
+                        request.PhysicianName,
+                        request.DateOfService,
+                        phone,
+                        request.Address
+                        );
+                }
+            }
+            else if (status == (int)DashboardStatus.ToClose)
+            {
+
+                dt.Columns.Add("Name", typeof(string));
+                dt.Columns.Add("Email", typeof(string));
+                dt.Columns.Add("Date Of Birth", typeof(string));
+                dt.Columns.Add("Region", typeof(string));
+                dt.Columns.Add("Physician Name", typeof(string));
+                dt.Columns.Add("Date Of Service", typeof(string));
+                dt.Columns.Add("Address", typeof(string));
+                dt.Columns.Add("Notes", typeof(string));
+
+                foreach (var request in requestList)
+                {
+                    dt.Rows.Add(request.PatientName,
+                        request.Email,
+                        request.DateOfBirth,
+                        request.RegionName,
+                        request.PhysicianName,
+                        request.DateOfService,
+                        request.Address,
+                        request.Notes
+                        );
+                }
+
+            }
+            else if (status == (int)DashboardStatus.Unpaid)
+            {
+
+                dt.Columns.Add("Name", typeof(string));
+                dt.Columns.Add("Email", typeof(string));
+                dt.Columns.Add("Physician Name", typeof(string));
+                dt.Columns.Add("Date Of Service", typeof(string));
+                dt.Columns.Add("Phone", typeof(string));
+                dt.Columns.Add("Address", typeof(string));
+
+                foreach (var request in requestList)
+                {
+                    string phone = "(Patient) " + request.PatientPhone;
+
+                    if (request.RequestType != (int)RequestType.Patient)
+                    {
+                        phone = phone + " (Requestor) " + request.Phone;
+                    }
+
+                    dt.Rows.Add(request.PatientName,
+                        request.Email,
+                        request.PhysicianName,
+                        request.DateOfService,
+                        phone,
+                        request.Address
+                        );
+                }
+
+            }
+
+
+            dt.AcceptChanges();
+
+            return dt;
+        }
+
+        public byte[] ExportAllExcel(int status)
+        {
+            IEnumerable<AdminRequest> allRequest = _dashboardRepository.GetAllRequestByStatus(status);
+
+            DataTable dt = GetDataTableFromList(allRequest.ToList(), status);
+            //Name of File
+            string fileName = "Sample.xlsx";
+            using (XLWorkbook wb = new XLWorkbook())
+            {
+                //Add DataTable in worksheet  
+                wb.Worksheets.Add(dt);
+                using (MemoryStream stream = new MemoryStream())
+                {
+                    wb.SaveAs(stream);
+                    //Return xlsx Excel File  
+                    return stream.ToArray();
+                }
+            }
+
+        }
+
+        [HttpPost]
+        public string ExportAll(int status)
+        {
+            IEnumerable<AdminRequest> allRequest = _dashboardRepository.GetAllRequestByStatus(status);
+
+            string path = Path.Combine(_environment.WebRootPath, "export", "sample.csv");
+
+            using (var writer = new StreamWriter(path))
+
+            using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
+            {
+                csv.WriteRecords(allRequest);
+            }
+
+            return "export/sample.csv";
+
+        }
+
+        #endregion
+
+
+        public IActionResult CreateRequest()
+        {
+            IEnumerable<Region> regions = _unitOfWork.RegionRepository.GetAll();
+            AdminCreateRequestViewModel model = new AdminCreateRequestViewModel();
+            model.regions = regions;
+            return View("Dashboard/CreateRequest", model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult CreateRequest(AdminCreateRequestViewModel model)
+        {
+            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
+            Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(a => a.Adminid == adminId);
+            if (adminId != 0)
+            {
+                if (ModelState.IsValid)
+                {
+                    var phoneNumber = "+" + model.countryCode + "-" + model.phoneNumber;
+                    string state = _unitOfWork.RegionRepository.GetFirstOrDefault(reg => reg.Regionid == model.state).Name;
+
+                    // Creating Patient in Aspnetusers Table
+
+                    bool isUserExists = _unitOfWork.UserRepository.IsUserWithEmailExists(model.email);
+
+                    if (!isUserExists)
+                    {
+
+                        Guid generatedId = Guid.NewGuid();
+
+                        Aspnetuser aspnetuser = new()
+                        {
+                            Id = generatedId.ToString(),
+                            Username = model.FirstName,
+                            Passwordhash = null,
+                            Email = model.email,
+                            Phonenumber = phoneNumber,
+                            Createddate = DateTime.Now
+                        };
+
+                        _unitOfWork.AspNetUserRepository.Add(aspnetuser);
+                        _unitOfWork.Save();
+
+                        User user1 = new()
+                        {
+                            Aspnetuserid = generatedId.ToString(),
+                            Firstname = model.FirstName,
+                            Lastname = model.LastName,
+                            Email = model.email,
+                            Mobile = phoneNumber,
+                            Street = model.street,
+                            City = model.city,
+                            State = state,
+                            Regionid = model.state,
+                            Zipcode = model.zipCode,
+                            Createddate = DateTime.Now,
+                            Createdby = admin.Aspnetuserid,
+                            Strmonth = model.dob?.Month.ToString(),
+                            Intdate = model.dob?.Day,
+                            Intyear = model.dob?.Year
+                        };
+
+
+                        _unitOfWork.UserRepository.Add(user1);
+                        _unitOfWork.Save();
+
+                        SendMailForCreateAccount(model.email);
+                    }
+
+                    User user = _unitOfWork.UserRepository.GetFirstOrDefault(u => u.Email == model.email);
+
+                    // Adding request in Request Table
+                    Request request = new()
+                    {
+                        Requesttypeid = 2,
+                        Userid = user.Userid,
+                        Firstname = model.FirstName,
+                        Lastname = model.LastName,
+                        Phonenumber = phoneNumber,
+                        Email = model.email,
+                        Status = (short)RequestStatus.Unassigned,
+                        Createddate = DateTime.Now,
+                        Confirmationnumber = GenerateConfirmationNumber(user),
+                        Patientaccountid = user.Aspnetuserid,
+                    };
+
+                    _unitOfWork.RequestRepository.Add(request);
+                    _unitOfWork.Save();
+
+                    //Adding request in RequestClient Table
+                    Requestclient requestclient = new()
+                    {
+                        Requestid = request.Requestid,
+                        Firstname = model.FirstName,
+                        Lastname = model.LastName,
+                        Phonenumber = phoneNumber,
+                        Email = model.email,
+                        Address = model.street,
+                        City = model.city,
+                        State = state,
+                        Regionid = model.state,
+                        Zipcode = model.zipCode,
+                        Strmonth = model.dob?.Month.ToString(),
+                        Intdate = model.dob?.Day,
+                        Intyear = model.dob?.Year
+                    };
+
+                    _unitOfWork.RequestClientRepository.Add(requestclient);
+                    _unitOfWork.Save();
+                    if (model.notes != null)
+                    {
+                        Requestnote rn = new()
+                        {
+                            Requestid = request.Requestid,
+                            Physiciannotes = null,
+                            Adminnotes = model.notes,
+                            Createdby = admin.Aspnetuserid,
+                            Createddate = DateTime.Now
+                        };
+                        _unitOfWork.RequestNoteRepository.Add(rn);
+                        _unitOfWork.Save();
+                    }
+
+                    model.regions = _unitOfWork.RegionRepository.GetAll();
+                    return View("Dashboard/CreateRequest", model);
+
+                }
+                return View("error");
+            }
+            return View("error");
+
+        }
 
 
         public IActionResult Orders(int requestId)
@@ -1771,37 +1579,37 @@ namespace HalloDoc.MVC.Controllers
 
                 encounterViewModel = new()
                 {
-                    firstName = requestclient.Firstname,
-                    lastName = requestclient.Lastname,
-                    email = requestclient.Email,
-                    phoneNumber = requestclient.Phonenumber,
-                    dob = dobDate != null ? DateTime.Parse(dobDate) : null,
-                    createdDate = request.Createddate,
-                    location = requestclient.Street + " " + requestclient.City + " " + requestclient.State,
-                    medicalHistorty = encounterform.Medicalhistory,
-                    history = encounterform.Historyofpresentillnessorinjury,
-                    medications = encounterform.Medications,
-                    allergies = encounterform.Allergies,
-                    temp = encounterform.Temp,
-                    hr = encounterform.Hr,
-                    rr = encounterform.Rr,
-                    bpLow = encounterform.Bloodpressuresystolic,
-                    bpHigh = encounterform.Bloodpressuresystolic,
-                    o2 = encounterform.O2,
-                    pain = encounterform.Pain,
-                    heent = encounterform.Heent,
-                    cv = encounterform.Cv,
-                    chest = encounterform.Chest,
-                    abd = encounterform.Abd,
-                    extr = encounterform.Extremities,
-                    skin = encounterform.Skin,
-                    neuro = encounterform.Neuro,
-                    other = encounterform.Other,
-                    diagnosis = encounterform.Diagnosis,
-                    treatmentPlan = encounterform.TreatmentPlan,
-                    procedures = encounterform.Procedures,
-                    medicationsDispensed = encounterform.Medicaldispensed,
-                    folloUps = encounterform.Followup
+                    FirstName = requestclient.Firstname,
+                    LastName = requestclient.Lastname,
+                    Email = requestclient.Email,
+                    PhoneNumber = requestclient.Phonenumber,
+                    DOB = dobDate != null ? DateTime.Parse(dobDate) : null,
+                    CreatedDate = request.Createddate,
+                    Location = requestclient.Street + " " + requestclient.City + " " + requestclient.State,
+                    MedicalHistory = encounterform.Medicalhistory,
+                    History = encounterform.Historyofpresentillnessorinjury,
+                    Medications = encounterform.Medications,
+                    Allergies = encounterform.Allergies,
+                    Temp = encounterform.Temp,
+                    HR = encounterform.Hr,
+                    RR = encounterform.Rr,
+                    BpLow = encounterform.Bloodpressuresystolic,
+                    BpHigh = encounterform.Bloodpressuresystolic,
+                    O2 = encounterform.O2,
+                    Pain = encounterform.Pain,
+                    Heent = encounterform.Heent,
+                    CV = encounterform.Cv,
+                    Chest = encounterform.Chest,
+                    ABD = encounterform.Abd,
+                    Extr = encounterform.Extremities,
+                    Skin = encounterform.Skin,
+                    Neuro = encounterform.Neuro,
+                    Other = encounterform.Other,
+                    Diagnosis = encounterform.Diagnosis,
+                    TreatmentPlan = encounterform.TreatmentPlan,
+                    Procedures = encounterform.Procedures,
+                    MedicationDispensed = encounterform.Medicaldispensed,
+                    FollowUps = encounterform.Followup
 
                 };
 
@@ -1811,13 +1619,13 @@ namespace HalloDoc.MVC.Controllers
 
             encounterViewModel = new()
             {
-                firstName = requestclient.Firstname,
-                lastName = requestclient.Lastname,
-                email = requestclient.Email,
-                phoneNumber = requestclient.Phonenumber,
-                dob = dobDate != null ? DateTime.Parse(dobDate) : null,
-                createdDate = request.Createddate,
-                location = requestclient.Street + " " + requestclient.City + " " + requestclient.State,
+                FirstName = requestclient.Firstname,
+                LastName = requestclient.Lastname,
+                Email = requestclient.Email,
+                PhoneNumber = requestclient.Phonenumber,
+                DOB = dobDate != null ? DateTime.Parse(dobDate) : null,
+                CreatedDate = request.Createddate,
+                Location = requestclient.Street + " " + requestclient.City + " " + requestclient.State,
             };
 
             return View("Dashboard/EncounterForm", encounterViewModel);
@@ -1830,37 +1638,37 @@ namespace HalloDoc.MVC.Controllers
         {
             string adminName = HttpContext.Request.Headers.Where(a => a.Key == "userName").FirstOrDefault().Value;
             Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(a => a.Firstname + " " + a.Lastname == adminName);
-            Request r = _unitOfWork.RequestRepository.GetFirstOrDefault(rs => rs.Requestid == model.requestId);
+            Request r = _unitOfWork.RequestRepository.GetFirstOrDefault(rs => rs.Requestid == model.RequestId);
             if (ModelState.IsValid)
             {
-                Encounterform encounterform = _unitOfWork.EncounterFormRepository.GetFirstOrDefault(e => e.Requestid == model.requestId);
+                Encounterform encounterform = _unitOfWork.EncounterFormRepository.GetFirstOrDefault(e => e.Requestid == model.RequestId);
                 if (encounterform == null)
                 {
                     Encounterform encf = new()
                     {
-                        Requestid = model.requestId,
-                        Historyofpresentillnessorinjury = model.history,
-                        Medicalhistory = model.medicalHistorty,
-                        Medications = model.medications,
-                        Allergies = model.allergies,
-                        Temp = model.temp,
-                        Hr = model.hr,
-                        Rr = model.rr,
-                        Bloodpressuresystolic = model.bpLow,
-                        Bloodpressurediastolic = model.bpHigh,
-                        O2 = model.o2,
-                        Pain = model.pain,
-                        Skin = model.skin,
-                        Heent = model.heent,
-                        Neuro = model.neuro,
-                        Other = model.other,
-                        Cv = model.cv,
-                        Chest = model.chest,
-                        Abd = model.abd,
-                        Extremities = model.extr,
-                        Diagnosis = model.diagnosis,
-                        TreatmentPlan = model.treatmentPlan,
-                        Procedures = model.procedures,
+                        Requestid = model.RequestId,
+                        Historyofpresentillnessorinjury = model.History,
+                        Medicalhistory = model.MedicalHistory,
+                        Medications = model.Medications,
+                        Allergies = model.Allergies,
+                        Temp = model.Temp,
+                        Hr = model.HR,
+                        Rr = model.RR,
+                        Bloodpressuresystolic = model.BpLow,
+                        Bloodpressurediastolic = model.BpHigh,
+                        O2 = model.O2,
+                        Pain = model.Pain,
+                        Skin = model.Skin,
+                        Heent = model.Heent,
+                        Neuro = model.Neuro,
+                        Other = model.Other,
+                        Cv = model.CV,
+                        Chest = model.Chest,
+                        Abd = model.ABD,
+                        Extremities = model.Extr,
+                        Diagnosis = model.Diagnosis,
+                        TreatmentPlan = model.TreatmentPlan,
+                        Procedures = model.Procedures,
                         Adminid = admin.Adminid,
                         Physicianid = r.Physicianid,
                         Isfinalize = false
@@ -1871,29 +1679,29 @@ namespace HalloDoc.MVC.Controllers
                 }
                 else
                 {
-                    encounterform.Requestid = model.requestId;
-                    encounterform.Historyofpresentillnessorinjury = model.history;
-                    encounterform.Medicalhistory = model.medicalHistorty;
-                    encounterform.Medications = model.medications;
-                    encounterform.Allergies = model.allergies;
-                    encounterform.Temp = model.temp;
-                    encounterform.Hr = model.hr;
-                    encounterform.Rr = model.rr;
-                    encounterform.Bloodpressuresystolic = model.bpLow;
-                    encounterform.Bloodpressurediastolic = model.bpHigh;
-                    encounterform.O2 = model.o2;
-                    encounterform.Pain = model.pain;
-                    encounterform.Skin = model.skin;
-                    encounterform.Heent = model.heent;
-                    encounterform.Neuro = model.neuro;
-                    encounterform.Other = model.other;
-                    encounterform.Cv = model.cv;
-                    encounterform.Chest = model.chest;
-                    encounterform.Abd = model.abd;
-                    encounterform.Extremities = model.extr;
-                    encounterform.Diagnosis = model.diagnosis;
-                    encounterform.TreatmentPlan = model.treatmentPlan;
-                    encounterform.Procedures = model.procedures;
+                    encounterform.Requestid = model.RequestId;
+                    encounterform.Historyofpresentillnessorinjury = model.History;
+                    encounterform.Medicalhistory = model.MedicalHistory;
+                    encounterform.Medications = model.Medications;
+                    encounterform.Allergies = model.Allergies;
+                    encounterform.Temp = model.Temp;
+                    encounterform.Hr = model.HR;
+                    encounterform.Rr = model.RR;
+                    encounterform.Bloodpressuresystolic = model.BpLow;
+                    encounterform.Bloodpressurediastolic = model.BpHigh;
+                    encounterform.O2 = model.O2;
+                    encounterform.Pain = model.Pain;
+                    encounterform.Skin = model.Skin;
+                    encounterform.Heent = model.Heent;
+                    encounterform.Neuro = model.Neuro;
+                    encounterform.Other = model.Other;
+                    encounterform.Cv = model.CV;
+                    encounterform.Chest = model.Chest;
+                    encounterform.Abd = model.ABD;
+                    encounterform.Extremities = model.Extr;
+                    encounterform.Diagnosis = model.Diagnosis;
+                    encounterform.TreatmentPlan = model.TreatmentPlan;
+                    encounterform.Procedures = model.Procedures;
                     encounterform.Adminid = admin.Adminid;
                     encounterform.Physicianid = r.Physicianid;
                     encounterform.Isfinalize = false;
@@ -1901,9 +1709,571 @@ namespace HalloDoc.MVC.Controllers
                     _unitOfWork.EncounterFormRepository.Update(encounterform);
                     _unitOfWork.Save();
                 }
-                return EncounterForm((int)model.requestId);
+                return EncounterForm((int)model.RequestId);
             }
             return View("error");
+        }
+
+
+        #endregion
+
+        #region Providers
+
+
+        public void InsertFileWithPath(IFormFile document, string path)
+        {
+            string fileName = document.FileName;
+
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+            string fullPath = Path.Combine(path, fileName);
+
+            using FileStream stream = new(fullPath, FileMode.Create);
+            document.CopyTo(stream);
+        }
+
+        public void InsertFileAfterRename(IFormFile file, string path, string updateName)
+        {
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+
+            string[] oldfiles = Directory.GetFiles(path,updateName+".*");
+            foreach (string f in oldfiles)
+            {
+                System.IO.File.Delete(f);
+            }
+
+            string extension = Path.GetExtension(file.FileName);
+
+            string fileName = updateName + extension;
+
+
+
+            string fullPath = Path.Combine(path, fileName);
+
+            using FileStream stream = new(fullPath, FileMode.Create);
+            file.CopyTo(stream);
+
+        }
+
+        [HttpPost]
+        public bool SavePhysicianProfileInfo(int PhysicianId, IFormFile Signature, IFormFile Photo, string BusinessName, string BusinessWebsite)
+        {
+
+
+            if (PhysicianId == null || PhysicianId == 0)
+            {
+                return false;
+            }
+
+            try
+            {
+
+                string path = Path.Combine(_environment.WebRootPath, "document", "physician", PhysicianId.ToString());
+                Physician physician = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Physicianid == PhysicianId);
+
+                physician.Businessname = BusinessName;
+                physician.Businesswebsite = BusinessWebsite;
+
+                if (Signature != null)
+                {
+                    InsertFileWithPath(Signature, path);
+
+                    physician.Signature = Signature.FileName;
+                }
+
+                if (Photo != null)
+                {
+                    InsertFileWithPath(Photo, path);
+                    physician.Photo = Photo.FileName;
+                }
+
+                _unitOfWork.PhysicianRepository.Update(physician);
+                _unitOfWork.Save();
+
+                TempData["success"] = "Data updated successfully.";
+                return true;
+            }
+            catch (Exception e)
+            {
+                TempData["error"] = e.Message;
+                return false;
+            }
+            
+        }
+
+        [HttpPost]
+        public bool SavePhysicianOnboardingInfo(int PhysicianId, IFormFile ICA, IFormFile BGCheck, IFormFile HIPAACompliance, IFormFile NDA, IFormFile LicenseDoc)
+        {
+
+
+            if (PhysicianId == null || PhysicianId == 0)
+            {
+                return false;
+            }
+
+            try
+            {
+                string path = Path.Combine(_environment.WebRootPath, "document", "physician", PhysicianId.ToString());
+                Physician phy = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Physicianid == PhysicianId);
+                
+                if(ICA != null)
+                {
+                    InsertFileAfterRename(ICA,path,"ICA");
+                    phy.Isagreementdoc = true;
+                }
+
+
+                if (BGCheck != null)
+                {
+                    InsertFileAfterRename(BGCheck, path, "BackgroundCheck");
+                    phy.Isbackgrounddoc = true;
+                }
+
+
+                if (HIPAACompliance != null)
+                {
+                    InsertFileAfterRename(HIPAACompliance, path, "HipaaCompliance");
+                    phy.Iscredentialdoc = true;
+                }
+
+
+                if (NDA != null)
+                {
+                    InsertFileAfterRename(NDA, path, "NDA");
+                    phy.Isnondisclosuredoc = true;
+                }
+
+
+                if (LicenseDoc != null)
+                {
+                    InsertFileAfterRename(LicenseDoc, path, "LicenseDoc");
+                    phy.Islicensedoc = true;
+                }
+
+
+
+                _unitOfWork.PhysicianRepository.Update(phy);
+                _unitOfWork.Save();
+
+                TempData["success"] = "Data updated successfully";
+                return true;
+            }
+            catch (Exception e)
+            {
+                TempData["error"] = e.ToString();
+                return false;
+            }
+
+            return false;
+        }
+
+        [HttpPost]
+        public bool SavePhysicianInformation(int PhysicianId, string FirstName, string LastName, string Email, string Phone, string CountryCode, string MedicalLicenseNumber, string NPINumber, string SyncEmail, List<int> selectedRegions)
+        {
+            if (PhysicianId == null || PhysicianId == 0)
+            {
+                return false;
+            }
+
+            try
+            {
+                string phone = "+" + CountryCode + "-" + Phone;
+                Physician phy = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Physicianid == PhysicianId);
+                phy.Firstname = FirstName;
+                phy.Lastname = LastName;
+                phy.Mobile = Phone;
+                phy.Medicallicense = MedicalLicenseNumber;
+                phy.Npinumber = NPINumber;
+                phy.Syncemailaddress = SyncEmail;
+
+
+                List<int> physicianRegions = _unitOfWork.PhysicianRegionRepo.Where(region => region.Physicianid == PhysicianId).ToList().Select(x => (int)x.Regionid).ToList();
+
+                List<int> commonRegions = new List<int>();
+
+                // Finding common regions in both new and old lists
+                foreach (int region in physicianRegions)
+                {
+                    if (selectedRegions.Contains(region))
+                    {
+                        commonRegions.Add(region);
+                    }
+                }
+
+                // Removing them from both lists
+                foreach (int region in commonRegions)
+                {
+                    selectedRegions.Remove(region);
+                    physicianRegions.Remove(region);
+                }
+
+                // From difference we will remove regions that were in old list but not in new list
+                foreach (int region in physicianRegions)
+                {
+                    Physicianregion pr = _unitOfWork.PhysicianRegionRepo.GetFirstOrDefault(ar => ar.Regionid == region);
+                    _unitOfWork.PhysicianRegionRepo.Remove(pr);
+                }
+
+                // And Add the regions that were in new list but not in old list
+                foreach (int region in selectedRegions)
+                {
+                    Physicianregion phyRegion = new Physicianregion()
+                    {
+                        Physicianid = PhysicianId,
+                        Regionid = region,
+                    };
+
+                    _unitOfWork.PhysicianRegionRepo.Add(phyRegion);
+                }
+
+                _unitOfWork.PhysicianRepository.Update(phy);
+                _unitOfWork.Save();
+
+                TempData["success"] = "Data updated successfully";
+                return true;
+            }
+            catch (Exception e)
+            {
+                TempData["error"] = e.ToString();
+                return false;
+            }
+
+            return false;
+        }
+
+        [HttpPost]
+        public bool SavePhysicianBillingInfo(int PhysicianId, string Address1, string Address2, string City, int RegionId, string Zip, string MailCountryCode, string MailPhone)
+        {
+            if (PhysicianId == null || PhysicianId == 0)
+            {
+                return false;
+            }
+
+            try
+            {
+                string phone = "+" + MailCountryCode + "-" + MailPhone;
+                Physician phy = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Physicianid == PhysicianId);
+                phy.Address1 = Address1;
+                phy.Address2 = Address2;
+                phy.City = City;
+                phy.Zip = Zip;
+                phy.Altphone = phone;
+                phy.Regionid = RegionId;
+
+
+                _unitOfWork.PhysicianRepository.Update(phy);
+                _unitOfWork.Save();
+
+                TempData["success"] = "Data updated successfully";
+                return true;
+            }
+            catch (Exception e)
+            {
+                TempData["error"] = e.ToString();
+                return false;
+            }
+
+            return false;
+
+        }
+
+
+        public IActionResult CreatePhysicianAccount()
+        {
+            EditPhysicianViewModel model = new EditPhysicianViewModel()
+            {
+                regions = _unitOfWork.RegionRepository.GetAll(),
+            };
+            return View("Providers/CreatePhysicianAccount", model);
+        }
+
+        public IActionResult EditPhysicianAccount(int physicianId)
+        {
+            Physician physician = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Physicianid == physicianId);
+            IEnumerable<int> phyRegions = _unitOfWork.PhysicianRegionRepo.Where(pr => pr.Physicianid == physicianId).ToList().Select(_ => (int)_.Regionid); ;
+
+            EditPhysicianViewModel model = new EditPhysicianViewModel()
+            {
+                FirstName = physician.Firstname,
+                LastName = physician.Lastname,
+                Email = physician.Email,
+                Phone = physician.Mobile,
+                MedicalLicenseNumber = physician.Medicallicense,
+                NPINumber = physician.Npinumber,
+                SyncEmail = physician.Syncemailaddress,
+                Address1 = physician.Address1,
+                Address2 = physician.Address2,
+                City = physician.City,
+                RegionId = physician.Regionid,
+                Zip = physician.Zip,
+                RoleId = (int)physician.Roleid,
+                MailPhone = physician.Altphone,
+                BusinessName = physician.Businessname,
+                BusinessWebsite = physician.Businesswebsite,
+                regions = _unitOfWork.RegionRepository.GetAll(),
+                roles = _unitOfWork.RoleRepo.GetAll(),
+                physicianRegions = phyRegions,
+                IsICA = physician.Isagreementdoc ?? false,
+                IsBGCheck = physician.Isbackgrounddoc ?? false,
+                IsHIPAA = physician.Iscredentialdoc ?? false,
+                IsLicenseDoc = physician.Islicensedoc ?? false,
+                IsNDA = physician.Isnondisclosuredoc ?? false,
+            };
+
+            return View("Providers/EditPhysicianAccount", model);
+        }
+
+        public void StopNotification(int physicianId)
+        {
+            Physiciannotification notif = _context.Physiciannotifications.FirstOrDefault(x => x.Physicianid == physicianId);
+
+            if (notif != null)
+            {
+
+                notif.Isnotificationstopped = !notif.Isnotificationstopped;
+
+                _context.Physiciannotifications.Update(notif);
+                _context.SaveChanges();
+                return;
+
+            }
+            else
+            {
+                Physiciannotification obj = new()
+                {
+                    Physicianid = physicianId,
+                    Isnotificationstopped = true
+                };
+                _context.Physiciannotifications.Add(obj);
+                _context.SaveChanges();
+                return;
+            }
+        }
+
+        public IActionResult ProviderMenu()
+        {
+
+            string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+            IEnumerable<ProviderMenuRow> physicianList = (from phy in _context.Physicians
+                                                          join role in _context.Roles on phy.Roleid equals role.Roleid
+                                                          join pn in _context.Physiciannotifications on phy.Physicianid equals pn.Physicianid into notiGroup
+                                                          from notiItem in notiGroup.DefaultIfEmpty()
+                                                          select new ProviderMenuRow
+                                                          {
+                                                              PhysicianId = phy.Physicianid,
+                                                              PhysicianName = phy.Firstname + " " + phy.Lastname,
+                                                              Email = phy.Email,
+                                                              PhoneNumber = phy.Mobile ?? "Mobile",
+                                                              Role = role.Name,
+                                                              Status = phy.Status.ToString() ?? "Status",
+                                                              OnCallStatus = "Busy",
+                                                              IsNotificationStopped = notiItem.Isnotificationstopped ? true : false,
+                                                          }).OrderBy(_ => _.PhysicianId);
+
+            ProviderMenuViewModel model = new ProviderMenuViewModel()
+            {
+                UserName = adminName,
+                physicianList = physicianList,
+            };
+            return View("Providers/ProviderMenu", model);
+        }
+
+
+        public IActionResult ContactYourProviderModal(int physicianId)
+        {
+            ContactYourProviderModel model = new ContactYourProviderModel()
+            {
+                PhysicianId = physicianId,
+            };
+            return PartialView("Modals/ContactYourProvider", model);
+        }
+
+        [HttpPost]
+        public IActionResult ContactYourProviderModal(ContactYourProviderModel model)
+        {
+            try
+            {
+
+                if (ModelState.IsValid)
+                {
+                    Physician physician = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Physicianid == model.PhysicianId);
+                    if (model.CommunicationType == 2 || model.CommunicationType == 3)
+                    {
+                        string subject = "Contacting Provider";
+                        string body = "<h2>Admin Message</h2><h5>" + model.Message + "</h5>";
+                        string toEmail = physician.Email;
+                        _emailService.SendMail(toEmail, body, subject);
+                    }
+                }
+
+                TempData["success"] = "Messages sent successfully.";
+
+            }
+            catch (Exception e)
+            {
+                TempData["error"] = e.Message;
+            }
+            return Redirect("/Admin/ProviderMenu");
+        }
+
+        public IActionResult Scheduling()
+        {
+            return View("Providers/Scheduling");
+        }
+
+        public IActionResult Invoicing()
+        {
+            return View("Providers/Invoicing");
+        }
+
+        #endregion
+
+        #region HelperFunctions
+
+
+
+        public string GenerateConfirmationNumber(User user)
+        {
+            string regionAbbr = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == user.Regionid).Abbreviation;
+
+            DateTime todayStart = DateTime.Now.Date;
+            int count = _unitOfWork.RequestRepository.Count(req => req.Createddate > todayStart);
+
+            string confirmationNumber = regionAbbr + user.Createddate.Date.ToString("D2") + user.Createddate.Month.ToString("D2") + user.Lastname.Substring(0, 2).ToUpper() + user.Firstname.Substring(0, 2).ToUpper() + (count + 1).ToString("D4");
+            return confirmationNumber;
+        }
+
+
+
+        public void SendMailForCreateAccount(string email)
+        {
+            try
+            {
+                Aspnetuser aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(user => user.Email == email);
+
+                string createAccToken = Guid.NewGuid().ToString();
+
+                Passtoken passtoken = new Passtoken()
+                {
+                    Aspnetuserid = aspUser.Id,
+                    Createddate = DateTime.Now,
+                    Email = email,
+                    Isdeleted = false,
+                    Isresettoken = false,
+                    Uniquetoken = createAccToken,
+                };
+
+                _unitOfWork.PassTokenRepository.Add(passtoken);
+                _unitOfWork.Save();
+
+                var createLink = Url.Action("CreateAccount", "Guest", new { token = createAccToken }, Request.Scheme);
+                string subject = "Set up your Account";
+                string body = "<h1>Create Account By clicking below</h1><a href=\"" + createLink + "\" >Create Account link</a>";
+
+                _emailService.SendMail(email, body, subject);
+
+                TempData["success"] = "Email has been successfully sent to " + email + " for create account link.";
+            }
+            catch (Exception ex)
+            {
+                TempData["error"] = ex.Message;
+            }
+        }
+
+
+        public void InsertRequestWiseFile(IFormFile document)
+        {
+            string path = _environment.WebRootPath + "/document";
+            string fileName = document.FileName;
+
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+            string fullPath = Path.Combine(path, fileName);
+
+            using FileStream stream = new(fullPath, FileMode.Create);
+            document.CopyTo(stream);
+        }
+
+
+        public static string GetPatientDOB(Requestclient u)
+        {
+            string udb = u.Intyear + "-" + u.Strmonth + "-" + u.Intdate;
+            if (u.Intyear == null || u.Strmonth == null || u.Intdate == null)
+            {
+                return "";
+            }
+
+            DateTime dobDate = DateTime.Parse(udb);
+            string dob = dobDate.ToString("MMM dd, yyyy");
+            var today = DateTime.Today;
+            var age = today.Year - dobDate.Year;
+            if (dobDate.Date > today.AddYears(-age)) age--;
+
+            string dobString = dob + " (" + age + ")";
+
+            return dobString;
+        }
+
+        public static string GetRequestType(Request request)
+        {
+            switch (request.Requesttypeid)
+            {
+                case (int)RequestType.Business: return "Business";
+                case (int)RequestType.Patient: return "Patient";
+                case (int)RequestType.Concierge: return "Concierge";
+                case (int)RequestType.Family: return "Relative/Family";
+            }
+
+            return null;
+        }
+
+        [HttpPost]
+        public JsonArray GetBusinessByType(int professionType)
+        {
+            var result = new JsonArray();
+            IEnumerable<Healthprofessional> businesses = _unitOfWork.HealthProfessionalRepo.Where(prof => prof.Profession == professionType);
+
+            foreach (Healthprofessional business in businesses)
+            {
+                result.Add(new { businessId = business.Vendorid, businessName = business.Vendorname });
+            }
+
+            return result;
+        }
+
+
+        [HttpPost]
+        public JsonArray GetPhysicianByRegion(int regionId)
+        {
+            var result = new JsonArray();
+            IEnumerable<Physician> physicians = _unitOfWork.PhysicianRepository.Where(phy => phy.Regionid == regionId);
+
+            foreach (Physician physician in physicians)
+            {
+                result.Add(new { physicianId = physician.Physicianid, physicianName = physician.Firstname + " " + physician.Lastname });
+            }
+
+            return result;
+        }
+
+
+        [HttpPost]
+        public Healthprofessional GetBusinessDetailsById(int vendorId)
+        {
+            if (vendorId <= 0)
+            {
+                return null;
+            }
+            Healthprofessional business = _unitOfWork.HealthProfessionalRepo.GetFirstOrDefault(prof => prof.Vendorid == vendorId);
+
+            return business;
         }
 
 
@@ -2067,5 +2437,6 @@ namespace HalloDoc.MVC.Controllers
 
 
         #endregion
+
     }
 }

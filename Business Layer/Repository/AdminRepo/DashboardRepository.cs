@@ -3,6 +3,7 @@ using Data_Layer.CustomModels;
 using Data_Layer.DataContext;
 using Data_Layer.DataModels;
 using Data_Layer.ViewModels.Admin;
+using DocumentFormat.OpenXml.Drawing.Charts;
 
 namespace Business_Layer.Repository.AdminRepo
 {
@@ -99,7 +100,7 @@ namespace Business_Layer.Repository.AdminRepo
                              DateOfBirth = GetPatientDOB(rc),
                              RequestType = r.Requesttypeid,
                              Requestor = GetRequestType(r) + " " + r.Firstname + " " + r.Lastname,
-                             RequestDate = r.Createddate.ToString("MMM dd, yyyy"),
+                             RequestDate = GetRequestDateWithDiff(r.Createddate),
                              PatientPhone = rc.Phonenumber,
                              PhysicianName = phyItem.Firstname + " " + phyItem.Lastname,
                              Phone = r.Phonenumber,
@@ -110,6 +111,13 @@ namespace Business_Layer.Repository.AdminRepo
             return await PagedList<AdminRequest>.CreateAsync(
             query, pageNumber, dashboardParams.pageSize);
 
+        }
+
+        public static string GetRequestDateWithDiff(DateTime requestDate)
+        {
+            DateTime dateNow = DateTime.Now;
+            double difference = dateNow.Subtract(requestDate).TotalMinutes;
+            return requestDate.ToString("MMM dd, yyyy") + " ( " + Math.Floor(difference) + " ) mins";
         }
 
 

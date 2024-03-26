@@ -1,6 +1,4 @@
 ﻿@model AdminDashboardViewModel
-@using Microsoft.AspNetCore.Http
-@inject IHttpContextAccessor Accessor
 @{
     Layout = "_AdminDashboardLayout";
     ViewData["UserName"] = Model.UserName;
@@ -262,7 +260,7 @@ C25.163,30.114,24.933,30.163,24.687,30.163z"></path>
                     <path d="M 21 3 C 11.654545 3 4 10.654545 4 20 C 4 29.345455 11.654545 37 21 37 C 24.701287 37 28.127393 35.786719 30.927734 33.755859 L 44.085938 46.914062 L 46.914062 44.085938 L 33.875 31.046875 C 36.43682 28.068316 38 24.210207 38 20 C 38 10.654545 30.345455 3 21 3 z M 21 5 C 29.254545 5 36 11.745455 36 20 C 36 28.254545 29.254545 35 21 35 C 12.745455 35 6 28.254545 6 20 C 6 11.745455 12.745455 5 21 5 z">
                     </path>
                 </svg>
-                <input type="text" class="form-control" id="search-filter" placeholder="Search Patients">
+                <input asp-for="filterOptions.PatientSearchText" type="text" class="form-control" id="search-filter" placeholder="Search Patients">
             </div>
 
             <div class="col-12 col-lg-4 ms-2 d-flex normal-input rounded align-items-center ps-2">
@@ -271,7 +269,7 @@ C25.163,30.114,24.933,30.163,24.687,30.163z"></path>
                     <path d="M 21 3 C 11.654545 3 4 10.654545 4 20 C 4 29.345455 11.654545 37 21 37 C 24.701287 37 28.127393 35.786719 30.927734 33.755859 L 44.085938 46.914062 L 46.914062 44.085938 L 33.875 31.046875 C 36.43682 28.068316 38 24.210207 38 20 C 38 10.654545 30.345455 3 21 3 z M 21 5 C 29.254545 5 36 11.745455 36 20 C 36 28.254545 29.254545 35 21 35 C 12.745455 35 6 28.254545 6 20 C 6 11.745455 12.745455 5 21 5 z">
                     </path>
                 </svg>
-                <select id="filter-regions" class="form-select border-0" aria-label="Default select example">
+                <select asp-for="filterOptions.RegionFilter" id="filter-regions" class="form-select border-0" aria-label="Default select example">
                     <option selected value="0">All Regions</option>
                     @foreach (Region region in Model.regions)
                     {
@@ -345,12 +343,27 @@ C25.163,30.114,24.933,30.163,24.687,30.163z"></path>
 
 <script>
 
-    var currentStatus = @Accessor.HttpContext?.Session.GetInt32("currentStatus");
-    var currentPage = @Accessor.HttpContext?.Session.GetInt32("currentPage");
+    var currentStatus = @Model.filterOptions.status;
+    var currentPage = @Model.filterOptions.pageNumber;
+    var currentRegion = @Model.filterOptions.RegionFilter;
+    var currentType = @Model.filterOptions.RequestTypeFilter;
+    var currentSearch = "@Model.filterOptions.PatientSearchText";
+
     console.log(currentStatus);
     console.log(currentPage);
+    console.log(currentRegion);
+    console.log(currentType);
+    console.log(currentSearch);
 
     if (currentStatus != null) {
+
+        dashboardStatus = currentStatus;
+        type_filter = currentType;
+        region_filter = currentRegion;
+        search_filter = currentSearch;
+
+        console.log('Region: ' + region_filter);
+
         loadPageWithStatus(currentPage, currentStatus);
     }
     else {

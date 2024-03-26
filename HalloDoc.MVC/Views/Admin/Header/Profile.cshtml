@@ -8,7 +8,7 @@
         <div class=" d-flex justify-content-between mt-5">
             <h4>My Profile</h4>
 
-            <button class="btn btn-outline-info fw-bold" onclick="history.back(-1)">
+            <button class="btn btn-outline-info align-middle" onclick="history.back(-1)">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="#01bce9" width="15" height="15" viewBox="0 -960 960 960">
                     <path d="m142-480 294 294q15 15 14.5 35T435-116q-15 15-35 15t-35-15L57-423q-12-12-18-27t-6-30q0-15 6-30t18-27l308-308q15-15 35.5-14.5T436-844q15 15 15 35t-15 35L142-480Z" />
                 </svg>
@@ -198,7 +198,7 @@
 
                     <div class="col-md-6 col-12 mt-4 form-floating floating-label">
                         <select disabled asp-for="RegionId" class="form-select billingChange" id="patientRequestRegion">
-                            <option disabled value="0"> -- select State -- </option>
+                            <option disabled value="0"> -- Select State -- </option>
 
                             @foreach (var region in Model.regions)
                             {
@@ -250,14 +250,6 @@
 </div>
 
 
-
-<style>
-
-    input[type="checkbox"]:checked {
-        background-color: #10BCE9 !important;
-    }
-
-</style>
 
 <script>
 
@@ -337,18 +329,12 @@
 
         let selectedRegions = [];
         let checkboxes = document.querySelectorAll(".check");
-        let count = 0;
         console.log("regions-selected");
 
         checkboxes.forEach(function (checkbox) {
             if (checkbox.checked) {
                 selectedRegions.push(checkbox.value);
             }
-            count++;
-        });
-
-        selectedRegions.forEach(function (id) {
-            console.log(id);
         });
 
         var countryCode = document.getElementById("admin-phone-country");
