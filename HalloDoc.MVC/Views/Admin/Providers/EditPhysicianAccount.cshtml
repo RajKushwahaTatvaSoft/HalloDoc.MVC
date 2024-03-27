@@ -27,14 +27,14 @@
             <div class="row g-2 m-1">
                 <div class="col-md">
                     <div class="form-floating">
-                        <input type="text" class="form-control" id="userName" placeholder="User Name">
+                        <input type="text" class="form-control account-info-input" id="userName" placeholder="User Name" disabled>
                         <label for="userName">User Name</label>
                     </div>
                 </div>
 
                 <div class="col-md">
                     <div class="form-floating">
-                        <input type="text" class="form-control " id="password" placeholder="Password">
+                        <input type="text" class="form-control" id="password" placeholder="Password">
                         <label for="floatingSelectGrid">Password</label>
                     </div>
                 </div>
@@ -43,7 +43,7 @@
             <div class="row g-2 m-1">
                 <div class="col-md-6">
                     <div class="form-floating">
-                        <select class="form-select mb-3" id="status" placeholder="Status">
+                        <select asp-for="StatusId" class="form-select mb-3 account-info-input" id="status" placeholder="Status" disabled>
                             <option>Active</option>
                             <option>Out</option>
                             <option>Died</option>
@@ -54,7 +54,7 @@
 
                 <div class="col-md-6">
                     <div class="form-floating phone-div w-100 h-100 ">
-                        <select asp-for="RoleId" class="form-select mb-3" placeholder="Role">
+                        <select asp-for="RoleId" class="form-select mb-3 account-info-input" placeholder="Role" disabled>
                             @foreach (var role in Model.roles)
                             {
                                 <option value="@role.Roleid">@role.Name</option>
@@ -68,7 +68,9 @@
 
             <div class="d-flex justify-content-end">
 
-                <button type="button" class="btn btn-primary m-1">Edit</button><br />
+                <button id="account-info-edit-btn" type="button" class="btn btn-primary m-1">Edit</button>
+                <button type="reset" id="account-info-cancel-btn" class="btn btn-danger me-1 d-none">Cancel</button>
+                <button type="submit" id="account-info-save-btn" class="btn btn-primary me-1 d-none">Save</button><br />
                 <button type="button" class="btn btn-outline-info m-1">Reset Password</button><br />
 
             </div>
@@ -104,8 +106,8 @@
                     </div>
                     <div class="col-md-6">
                         <div class="form-floating phone-div w-100 h-100 ">
-                            <input hidden id="phy-phone-country" asp-for="CountryCode" />
-                            <input asp-for="Phone" type="tel" class="form-control w-100 h-100" id="phy-phone" placeholder="Phone">
+                            <input id="phy-phone-country" asp-for="CountryCode" hidden />
+                            <input id="phy-phone" class="py-4 form-control" type="tel" asp-for="Phone" />
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -254,7 +256,7 @@
 
                     <div class="col-md-6 mt-2">
 
-                        <input asp-for="Photo" class="form-control" type="file" id="phy_photo_input_id" style="display:none;">
+                        <input asp-for="Photo" accept="image/png, image/jpeg, image/jpg" class="form-control" type="file" id="phy_photo_input_id" style="display:none;">
 
                         <div class="input-group mb-3">
                             <input type="text" id="phy_photo_text_input_id" class="form-control" placeholder="Select Photo"
@@ -277,7 +279,7 @@
 
                         <div class="d-flex">
 
-                            <input asp-for="Signature" class="form-control" type="file" id="phy_sign_input_id" style="display:none;">
+                            <input asp-for="Signature" accept="image/png, image/jpeg, image/jpg" class="form-control" type="file" id="phy_sign_input_id" style="display:none;">
 
                             <div class="input-group mb-3">
                                 <input type="text" id="phy_sign_text_input_id" class="form-control" placeholder="Select Signature"
@@ -348,10 +350,13 @@
                         <button id="ica-upload-btn" type="button" class="btn btn-primary">Upload</button>
                     </div>
                     <div class="col-2">
-                        <button type="button" class="btn btn-primary">View</button>
+                        @if (Model.IsICA)
+                        {
+                            <button type="button" class="btn btn-primary">View</button>
+                        }
                     </div>
                     <div class="col">
-                        <input asp-for="ICA" type="file" id="ica-file-input" hidden />
+                        <input asp-for="ICA" type="file" accept="application/pdf" id="ica-file-input" hidden />
                         <span id="ica-file-name-text" class="fw-bole"></span>
                     </div>
                 </div>
@@ -369,10 +374,13 @@
                         <button id="bg-check-upload-btn" type="button" class="btn btn-primary">Upload</button>
                     </div>
                     <div class="col-2">
-                        <button type="button" class="btn btn-primary">View</button>
+                        @if (Model.IsBGCheck)
+                        {
+                            <button type="button" class="btn btn-primary">View</button>
+                        }
                     </div>
                     <div class="col">
-                        <input asp-for="BGCheck" type="file" id="bg-check-file-input" hidden />
+                        <input asp-for="BGCheck" type="file" accept="application/pdf" id="bg-check-file-input" hidden />
                         <span id="bg-check-file-name-text" class="fw-bole"></span>
                     </div>
                 </div>
@@ -390,10 +398,13 @@
                         <button id="hipaa-upload-btn" type="button" class="btn btn-primary">Upload</button>
                     </div>
                     <div class="col-2">
-                        <button type="button" class="btn btn-primary">View</button>
+                        @if (Model.IsHIPAA)
+                        {
+                            <button type="button" class="btn btn-primary">View</button>
+                        }
                     </div>
                     <div class="col">
-                        <input asp-for="HIPAACompliance" type="file" id="hipaa-file-input" hidden />
+                        <input asp-for="HIPAACompliance" accept="application/pdf" type="file" id="hipaa-file-input" hidden />
                         <span id="hipaa-file-name-text" class="fw-bole"></span>
                     </div>
                 </div>
@@ -411,10 +422,13 @@
                         <button id="nda-upload-btn" type="button" class="btn btn-primary">Upload</button>
                     </div>
                     <div class="col-2">
-                        <button type="button" class="btn btn-primary">View</button>
+                        @if (Model.IsNDA)
+                        {
+                            <button type="button" class="btn btn-primary">View</button>
+                        }
                     </div>
                     <div class="col">
-                        <input asp-for="NDA" type="file" id="nda-file-input" hidden />
+                        <input asp-for="NDA" type="file" accept="application/pdf" id="nda-file-input" hidden />
                         <span id="nda-file-name-text" class="fw-bole"></span>
                     </div>
                 </div>
@@ -432,10 +446,13 @@
                         <button id="license-upload-btn" type="button" class="btn btn-primary">Upload</button>
                     </div>
                     <div class="col-2">
-                        <button type="button" class="btn btn-primary">View</button>
+                        @if (Model.IsLicenseDoc)
+                        {
+                            <button type="button" class="btn btn-primary">View</button>
+                        }
                     </div>
                     <div class="col">
-                        <input asp-for="LicenseDoc" type="file" id="license-file-input" hidden />
+                        <input asp-for="LicenseDoc" type="file" accept="application/pdf" id="license-file-input" hidden />
                         <span id="license-file-name-text" class="fw-bole"></span>
                     </div>
                 </div>
@@ -444,6 +461,7 @@
             <button type="reset" class="btn btn-danger float-end m-1 ">Delete Account</button>
             <button type="submit" class="btn btn-primary float-end m-1 ">Save</button>
         </form>
+
     </div>
 </div>
 
@@ -451,10 +469,42 @@
         integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous">
 </script>
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
-    const { jsPDF } = window.jspdf;
+
+    var phyAccountInfoEdit = document.getElementById("account-info-edit-btn");
+    var phyAccountInfoSave = document.getElementById("account-info-save-btn");
+    var phyAccountInfoCancel = document.getElementById("account-info-cancel-btn");
+
+    $('#account-info-edit-btn').click(function () {
+
+        var inputs = document.getElementsByClassName("account-info-input");
+        for (var i = 0; i < inputs.length; i++) {
+            inputs[i].disabled = false;
+        }
+
+        phyAccountInfoEdit.classList.add('d-none');
+        phyAccountInfoSave.classList.remove('d-none');
+        phyAccountInfoCancel.classList.remove('d-none');
+
+    });
+
+    $('#account-info-cancel-btn').click(function () {
+
+        var inputs = document.getElementsByClassName("account-info-input");
+        for (var i = 0; i < inputs.length; i++) {
+            inputs[i].disabled = true;
+        }
+
+        phyAccountInfoEdit.classList.remove('d-none');
+        phyAccountInfoSave.classList.add('d-none');
+        phyAccountInfoCancel.classList.add('d-none');
+
+    });
+
+</script>
+
+<script>
 
     function dataURLtoFile(dataurl, filename) {
         var arr = dataurl.split(','),
@@ -479,7 +529,7 @@
 
         $('#save-signature').on('click', function () {
             const signatureImage = signaturePad.toDataURL();
-            const fileName = "Digital_Signature-" + Date.now() + ".png";
+            const fileName = "Digital_Signature.png";
 
             $('#phy_sign_text_input_id').val(fileName);
 
@@ -487,16 +537,12 @@
 
             let container = new DataTransfer();
             let data = new Blob();
-            // let file = new File(signatureImage, "Digital_Signature.png", { type: "image/png", lastModified: new Date().getTime() });
             let file = dataURLtoFile(signatureImage, fileName);
             container.items.add(file);
             fileInputElement.files = container.files;
 
             $('#signature-div').css("display", "none");
 
-            // const doc = new jsPDF();
-            // doc.addImage(signatureImage, 'PNG', 10, 10, 100, 50);
-            // doc.save('signed_document.pdf');
         });
 
         $('#create-signature-btn').click(function () {
@@ -578,7 +624,6 @@
         });
 
     });
-
 
     $('#physician-info-form').submit(function (event) {
         event.preventDefault();

@@ -1,0 +1,80 @@
+﻿@model UserAccessViewModel
+@{
+    Layout = "_AdminDashboardLayout";
+}
+
+<div class="container mt-4">
+    <div class="justify-content-between d-flex container-fluid mb-2 mt-4 position-relative ">
+        <div class="">
+            <h3>User Access</h3>
+        </div>
+    </div>
+    <div class=" border-0 shadow p-4 mb-5 rounded">
+        <div class="row justify-content-end">
+
+            <div class="d-flex justify-content-end" style="border-radius:5px;">
+                <a asp-controller="Admin" asp-action="CreateAdminAccount" class="btn btn-outline-info d-flex justify-content-center mx-2" style="width:fit-content">
+                    <span class="text-info">Create Admin Account</span>
+                </a>
+            </div>
+
+        </div>
+
+        <div class="w-100 d-none d-md-block my-3 table-responsive">
+            <table class="table table-hover " style="height:75px; text-align:match-parent">
+                <thead class="">
+                    <tr class="table-secondary">
+                        <th class="text-dark">Account Type</th>
+                        <th class="text-dark">Account POC</th>
+                        <th class="text-dark">Phone</th>
+                        <th class="text-dark">Status</th>
+                        <th class="text-dark">Open Requests</th>
+                        <th class="text-dark">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var role in Model.userList)
+                    {
+                        <tr>
+
+                            <td>
+                                @role.AccountType
+                            </td>
+                            <td>
+                                @role.AccountPOC
+                            </td>
+                            <td>
+                                @role.Phone
+                            </td>
+                            <td>
+                                @role.Status
+                            </td>
+                            <td>
+                                @role.OpenRequests
+                            </td>
+                            <td class="d-flex justify-content-end">
+                                @if (role.AccountTypeId == 1)
+                                {
+                                    <a class="btn mx-1 btn-outline-info " asp-controller="Admin" asp-action="MyProfile">Edit</a>
+                                }
+                                else if (role.AccountTypeId == 2)
+                                {
+                                    <a class="btn mx-1 btn-outline-info " asp-controller="Admin" asp-action="EditPhysicianAccount" asp-route-physicianId="@role.AspnetUserId">Edit</a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+    $('.admin-tab').removeClass("active");
+    $('#access-tab').addClass("active");
+
+</script>

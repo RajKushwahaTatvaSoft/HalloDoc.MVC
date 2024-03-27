@@ -28,6 +28,7 @@ namespace Business_Layer.Repository
                 new Claim("roleId", user.RoleId.ToString()),
                 new Claim("userName", user.UserName),
                 new Claim("userId", user.UserId.ToString()),
+                new Claim("accountTypeId", user.AccountTypeId.ToString()),
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));

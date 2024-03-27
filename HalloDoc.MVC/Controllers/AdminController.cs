@@ -1,9 +1,11 @@
 ﻿using Business_Layer.Helpers;
 using Business_Layer.Interface;
 using Business_Layer.Interface.AdminInterface;
+using Business_Layer.Utilities;
 using ClosedXML.Excel;
 using CsvHelper;
 using Data_Layer.CustomModels;
+using Data_Layer.CustomModels.TableRow;
 using Data_Layer.CustomModels.TableRow.Admin;
 using Data_Layer.DataContext;
 using Data_Layer.DataModels;
@@ -106,15 +108,13 @@ namespace HalloDoc.MVC.Controllers
             return View("Header/Records");
         }
 
-        public IActionResult Access()
-        {
-            return View("Header/Access");
-        }
+
 
         public IActionResult Logout()
         {
 
             Response.Cookies.Delete("hallodoc");
+
 
             TempData["success"] = "Logout Successfull";
 
@@ -158,6 +158,7 @@ namespace HalloDoc.MVC.Controllers
             return PartialView("Partial/PartialTable", model);
         }
 
+        [RoleAuthorize((int)AllowMenu.AdminDashboard)]
         public IActionResult Dashboard()
         {
 
@@ -1249,6 +1250,7 @@ namespace HalloDoc.MVC.Controllers
 
         }
 
+        [RoleAuthorize((int)AllowMenu.AdminDashboard)]
         public IActionResult ViewNotes(int Requestid)
         {
 
@@ -1741,7 +1743,7 @@ namespace HalloDoc.MVC.Controllers
                 Directory.CreateDirectory(path);
             }
 
-            string[] oldfiles = Directory.GetFiles(path,updateName+".*");
+            string[] oldfiles = Directory.GetFiles(path, updateName + ".*");
             foreach (string f in oldfiles)
             {
                 System.IO.File.Delete(f);
@@ -1750,8 +1752,6 @@ namespace HalloDoc.MVC.Controllers
             string extension = Path.GetExtension(file.FileName);
 
             string fileName = updateName + extension;
-
-
 
             string fullPath = Path.Combine(path, fileName);
 
@@ -1764,7 +1764,8 @@ namespace HalloDoc.MVC.Controllers
         public bool SavePhysicianProfileInfo(int PhysicianId, IFormFile Signature, IFormFile Photo, string BusinessName, string BusinessWebsite)
         {
 
-
+            List<string> validProfileExtensions = new List<string> { ".jpeg", ".png", ".jpg" };
+            List<string> validDocumentExtensions = new List<string> { ".pdf" };
             if (PhysicianId == null || PhysicianId == 0)
             {
                 return false;
@@ -1781,15 +1782,30 @@ namespace HalloDoc.MVC.Controllers
 
                 if (Signature != null)
                 {
-                    InsertFileWithPath(Signature, path);
+                    string sigExtension = Path.GetExtension(Photo.FileName);
+
+                    if (!validProfileExtensions.Contains(sigExtension))
+                    {
+                        TempData["error"] = "Invalid Signature Extension";
+                        return false;
+                    }
+                    InsertFileAfterRename(Signature, path, "Signature");
 
                     physician.Signature = Signature.FileName;
                 }
 
                 if (Photo != null)
                 {
-                    InsertFileWithPath(Photo, path);
+                    string profileExtension = Path.GetExtension(Photo.FileName);
+
+                    if (!validProfileExtensions.Contains(profileExtension))
+                    {
+                        TempData["error"] = "Invalid Profile Photo Extension";
+                        return false;
+                    }
+                    InsertFileAfterRename(Photo, path, "ProfilePhoto");
                     physician.Photo = Photo.FileName;
+
                 }
 
                 _unitOfWork.PhysicianRepository.Update(physician);
@@ -1803,7 +1819,7 @@ namespace HalloDoc.MVC.Controllers
                 TempData["error"] = e.Message;
                 return false;
             }
-            
+
         }
 
         [HttpPost]
@@ -1820,10 +1836,10 @@ namespace HalloDoc.MVC.Controllers
             {
                 string path = Path.Combine(_environment.WebRootPath, "document", "physician", PhysicianId.ToString());
                 Physician phy = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Physicianid == PhysicianId);
-                
-                if(ICA != null)
+
+                if (ICA != null)
                 {
-                    InsertFileAfterRename(ICA,path,"ICA");
+                    InsertFileAfterRename(ICA, path, "ICA");
                     phy.Isagreementdoc = true;
                 }
 
@@ -1978,8 +1994,6 @@ namespace HalloDoc.MVC.Controllers
                 return false;
             }
 
-            return false;
-
         }
 
 
@@ -1988,8 +2002,162 @@ namespace HalloDoc.MVC.Controllers
             EditPhysicianViewModel model = new EditPhysicianViewModel()
             {
                 regions = _unitOfWork.RegionRepository.GetAll(),
+                roles = _context.Roles,
             };
             return View("Providers/CreatePhysicianAccount", model);
+        }
+
+        [HttpPost]
+        public IActionResult CreatePhysicianAccount(EditPhysicianViewModel model)
+        {
+
+            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
+            Admin? admin = _context.Admins.FirstOrDefault(x => x.Adminid == adminId);
+
+            List<string> validProfileExtensions = new List<string> { ".jpeg", ".png", ".jpg" };
+            List<string> validDocumentExtensions = new List<string> { ".pdf" };
+
+            if (admin != null && ModelState.IsValid)
+            {
+
+                try
+                {
+                    Guid generatedId = Guid.NewGuid();
+
+                    Aspnetuser aspUser = new()
+                    {
+                        Id = generatedId.ToString(),
+                        Username = model.UserName,
+                        Passwordhash = AuthHelper.GenerateSHA256(model.Password),
+                        Email = model.Email,
+                        Phonenumber = model.Phone,
+                        Createddate = DateTime.Now,
+                        Roleid = (int)AllowRole.Physician,
+                    };
+
+                    _unitOfWork.AspNetUserRepository.Add(aspUser);
+                    _unitOfWork.Save();
+
+                    Physician phy = new()
+                    {
+                        Aspnetuserid = generatedId.ToString(),
+                        Firstname = model.FirstName,
+                        Lastname = model.LastName,
+                        Email = model.Email,
+                        Mobile = model.Phone,
+                        Medicallicense = model.MedicalLicenseNumber,
+                        Adminnotes = model.AdminNotes,
+                        Address1 = model.Address1,
+                        Address2 = model.Address2,
+                        City = model.City,
+                        Regionid = model.RegionId,
+                        Zip = model.Zip,
+                        Altphone = model.MailPhone,
+                        Createdby = admin.Aspnetuserid,
+                        Createddate = DateTime.Now,
+                        Status = (short)model.StatusId,
+                        Roleid = model.RoleId,
+                        Npinumber = model.NPINumber,
+                        Businessname = model.BusinessName,
+                        Businesswebsite = model.BusinessWebsite,
+                    };
+
+                    _unitOfWork.PhysicianRepository.Add(phy);
+                    _unitOfWork.Save();
+
+
+                    string path = Path.Combine(_environment.WebRootPath, "document", "physician", phy.Physicianid.ToString());
+
+                    if (model.Photo != null)
+                    {
+                        string fileExtension = Path.GetExtension(model.Photo.FileName);
+                        if (validDocumentExtensions.Contains(fileExtension))
+                        {
+                            phy.Isnondisclosuredoc = true;
+                            InsertFileAfterRename(model.Photo, path, "ProfilePhoto");
+                        }
+                    }
+
+                    if (model.Signature != null)
+                    {
+                        string fileExtension = Path.GetExtension(model.Signature.FileName);
+                        if (validDocumentExtensions.Contains(fileExtension))
+                        {
+                            phy.Isnondisclosuredoc = true;
+                            InsertFileAfterRename(model.Signature, path, "Signature");
+                        }
+                    }
+
+
+                    if (model.ICA != null)
+                    {
+                        string fileExtension = Path.GetExtension(model.ICA.FileName);
+                        if (validDocumentExtensions.Contains(fileExtension))
+                        {
+                            phy.Isnondisclosuredoc = true;
+                            InsertFileAfterRename(model.ICA, path, "ICA");
+                        }
+                    }
+
+                    if (model.BGCheck != null)
+                    {
+                        string fileExtension = Path.GetExtension(model.BGCheck.FileName);
+                        if (validDocumentExtensions.Contains(fileExtension))
+                        {
+                            phy.Isnondisclosuredoc = true;
+                            InsertFileAfterRename(model.BGCheck, path, "BackgroundCheck");
+                        }
+                    }
+
+                    if (model.HIPAACompliance != null)
+                    {
+                        string fileExtension = Path.GetExtension(model.HIPAACompliance.FileName);
+                        if (validDocumentExtensions.Contains(fileExtension))
+                        {
+                            phy.Isnondisclosuredoc = true;
+                            InsertFileAfterRename(model.HIPAACompliance, path, "HipaaCompliance");
+                        }
+                    }
+
+                    if (model.NDA != null)
+                    {
+                        string fileExtension = Path.GetExtension(model.NDA.FileName);
+                        if (validDocumentExtensions.Contains(fileExtension))
+                        {
+                            phy.Isnondisclosuredoc = true;
+                            InsertFileAfterRename(model.NDA, path, "NDA");
+                        }
+                    }
+
+                    if (model.LicenseDoc != null)
+                    {
+                        string fileExtension = Path.GetExtension(model.LicenseDoc.FileName);
+                        if (validDocumentExtensions.Contains(fileExtension))
+                        {
+                            phy.Isnondisclosuredoc = true;
+                            InsertFileAfterRename(model.LicenseDoc, path, "LicenseDoc");
+                        }
+                    }
+
+                    TempData["success"] = "Physician Created Successfully";
+
+                    return RedirectToAction("ProviderMenu");
+                }
+                catch (Exception e)
+                {
+                    TempData["error"] = e.Message;
+                    model.roles = _unitOfWork.RoleRepo.GetAll();
+                    model.regions = _unitOfWork.RegionRepository.GetAll();
+                    return View("Providers/CreatePhysicianAccount", model);
+                }
+
+
+            }
+
+            model.roles = _unitOfWork.RoleRepo.GetAll();
+            model.regions = _unitOfWork.RegionRepository.GetAll();
+            return View("Providers/CreatePhysicianAccount", model);
+
         }
 
         public IActionResult EditPhysicianAccount(int physicianId)
@@ -2130,152 +2298,6 @@ namespace HalloDoc.MVC.Controllers
         {
             return View("Providers/Invoicing");
         }
-
-        #endregion
-
-        #region HelperFunctions
-
-
-
-        public string GenerateConfirmationNumber(User user)
-        {
-            string regionAbbr = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == user.Regionid).Abbreviation;
-
-            DateTime todayStart = DateTime.Now.Date;
-            int count = _unitOfWork.RequestRepository.Count(req => req.Createddate > todayStart);
-
-            string confirmationNumber = regionAbbr + user.Createddate.Date.ToString("D2") + user.Createddate.Month.ToString("D2") + user.Lastname.Substring(0, 2).ToUpper() + user.Firstname.Substring(0, 2).ToUpper() + (count + 1).ToString("D4");
-            return confirmationNumber;
-        }
-
-
-
-        public void SendMailForCreateAccount(string email)
-        {
-            try
-            {
-                Aspnetuser aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(user => user.Email == email);
-
-                string createAccToken = Guid.NewGuid().ToString();
-
-                Passtoken passtoken = new Passtoken()
-                {
-                    Aspnetuserid = aspUser.Id,
-                    Createddate = DateTime.Now,
-                    Email = email,
-                    Isdeleted = false,
-                    Isresettoken = false,
-                    Uniquetoken = createAccToken,
-                };
-
-                _unitOfWork.PassTokenRepository.Add(passtoken);
-                _unitOfWork.Save();
-
-                var createLink = Url.Action("CreateAccount", "Guest", new { token = createAccToken }, Request.Scheme);
-                string subject = "Set up your Account";
-                string body = "<h1>Create Account By clicking below</h1><a href=\"" + createLink + "\" >Create Account link</a>";
-
-                _emailService.SendMail(email, body, subject);
-
-                TempData["success"] = "Email has been successfully sent to " + email + " for create account link.";
-            }
-            catch (Exception ex)
-            {
-                TempData["error"] = ex.Message;
-            }
-        }
-
-
-        public void InsertRequestWiseFile(IFormFile document)
-        {
-            string path = _environment.WebRootPath + "/document";
-            string fileName = document.FileName;
-
-            if (!Directory.Exists(path))
-            {
-                Directory.CreateDirectory(path);
-            }
-            string fullPath = Path.Combine(path, fileName);
-
-            using FileStream stream = new(fullPath, FileMode.Create);
-            document.CopyTo(stream);
-        }
-
-
-        public static string GetPatientDOB(Requestclient u)
-        {
-            string udb = u.Intyear + "-" + u.Strmonth + "-" + u.Intdate;
-            if (u.Intyear == null || u.Strmonth == null || u.Intdate == null)
-            {
-                return "";
-            }
-
-            DateTime dobDate = DateTime.Parse(udb);
-            string dob = dobDate.ToString("MMM dd, yyyy");
-            var today = DateTime.Today;
-            var age = today.Year - dobDate.Year;
-            if (dobDate.Date > today.AddYears(-age)) age--;
-
-            string dobString = dob + " (" + age + ")";
-
-            return dobString;
-        }
-
-        public static string GetRequestType(Request request)
-        {
-            switch (request.Requesttypeid)
-            {
-                case (int)RequestType.Business: return "Business";
-                case (int)RequestType.Patient: return "Patient";
-                case (int)RequestType.Concierge: return "Concierge";
-                case (int)RequestType.Family: return "Relative/Family";
-            }
-
-            return null;
-        }
-
-        [HttpPost]
-        public JsonArray GetBusinessByType(int professionType)
-        {
-            var result = new JsonArray();
-            IEnumerable<Healthprofessional> businesses = _unitOfWork.HealthProfessionalRepo.Where(prof => prof.Profession == professionType);
-
-            foreach (Healthprofessional business in businesses)
-            {
-                result.Add(new { businessId = business.Vendorid, businessName = business.Vendorname });
-            }
-
-            return result;
-        }
-
-
-        [HttpPost]
-        public JsonArray GetPhysicianByRegion(int regionId)
-        {
-            var result = new JsonArray();
-            IEnumerable<Physician> physicians = _unitOfWork.PhysicianRepository.Where(phy => phy.Regionid == regionId);
-
-            foreach (Physician physician in physicians)
-            {
-                result.Add(new { physicianId = physician.Physicianid, physicianName = physician.Firstname + " " + physician.Lastname });
-            }
-
-            return result;
-        }
-
-
-        [HttpPost]
-        public Healthprofessional GetBusinessDetailsById(int vendorId)
-        {
-            if (vendorId <= 0)
-            {
-                return null;
-            }
-            Healthprofessional business = _unitOfWork.HealthProfessionalRepo.GetFirstOrDefault(prof => prof.Vendorid == vendorId);
-
-            return business;
-        }
-
 
         #endregion
 
@@ -2432,7 +2454,463 @@ namespace HalloDoc.MVC.Controllers
 
             }
 
-            return false;
+        }
+
+
+
+        #endregion
+
+        #region Access
+
+
+        [HttpGet]
+        public IActionResult CreateAdminAccount()
+        {
+            EditPhysicianViewModel model = new EditPhysicianViewModel();
+            model.roles = _context.Roles.ToList();
+            model.regions = _context.Regions.ToList();
+            return View("Access/CreateAdminAccount", model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult CreateAdminAccount(EditPhysicianViewModel model)
+        {
+            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
+            Admin? admin = _context.Admins.FirstOrDefault(x => x.Adminid == adminId);
+
+            if (admin != null && ModelState.IsValid)
+            {
+                Guid generatedId = Guid.NewGuid();
+                var phoneNumber = "+" + model.CountryCode + "-" + model.Phone;
+                Aspnetuser aspnetuser = new()
+                {
+                    Id = generatedId.ToString(),
+                    Username = model.UserName,
+                    Passwordhash = AuthHelper.GenerateSHA256(model.Password),
+                    Email = model.Email,
+                    Phonenumber = model.Phone,
+                    Createddate = DateTime.Now,
+                    Roleid = 1,
+                };
+
+                _unitOfWork.AspNetUserRepository.Add(aspnetuser);
+                _unitOfWork.Save();
+
+                Admin admin1 = new()
+                {
+                    Aspnetuserid = aspnetuser.Id,
+                    Firstname = model.FirstName,
+                    Lastname = model.LastName,
+                    Email = model.Email,
+                    Mobile = model.Phone,
+                    Address1 = model.Address1,
+                    Address2 = model.Address2,
+                    City = model.City,
+                    Regionid = model.RegionId,
+                    Zip = model.Zip,
+                    Createdby = aspnetuser.Id,
+                    Createddate = DateTime.Now,
+                    Roleid = model.RoleId,
+                };
+                _unitOfWork.AdminRepository.Add(admin1);
+                _unitOfWork.Save();
+
+
+                if (model.selectedRegions != null && model.selectedRegions.Any())
+                {
+                    foreach (int Item in model.selectedRegions)
+                    {
+                        Adminregion adminregion = new()
+                        {
+                            Regionid = Item,
+                            Adminid = admin1.Adminid
+                        };
+                        _context.Adminregions.Add(adminregion);
+                        _context.SaveChanges();
+                    }
+                }
+
+
+                TempData["success"] = "Admin Created sucessfully";
+                return RedirectToAction("UserAccess");
+            }
+            TempData["failure"] = "Error Creating Admin ";
+            return RedirectToAction("CreateAdminAccount");
+        }
+
+
+        public IActionResult AccountAccess()
+        {
+            int adminId = Convert.ToInt32(HttpContext.Request.Headers
+                .Where(x => x.Key == "userId")
+                .FirstOrDefault().Value);
+
+            Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(a => a.Adminid == adminId);
+            AccountAccessViewModel model = new AccountAccessViewModel();
+
+            IEnumerable<AccountAccessTRow> accessTables = (from r in _context.Roles
+                                                           where r.Isdeleted != true
+                                                           select new AccountAccessTRow
+                                                           {
+                                                               Id = r.Roleid,
+                                                               Name = r.Name,
+                                                               AccounttypeName = r.Accounttype == 1 ? "Admin" : "Physician",
+                                                               AccountType = r.Accounttype,
+                                                           });
+
+            model.roles = accessTables;
+            return View("Access/AccountAccess", model);
+        }
+
+        public IActionResult EditRole(int roleid, int accounttype)
+        {
+
+            IEnumerable<int?> list1 = _context.Rolemenus.Where(a => a.Roleid == roleid).ToList().Select(x => x.Menuid);
+
+            List<Menu> menus;
+
+            if (accounttype == 3)
+            {
+                menus = _context.Menus.ToList();
+            }
+            else
+            {
+                menus = _context.Menus.Where(x => x.Accounttype == accounttype).ToList();
+            }
+
+            EditRoleViewModel model = new()
+            {
+                Menus = menus,
+                list = list1,
+                RoleId = roleid
+            };
+
+            return View("Access/EditRole", model);
+        }
+
+        [HttpPost]
+        public bool roleEditSubmit(List<int> menus, int roleid)
+        {
+
+            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
+            Admin? admin = _context.Admins.FirstOrDefault(a => a.Adminid == adminId);
+            if (admin == null)
+            {
+                return false;
+            }
+            if (roleid == 0 || menus.Count == 0)
+            {
+                return false;
+
+            }
+
+            List<Rolemenu> rolemenus1 = _context.Rolemenus.ToList().Where(x => x.Roleid == roleid).ToList();
+            List<int?> rolemenus = _context.Rolemenus.Where(x => x.Roleid == roleid).Select(x => x.Menuid).ToList();
+            for (int i = 0; i < rolemenus.Count; i++)
+            {
+                if (!menus.Contains((int)rolemenus[i]))
+                {
+                    Role role = _context.Roles.FirstOrDefault(r => r.Roleid == roleid);
+                    role.Modifiedby = admin.Aspnetuserid;
+                    role.Modifieddate = DateTime.Now;
+                    Rolemenu? rolemenu = _context.Rolemenus.FirstOrDefault(x => x.Menuid == rolemenus[i]);
+                    _context.Rolemenus.Remove(rolemenu);
+                    _context.Roles.Update(role);
+                    _context.SaveChanges();
+                }
+            }
+            for (int i = 0; i < menus.Count; i++)
+            {
+                if (!rolemenus.Contains(menus[i]))
+                {
+                    Role role = _context.Roles.FirstOrDefault(r => r.Roleid == roleid);
+                    role.Modifiedby = admin.Aspnetuserid;
+                    role.Modifieddate = DateTime.Now;
+                    Rolemenu item = new Rolemenu();
+                    item.Menuid = menus[i];
+                    item.Roleid = roleid;
+                    _context.Rolemenus.Add(item);
+                    _context.Roles.Update(role);
+                    _context.SaveChanges();
+
+                }
+                else
+                {
+                    continue;
+                }
+            }
+
+            return true;
+
+        }
+        public IActionResult DeleteRole(int roleid)
+        {
+            try
+            {
+
+                int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
+                Admin? admin = _context.Admins.FirstOrDefault(x => x.Adminid == adminId);
+
+                Role? role = _context.Roles.FirstOrDefault(z => z.Roleid == roleid);
+
+                if (role == null)
+                {
+                    TempData["error"] = "Error occured while removing role. Please try again later.";
+                    return RedirectToAction("AccountAccess");
+                }
+
+                role.Isdeleted = true;
+                _context.Roles.Update(role);
+                _context.SaveChanges();
+
+                TempData["success"] = "Role Deleted Successfully";
+
+                return RedirectToAction("AccountAccess");
+            }
+            catch (Exception e)
+            {
+                TempData["error"] = e.Message;
+                return RedirectToAction("AccountAccess");
+            }
+
+
+        }
+        [HttpGet]
+        public ActionResult GetMenusByAccounttype(short type)
+        {
+            List<Menu> checkboxItems;
+            if (type == 3)
+            {
+                checkboxItems = _context.Menus.ToList();
+            }
+            else
+            {
+                checkboxItems = _context.Menus.Where(x => x.Accounttype == type).ToList();
+            }
+
+            return Ok(checkboxItems);
+        }
+
+        [HttpGet]
+        public IActionResult CreateAccess(short menuFilter)
+        {
+            List<Aspnetrole> roles = _context.Aspnetroles.ToList();
+            CreateAccessViewModel model = new CreateAccessViewModel();
+            model.netRoles = roles;
+            return View("Access/CreateAccess", model);
+        }
+
+        [HttpPost]
+        public IActionResult CreateAccess(CreateAccessViewModel model)
+        {
+            try
+            {
+                int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
+                Admin? admin = _context.Admins.FirstOrDefault(x => x.Adminid == adminId);
+                if (string.IsNullOrEmpty(model.roleName) || model.accounttype == 0 || model.selectedRoles == null || !model.selectedRoles.Any())
+                {
+                    TempData["error"] = "Please fill all necessary details";
+                    return RedirectToAction("CreateAccess");
+                }
+                Role role = new()
+                {
+                    Name = model.roleName,
+                    Accounttype = (short)model.accounttype,
+                    Createdby = admin.Aspnetuserid,
+                    Createddate = DateTime.Now,
+                    Isdeleted = false
+
+                };
+
+                _unitOfWork.RoleRepo.Add(role);
+                _unitOfWork.Save();
+
+                foreach (var menuId in model.selectedRoles)
+                {
+                    Rolemenu rolemenu = new Rolemenu();
+                    rolemenu.Menuid = menuId;
+                    rolemenu.Roleid = role.Roleid;
+                    _context.Rolemenus.Add(rolemenu);
+                }
+
+                _context.SaveChanges();
+
+                TempData["success"] = "Role created Successfully";
+                return RedirectToAction("AccountAccess");
+
+            }
+            catch (Exception ex)
+            {
+                TempData["error"] = ex.Message;
+                return RedirectToAction("CreateAccess");
+            }
+
+        }
+
+
+        public IActionResult UserAccess()
+        {
+            IEnumerable<UserAccessTRow> list = (from user in _context.Aspnetusers
+                                                select new UserAccessTRow
+                                                {
+                                                    AccountTypeId = user.Roleid,
+                                                    AspnetUserId = user.Id,
+                                                    AccountType = user.Username,
+                                                    AccountPOC = user.Roleid.ToString(),
+                                                    Phone = user.Phonenumber?? "+91 XX XX XX XX XX",
+                                                    Status = "Offline",
+                                                    OpenRequests = "0",
+                                                });
+            UserAccessViewModel model = new()
+            {
+                userList = list,
+            };
+            return View("Access/UserAccess",model);
+        }
+        #endregion
+
+        #region HelperFunctions
+
+
+
+        public string GenerateConfirmationNumber(User user)
+        {
+            string regionAbbr = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == user.Regionid).Abbreviation;
+
+            DateTime todayStart = DateTime.Now.Date;
+            int count = _unitOfWork.RequestRepository.Count(req => req.Createddate > todayStart);
+
+            string confirmationNumber = regionAbbr + user.Createddate.Date.ToString("D2") + user.Createddate.Month.ToString("D2") + user.Lastname.Substring(0, 2).ToUpper() + user.Firstname.Substring(0, 2).ToUpper() + (count + 1).ToString("D4");
+            return confirmationNumber;
+        }
+
+
+
+        public void SendMailForCreateAccount(string email)
+        {
+            try
+            {
+                Aspnetuser aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(user => user.Email == email);
+
+                string createAccToken = Guid.NewGuid().ToString();
+
+                Passtoken passtoken = new Passtoken()
+                {
+                    Aspnetuserid = aspUser.Id,
+                    Createddate = DateTime.Now,
+                    Email = email,
+                    Isdeleted = false,
+                    Isresettoken = false,
+                    Uniquetoken = createAccToken,
+                };
+
+                _unitOfWork.PassTokenRepository.Add(passtoken);
+                _unitOfWork.Save();
+
+                var createLink = Url.Action("CreateAccount", "Guest", new { token = createAccToken }, Request.Scheme);
+                string subject = "Set up your Account";
+                string body = "<h1>Create Account By clicking below</h1><a href=\"" + createLink + "\" >Create Account link</a>";
+
+                _emailService.SendMail(email, body, subject);
+
+                TempData["success"] = "Email has been successfully sent to " + email + " for create account link.";
+            }
+            catch (Exception ex)
+            {
+                TempData["error"] = ex.Message;
+            }
+        }
+
+
+        public void InsertRequestWiseFile(IFormFile document)
+        {
+            string path = _environment.WebRootPath + "/document";
+            string fileName = document.FileName;
+
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+            string fullPath = Path.Combine(path, fileName);
+
+            using FileStream stream = new(fullPath, FileMode.Create);
+            document.CopyTo(stream);
+        }
+
+
+        public static string GetPatientDOB(Requestclient u)
+        {
+            string udb = u.Intyear + "-" + u.Strmonth + "-" + u.Intdate;
+            if (u.Intyear == null || u.Strmonth == null || u.Intdate == null)
+            {
+                return "";
+            }
+
+            DateTime dobDate = DateTime.Parse(udb);
+            string dob = dobDate.ToString("MMM dd, yyyy");
+            var today = DateTime.Today;
+            var age = today.Year - dobDate.Year;
+            if (dobDate.Date > today.AddYears(-age)) age--;
+
+            string dobString = dob + " (" + age + ")";
+
+            return dobString;
+        }
+
+        public static string GetRequestType(Request request)
+        {
+            switch (request.Requesttypeid)
+            {
+                case (int)RequestType.Business: return "Business";
+                case (int)RequestType.Patient: return "Patient";
+                case (int)RequestType.Concierge: return "Concierge";
+                case (int)RequestType.Family: return "Relative/Family";
+            }
+
+            return null;
+        }
+
+        [HttpPost]
+        public JsonArray GetBusinessByType(int professionType)
+        {
+            var result = new JsonArray();
+            IEnumerable<Healthprofessional> businesses = _unitOfWork.HealthProfessionalRepo.Where(prof => prof.Profession == professionType);
+
+            foreach (Healthprofessional business in businesses)
+            {
+                result.Add(new { businessId = business.Vendorid, businessName = business.Vendorname });
+            }
+
+            return result;
+        }
+
+
+        [HttpPost]
+        public JsonArray GetPhysicianByRegion(int regionId)
+        {
+            var result = new JsonArray();
+            IEnumerable<Physician> physicians = _unitOfWork.PhysicianRepository.Where(phy => phy.Regionid == regionId);
+
+            foreach (Physician physician in physicians)
+            {
+                result.Add(new { physicianId = physician.Physicianid, physicianName = physician.Firstname + " " + physician.Lastname });
+            }
+
+            return result;
+        }
+
+
+        [HttpPost]
+        public Healthprofessional GetBusinessDetailsById(int vendorId)
+        {
+            if (vendorId <= 0)
+            {
+                return null;
+            }
+            Healthprofessional business = _unitOfWork.HealthProfessionalRepo.GetFirstOrDefault(prof => prof.Vendorid == vendorId);
+
+            return business;
         }
 
 

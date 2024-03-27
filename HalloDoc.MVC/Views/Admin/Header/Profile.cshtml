@@ -180,22 +180,6 @@
                         </div>
                     </div>
 
-
-                    <div class="col-md-6 col-12 mt-4 form-floating floating-label">
-                        <select disabled class="form-select billingChange" placeholder="State" id="patientRequestRegion">
-                            <option selected disabled value="0">State</option>
-
-                            @foreach (var region in Model.regions)
-                            {
-                                <option value="@region.Regionid">@region.Name</option>
-                            }
-
-                        </select>
-                        <label for="patientRequestRegion">State</label>
-                        <span asp-validation-for="RegionId" class="text-danger"></span>
-
-                    </div>
-
                     <div class="col-md-6 col-12 mt-4 form-floating floating-label">
                         <select disabled asp-for="RegionId" class="form-select billingChange" id="patientRequestRegion">
                             <option disabled value="0"> -- Select State -- </option>

@@ -10,9 +10,10 @@ namespace Data_Layer.ViewModels.Admin
 {
     public class EditPhysicianViewModel
     {
-        public IEnumerable<Region> regions { get; set; }
-        public IEnumerable<Role> roles { get; set; }
-        public IEnumerable<int> physicianRegions { get; set; }
+        public IEnumerable<Region>? regions { get; set; }
+        public IEnumerable<Role>? roles { get; set; }
+        public IEnumerable<int>? physicianRegions { get; set; }
+        public IEnumerable<int>? selectedRegions { get; set; }
         public int? PhysicianId { get; set; }
         public string UserName { get; set; }
         public string Password { get; set; }
@@ -26,7 +27,7 @@ namespace Data_Layer.ViewModels.Admin
         public string MailPhone { get; set; }
         public string MedicalLicenseNumber { get; set; }
         public string NPINumber { get; set; }
-        public string SyncEmail { get; set; }
+        public string? SyncEmail { get; set; }
         public string Address1 { get; set; }
         public string Address2 { get; set; }
         public string City { get; set; }
@@ -43,13 +44,13 @@ namespace Data_Layer.ViewModels.Admin
         public bool IsLicenseDoc{  get; set; }
 
         /* POST METHOD FILES */
-        public IFormFile Photo { get; set; }
-        public IFormFile Signature { get; set; }
-        public IFormFile ICA { get; set; }
-        public IFormFile BGCheck { get; set; }
-        public IFormFile HIPAACompliance { get; set; }
-        public IFormFile NDA { get; set; }
-        public IFormFile LicenseDoc { get; set; }
+        public IFormFile? Photo { get; set; }
+        public IFormFile? Signature { get; set; }
+        public IFormFile? ICA { get; set; }
+        public IFormFile? BGCheck { get; set; }
+        public IFormFile? HIPAACompliance { get; set; }
+        public IFormFile? NDA { get; set; }
+        public IFormFile? LicenseDoc { get; set; }
         
     }
 

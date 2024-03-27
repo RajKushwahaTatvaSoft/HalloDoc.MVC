@@ -1,45 +1,12 @@
 ﻿using Business_Layer.Interface.AdminInterface;
+using Business_Layer.Utilities;
 using Data_Layer.CustomModels;
 using Data_Layer.DataContext;
 using Data_Layer.DataModels;
 using Data_Layer.ViewModels.Admin;
-using DocumentFormat.OpenXml.Drawing.Charts;
 
 namespace Business_Layer.Repository.AdminRepo
 {
-    public enum RequestStatus
-    {
-        Unassigned = 1,
-        Accepted = 2,
-        Cancelled = 3,
-        MDEnRoute = 4,
-        MDOnSite = 5,
-        Conclude = 6,
-        CancelledByPatient = 7,
-        Closed = 8,
-        Unpaid = 9,
-        Clear = 10,
-        Block = 11,
-    }
-
-    public enum DashboardStatus
-    {
-        New = 1,
-        Pending = 2,
-        Active = 3,
-        Conclude = 4,
-        ToClose = 5,
-        Unpaid = 6,
-    }
-
-    public enum RequestType
-    {
-        Business = 1,
-        Patient = 2,
-        Family = 3,
-        Concierge = 4
-    }
-
     public class DashboardRepository : IDashboardRepository
     {
         private readonly ApplicationDbContext _context;

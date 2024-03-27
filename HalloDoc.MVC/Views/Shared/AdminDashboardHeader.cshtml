@@ -61,7 +61,7 @@
 
     <li class="admin-tab nav-item" role="presentation">
      
-        <a style="cursor:pointer" class="nav-link active admin-tab px-0 " id="provider-tab" data-bs-toggle="dropdown">
+        <a style="cursor:pointer" class="nav-link active admin-tab px-0" id="provider-tab" data-bs-toggle="dropdown">
             <span class="tabHeader py-2 px-3">Providers</span>
         </a>
 
@@ -78,11 +78,20 @@
             <span class="tabHeader py-2 px-3">Partners</span>
         </a>
     </li>
-    <li class="nav-item" role="presentation">
-        <a asp-controller="Admin" asp-action="Access" class="nav-link px-0 admin-tab" id="access-tab">
+
+    <li class="admin-tab nav-item" role="presentation">
+     
+        <a style="cursor:pointer" class="nav-link admin-tab px-0" id="access-tab" data-bs-toggle="dropdown">
             <span class="tabHeader py-2 px-3">Access</span>
         </a>
+
+        <ul class="dropdown-menu" aria-labelledby="access-tab">
+            <li><a class="dropdown-item" asp-controller="Admin" asp-action="AccountAccess">Account Access</a></li>
+            <li><a class="dropdown-item" asp-controller="Admin" asp-action="UserAccess">User Access</a></li>
+        </ul>
+
     </li>
+
     <li class="nav-item" role="presentation">
         <a asp-controller="Admin" asp-action="Records" class="nav-link px-0 admin-tab" id="record-tab">
             <span class="tabHeader py-2 px-3">Records</span>

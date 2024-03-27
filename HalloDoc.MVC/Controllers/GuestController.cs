@@ -11,6 +11,7 @@ using System.Text;
 using Data_Layer.ViewModels.Admin;
 using HalloDoc.MVC.Services;
 using System.IdentityModel.Tokens.Jwt;
+using Business_Layer.Utilities;
 
 
 namespace HalloDoc.MVC.Controllers
@@ -248,7 +249,8 @@ namespace HalloDoc.MVC.Controllers
                     {
                         UserId = patientUser.Userid,
                         Email = patientUser.Email,
-                        RoleId = aspUser.Roleid,
+                        AccountTypeId = aspUser.Roleid,
+                        RoleId = 0,
                         UserName = patientUser.Firstname + (String.IsNullOrEmpty(patientUser.Lastname) ? "" : " " + patientUser.Lastname),
                     };
 
@@ -270,7 +272,8 @@ namespace HalloDoc.MVC.Controllers
                     {
                         UserId = physicianUser.Physicianid,
                         Email = physicianUser.Email,
-                        RoleId = aspUser.Roleid,
+                        AccountTypeId = aspUser.Roleid,
+                        RoleId = physicianUser.Roleid ?? 0,
                         UserName = physicianUser.Firstname + (String.IsNullOrEmpty(physicianUser.Lastname) ? "" : " " + physicianUser.Lastname),
                     };
 
@@ -292,7 +295,8 @@ namespace HalloDoc.MVC.Controllers
                     {
                         UserId = adminUser.Adminid,
                         Email = adminUser.Email,
-                        RoleId = aspUser.Roleid,
+                        AccountTypeId = aspUser.Roleid,
+                        RoleId = adminUser.Roleid ?? 0,
                         UserName = adminUser.Firstname + (String.IsNullOrEmpty(adminUser.Lastname) ? "" : " " + adminUser.Lastname),
                     };
 

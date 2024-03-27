@@ -1,16 +1,11 @@
 ﻿using Business_Layer.Interface;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using NuGet.Protocol;
 using System.IdentityModel.Tokens.Jwt;
 
 namespace HalloDoc.MVC.Services
 {
-    public enum AllowRole
-    {
-        Admin = 1,
-        Patient = 2,
-        Physician = 3
-    }
 
     public class CustomAuthorize : Attribute, IAuthorizationFilter
     {
@@ -20,10 +15,10 @@ namespace HalloDoc.MVC.Services
         {
             _roleId = roleId;
         }
-
+        
         public void OnAuthorization(AuthorizationFilterContext context)
         {
-            if(_roleId == null)
+            if(_roleId == 0)
             {
                 context.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Guest", action = "Index" }));
                 return;
@@ -37,8 +32,7 @@ namespace HalloDoc.MVC.Services
                 return;
             }
 
-            var request = context.HttpContext.Request;
-            var token = request.Cookies["hallodoc"];
+            var token = context.HttpContext.Request.Cookies["hallodoc"];
 
             if (token == null || !jwtService.ValidateToken(token, out JwtSecurityToken jwtToken))
             {
@@ -46,7 +40,7 @@ namespace HalloDoc.MVC.Services
                 return;
             }
 
-            var roleClaim = jwtToken.Claims.FirstOrDefault(claims => claims.Type == "roleId");
+            var roleClaim = jwtToken.Claims.FirstOrDefault(claims => claims.Type == "accountTypeId");
             var userIdClaim = jwtToken.Claims.FirstOrDefault(claims => claims.Type == "userId");
             var userNameClaim = jwtToken.Claims.FirstOrDefault(claims => claims.Type == "userName");
             context.HttpContext.Request.Headers.Add("userId",userIdClaim.Value);
@@ -66,5 +60,6 @@ namespace HalloDoc.MVC.Services
             }
 
         }
+
     }
 }
