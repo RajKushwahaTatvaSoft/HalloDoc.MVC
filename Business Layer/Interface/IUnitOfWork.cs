@@ -29,6 +29,7 @@ namespace Business_Layer.Interface
         IAdminRegionRepo AdminRegionRepo { get; }
         IRoleRepository RoleRepo { get; }
         IPhysicianRegionRepo PhysicianRegionRepo { get; }
+        IPhysicianLocationRepo PhysicianLocationRepo { get; }
         void Save();
     }
 

@@ -35,6 +35,7 @@ namespace Business_Layer.Repository
             AdminRegionRepo = new AdminRegionRepo(_context);
             RoleRepo = new RoleRepository(_context);
             PhysicianRegionRepo = new PhysicianRegionRepository(_context);
+            PhysicianLocationRepo = new PhysicianLocationRepo(_context);
         }
 
         public IAdminRepository AdminRepository { get; private set; }
@@ -61,6 +62,7 @@ namespace Business_Layer.Repository
         public IAdminRegionRepo AdminRegionRepo { get; private set; }
         public IPhysicianRegionRepo PhysicianRegionRepo { get; private set; }
         public IRoleRepository RoleRepo { get; private set; }
+        public IPhysicianLocationRepo PhysicianLocationRepo { get; private set; }
 
         public void Save()
         {

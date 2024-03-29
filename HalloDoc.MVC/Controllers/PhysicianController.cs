@@ -2,10 +2,14 @@
 using Business_Layer.Interface.AdminInterface;
 using Business_Layer.Utilities;
 using Data_Layer.CustomModels;
+using Data_Layer.DataModels;
 using Data_Layer.ViewModels.Admin;
 using Data_Layer.ViewModels.Physician;
 using HalloDoc.MVC.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Storage;
+using System.Text.Json.Nodes;
+using static Org.BouncyCastle.Math.EC.ECCurve;
 
 namespace HalloDoc.MVC.Controllers
 {
@@ -14,11 +18,13 @@ namespace HalloDoc.MVC.Controllers
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IDashboardRepository _dashboardRepository;
+        private readonly IConfiguration _config;
 
-        public PhysicianController(IUnitOfWork unit, IDashboardRepository dashboardRepository)
+        public PhysicianController(IUnitOfWork unit, IDashboardRepository dashboardRepository, IConfiguration config)
         {
             _unitOfWork = unit;
             _dashboardRepository = dashboardRepository;
+            _config = config;
         }
 
         public IActionResult Profile()
@@ -69,6 +75,101 @@ namespace HalloDoc.MVC.Controllers
 
         }
 
+        public async Task<string> GetAddressFromLatLng(double latitude, double longtitude)
+        {
+            try
+            {
+
+                using (var client = new HttpClient())
+                {
+                    string apiKey = _config.GetSection("Geocoding")["ApiKey"];
+                    string baseUrl = $"https://geocode.maps.co/reverse?lat={latitude}&lon={longtitude}&api_key=" + apiKey;
+                    //HTTP GET
+
+                    var responseTask = client.GetAsync(baseUrl);
+                    responseTask.Wait();
+
+                    var result = responseTask.Result;
+                    if (result.IsSuccessStatusCode)
+                    {
+                        var content = await result.Content.ReadAsStringAsync();
+
+                        var json = JsonObject.Parse(content);
+
+                        string address = json?["display_name"]?.ToString() ?? "";
+
+                        return address;
+                    }
+                    else
+                    {
+                        //log response status here
+
+                        ModelState.AddModelError(string.Empty, "Server error. Please contact administrator.");
+
+                        return "";
+                    }
+                }
+
+            }
+            catch (Exception e)
+            {
+                var error = e.Message;
+                return "";
+            }
+
+        }
+
+        [HttpPost]
+        public async Task<bool> UpdatePhysicianLocation(double latitude, double longitude)
+        {
+            int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
+            try
+            {
+                Physician physician = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Physicianid == phyId);
+                Physicianlocation phyLocation = _unitOfWork.PhysicianLocationRepo.GetFirstOrDefault(loc => loc.Physicianid == phyId);
+                string latLngAddress = await GetAddressFromLatLng(latitude, longitude);
+
+
+                if (phyLocation == null)
+                {
+
+                    phyLocation = new Physicianlocation()
+                    {
+                        Physicianid = phyId,
+                        Latitude = latitude,
+                        Longitude = longitude,
+                        Createddate = DateTime.Now,
+                        Physicianname = physician.Firstname + " " + physician.Lastname,
+                        Address = latLngAddress,
+                    };
+
+                    _unitOfWork.PhysicianLocationRepo.Add(phyLocation);
+                    _unitOfWork.Save();
+
+                }
+                else
+                {
+                    phyLocation.Latitude = latitude;
+                    phyLocation.Longitude = longitude;
+                    phyLocation.Createddate = DateTime.Now;
+                    phyLocation.Address = latLngAddress;
+
+                    _unitOfWork.PhysicianLocationRepo.Update(phyLocation);
+                    _unitOfWork.Save();
+
+                }
+
+
+                return true;
+            }
+
+            catch (Exception ex)
+            {
+                return false;
+            }
+
+        }
+
 
         [HttpPost]
         public async Task<ActionResult> PartialTable(int status, int page, int typeFilter, string searchFilter, int regionFilter)
@@ -90,7 +191,7 @@ namespace HalloDoc.MVC.Controllers
             };
 
             PagedList<AdminRequest> pagedList = await _dashboardRepository.GetAdminRequestsAsync(filter);
-             
+
             PhysicianDashboardViewModel model = new PhysicianDashboardViewModel();
             model.pagedList = pagedList;
             model.DashboardStatus = status;

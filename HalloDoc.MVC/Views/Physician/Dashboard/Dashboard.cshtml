@@ -558,3 +558,43 @@ C25.163,30.114,24.933,30.163,24.687,30.163z"></path>
 </div>
 
 <script src="/js/physician-dashboard.js"></script>
+
+<script>
+
+    navigator.geolocation.getCurrentPosition(show_map);
+
+    function show_map(position) {
+        console.log('hi');
+        var lat = position.coords.latitude;
+        var lon = position.coords.longitude;
+
+        console.log(lat);
+        console.log(lon);
+
+        if (lat != null && lon != null) {
+
+            $.ajax({
+                url: "/Physician/UpdatePhysicianLocation",
+                data: { latitude: lat, longitude: lon },
+                type: 'POST',
+                success: function (result) {
+                    if (result) {
+                        console.log('successfully updated location.');
+                    }
+                    else {
+                        console.log('could not update location.');
+                    }
+                },
+                error: function (error) {
+                    console.log('Error Updating Location')
+                    console.log(error);
+                },
+            });
+        }
+
+        // var url = "/Home/Index?latitude=" + latitude + "&longtitude=" + longitude;
+        // $.post(url, function (data) {
+        // });
+    }
+
+</script>

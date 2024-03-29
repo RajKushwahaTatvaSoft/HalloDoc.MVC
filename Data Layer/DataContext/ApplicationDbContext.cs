@@ -373,7 +373,7 @@ public partial class ApplicationDbContext : DbContext
         {
             entity.HasKey(e => e.Shiftid).HasName("shift_pkey");
 
-            entity.Property(e => e.Shiftid).ValueGeneratedNever();
+            entity.Property(e => e.Shiftid).UseIdentityAlwaysColumn();
             entity.Property(e => e.Weekdays).IsFixedLength();
 
             entity.HasOne(d => d.CreatedbyNavigation).WithMany(p => p.Shifts)
@@ -389,7 +389,7 @@ public partial class ApplicationDbContext : DbContext
         {
             entity.HasKey(e => e.Shiftdetailid).HasName("shiftdetail_pkey");
 
-            entity.Property(e => e.Shiftdetailid).ValueGeneratedNever();
+            entity.Property(e => e.Shiftdetailid).UseIdentityAlwaysColumn();
 
             entity.HasOne(d => d.ModifiedbyNavigation).WithMany(p => p.Shiftdetails).HasConstraintName("shiftdetail_modifiedby_fkey");
 
@@ -404,7 +404,7 @@ public partial class ApplicationDbContext : DbContext
         {
             entity.HasKey(e => e.Shiftdetailregionid).HasName("shiftdetailregion_pkey");
 
-            entity.Property(e => e.Shiftdetailregionid).ValueGeneratedNever();
+            entity.Property(e => e.Shiftdetailregionid).UseIdentityAlwaysColumn();
 
             entity.HasOne(d => d.Region).WithMany(p => p.Shiftdetailregions)
                 .OnDelete(DeleteBehavior.ClientSetNull)

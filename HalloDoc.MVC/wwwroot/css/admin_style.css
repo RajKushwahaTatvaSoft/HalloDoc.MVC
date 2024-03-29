@@ -9,7 +9,7 @@ html, body {
 }
 
 input[type="checkbox"]:disabled {
-    background-color : #AAAAAA;
+    background-color: #AAAAAA;
 }
 
 input[type="checkbox"]:checked {
@@ -434,9 +434,25 @@ x::-webkit-file-upload-button, input[type=file]:after {
     border-radius: 100%;
 }
 
+.scheduling-body .pending-shift-bg {
+    background-color: lightpink;
+}
+
+
+.scheduling-body .approved-shift-bg {
+    background-color: lightgreen;
+}
+
+.calender-filter {
+    border: 1px solid #10bce9;
+}
+
+.cal-filter-active {
+    background-color: #10bce9;
+    color: white;
+}
 
 @media (max-width: 768px) {
-
     .status-tab svg {
         display: none;
     }

@@ -44,7 +44,7 @@ namespace HalloDoc.MVC.Controllers
                 return View();
             }
 
-            var roleClaim = jwtToken.Claims.FirstOrDefault(claims => claims.Type == "roleId");
+            var roleClaim = jwtToken.Claims.FirstOrDefault(claims => claims.Type == "accountTypeId");
             int roleId = Convert.ToInt32(roleClaim?.Value);
 
             if(roleId == (int)AllowRole.Patient)

@@ -1,0 +1,44 @@
+﻿@model ShiftWeekViewModel
+
+<div class="p-0 container-fluid mt-4">
+
+    <table class=" p-0 table mt-4  table-bordered">
+
+        <thead class="p-0" style="background-color: dimgrey;">
+            <tr class="">
+                <th class="text-uppercase text-white" style="text-align: center">Mon</th>
+                <th class="text-uppercase text-white" style="text-align: center">Tue</th>
+                <th class="text-uppercase text-white" style="text-align: center">Wed</th>
+                <th class="text-uppercase text-white" style="text-align: center">Thu</th>
+                <th class="text-uppercase text-white" style="text-align: center">Fri</th>
+                <th class="text-uppercase text-white" style="text-align: center">Sat</th>
+                <th class="text-uppercase text-white" style="text-align: center">Sun</th>
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+            @foreach (var phyDetails in Model.physicianShifts)
+            {
+
+                <tr>
+
+                    <td>
+
+                        <img src="~/document/physician/@phyDetails.PhysicianId/ProfilePhoto.png" class="rounded-circle" style="height:30px; width:30px;" />
+                        <span>@phyDetails.PhysicianName</span>
+
+                    </td>
+
+
+                </tr>
+                
+            }
+
+
+        </tbody>
+
+    </table>
+
+</div>

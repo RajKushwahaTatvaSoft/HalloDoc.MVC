@@ -9,8 +9,8 @@ using Data_Layer.CustomModels.TableRow;
 using Data_Layer.CustomModels.TableRow.Admin;
 using Data_Layer.DataContext;
 using Data_Layer.DataModels;
+using Data_Layer.ViewModels;
 using Data_Layer.ViewModels.Admin;
-using DocumentFormat.OpenXml.Wordprocessing;
 using HalloDoc.MVC.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis;
@@ -19,11 +19,8 @@ using System.Globalization;
 using System.IO.Compression;
 using System.Net;
 using System.Net.Mail;
-using System.Numerics;
-using System.Reflection.Metadata;
 using System.Text;
 using System.Text.Json.Nodes;
-
 
 namespace HalloDoc.MVC.Controllers
 {
@@ -100,7 +97,18 @@ namespace HalloDoc.MVC.Controllers
 
         public IActionResult ProviderLocation()
         {
-            return View("Header/ProviderLocation");
+            IEnumerable<PhyLocationRow> list = (from pl in _context.Physicianlocations
+                                                select new PhyLocationRow
+                                                {
+                                                    PhysicianName = pl.Physicianname,
+                                                    Latitude = pl.Latitude ?? 0,
+                                                    Longitude = pl.Longitude ?? 0,
+                                                });
+            ProviderLocationViewModel model = new ProviderLocationViewModel()
+            {
+                locationList = list,
+            };
+            return View("Header/ProviderLocation", model);
         }
 
         public IActionResult Records()
@@ -1166,7 +1174,7 @@ namespace HalloDoc.MVC.Controllers
             }
         }
 
-
+        [RoleAuthorize((int)AllowMenu.AdminDashboard)]
         public IActionResult ViewCase(int Requestid)
         {
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
@@ -1721,20 +1729,283 @@ namespace HalloDoc.MVC.Controllers
 
         #region Providers
 
-
-        public void InsertFileWithPath(IFormFile document, string path)
+        public IActionResult Scheduling()
         {
-            string fileName = document.FileName;
+            SchedulingViewModel model = new SchedulingViewModel();
+            model.regions = _unitOfWork.RegionRepository.GetAll();
 
-            if (!Directory.Exists(path))
-            {
-                Directory.CreateDirectory(path);
-            }
-            string fullPath = Path.Combine(path, fileName);
-
-            using FileStream stream = new(fullPath, FileMode.Create);
-            document.CopyTo(stream);
+            return View("Providers/Scheduling", model);
         }
+        [HttpPost]
+        public List<Physician> GetPhyByRegion(int id)
+        {
+            return _context.Physicians.Where(a => a.Regionid == id).ToList();
+        }
+        public enum shiftStatus
+        {
+            Pending = 2,
+            Approved = 1
+        }
+        public enum shiftWeekDays
+        {
+            Sunday = 1,
+            Monday = 2,
+            Tuesday = 3,
+            Wednesday = 4,
+            Thursday = 5,
+            Friday = 6,
+            Saturday = 7
+        }
+
+        public int GetOffSet(int currentDay, List<int> repeatDays)
+        {
+            int nextVal = repeatDays.SkipWhile(day => day <= currentDay).FirstOrDefault();
+            int index = repeatDays.IndexOf(nextVal);
+            return index;
+        }
+
+        [HttpPost]
+        public IActionResult AddShift(SchedulingViewModel model)
+        {
+
+            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
+            Admin admin = _context.Admins.FirstOrDefault(a => a.Adminid == adminId);
+            if (ModelState.IsValid)
+            {
+                Shift shift = new Shift();
+                shift.Physicianid = (int)model.addShiftPhysician;
+                shift.Startdate = DateOnly.FromDateTime(model.shiftDate.Value.Date);
+                if (model.isRepeat != null)
+                {
+                    shift.Isrepeat = true;
+                }
+                else
+                {
+                    shift.Isrepeat = false;
+                }
+
+                shift.Repeatupto = model.repeatCount;
+                shift.Createddate = DateTime.Now;
+                shift.Createdby = admin.Aspnetuserid;
+                _context.Shifts.Add(shift);
+                _context.SaveChanges();
+
+                Shiftdetail shiftdetail1 = new()
+                {
+                    Shiftid = shift.Shiftid,
+                    Shiftdate = (DateTime)model.shiftDate,
+                    Regionid = model.addShiftRegion,
+                    Starttime = (TimeOnly)model.shiftStartTime,
+                    Endtime = (TimeOnly)model.shiftEndTime,
+                    Status = (short)shiftStatus.Approved,
+                    Isdeleted = false
+                };
+                _context.Shiftdetails.Add(shiftdetail1);
+                _context.SaveChanges();
+
+                DateTime currentDate = (DateTime)model.shiftDate;
+                int currentDayOfWeek = (int)model.shiftDate.Value.DayOfWeek;
+
+                int offset = GetOffSet(currentDayOfWeek, model.repeatDays);
+
+                for (int i = 0; i < model.repeatCount; i++)
+                {
+                    int length = model.repeatDays.Count;
+                    for (int j = 0; j < length; j++)
+                    {
+                        int offsetIndex = (j + offset) % length;
+
+                        DateTime nextShiftDate = GetNextWeekday(currentDate, model.repeatDays[offsetIndex]);
+                        Shiftdetail shiftdetail = new()
+                        {
+                            Shiftid = shift.Shiftid,
+                            Shiftdate = nextShiftDate,
+                            Regionid = model.addShiftRegion,
+                            Starttime = (TimeOnly)model.shiftStartTime,
+                            Endtime = (TimeOnly)model.shiftEndTime,
+                            Status = (short)shiftStatus.Approved,
+                            Isdeleted = false
+                        };
+
+                        _context.Shiftdetails.Add(shiftdetail);
+                        _context.SaveChanges();
+
+                        Shiftdetailregion s = new()
+                        {
+                            Shiftdetailid = shiftdetail.Shiftdetailid,
+                            Regionid = (int)shiftdetail.Regionid
+                        };
+                        _context.Shiftdetailregions.Add(s);
+                        _context.SaveChanges();
+                    }
+
+                    currentDate = GetNextWeekday(currentDate, 7); // Move to next week
+                }
+            }
+
+            return RedirectToAction("Scheduling");
+        }
+
+        private DateTime GetNextWeekday(DateTime startDate, int targetDayOfWeek)
+        {
+            int currentDayOfWeek = (int)startDate.DayOfWeek;
+            int daysToAdd = targetDayOfWeek - currentDayOfWeek;
+
+            if (daysToAdd <= 0) daysToAdd += 7; // If the target day is earlier in the week, move to next week
+
+            return startDate.AddDays(daysToAdd);
+        }
+
+        public IActionResult DaySchedule()
+        {
+            // Assume you have a list of ShiftViewModel objects populated from your database
+            List<string> hours = GenerateHours();
+
+            ShiftTableViewModel viewModel = new()
+            {
+                Hours = hours,
+            };
+
+            return PartialView("ScheduleDayWiseTable", viewModel);
+        }
+
+
+        private List<string> GenerateHours()
+        {
+            List<string> hours = new List<string>();
+
+            // Generate hours from 12 AM to 11 PM
+            for (int i = 0; i < 24; i++)
+            {
+                string hour = (i % 12 == 0 ? "12" : (i % 12).ToString()) + (i < 12 ? "A" : "P");
+                hours.Add(hour);
+            }
+
+            return hours;
+        }
+        private List<string> GenerateHourTime()
+        {
+            List<string> hours = new List<string>();
+
+            // Generate hours from 12 AM to 11 PM
+            for (int i = 0; i < 24; i++)
+            {
+                string hour = ((i).ToString()) + ":00:00";
+                hours.Add(hour);
+            }
+
+            return hours;
+        }
+
+
+        private List<ShiftViewModel> GetShiftViewModels(DateTime currentDate)
+        {
+            // Retrieve shift details from the database or any other data source
+
+            var query = (from s in _context.Shifts
+                         join sd in _context.Shiftdetails
+                         on s.Shiftid equals sd.Shiftid
+                         join p in _context.Physicians on s.Physicianid equals p.Physicianid into subgroup
+                         from subitem in subgroup.DefaultIfEmpty()
+                         select new ShiftViewModel
+                         {
+                             ProviderName = subitem.Firstname + " " + subitem.Lastname,
+                             PhysicianId = subitem.Physicianid,
+                             StartTime = sd.Starttime,
+                             EndTime = sd.Endtime,
+                             Status = sd.Status,
+                             shiftDate = sd.Shiftdate
+
+                         }).Where(x => x.shiftDate == currentDate);
+
+            return query.ToList();
+        }
+
+        [HttpPost]
+        public IActionResult ScheduleMonthWisePartial(int shiftMonth, int shiftYear)
+        {
+            string startDate = shiftYear + "-" + (shiftMonth + 1) + "-01";
+
+            int days = DateTime.DaysInMonth(shiftYear, (shiftMonth + 1));
+
+            int startDayOfWeek = (int)DateTime.Parse(startDate).DayOfWeek;
+
+            var query = (from s in _context.Shifts
+                         join sd in _context.Shiftdetails
+                         on s.Shiftid equals sd.Shiftid
+                         where sd.Shiftdate.Month == (shiftMonth + 1)
+                         join p in _context.Physicians on s.Physicianid equals p.Physicianid into subgroup
+                         from subitem in subgroup.DefaultIfEmpty()
+                         select new ShiftItem
+                         {
+                             PhysicianId = sd.Shiftdetailid,
+                             RegionId = sd.Regionid ?? 0,
+                             PhysicianName = subitem.Firstname + " " + subitem.Lastname,
+                             StartTime = sd.Starttime,
+                             EndTime = sd.Endtime,
+                             Status = sd.Status,
+                             ShiftDate = sd.Shiftdate,
+                         });
+
+
+            ShiftMonthViewModel model = new ShiftMonthViewModel()
+            {
+                DaysInMonth = days,
+                StartDayOfWeek = startDayOfWeek,
+                shiftItems = query,
+            };
+
+            return PartialView("Partial/ScheduleMonthWiseTable", model);
+        }
+
+        [HttpPost]
+        public IActionResult ScheduleWeekWisePartial(DateTime startDate)
+        {
+
+            DateTime date = startDate.ToLocalTime();
+
+
+            ShiftWeekViewModel model = new ShiftWeekViewModel();
+
+            var query = (from p in _context.Physicians
+                         select new PhysicianShift
+                         {
+                             PhysicianId = p.Physicianid,
+                             RegionId = p.Regionid ?? 0,
+                             PhysicianName = p.Firstname + " " + p.Lastname,
+                         });
+
+            int i = 0;
+            return PartialView("Partial/ScheduleWeekWiseTable");
+        }
+
+        [HttpPost]
+        public IActionResult SchedulePartialTable(int shiftStatus, int typeFilter, DateTime dayFilter, int regionFilter)
+        {
+            if (dayFilter != null)
+            {
+                DateTime myDate = DateTime.ParseExact("2024-03-31 00:00:00,000", "yyyy-MM-dd HH:mm:ss,fff",
+                                       System.Globalization.CultureInfo.InvariantCulture);
+                List<ShiftViewModel> shiftViewModels = GetShiftViewModels(myDate);
+                List<string> hours = GenerateHours();
+                List<string> hourtimes = GenerateHourTime();
+
+                ShiftTableViewModel viewModel = new()
+                {
+                    hourTime = hourtimes,
+                    Hours = hours,
+                    Shifts = shiftViewModels,
+                    physicians = _context.Physicians,
+                };
+                return PartialView("Partial/ScheduleDayWiseTable", viewModel);
+
+            }
+            else
+            {
+                return View("error");
+            }
+        }
+
 
         public void InsertFileAfterRename(IFormFile file, string path, string updateName)
         {
@@ -1782,7 +2053,7 @@ namespace HalloDoc.MVC.Controllers
 
                 if (Signature != null)
                 {
-                    string sigExtension = Path.GetExtension(Photo.FileName);
+                    string sigExtension = Path.GetExtension(Signature.FileName);
 
                     if (!validProfileExtensions.Contains(sigExtension))
                     {
@@ -2007,10 +2278,56 @@ namespace HalloDoc.MVC.Controllers
             return View("Providers/CreatePhysicianAccount", model);
         }
 
+
+        public async Task<string> FetchLatLang(EditPhysicianViewModel model)
+        {
+            try
+            {
+
+                string state = _unitOfWork.RegionRepository.GetFirstOrDefault(reg => reg.Regionid == model.RegionId).Name;
+
+                using (var client = new HttpClient())
+                {
+                    string apiKey = _config.GetSection("Geocoding")["ApiKey"];
+                    string baseUrl = $"https://geocode.maps.co/search?city={model.City}&state={state}&postalcode={model.Zip}&country=India&api_key=" + apiKey;
+                    //HTTP GET
+
+                    var responseTask = client.GetAsync(baseUrl);
+                    responseTask.Wait();
+
+                    var result = responseTask.Result;
+                    if (result.IsSuccessStatusCode)
+                    {
+                        var content = await result.Content.ReadAsStringAsync();
+
+                        var json = JsonArray.Parse(content);
+
+                        string? latitude = json?[0]?["lat"]?.ToString();
+                        string? longitude = json?[0]?["lon"]?.ToString();
+
+                    }
+                    else
+                    {
+                        //log response status here
+
+                        ModelState.AddModelError(string.Empty, "Server error. Please contact administrator.");
+                    }
+                }
+
+            }
+            catch (Exception e)
+            {
+                var error = e.Message;
+            }
+
+
+            return "bye";
+        }
+
         [HttpPost]
         public IActionResult CreatePhysicianAccount(EditPhysicianViewModel model)
         {
-
+            FetchLatLang(model);
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
             Admin? admin = _context.Admins.FirstOrDefault(x => x.Adminid == adminId);
 
@@ -2287,11 +2604,6 @@ namespace HalloDoc.MVC.Controllers
                 TempData["error"] = e.Message;
             }
             return Redirect("/Admin/ProviderMenu");
-        }
-
-        public IActionResult Scheduling()
-        {
-            return View("Providers/Scheduling");
         }
 
         public IActionResult Invoicing()
@@ -2624,6 +2936,7 @@ namespace HalloDoc.MVC.Controllers
             {
                 if (!rolemenus.Contains(menus[i]))
                 {
+
                     Role role = _context.Roles.FirstOrDefault(r => r.Roleid == roleid);
                     role.Modifiedby = admin.Aspnetuserid;
                     role.Modifieddate = DateTime.Now;
@@ -2674,22 +2987,16 @@ namespace HalloDoc.MVC.Controllers
                 return RedirectToAction("AccountAccess");
             }
 
-
         }
+
         [HttpGet]
         public ActionResult GetMenusByAccounttype(short type)
         {
             List<Menu> checkboxItems;
-            if (type == 3)
-            {
-                checkboxItems = _context.Menus.ToList();
-            }
-            else
-            {
-                checkboxItems = _context.Menus.Where(x => x.Accounttype == type).ToList();
-            }
+            checkboxItems = _context.Menus.Where(x => x.Accounttype == type).ToList();
 
             return Ok(checkboxItems);
+
         }
 
         [HttpGet]
@@ -2758,7 +3065,7 @@ namespace HalloDoc.MVC.Controllers
                                                     AspnetUserId = user.Id,
                                                     AccountType = user.Username,
                                                     AccountPOC = user.Roleid.ToString(),
-                                                    Phone = user.Phonenumber?? "+91 XX XX XX XX XX",
+                                                    Phone = user.Phonenumber ?? "+91 XX XX XX XX XX",
                                                     Status = "Offline",
                                                     OpenRequests = "0",
                                                 });
@@ -2766,12 +3073,11 @@ namespace HalloDoc.MVC.Controllers
             {
                 userList = list,
             };
-            return View("Access/UserAccess",model);
+            return View("Access/UserAccess", model);
         }
         #endregion
 
         #region HelperFunctions
-
 
 
         public string GenerateConfirmationNumber(User user)
