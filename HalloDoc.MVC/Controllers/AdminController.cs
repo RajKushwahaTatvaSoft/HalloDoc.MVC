@@ -1,6 +1,7 @@
 ﻿using Business_Layer.Helpers;
 using Business_Layer.Interface;
 using Business_Layer.Interface.AdminInterface;
+using Business_Layer.Interface.Services;
 using Business_Layer.Utilities;
 using ClosedXML.Excel;
 using CsvHelper;
@@ -33,9 +34,10 @@ namespace HalloDoc.MVC.Controllers
         private readonly IWebHostEnvironment _environment;
         private readonly IConfiguration _config;
         private readonly IEmailService _emailService;
+        private readonly IUtilityService _utilityService;
         private readonly ApplicationDbContext _context;
 
-        public AdminController(IUnitOfWork unitOfWork, IDashboardRepository dashboard, IWebHostEnvironment environment, IConfiguration config, ApplicationDbContext context, IEmailService emailService)
+        public AdminController(IUnitOfWork unitOfWork, IDashboardRepository dashboard, IWebHostEnvironment environment, IConfiguration config, ApplicationDbContext context, IEmailService emailService, IUtilityService utilityService)
         {
             _unitOfWork = unitOfWork;
             _dashboardRepository = dashboard;
@@ -43,6 +45,7 @@ namespace HalloDoc.MVC.Controllers
             _config = config;
             _emailService = emailService;
             _context = context;
+            _utilityService = utilityService;
         }
 
 
@@ -52,7 +55,6 @@ namespace HalloDoc.MVC.Controllers
         {
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
             Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(a => a.Adminid == adminId);
-
 
             if (admin == null)
             {
@@ -64,6 +66,8 @@ namespace HalloDoc.MVC.Controllers
 
             IEnumerable<Region> regions = _unitOfWork.RegionRepository.GetAll();
             IEnumerable<int> adminRegions = _unitOfWork.AdminRegionRepo.Where(region => region.Adminid == adminId).ToList().Select(x => (int)x.Regionid);
+            IEnumerable<City> adminMailCityList = _context.Cities.Where(city => city.Regionid == admin.Regionid);
+            int cityId = _context.Cities.FirstOrDefault(city=> city.Name == admin.City)?.Id ?? 0;
 
             AdminProfileViewModel model = new()
             {
@@ -77,13 +81,15 @@ namespace HalloDoc.MVC.Controllers
                 AltPhoneNumber = admin.Altphone,
                 LastName = admin.Lastname,
                 regions = regions,
+                adminMailCities = adminMailCityList,
                 Address1 = admin.Address1,
                 Address2 = admin.Address2,
                 City = admin.City,
                 State = state,
                 Zip = admin.Zip,
-                RegionId = (int)admin.Regionid,
+                RegionId = admin.Regionid ?? 0,
                 selectedRegions = adminRegions,
+                CityId = cityId,
             };
 
             return View("Header/Profile", model);
@@ -104,9 +110,11 @@ namespace HalloDoc.MVC.Controllers
                                                     Latitude = pl.Latitude ?? 0,
                                                     Longitude = pl.Longitude ?? 0,
                                                 });
+            string apiKey = _config.GetSection("TomTom")["ApiKey"];
             ProviderLocationViewModel model = new ProviderLocationViewModel()
             {
                 locationList = list,
+                ApiKey = apiKey,
             };
             return View("Header/ProviderLocation", model);
         }
@@ -1924,35 +1932,34 @@ namespace HalloDoc.MVC.Controllers
         [HttpPost]
         public IActionResult ScheduleMonthWisePartial(int shiftMonth, int shiftYear)
         {
-            string startDate = shiftYear + "-" + (shiftMonth + 1) + "-01";
+            //string startDate = shiftYear + "-" + (shiftMonth + 1) + "-01";
 
-            int days = DateTime.DaysInMonth(shiftYear, (shiftMonth + 1));
+            //int days = DateTime.DaysInMonth(shiftYear, (shiftMonth + 1));
 
-            int startDayOfWeek = (int)DateTime.Parse(startDate).DayOfWeek;
+            //int startDayOfWeek = (int)DateTime.Parse(startDate).DayOfWeek;
 
-            var query = (from s in _context.Shifts
-                         join sd in _context.Shiftdetails
-                         on s.Shiftid equals sd.Shiftid
-                         where sd.Shiftdate.Month == (shiftMonth + 1)
-                         join p in _context.Physicians on s.Physicianid equals p.Physicianid into subgroup
-                         from subitem in subgroup.DefaultIfEmpty()
-                         select new ShiftItem
-                         {
-                             PhysicianId = sd.Shiftdetailid,
-                             RegionId = sd.Regionid ?? 0,
-                             PhysicianName = subitem.Firstname + " " + subitem.Lastname,
-                             StartTime = sd.Starttime,
-                             EndTime = sd.Endtime,
-                             Status = sd.Status,
-                             ShiftDate = sd.Shiftdate,
-                         });
+            var query = _context.Shiftdetails.Where(shift => shift.Shiftdate.Month == (shiftMonth + 1) && shift.Shiftdate.Year == shiftYear);
 
+            //var query = (from s in _context.Shifts
+            //             join sd in _context.Shiftdetails
+            //             on s.Shiftid equals sd.Shiftid
+            //             where sd.Shiftdate.Month == (shiftMonth + 1)
+            //             join p in _context.Physicians on s.Physicianid equals p.Physicianid into subgroup
+            //             from subitem in subgroup.DefaultIfEmpty()
+            //             select new ShiftItem
+            //             {
+            //                 PhysicianId = sd.Shiftdetailid,
+            //                 RegionId = sd.Regionid ?? 0,
+            //                 PhysicianName = subitem.Firstname + " " + subitem.Lastname,
+            //                 StartTime = sd.Starttime,
+            //                 EndTime = sd.Endtime,
+            //                 Status = sd.Status,
+            //                 ShiftDate = sd.Shiftdate,
+            //             });
 
             ShiftMonthViewModel model = new ShiftMonthViewModel()
             {
-                DaysInMonth = days,
-                StartDayOfWeek = startDayOfWeek,
-                shiftItems = query,
+                shiftDetails = query,
             };
 
             return PartialView("Partial/ScheduleMonthWiseTable", model);
@@ -1962,21 +1969,106 @@ namespace HalloDoc.MVC.Controllers
         public IActionResult ScheduleWeekWisePartial(DateTime startDate)
         {
 
-            DateTime date = startDate.ToLocalTime();
-
+            DateTime start = startDate.ToLocalTime();
+            DateTime end = start.AddDays(7);
 
             ShiftWeekViewModel model = new ShiftWeekViewModel();
 
-            var query = (from p in _context.Physicians
-                         select new PhysicianShift
+            //var query = (from p in _context.Physicians
+            //             select new PhysicianShift
+            //             {
+            //                 PhysicianId = p.Physicianid,
+            //                 PhysicianName = p.Firstname,
+            //                 shiftDetails = GetPhyShiftDetails(startDate,p.Physicianid)
+            //             });
+
+            //var query = (from p in _context.Physicians
+            //             join s in _context.Shifts on p.Physicianid equals s.Physicianid into shiftGroup
+            //             from shiftItem in shiftGroup.DefaultIfEmpty()
+            //             join sd in _context.Shiftdetails on shiftItem.Shiftid equals sd.Shiftid into detailGroup
+            //             from detailItem in detailGroup.DefaultIfEmpty()
+            //             where (detailItem.Shiftdate <= end)
+            //             group detailItem by p.Physicianid into sdGroup
+            //             select new PhysicianShift
+            //             {
+            //                 PhysicianId = sdGroup.Key,
+            //                 shiftDetails = sdGroup.ToList(),
+            //             });
+
+            //var query = (from p in _context.Physicians
+            //             join s in _context.Shifts on p.Physicianid equals s.Physicianid into shiftGroup
+            //             from shiftItem in shiftGroup.DefaultIfEmpty()
+            //             join sd in _context.Shiftdetails on shiftItem.Shiftid equals sd.Shiftid 
+            //             where (sd.Shiftdate <= end)
+            //             group sd by p.Physicianid into sdGroup
+            //             select new PhysicianShift
+            //             {
+            //                 PhysicianId = sdGroup.Key,
+            //                 shiftDetails = sdGroup.ToList(),
+            //             });
+
+            //var query = (from p in _context.Physicians
+            //             join sgroup in
+            //             (from s in _context.Shifts
+            //             join sd in _context.Shiftdetails on s.Shiftid equals sd.Shiftid) on p.Physicianid equals sgroup.Physicianid into phyGroup
+            //             from phyItem in 
+            //             where (sd.Shiftdate <= end)
+            //             group sd by p.Physicianid into sdGroup
+            //             select new PhysicianShift
+            //             {
+            //                 PhysicianId = sdGroup.Key,
+            //                 shiftDetails = sdGroup.ToList(),
+            //             });
+
+            IEnumerable<Physician> phyList = _unitOfWork.PhysicianRepository.GetAll();
+            List<PhysicianShift> physicianShifts = new List<PhysicianShift>();
+
+/*
+            foreach (var phy in phyList)
+            {
+                var query = (from sd in _context.Shiftdetails
+                             join s in _context.Shifts on sd.Shiftid equals s.Shiftid
+                             where (s.Physicianid == phy.Physicianid && sd.Shiftdate >= start && sd.Shiftdate <= end)
+                             select new Shiftdetail
+                             {
+                                 Shiftid = s.Shiftid,
+                                 Starttime = sd.Starttime,
+                                 Endtime = sd.Endtime,
+                             }).ToList();
+
+                PhysicianShift shift = new()
+                {
+                    PhysicianId = phy.Physicianid,
+                    PhysicianName = phy.Firstname,
+                    shiftDetails = query,
+                };
+
+                physicianShifts.Add(shift);
+            }
+*/
+            model.physicianShifts = physicianShifts;
+            model.physicians = phyList;
+
+            return PartialView("Partial/ScheduleWeekWiseTable", model);
+        }
+
+        public IEnumerable<Shiftdetail> GetPhyShiftDetails(DateTime startDate, int physicianId)
+        {
+
+            DateTime start = startDate.ToLocalTime();
+            DateTime end = start.AddDays(7);
+
+            var query = (from s in _context.Shifts
+                         join sd in _context.Shiftdetails on s.Shiftid equals sd.Shiftid
+                         join p in _context.Physicians on s.Physicianid equals p.Physicianid
+                         where (p.Physicianid == physicianId && sd.Shiftdate >= start && sd.Shiftdate <= end)
+                         select new Shiftdetail
                          {
-                             PhysicianId = p.Physicianid,
-                             RegionId = p.Regionid ?? 0,
-                             PhysicianName = p.Firstname + " " + p.Lastname,
+                             Starttime = sd.Starttime,
+                             Endtime = sd.Endtime,
                          });
 
-            int i = 0;
-            return PartialView("Partial/ScheduleWeekWiseTable");
+            return query;
         }
 
         [HttpPost]
@@ -2283,7 +2375,6 @@ namespace HalloDoc.MVC.Controllers
         {
             try
             {
-
                 string state = _unitOfWork.RegionRepository.GetFirstOrDefault(reg => reg.Regionid == model.RegionId).Name;
 
                 using (var client = new HttpClient())
@@ -2327,7 +2418,6 @@ namespace HalloDoc.MVC.Controllers
         [HttpPost]
         public IActionResult CreatePhysicianAccount(EditPhysicianViewModel model)
         {
-            FetchLatLang(model);
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
             Admin? admin = _context.Admins.FirstOrDefault(x => x.Adminid == adminId);
 
@@ -2388,7 +2478,7 @@ namespace HalloDoc.MVC.Controllers
                     if (model.Photo != null)
                     {
                         string fileExtension = Path.GetExtension(model.Photo.FileName);
-                        if (validDocumentExtensions.Contains(fileExtension))
+                        if (validProfileExtensions.Contains(fileExtension))
                         {
                             phy.Isnondisclosuredoc = true;
                             InsertFileAfterRename(model.Photo, path, "ProfilePhoto");
@@ -2398,7 +2488,7 @@ namespace HalloDoc.MVC.Controllers
                     if (model.Signature != null)
                     {
                         string fileExtension = Path.GetExtension(model.Signature.FileName);
-                        if (validDocumentExtensions.Contains(fileExtension))
+                        if (validProfileExtensions.Contains(fileExtension))
                         {
                             phy.Isnondisclosuredoc = true;
                             InsertFileAfterRename(model.Signature, path, "Signature");
@@ -2455,6 +2545,9 @@ namespace HalloDoc.MVC.Controllers
                             InsertFileAfterRename(model.LicenseDoc, path, "LicenseDoc");
                         }
                     }
+
+                    _unitOfWork.PhysicianRepository.Update(phy);
+                    _unitOfWork.Save();
 
                     TempData["success"] = "Physician Created Successfully";
 
@@ -2657,6 +2750,12 @@ namespace HalloDoc.MVC.Controllers
         }
 
         [HttpPost]
+        public IEnumerable<City> GetCitiesByRegion(int regionId)
+        {
+            return _utilityService.GetCitiesByRegion(regionId);
+        }
+
+        [HttpPost]
         public bool SaveAdministratorInfo(List<int> regions, string firstName, string lastName, string email, string phone)
         {
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
@@ -2724,19 +2823,18 @@ namespace HalloDoc.MVC.Controllers
             }
             catch (Exception ex)
             {
-
                 return false;
-
             }
 
         }
 
         [HttpPost]
-        public bool SaveAdminBillingInfo(string Address1, string Address2, string City, string Zip, string AltCountryCode, string AltPhoneNumber, int RegionId)
+        public bool SaveAdminBillingInfo(string Address1, string Address2, int CityId, string Zip, string AltCountryCode, string AltPhoneNumber, int RegionId)
         {
 
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
             Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(a => a.Adminid == adminId);
+            string? City = _context.Cities.FirstOrDefault(city=> city.Id == CityId)?.Name;
 
             if (admin == null)
             {

@@ -29,9 +29,7 @@ namespace Data_Layer.ViewModels.Admin
 
     public class ShiftMonthViewModel
     {
-        public int StartDayOfWeek { get; set; }
-        public int DaysInMonth { get; set; }
-        public IEnumerable<ShiftItem> shiftItems { get; set; }
+        public IEnumerable<Shiftdetail> shiftDetails{ get; set; }
 
     }
 
@@ -40,15 +38,16 @@ namespace Data_Layer.ViewModels.Admin
         public DateTime StartOfWeek { get; set; }
         public DateTime EndOfWeek { get; set; }
         public IEnumerable<PhysicianShift> physicianShifts { get; set; }
+        public IEnumerable<DataModels.Physician> physicians { get; set; }
 
     }
 
     public class PhysicianShift
     {
         public int PhysicianId { get; set; }
+        public string PhysicianName {  get; set; }
         public int RegionId { get; set; }
-        public string PhysicianName { get; set; }
-        public IEnumerable<Shiftdetail> shiftdetails { get; set; }
+        public IEnumerable<Shiftdetail> shiftDetails {  get; set; }
     }
 
 

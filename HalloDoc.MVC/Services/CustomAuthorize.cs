@@ -1,4 +1,5 @@
 ﻿using Business_Layer.Interface;
+using Business_Layer.Repository;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using NuGet.Protocol;
@@ -15,9 +16,13 @@ namespace HalloDoc.MVC.Services
         {
             _roleId = roleId;
         }
+
+
         
         public void OnAuthorization(AuthorizationFilterContext context)
         {
+
+
             if(_roleId == 0)
             {
                 context.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Guest", action = "Index" }));
@@ -26,6 +31,7 @@ namespace HalloDoc.MVC.Services
 
             var jwtService = context.HttpContext.RequestServices.GetService<IJwtService>();
 
+
             if (jwtService == null)
             {
                 context.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Guest", action = "Index" }));
@@ -33,9 +39,24 @@ namespace HalloDoc.MVC.Services
             }
 
             var token = context.HttpContext.Request.Cookies["hallodoc"];
-
+                        
             if (token == null || !jwtService.ValidateToken(token, out JwtSecurityToken jwtToken))
             {
+
+                //if (IsAjaxRequest(context.HttpContext.Request))
+                //{
+                //    context.Result = new JsonResult(new { error = "Access denied", redirectToLogin = true })
+                //    {
+                //        StatusCode = StatusCodes.Status403Forbidden
+                //    };
+                //}
+                //else
+                //{
+                //    context.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Login", action = "Index" }));
+                //}
+
+                //return;
+
                 context.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Guest", action = "Index" }));
                 return;
             }
@@ -60,6 +81,17 @@ namespace HalloDoc.MVC.Services
             }
 
         }
+
+        //public static bool IsAjaxRequest(this HttpRequest request)
+        //{
+        //    if (request == null)
+        //        throw new ArgumentNullException("request");
+        //    if (request["X-Requested-With"] == "XMLHttpRequest")
+        //        return true;
+        //    if (request.Headers != null)
+        //        return request.Headers["X-Requested-With"] == "XMLHttpRequest";
+        //    return false;
+        //}
 
     }
 }

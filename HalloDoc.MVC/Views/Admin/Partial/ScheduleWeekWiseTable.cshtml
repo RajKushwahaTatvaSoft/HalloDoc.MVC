@@ -6,6 +6,7 @@
 
         <thead class="p-0" style="background-color: dimgrey;">
             <tr class="">
+                <th class="p-0 align-items-center" style="text-align: center"><span class="text-white align-items-center" style="text-align: center">STAFF</span></th>
                 <th class="text-uppercase text-white" style="text-align: center">Mon</th>
                 <th class="text-uppercase text-white" style="text-align: center">Tue</th>
                 <th class="text-uppercase text-white" style="text-align: center">Wed</th>
@@ -19,22 +20,83 @@
 
         <tbody>
 
-            @foreach (var phyDetails in Model.physicianShifts)
+            @foreach (var shift in Model.physicianShifts)
+            {
+                <tr>
+
+                    <td>
+
+                        <img src="~/document/physician/@shift.PhysicianId/ProfilePhoto.jpg" class="rounded-circle" style="height:30px; width:30px;" />
+                        <span>@shift.PhysicianName</span>
+
+                    </td>
+
+
+                    @try
+                    {
+
+                        @if (shift.shiftDetails != null && shift.shiftDetails.Any())
+                        {
+                            @foreach (var shiftdetail in shift.shiftDetails)
+                            {
+                                @if(shiftdetail != null)
+                                {
+                                    <td class="pending-shift-bg">
+                                        @shiftdetail.Starttime - @shiftdetail.Endtime
+                                    </td>
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception e)
+                    {
+
+                    }
+
+
+
+                </tr>
+            }
+
+            @* @foreach (var physician in Model.physicians)
             {
 
                 <tr>
 
                     <td>
 
-                        <img src="~/document/physician/@phyDetails.PhysicianId/ProfilePhoto.png" class="rounded-circle" style="height:30px; width:30px;" />
-                        <span>@phyDetails.PhysicianName</span>
+                        <img src="~/document/physician/@physician.Physicianid/ProfilePhoto.png" class="rounded-circle" style="height:30px; width:30px;" />
+                        <span>@physician.Firstname @physician.Lastname</span>
 
                     </td>
 
 
+                    @{
+                        var list = Model.physicianShifts.Where(shift => shift.PhysicianId == physician.Physicianid);
+                    }
+
+                @try{
+
+                        @if (list != null && list.Any())
+                        {
+                            @foreach (var shift in list)
+                            {
+                                <td class="pending-shift-bg">
+                                    @shift.shiftDetail.Starttime - @shift.shiftDetail.Endtime
+                                </td>
+                            }
+                        }
+                }
+                    catch(Exception e)
+                    {
+                        
+                    }
+
+
+
                 </tr>
-                
-            }
+
+            } *@
 
 
         </tbody>

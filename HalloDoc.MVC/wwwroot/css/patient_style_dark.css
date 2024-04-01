@@ -3,6 +3,14 @@
     background-color: #282828;
 }
 
+    .dark-mode .form-control.is-valid, .dark-mode .was-validated .form-control:valid, .dark-mode .form-select.is-valid, .dark-mode .was-validated .form-select:valid {
+        border-color: lightgreen;
+    }
+
+    .dark-mode .form-control.is-invalid, .dark-mode .was-validated .form-control:invalid, .dark-mode .form-select.is-invalid, .dark-mode .was-validated .form-select:invalid {
+        border-color: #ff3632;
+    }
+
     .dark-mode .iti__country-list {
         color: white;
         background-color: #282828 !important;

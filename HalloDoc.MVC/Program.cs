@@ -10,6 +10,8 @@ using Business_Layer.Repository.AdminRepo;
 using Business_Layer.Repository.TableRepo;
 using Business_Layer.Interface.TableInterface;
 using Business_Layer.Services;
+using Business_Layer.Interface.Services;
+using HalloDoc.MVC.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +28,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IUtilityService, Utilities>();
 
 builder.Services.AddSession(options =>
 {

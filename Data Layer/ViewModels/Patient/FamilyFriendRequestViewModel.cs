@@ -23,5 +23,6 @@ namespace Data_Layer.ViewModels
         [Required(ErrorMessage = "Relation cannot be empty")]
         public string? Relation { get; set; }
         public IEnumerable<Region>? regions { get; set; }
+        public bool? IsValidated { get; set; }
     }
 }

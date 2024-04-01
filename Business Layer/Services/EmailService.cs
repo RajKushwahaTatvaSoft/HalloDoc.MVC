@@ -1,7 +1,7 @@
 ﻿using System.Net.Mail;
 using System.Net;
 using Microsoft.Extensions.Configuration;
-using Business_Layer.Interface;
+using Business_Layer.Interface.Services;
 
 namespace Business_Layer.Services
 {

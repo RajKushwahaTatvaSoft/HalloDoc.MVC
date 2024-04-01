@@ -12,6 +12,7 @@ using Data_Layer.ViewModels.Admin;
 using HalloDoc.MVC.Services;
 using System.IdentityModel.Tokens.Jwt;
 using Business_Layer.Utilities;
+using Business_Layer.Interface.Services;
 
 
 namespace HalloDoc.MVC.Controllers
@@ -22,12 +23,20 @@ namespace HalloDoc.MVC.Controllers
         private readonly IUnitOfWork _unitOfWork;
         private readonly IWebHostEnvironment _environment;
         private readonly IConfiguration _config;
-        public GuestController(IUnitOfWork unitOfWork, IJwtService jwt, IWebHostEnvironment environment, IConfiguration config)
+        private readonly IUtilityService _utilityService;
+        public GuestController(IUnitOfWork unitOfWork, IJwtService jwt, IWebHostEnvironment environment, IConfiguration config, IUtilityService utilityService)
         {
             _jwtService = jwt;
             _unitOfWork = unitOfWork;
             _environment = environment;
             _config = config;
+            _utilityService = utilityService;
+        }
+
+        [HttpPost]
+        public IEnumerable<City> GetCitiesByRegion(int regionId)
+        {
+            return _utilityService.GetCitiesByRegion(regionId);
         }
 
         public IActionResult Index()
@@ -341,7 +350,8 @@ namespace HalloDoc.MVC.Controllers
             {
                 string requestIpAddress = GetRequestIP();
                 string phoneNumber = "+" + userViewModel.Countrycode + '-' + userViewModel.Phone;
-                string state = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == userViewModel.RegionId).Name;
+                string patientState = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == userViewModel.RegionId).Name;
+                string patientCity = _unitOfWork.CityRepository.GetFirstOrDefault(city => city.Id == userViewModel.CityId).Name;
 
                 bool isUserExists = _unitOfWork.UserRepository.IsUserWithEmailExists(userViewModel.Email);
 
@@ -378,9 +388,9 @@ namespace HalloDoc.MVC.Controllers
                             Email = userViewModel.Email,
                             Mobile = phoneNumber,
                             Street = userViewModel.Street,
-                            State = state,
+                            State = patientState,
                             Regionid = userViewModel.RegionId,
-                            City = userViewModel.City,
+                            City = patientCity,
                             Zipcode = userViewModel.ZipCode,
                             Createddate = DateTime.Now,
                             Createdby = generatedId.ToString(),
@@ -421,11 +431,11 @@ namespace HalloDoc.MVC.Controllers
                             Lastname = userViewModel.LastName,
                             Phonenumber = phoneNumber,
                             Email = userViewModel.Email,
-                            Address = userViewModel.Street + " " + userViewModel.City + " " + userViewModel.State + ", " + userViewModel.ZipCode,
+                            Address = userViewModel.Street + " " + patientCity + " " + patientState + ", " + userViewModel.ZipCode,
                             Street = userViewModel.Street,
                             Regionid = userViewModel.RegionId,
-                            City = userViewModel.City,
-                            State = state,
+                            City = patientCity,
+                            State = patientState,
                             Zipcode = userViewModel.ZipCode,
                             Notes = userViewModel.Symptom,
                             Ip = requestIpAddress,
@@ -461,7 +471,6 @@ namespace HalloDoc.MVC.Controllers
                     else
                     {
                         TempData["error"] = "Password cannot be empty.";
-                        return View("Request/PatientRequest");
                     }
                 }
                 else
@@ -499,11 +508,11 @@ namespace HalloDoc.MVC.Controllers
                         Lastname = userViewModel.LastName,
                         Phonenumber = phoneNumber,
                         Email = userViewModel.Email,
-                        Address = userViewModel.Street + " " + userViewModel.City + " " + userViewModel.State + ", " + userViewModel.ZipCode,
+                        Address = userViewModel.Street + " " + patientCity + " " + patientState + ", " + userViewModel.ZipCode,
                         Street = userViewModel.Street,
-                        City = userViewModel.City,
+                        City = patientCity,
                         Regionid = userViewModel.RegionId,
-                        State = state,
+                        State = patientState,
                         Zipcode = userViewModel.ZipCode,
                         Notes = userViewModel.Symptom,
                         Ip = requestIpAddress,
@@ -539,6 +548,7 @@ namespace HalloDoc.MVC.Controllers
             }
 
             userViewModel.regions = _unitOfWork.RegionRepository.GetAll();
+            userViewModel.IsValidated = true;
             return View("Request/PatientRequest", userViewModel);
 
         }
@@ -586,7 +596,6 @@ namespace HalloDoc.MVC.Controllers
         {
             if (ModelState.IsValid)
             {
-
                 User user = null;
                 bool isUserExists = _unitOfWork.UserRepository.IsUserWithEmailExists(friendViewModel.patientDetails.Email);
                 string requestIpAddress = GetRequestIP();

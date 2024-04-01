@@ -11,15 +11,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Family/Friend Request</title>
 
-    <!-- <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script> -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 
     <script src="https://code.jquery.com/jquery-3.6.1.min.js"
             integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous">
     </script>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
-            integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
-            crossorigin="anonymous"></script>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
@@ -88,7 +84,10 @@
             </button>
         </div>
 
-        <form method="post" enctype="multipart/form-data">
+        @{
+            string isValidated = Model.IsValidated == true ? "was-validated" : "";
+        }
+        <form method="post" class="needs-validation @isValidated" enctype="multipart/form-data" novalidate>
 
             <div class="container-fluid form-card shadow-sm rounded mx-1 my-3 py-3">
 
@@ -100,7 +99,7 @@
                     <div class="col-lg-4 col-md-6 col-12">
                         <div class="form-floating mt-3">
                             <input asp-for="FirstName" class="form-control" placeholder="Leave a comment here"
-                                   id="floatingTextarea2"></input>
+                                   id="floatingTextarea2" required>
                             <label for="floatingTextarea2">Your First Name</label>
                             <span asp-validation-for="FirstName" class="text-danger"></span>
                         </div>
@@ -109,7 +108,7 @@
                     <div class="col-lg-4 col-md-6 col-12">
                         <div class="form-floating mt-3">
                             <input asp-for="LastName" class="form-control" placeholder="Leave a comment here"
-                                   id="floatingTextarea2"></input>
+                                   id="floatingTextarea2" />
                             <label for="floatingTextarea2">Your Last Name</label>
                         </div>
                     </div>
@@ -118,8 +117,8 @@
 
                         <div class="form-floating mt-3">
 
-                            <input id="family-phone-country" asp-for="Countrycode" hidden />
-                            <input asp-for="Phone" id="family-phone" class="form-control" type="tel" name="phone"></input>
+                            <input id="other-phone-country" asp-for="Countrycode" hidden />
+                            <input asp-for="Phone" id="other-phone" class="form-control" type="tel" name="phone" />
                             <span asp-validation-for="Phone" class="text-danger"></span>
 
                         </div>
@@ -132,14 +131,13 @@
                                    id="floatingTextarea2"></input>
                             <label for="floatingTextarea2">Your Email</label>
                             <span asp-validation-for="Email" class="text-danger"></span>
-
                         </div>
                     </div>
 
                     <div class="col-lg-4 col-md-6 col-12">
                         <div class="form-floating mt-3">
                             <input asp-for="Relation" class="form-control" placeholder="Leave a comment here"
-                                   id="floatingTextarea2"></input>
+                                   id="floatingTextarea2" />
                             <label for="floatingTextarea2">Relation With Patient</label>
                             <span asp-validation-for="Relation" class="text-danger"></span>
 
@@ -168,7 +166,7 @@
                     <div class="col-lg-4 col-md-6 col-12">
                         <div class="form-floating mt-3">
                             <input asp-for="patientDetails.FirstName" class="form-control" placeholder="Leave a comment here"
-                                   id="floatingTextarea2"></input>
+                                   id="floatingTextarea2" required>
                             <label for="floatingTextarea2">First Name</label>
                             <span asp-validation-for="patientDetails.FirstName" class="text-danger"></span>
 
@@ -178,7 +176,7 @@
                     <div class="col-lg-4 col-md-6 col-12">
                         <div class="form-floating mt-3">
                             <input asp-for="patientDetails.LastName" class="form-control" placeholder="Leave a comment here"
-                                   id="floatingTextarea2"></input>
+                                   id="floatingTextarea2" />
                             <label for="floatingTextarea2">Last Name</label>
                         </div>
                     </div>
@@ -206,7 +204,7 @@
                     <div class="col-md-6 col-12">
                         <div class="form-floating mt-3">
                             <input asp-for="patientDetails.Email" class="form-control" placeholder="Leave a comment here"
-                                   id="floatingTextarea2"></input>
+                                   id="floatingTextarea2" required />
                             <label for="floatingTextarea2">Email</label>
                         </div>
                     </div>
@@ -237,32 +235,40 @@
 
                     </div>
                     <div class="col-12 col-md-6 col-lg-4">
+
                         <div class="form-floating mt-3">
-
-                            <input asp-for="patientDetails.City" class="form-control" placeholder="Leave a comment here"
-                                   id="floatingTextarea2"></input>
-                            <label for="floatingTextarea2">City</label>
-
+                            <select asp-for="patientDetails.CityId" class="form-select" id="patient-city" required>
+                                <option disabled selected value=""> -- Select City -- </option>
+                            </select>
+                            <label for="patient-city">City</label>
+                            <span asp-validation-for="patientDetails.CityId" class="text-danger"></span>
                         </div>
+
                     </div>
 
                     <div class="col-12 col-md-6 col-lg-4">
+
                         <div class="form-floating mt-3">
 
-                            <select asp-for="patientDetails.RegionId" class="form-select" id="patientRequestRegion">
+                            <select asp-for="patientDetails.RegionId" class="form-select" id="patient-state">
                                 <option disabled selected value="0"> -- Select State -- </option>
 
-                                @foreach (var region in Model.regions)
+                                @if (Model.regions != null && Model.regions.Any())
                                 {
-                                    <option value="@region.Regionid">@region.Name</option>
+                                    @foreach (var region in Model.regions)
+                                    {
+                                        <option value="@region.Regionid">@region.Name</option>
+                                    }
                                 }
 
                             </select>
-                            <label for="patientRequestRegion">State</label>
+
+                            <label for="patient-state">State</label>
 
                             <span asp-validation-for="patientDetails.RegionId" class="text-danger"></span>
 
                         </div>
+
                     </div>
                     <div class="col-12 col-md-6 col-lg-4">
                         <div class="form-floating mt-3">
@@ -342,58 +348,7 @@
 
     </div>
 
-    <script>
-        // bind file-input-form click action to text-input-span
-        $('#text_input_span_id').click(function () {
-            $("#file_input_id").trigger('click');
-        })
-        // bind file-input-form click action to text-input-form
-        $('#text_input_id').click(function () {
-            $("#file_input_id").trigger('click');
-        })
-        // display file name in text-input-form
-        $("#file_input_id").change(function () {
-            $('#text_input_id').val(this.value.replace(/C:\\fakepath\\/i, ''))
-        })
-    </script>
-
-    <script>
-
-        const familyInputField = document.getElementById("family-phone");
-        var familyPhoneInput = window.intlTelInput(familyInputField, {
-            utilsScript:
-                "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
-            preferredCountries: ["in"],
-            separateDialCode: true,
-            initialCountry: "in"
-        });
-
-        const patientInputField = document.getElementById("patient-phone");
-        var patientPhoneInput = window.intlTelInput(patientInputField, {
-            utilsScript:
-                "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
-            preferredCountries: ["in"],
-            separateDialCode: true,
-            initialCountry: "in"
-        });
-
-        function changeCountryCode() {
-
-            var countryCodePatient = document.getElementById("patient-phone-country");
-            var countryCodeFamily = document.getElementById("family-phone-country");
-
-            countryCodePatient.value = patientPhoneInput.getSelectedCountryData().dialCode;
-            countryCodeFamily.value = familyPhoneInput.getSelectedCountryData().dialCode;
-        }
-
-        $(function () {
-            $("#datepicker").datepicker({
-                autoclose: true,
-                todayHighlight: true,
-            }).datepicker('update', new Date());
-        });
-
-    </script>
+    <script src="~/js/guest-requests.js"></script>
 
     <script>
 

@@ -21,12 +21,14 @@ namespace Data_Layer.ViewModels.Admin
         public int? RoleId { get; set; }
         public IEnumerable<Region>? regions { get; set; }
         public IEnumerable<int>? selectedRegions { get; set; }
+        public IEnumerable<City>? adminMailCities {  get; set; }
         public string? Address1 { get; set; }
         public string? Address2 { get; set; }
         public string? City { get; set; }
         public string? Zip { get; set; }
         public string? State { get; set; }
         public int RegionId {  get; set; }
+        public int CityId {  get; set; }
         public string? AltCountryCode { get; set; }
         public string? AltPhoneNumber { get; set; }
 
