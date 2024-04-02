@@ -13,5 +13,6 @@ namespace Data_Layer.ViewModels
         public string BusinessOrPropertyName { get; set; }
         public string CaseNumber { get; set; }
         public IEnumerable<Region>? regions {  get; set; }
+        public bool? IsValidated { get; set; }
     }
 }

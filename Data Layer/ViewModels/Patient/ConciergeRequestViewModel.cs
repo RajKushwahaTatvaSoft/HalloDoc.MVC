@@ -12,5 +12,6 @@ namespace Data_Layer.ViewModels
         public string Email { get; set; }
         public string? HotelOrPropertyName { get; set; }
         public IEnumerable<Region>? regions { get; set; }
+        public bool? IsValidated {  get; set; }
     }
 }

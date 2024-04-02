@@ -83,14 +83,17 @@
                 <div class="col-12 col-md-6 col-lg-4">
                     <div class="form-floating mb-3">
 
-                        <input asp-for="patientDetails.City" type="text" class="form-control " id="floatingInputState" placeholder="State" aria-label="State">
-                        <label class="ms-2 " for="floatingInputState">City</label>
+                        <select asp-for="patientDetails.CityId" class="form-select" id="patient-city" required>
+                            <option disabled selected value=""> -- Select City -- </option>
+                        </select>
+                        <label for="patient-city">City</label>
+                        <span asp-validation-for="patientDetails.CityId" class="text-danger"></span>
 
                     </div>
                 </div>
                 <div class="col-lg-4 col-md-6 col-12 form-floating mb-3">
 
-                    <select asp-for="patientDetails.RegionId" class="form-select" id="patientRequestRegion">
+                    <select asp-for="patientDetails.RegionId" class="form-select" id="patient-state">
                         <option disabled selected value="0"> -- Select State -- </option>
 
                         @foreach (var region in Model.regions)
@@ -99,7 +102,7 @@
                         }
 
                     </select>
-                    <label for="patientRequestRegion">State</label>
+                    <label for="patient-state">State</label>
                     <span asp-validation-for="patientDetails.RegionId" class="text-danger"></span>
 
                 </div>
@@ -171,6 +174,45 @@
     </form>
 
 </div>
+
+<script>
+
+    $("#patient-state").change(function () {
+
+        var regId = $('option:selected', this).val();
+
+        $.ajax({
+            url: '/Guest/GetCitiesByRegion',
+            type: 'POST',
+            data: {
+                regionId: regId,
+            },
+            success: function (result) {
+                console.log(result);
+                $('#patient-city').empty();
+                $('#patient-city').append($('<option>', {
+                    value: "",
+                    text: '-- Select City --',
+                    selected: true,
+                    disabled: true
+                }));
+                $.each(result, function (index, object) {
+
+                    $('#patient-city').append($('<option>', {
+                        value: object["id"],
+                        text: object["name"]
+                    }));
+
+                });
+            },
+            error: function (err) {
+                console.error(err);
+            }
+        });
+    });
+
+
+</script>
 
 
 <script>

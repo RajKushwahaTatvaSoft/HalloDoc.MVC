@@ -72,6 +72,8 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<Requestnote> Requestnotes { get; set; }
 
+    public virtual DbSet<Requeststatus> Requeststatuses { get; set; }
+
     public virtual DbSet<Requeststatuslog> Requeststatuslogs { get; set; }
 
     public virtual DbSet<Requesttype> Requesttypes { get; set; }
@@ -327,6 +329,13 @@ public partial class ApplicationDbContext : DbContext
             entity.HasOne(d => d.Request).WithMany(p => p.Requestnotes)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("requestnotes_requestid_fkey");
+        });
+
+        modelBuilder.Entity<Requeststatus>(entity =>
+        {
+            entity.HasKey(e => e.Statusid).HasName("requeststatus_pkey");
+
+            entity.Property(e => e.Statusid).ValueGeneratedNever();
         });
 
         modelBuilder.Entity<Requeststatuslog>(entity =>

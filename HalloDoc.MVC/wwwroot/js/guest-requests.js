@@ -42,8 +42,6 @@ $(document).ready(function () {
     })
 })()
 
-
-
 $("#patient-state").change(function () {
 
     var regId = $('option:selected', this).val();

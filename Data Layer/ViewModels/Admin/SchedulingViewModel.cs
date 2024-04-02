@@ -29,6 +29,8 @@ namespace Data_Layer.ViewModels.Admin
 
     public class ShiftMonthViewModel
     {
+        public string ShiftMonth {  get; set; }
+        public string ShiftYear { get; set; }
         public IEnumerable<Shiftdetail> shiftDetails{ get; set; }
 
     }
@@ -57,7 +59,6 @@ namespace Data_Layer.ViewModels.Admin
         public List<string>? hourTime { get; set; }
         public List<ShiftViewModel>? Shifts { get; set; }
         public IEnumerable<DataModels.Physician> physicians { get; set; }
-
     }
 
     public class ShiftItem

@@ -256,7 +256,7 @@
 
                     <div class="col-md-6 mt-2">
 
-                        <input asp-for="Photo" accept="image/png, image/jpeg, image/jpg" class="form-control" type="file" id="phy_photo_input_id" style="display:none;">
+                        <input asp-for="PhotoFile" accept="image/png, image/jpeg, image/jpg" class="form-control" type="file" id="phy_photo_input_id" style="display:none;">
 
                         <div class="input-group mb-3">
                             <input type="text" id="phy_photo_text_input_id" class="form-control" placeholder="Select Photo"
@@ -279,7 +279,7 @@
 
                         <div class="d-flex">
 
-                            <input asp-for="Signature" accept="image/png, image/jpeg, image/jpg" class="form-control" type="file" id="phy_sign_input_id" style="display:none;">
+                            <input asp-for="SignatureFile" accept="image/png, image/jpeg, image/jpg" class="form-control" type="file" id="phy_sign_input_id" style="display:none;">
 
                             <div class="input-group mb-3">
                                 <input type="text" id="phy_sign_text_input_id" class="form-control" placeholder="Select Signature"
@@ -356,7 +356,7 @@
                         }
                     </div>
                     <div class="col">
-                        <input asp-for="ICA" type="file" accept="application/pdf" id="ica-file-input" hidden />
+                        <input asp-for="ICAFile" type="file" accept="application/pdf" id="ica-file-input" hidden />
                         <span id="ica-file-name-text" class="fw-bole"></span>
                     </div>
                 </div>
@@ -380,7 +380,7 @@
                         }
                     </div>
                     <div class="col">
-                        <input asp-for="BGCheck" type="file" accept="application/pdf" id="bg-check-file-input" hidden />
+                        <input asp-for="BGCheckFile" type="file" accept="application/pdf" id="bg-check-file-input" hidden />
                         <span id="bg-check-file-name-text" class="fw-bole"></span>
                     </div>
                 </div>
@@ -404,7 +404,7 @@
                         }
                     </div>
                     <div class="col">
-                        <input asp-for="HIPAACompliance" accept="application/pdf" type="file" id="hipaa-file-input" hidden />
+                        <input asp-for="HIPAAComplianceFile" accept="application/pdf" type="file" id="hipaa-file-input" hidden />
                         <span id="hipaa-file-name-text" class="fw-bole"></span>
                     </div>
                 </div>
@@ -428,7 +428,7 @@
                         }
                     </div>
                     <div class="col">
-                        <input asp-for="NDA" type="file" accept="application/pdf" id="nda-file-input" hidden />
+                        <input asp-for="NDAFile" type="file" accept="application/pdf" id="nda-file-input" hidden />
                         <span id="nda-file-name-text" class="fw-bole"></span>
                     </div>
                 </div>
@@ -452,7 +452,7 @@
                         }
                     </div>
                     <div class="col">
-                        <input asp-for="LicenseDoc" type="file" accept="application/pdf" id="license-file-input" hidden />
+                        <input asp-for="LicenseDocFile" type="file" accept="application/pdf" id="license-file-input" hidden />
                         <span id="license-file-name-text" class="fw-bole"></span>
                     </div>
                 </div>

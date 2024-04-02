@@ -2,16 +2,20 @@
 using System.Net;
 using Microsoft.Extensions.Configuration;
 using Business_Layer.Interface.Services;
+using Data_Layer.DataContext;
+using Data_Layer.DataModels;
 
 namespace Business_Layer.Services
 {
     public class EmailService : IEmailService
     {
         private readonly IConfiguration _config;
+        private readonly ApplicationDbContext _context;
 
-        public EmailService(IConfiguration config)
+        public EmailService(IConfiguration config, ApplicationDbContext context)
         {
             _config = config;
+            _context = context;
         }
         public void SendMail(string toEmail, string body, string subject)
         {
@@ -38,7 +42,40 @@ namespace Business_Layer.Services
 
             mailMessage.To.Add(toEmail);
 
-            client.Send(mailMessage);
+            int count = 0;
+            bool isSent = false;
+
+            while (count < 5)
+            {
+                count++;
+                try
+                {
+                    client.Send(mailMessage);
+                    isSent = true;
+                    break;
+                }
+                catch (Exception e)
+                {
+                    isSent = false;
+                    continue;
+                }
+
+            }
+
+            Emaillog log = new Emaillog()
+            {
+                Emailtemplate = "1",
+                Subjectname = subject,
+                Emailid = toEmail,
+                Confirmationnumber = "-",
+                Roleid = 1,
+                Senttries = count,
+                Isemailsent = isSent,
+                Sentdate = DateTime.Now,
+            };
+
+            _context.Add(log);
+            _context.SaveChanges();
 
 
         }

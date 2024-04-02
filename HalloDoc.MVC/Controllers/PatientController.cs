@@ -63,7 +63,6 @@ namespace HalloDoc.MVC.Controllers
                 return View("Error");
             }
 
-
             PatientDashboardViewModel model = new PatientDashboardViewModel()
             {
                 UserId = userId,
@@ -98,6 +97,9 @@ namespace HalloDoc.MVC.Controllers
                 dobDate = user.Intyear + "-" + user.Strmonth + "-" + user.Intdate;
             }
 
+            IEnumerable<City> selectedCities = _unitOfWork.CityRepository.Where(city=> city.Regionid == user.Regionid);
+            int? cityId = _unitOfWork.CityRepository.GetFirstOrDefault(city=> city.Name == user.City)?.Id;
+
             MeRequestViewModel model = new()
             {
                 UserId = user.Userid,
@@ -110,9 +112,10 @@ namespace HalloDoc.MVC.Controllers
                 State = user.State,
                 ZipCode = user.Zipcode,
                 RegionId = user.Regionid,
+                selectedRegionCities = selectedCities,
+                CityId = cityId,
                 regions = _unitOfWork.RegionRepository.GetAll(),
             };
-
 
             return View("Dashboard/RequestForMe", model);
         }
@@ -124,7 +127,7 @@ namespace HalloDoc.MVC.Controllers
 
             int userId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
 
-            if (userId == null)
+            if (userId == 0)
             {
                 return View("Error");
             }
@@ -136,6 +139,7 @@ namespace HalloDoc.MVC.Controllers
                 string requestIpAddress = GetRequestIP();
                 string phoneNumber = "+" + meRequestViewModel.Countrycode + '-' + meRequestViewModel.Phone;
                 string state = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == meRequestViewModel.RegionId).Name;
+                string city = _unitOfWork.CityRepository.GetFirstOrDefault(city => city.Id == meRequestViewModel.CityId).Name;
 
                 Request request = new()
                 {
@@ -165,7 +169,7 @@ namespace HalloDoc.MVC.Controllers
                     Phonenumber = phoneNumber,
                     Email = meRequestViewModel.Email,
                     Address = meRequestViewModel.Street,
-                    City = meRequestViewModel.City,
+                    City = city,
                     Regionid = meRequestViewModel.RegionId,
                     State = state,
                     Zipcode = meRequestViewModel.ZipCode,
@@ -241,6 +245,7 @@ namespace HalloDoc.MVC.Controllers
                 string requestIpAddress = GetRequestIP();
                 string phoneNumber = "+" + srvm.patientDetails.Countrycode + '-' + srvm.patientDetails.Phone;
                 string state = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == srvm.patientDetails.RegionId).Name;
+                string city = _unitOfWork.CityRepository.GetFirstOrDefault(city => city.Id == srvm.patientDetails.CityId).Name;
 
                 User user = null;
 
@@ -272,7 +277,7 @@ namespace HalloDoc.MVC.Controllers
                         Email = srvm.patientDetails.Email,
                         Mobile = phoneNumber,
                         Street = srvm.patientDetails.Street,
-                        City = srvm.patientDetails.City,
+                        City = city,
                         Regionid = srvm.patientDetails.RegionId,
                         State = state,
                         Zipcode = srvm.patientDetails.ZipCode,
@@ -318,7 +323,7 @@ namespace HalloDoc.MVC.Controllers
                         Phonenumber = phoneNumber,
                         Email = srvm.patientDetails.Email,
                         Address = srvm.patientDetails.Street,
-                        City = srvm.patientDetails.City,
+                        City = city,
                         Regionid = srvm.patientDetails.RegionId,
                         State = state,
                         Zipcode = srvm.patientDetails.ZipCode,
@@ -380,7 +385,7 @@ namespace HalloDoc.MVC.Controllers
                         Phonenumber = phoneNumber,
                         Email = srvm.patientDetails.Email,
                         Address = srvm.patientDetails.Street,
-                        City = srvm.patientDetails.City,
+                        City = city,
                         Regionid = srvm.patientDetails.RegionId,
                         State = state,
                         Zipcode = srvm.patientDetails.ZipCode,

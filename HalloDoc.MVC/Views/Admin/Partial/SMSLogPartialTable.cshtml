@@ -1,0 +1,43 @@
+﻿@model SMSLogsViewModel
+
+<div class="table-responsive mt-3 d-none d-md-block">
+    <table class="table admin-dashboard">
+
+        <thead class="table-head align-middle">
+
+            <tr>
+
+                <th>Recipient</th>
+                <th>Action</th>
+                <th>Role Name</th>
+                <th>Mobile Number</th>
+                <th>Create Date</th>
+                <th>Sent Date</th>
+                <th>Sent</th>
+                <th>Sent Tries</th>
+                <th>Confirmation Number</th>
+
+            </tr>
+
+        </thead>
+
+        <tbody class="align-middle" id="dashboard-table-body">
+
+            @foreach (var log in Model.smsLogs)
+            {
+                <tr>
+                    <td>@log.Smslogid</td>
+                    <td>@log.Action</td>
+                    <td>@log.Roleid</td>
+                    <td>@log.Mobilenumber</td>
+                    <td>@log.Createdate</td>
+                    <td>@log.Sentdate</td>
+                    <td>@log.Issmssent</td>
+                    <td>@log.Senttries</td>
+                    <td>@log.Confirmationnumber</td>
+                </tr>
+            }
+        </tbody>
+
+    </table>
+</div>

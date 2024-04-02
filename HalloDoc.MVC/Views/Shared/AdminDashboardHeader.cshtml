@@ -17,6 +17,14 @@
         #access-parent:hover .dropdown-menu {
             display: block;
         }
+
+    #record-parent:hover {
+        cursor: pointer;
+    }
+
+        #record-parent:hover .dropdown-menu {
+            display: block;
+        }
 </style>
 
 <header class="">
@@ -113,9 +121,19 @@
 
     </li>
 
-    <li class="nav-item" role="presentation">
-        <a asp-controller="Admin" asp-action="Records" class="nav-link px-0 admin-tab" id="record-tab">
+    <li class="admin-tab nav-item" role="presentation" id="record-parent">
+
+        <a style="cursor:pointer" class="nav-link admin-tab px-0" id="record-tab" data-bs-toggle="dropdown">
             <span class="tabHeader py-2 px-3">Records</span>
         </a>
+
+        <ul class="dropdown-menu" aria-labelledby="access-tab">
+            <li><a class="dropdown-item" asp-controller="Admin" asp-action="SearchRecords">Search Records</a></li>
+            <li><a class="dropdown-item" asp-controller="Admin" asp-action="EmailLogs">Email Logs</a></li>
+            <li><a class="dropdown-item" asp-controller="Admin" asp-action="SMSLogs">SMS Logs</a></li>
+            <li><a class="dropdown-item" asp-controller="Admin" asp-action="PatientRecords">Patient Records</a></li>
+            <li><a class="dropdown-item" asp-controller="Admin" asp-action="BlockedHistory">Blocked History</a></li>
+        </ul>
+
     </li>
 </ul>

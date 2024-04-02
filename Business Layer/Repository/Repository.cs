@@ -50,7 +50,7 @@ namespace Business_Layer.Repository
             return query.Count(filter);
         }
 
-        public T GetFirstOrDefault(Expression<Func<T, bool>> filter)
+        public T? GetFirstOrDefault(Expression<Func<T, bool>> filter)
         {
             IQueryable<T> query = dbSet;
             return query.FirstOrDefault(filter);

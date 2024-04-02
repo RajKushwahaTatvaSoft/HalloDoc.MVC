@@ -44,13 +44,13 @@ namespace Data_Layer.ViewModels.Admin
         public bool IsLicenseDoc{  get; set; }
 
         /* POST METHOD FILES */
-        public IFormFile? Photo { get; set; }
-        public IFormFile? Signature { get; set; }
-        public IFormFile? ICA { get; set; }
-        public IFormFile? BGCheck { get; set; }
-        public IFormFile? HIPAACompliance { get; set; }
-        public IFormFile? NDA { get; set; }
-        public IFormFile? LicenseDoc { get; set; }
+        public IFormFile? PhotoFile { get; set; }
+        public IFormFile? SignatureFile { get; set; }
+        public IFormFile? ICAFile { get; set; }
+        public IFormFile? BGCheckFile { get; set; }
+        public IFormFile? HIPAAComplianceFile { get; set; }
+        public IFormFile? NDAFile { get; set; }
+        public IFormFile? LicenseDocFile { get; set; }
         
     }
 

@@ -20,7 +20,6 @@
             </tr>
             @foreach (var p in Model.physicians)
             {
-
                 <tr>
                     <td>
                         <img src="~/document/physician/@p.Physicianid/ProfilePhoto.jpg" class="rounded-circle " style="height:30px; width:30px;" />
@@ -94,3 +93,63 @@
         </tbody>
     </table>
 </div>
+
+
+<script>
+    $('.viewshift-btn').click(function () {
+        console.log('view shift btn');
+
+        var Id = $(this).data("id");
+        console.log('shift id ' + Id);
+        $('#EditshiftId').val(Id);
+
+        var physicianid = $(this).data("phyid");
+        console.log('phyId' + physicianid);
+        $('#physicianList2').val(physicianid);
+
+        var startTime = $(this).data("time");
+        $('#EditshiftstartTime').val(startTime);
+
+        var endTime = $(this).data("endtime");
+        $('#EditshiftendTime').val(endTime);
+
+        var shiftdate = $(this).data("date");
+        $('#Editshiftdate').val(shiftdate);
+        // console.log($('#EditshiftId').val());
+        // console.log($('#physicianList2').val());
+        // console.log($('#EditshiftendTime').val());
+
+
+    });
+
+
+    $('#viewShift-save-btn').click(function () {
+        debugger;
+        console.log('view save btn');
+        var phyid = $('#physicianList2').val();
+        console.log(phyid);
+        var shift = $('#EditshiftId').val();
+        console.log(shift);
+        var start = $('#EditshiftstartTime').val();
+        console.log(start);
+
+        var end = $('#EditshiftendTime').val();
+        console.log(end);
+        var shiftdate = $('#Editshiftdate').val();
+
+
+        $.ajax({
+            url: "/Admin/EditShift",
+            data: { shiftId: shift, startTime: start, endTime: end, date: shiftdate },
+            type: 'POST',
+            success: function (result) {
+                location.reload();
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
+    });
+
+</script>

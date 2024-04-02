@@ -213,7 +213,7 @@
 
                         <div class="form-floating mt-3">
                             <input id="patient-phone-country" asp-for="patientDetails.Countrycode" hidden />
-                            <input asp-for="patientDetails.Phone" id="patient-phone" class="form-control" type="tel"></input>
+                            <input asp-for="patientDetails.Phone" id="patient-phone" class="form-control" type="tel" />
                         </div>
 
                     </div>
@@ -229,7 +229,7 @@
                     <div class="col-12 col-md-6 col-lg-4">
                         <div class="form-floating mt-3">
                             <input asp-for="patientDetails.Street" class="form-control" placeholder="Leave a comment here"
-                                   id="floatingTextarea2"></input>
+                                   id="floatingTextarea2" />
                             <label for="floatingTextarea2">Street</label>
                         </div>
 
@@ -242,6 +242,7 @@
                             </select>
                             <label for="patient-city">City</label>
                             <span asp-validation-for="patientDetails.CityId" class="text-danger"></span>
+
                         </div>
 
                     </div>
@@ -251,7 +252,7 @@
                         <div class="form-floating mt-3">
 
                             <select asp-for="patientDetails.RegionId" class="form-select" id="patient-state">
-                                <option disabled selected value="0"> -- Select State -- </option>
+                                <option disabled selected value=""> -- Select State -- </option>
 
                                 @if (Model.regions != null && Model.regions.Any())
                                 {

@@ -1,4 +1,5 @@
-﻿using Business_Layer.Interface;
+﻿using Business_Layer.Helpers;
+using Business_Layer.Interface;
 using Business_Layer.Utilities;
 using Data_Layer.CustomModels;
 using Data_Layer.DataContext;
@@ -32,7 +33,7 @@ namespace Business_Layer.Repository
                          select new PatientDashboardRequest
                          {
                              RequestId = r.Requestid,
-                             RequestStatus = GetStatusString(r.Status),
+                             RequestStatus = RequestHelper.GetRequestStatusString(r.Status),
                              CreatedDate = r.Createddate,
                              FileCount = _context.Requestwisefiles.Count(file => file.Requestid == r.Requestid),
                          }).AsQueryable();
@@ -40,37 +41,6 @@ namespace Business_Layer.Repository
             return await PagedList<PatientDashboardRequest>.CreateAsync(
             query, pageNumber, pageSize);
 
-        }
-
-        public static string GetStatusString(int status)
-        {
-            switch (status)
-            {
-                case (int)RequestStatus.Unassigned:
-                    return "Unassigned";
-                case (int)RequestStatus.Accepted:
-                    return "Accepted";
-                case (int)RequestStatus.Cancelled:
-                    return "Cancelled";
-                case (int)RequestStatus.MDEnRoute:
-                    return "MDEnRoute";
-                case (int)RequestStatus.MDOnSite:
-                    return "MDOnSite";
-                case (int)RequestStatus.Conclude:
-                    return "Conclude";
-                case (int)RequestStatus.CancelledByPatient:
-                    return "CancelledByPatient";
-                case (int)RequestStatus.Closed:
-                    return "Closed";
-                case (int)RequestStatus.Unpaid:
-                    return "Unpaid";
-                case (int)RequestStatus.Clear:
-                    return "Clear";
-                case (int)RequestStatus.Block:
-                    return "Block";
-            }
-
-            return null;
         }
 
 

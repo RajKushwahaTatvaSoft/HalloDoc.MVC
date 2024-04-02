@@ -15,6 +15,8 @@ using Data_Layer.ViewModels.Admin;
 using HalloDoc.MVC.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis;
+using Microsoft.EntityFrameworkCore;
+using Org.BouncyCastle.Utilities;
 using System.Data;
 using System.Globalization;
 using System.IO.Compression;
@@ -118,13 +120,6 @@ namespace HalloDoc.MVC.Controllers
             };
             return View("Header/ProviderLocation", model);
         }
-
-        public IActionResult Records()
-        {
-            return View("Header/Records");
-        }
-
-
 
         public IActionResult Logout()
         {
@@ -1891,6 +1886,7 @@ namespace HalloDoc.MVC.Controllers
 
             return hours;
         }
+
         private List<string> GenerateHourTime()
         {
             List<string> hours = new List<string>();
@@ -1904,15 +1900,29 @@ namespace HalloDoc.MVC.Controllers
 
             return hours;
         }
+        
+        [HttpPost]
+        public IActionResult EditShift(int shiftId, TimeOnly startTime, TimeOnly endTime, DateTime shiftdate)
+        {
+            Shiftdetail sd = _context.Shiftdetails.FirstOrDefault(s => s.Shiftdetailid == shiftId);
+            if (sd != null)
+            {
 
+                sd.Starttime = startTime;
+                sd.Endtime = endTime;
+                sd.Shiftdate = shiftdate;
+            }
+            _context.Shiftdetails.Update(sd);
+            _context.SaveChanges();
+            return RedirectToAction("SchedulingHeader");
+        }
 
         private List<ShiftViewModel> GetShiftViewModels(DateTime currentDate)
         {
             // Retrieve shift details from the database or any other data source
 
             var query = (from s in _context.Shifts
-                         join sd in _context.Shiftdetails
-                         on s.Shiftid equals sd.Shiftid
+                         join sd in _context.Shiftdetails on s.Shiftid equals sd.Shiftid
                          join p in _context.Physicians on s.Physicianid equals p.Physicianid into subgroup
                          from subitem in subgroup.DefaultIfEmpty()
                          select new ShiftViewModel
@@ -2020,10 +2030,12 @@ namespace HalloDoc.MVC.Controllers
             //                 shiftDetails = sdGroup.ToList(),
             //             });
 
-            IEnumerable<Physician> phyList = _unitOfWork.PhysicianRepository.GetAll();
+            IEnumerable<Physician> phyList = _context.Physicians.ToList();
             List<PhysicianShift> physicianShifts = new List<PhysicianShift>();
 
-/*
+
+      
+
             foreach (var phy in phyList)
             {
                 var query = (from sd in _context.Shiftdetails
@@ -2034,7 +2046,7 @@ namespace HalloDoc.MVC.Controllers
                                  Shiftid = s.Shiftid,
                                  Starttime = sd.Starttime,
                                  Endtime = sd.Endtime,
-                             }).ToList();
+                             });
 
                 PhysicianShift shift = new()
                 {
@@ -2045,7 +2057,7 @@ namespace HalloDoc.MVC.Controllers
 
                 physicianShifts.Add(shift);
             }
-*/
+
             model.physicianShifts = physicianShifts;
             model.physicians = phyList;
 
@@ -2072,13 +2084,15 @@ namespace HalloDoc.MVC.Controllers
         }
 
         [HttpPost]
-        public IActionResult SchedulePartialTable(int shiftStatus, int typeFilter, DateTime dayFilter, int regionFilter)
+        public IActionResult SchedulePartialTable(int shiftStatus, int typeFilter, DateTime dayFilter, int regionFilter, DateTime startDate)
         {
             if (dayFilter != null)
             {
-                DateTime myDate = DateTime.ParseExact("2024-03-31 00:00:00,000", "yyyy-MM-dd HH:mm:ss,fff",
-                                       System.Globalization.CultureInfo.InvariantCulture);
-                List<ShiftViewModel> shiftViewModels = GetShiftViewModels(myDate);
+                //    DateTime myDate = DateTime.ParseExact("2024-03-31 00:00:00,000", "yyyy-MM-dd HH:mm:ss,fff",
+                //                           System.Globalization.CultureInfo.InvariantCulture);
+
+                DateTime currentDate = startDate.ToLocalTime();
+                List<ShiftViewModel> shiftViewModels = GetShiftViewModels(currentDate);
                 List<string> hours = GenerateHours();
                 List<string> hourtimes = GenerateHourTime();
 
@@ -2472,77 +2486,90 @@ namespace HalloDoc.MVC.Controllers
                     _unitOfWork.PhysicianRepository.Add(phy);
                     _unitOfWork.Save();
 
+                    foreach(int regionId in model.selectedRegions)
+                    {
+                        Physicianregion phyRegion = new Physicianregion()
+                        {
+                            Regionid = regionId,
+                            Physicianid = phy.Physicianid,
+                        };
+
+                        _unitOfWork.PhysicianRegionRepo.Add(phyRegion);
+                    }
+
+                    _unitOfWork.Save();
+
 
                     string path = Path.Combine(_environment.WebRootPath, "document", "physician", phy.Physicianid.ToString());
 
-                    if (model.Photo != null)
+                    if (model.PhotoFile != null)
                     {
-                        string fileExtension = Path.GetExtension(model.Photo.FileName);
+                        string fileExtension = Path.GetExtension(model.PhotoFile.FileName);
                         if (validProfileExtensions.Contains(fileExtension))
                         {
                             phy.Isnondisclosuredoc = true;
-                            InsertFileAfterRename(model.Photo, path, "ProfilePhoto");
+                            InsertFileAfterRename(model.PhotoFile, path, "ProfilePhoto");
                         }
                     }
 
-                    if (model.Signature != null)
+                    if (model.SignatureFile != null)
                     {
-                        string fileExtension = Path.GetExtension(model.Signature.FileName);
+                        string fileExtension = Path.GetExtension(model.SignatureFile.FileName);
                         if (validProfileExtensions.Contains(fileExtension))
                         {
                             phy.Isnondisclosuredoc = true;
-                            InsertFileAfterRename(model.Signature, path, "Signature");
+                            InsertFileAfterRename(model.SignatureFile, path, "Signature");
                         }
                     }
 
 
-                    if (model.ICA != null)
+                    if (model.ICAFile != null)
                     {
-                        string fileExtension = Path.GetExtension(model.ICA.FileName);
+                        string fileExtension = Path.GetExtension(model.ICAFile.FileName);
                         if (validDocumentExtensions.Contains(fileExtension))
                         {
                             phy.Isnondisclosuredoc = true;
-                            InsertFileAfterRename(model.ICA, path, "ICA");
+                            InsertFileAfterRename(model.ICAFile, path, "ICA");
                         }
                     }
 
-                    if (model.BGCheck != null)
+                    if (model.BGCheckFile != null)
                     {
-                        string fileExtension = Path.GetExtension(model.BGCheck.FileName);
+                        string fileExtension = Path.GetExtension(model.BGCheckFile.FileName);
                         if (validDocumentExtensions.Contains(fileExtension))
                         {
                             phy.Isnondisclosuredoc = true;
-                            InsertFileAfterRename(model.BGCheck, path, "BackgroundCheck");
+                            InsertFileAfterRename(model.BGCheckFile, path, "BackgroundCheck");
                         }
                     }
 
-                    if (model.HIPAACompliance != null)
+                    if (model.HIPAAComplianceFile != null)
                     {
-                        string fileExtension = Path.GetExtension(model.HIPAACompliance.FileName);
+                        string fileExtension = Path.GetExtension(model.HIPAAComplianceFile.FileName);
                         if (validDocumentExtensions.Contains(fileExtension))
                         {
                             phy.Isnondisclosuredoc = true;
-                            InsertFileAfterRename(model.HIPAACompliance, path, "HipaaCompliance");
+                            InsertFileAfterRename(model.HIPAAComplianceFile, path, "HipaaCompliance");
                         }
                     }
 
-                    if (model.NDA != null)
+                    if (model.NDAFile != null)
                     {
-                        string fileExtension = Path.GetExtension(model.NDA.FileName);
+                        string fileExtension = Path.GetExtension(model.NDAFile.FileName);
                         if (validDocumentExtensions.Contains(fileExtension))
                         {
                             phy.Isnondisclosuredoc = true;
-                            InsertFileAfterRename(model.NDA, path, "NDA");
+                            InsertFileAfterRename(model.NDAFile, path, "NDA");
                         }
                     }
 
-                    if (model.LicenseDoc != null)
+                    if (model.LicenseDocFile != null)
                     {
-                        string fileExtension = Path.GetExtension(model.LicenseDoc.FileName);
+                        string fileExtension = Path.GetExtension(model.LicenseDocFile.FileName);
                         if (validDocumentExtensions.Contains(fileExtension))
                         {
                             phy.Isnondisclosuredoc = true;
-                            InsertFileAfterRename(model.LicenseDoc, path, "LicenseDoc");
+                            InsertFileAfterRename(model.LicenseDocFile, path, "LicenseDoc");
                         }
                     }
 
@@ -3153,7 +3180,6 @@ namespace HalloDoc.MVC.Controllers
 
         }
 
-
         public IActionResult UserAccess()
         {
             IEnumerable<UserAccessTRow> list = (from user in _context.Aspnetusers
@@ -3173,6 +3199,119 @@ namespace HalloDoc.MVC.Controllers
             };
             return View("Access/UserAccess", model);
         }
+        #endregion
+
+        #region Records
+
+        [HttpPost]
+        public IActionResult SMSLogsPartialTable(int roleIdFilter, string receiverName, string mobileNumber, DateTime createdDate, DateTime sentDate)
+        {
+            IEnumerable<Smslog> logs = _context.Smslogs;
+
+            SMSLogsViewModel model = new()
+            {
+                smsLogs = logs,
+            };
+            return PartialView("Partial/SMSLogPartialTable", model);
+        }
+
+        [HttpPost]
+        public IActionResult EmailLogsPartialTable(int roleIdFilter, string receiverName, string emailAddress, DateTime createdDate, DateTime sentDate)
+        {
+            IEnumerable<Emaillog> logs = _context.Emaillogs;
+
+            EmailLogsViewModel model = new()
+            {
+                emailLogs = logs,
+            };
+            return PartialView("Partial/EmailLogPartialTable",model);
+        }
+
+        [HttpPost]
+        public IActionResult SearchRecordPartialTable(string patientName, int requestStatus, int requestType,string phoneNumber, DateTime fromDateOfService, DateTime toDateOfService,string providerName, string email)
+        {
+
+            // TODO: Add dateOfService filter in page
+            var query = (from r in _context.Requests
+                         join rc in _context.Requestclients on r.Requestid equals rc.Requestid
+                         join phy in _context.Physicians on r.Physicianid equals phy.Physicianid into phyGroup
+                         from phyItem in phyGroup.DefaultIfEmpty()
+                         where ( (string.IsNullOrEmpty(patientName) || (rc.Firstname+ " " + rc.Lastname).ToLower().Contains(patientName.ToLower()))
+                         && (requestStatus == 0 || r.Status == requestStatus)
+                         && (requestType == 0 || r.Requesttypeid == requestType)
+                         && (string.IsNullOrEmpty(phoneNumber) || rc.Phonenumber.ToLower().Contains(phoneNumber.ToLower()))
+                         && (string.IsNullOrEmpty(providerName) || (phyItem.Firstname + " " + phyItem.Lastname).ToLower().Contains(providerName.ToLower()))
+                         && (string.IsNullOrEmpty(email) || rc.Email.ToLower().Contains(email.ToLower()))
+                         )
+                         select new SearchRecordTRow
+                         {
+                             RequestId = r.Requestid,
+                             PatientName = rc.Firstname + " " + rc.Lastname,
+                             Requestor = GetRequestType(r.Requesttypeid),
+                             DateOfService = DateTime.Now,
+                             CloseCaseDate = DateTime.Now,
+                             Email = rc.Email ?? "",
+                             PhoneNumber = rc.Phonenumber ?? "",
+                             Address = rc.Address ?? "",
+                             Zip = rc.Zipcode ?? "",
+                             RequestStatus = RequestHelper.GetRequestStatusString(r.Status),
+                             Physician = phyItem.Firstname + " " + phyItem.Lastname,
+                             PhysicianNote = "",
+                             AdminNote = "",
+                             CancelledByPhysicianNote = "",
+                             PatientNote = "",                             
+                         });
+
+            SearchRecordViewModel model = new SearchRecordViewModel()
+            {
+                searchRecordTRows = query
+            };
+
+            return PartialView("Partial/SearchRecordPartialTable",model);
+        }
+
+
+        public IActionResult SearchRecords()
+        {
+            SearchRecordViewModel model = new SearchRecordViewModel()
+            {
+                requeststatuses = _context.Requeststatuses,
+                requesttypes = _context.Requesttypes,
+            };
+            return View("Records/SearchRecords",model);
+        }
+
+        public IActionResult EmailLogs()
+        {
+
+            EmailLogsViewModel model = new()
+            {
+                roles = _unitOfWork.RoleRepo.GetAll(),
+            };
+            return View("Records/EmailLogs",model);
+        }
+
+        public IActionResult SMSLogs()
+        {
+            SMSLogsViewModel model = new()
+            {
+                roles = _unitOfWork.RoleRepo.GetAll(),
+            };
+            return View("Records/SMSLogs",model);
+        }
+
+        public IActionResult PatientRecords()
+        {
+            return View("Records/PatientRecords");
+        }
+
+        public IActionResult BlockedHistory()
+        {
+            return View("Records/BlockedHistory");
+        }
+
+
+
         #endregion
 
         #region HelperFunctions
@@ -3262,9 +3401,9 @@ namespace HalloDoc.MVC.Controllers
             return dobString;
         }
 
-        public static string GetRequestType(Request request)
+        public static string GetRequestType(int requestTypeId)
         {
-            switch (request.Requesttypeid)
+            switch (requestTypeId)
             {
                 case (int)RequestType.Business: return "Business";
                 case (int)RequestType.Patient: return "Patient";
@@ -3288,7 +3427,6 @@ namespace HalloDoc.MVC.Controllers
 
             return result;
         }
-
 
         [HttpPost]
         public JsonArray GetPhysicianByRegion(int regionId)

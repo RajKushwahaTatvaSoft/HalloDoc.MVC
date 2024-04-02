@@ -31,8 +31,5 @@ namespace Data_Layer.ViewModels
         public IEnumerable<City>? selectedRegionCities { get; set; }
         public bool? IsValidated {  get; set; }
 
-        //TODO: remove bottom two fields
-        public string? City {  get; set; }
-        public string? State {  get; set; }
     }
 }
