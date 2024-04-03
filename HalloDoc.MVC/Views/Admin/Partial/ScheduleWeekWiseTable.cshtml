@@ -1,106 +1,138 @@
 ﻿@model ShiftWeekViewModel
 
-<div class="p-0 container-fluid mt-4">
+<div class="p-0 week-wise-table container-fluid mt-4">
 
     <table class=" p-0 table mt-4  table-bordered">
 
+        <colgroup>
+            <col span="1" style="width: 15%">
+            @for (int i = 0; i < 7; i++)
+            {
+                <col span="1" style="width: 12.14%;">
+            }
+        </colgroup>
+
         <thead class="p-0" style="background-color: dimgrey;">
             <tr class="">
-                <th class="p-0 align-items-center" style="text-align: center"><span class="text-white align-items-center" style="text-align: center">STAFF</span></th>
+                <th class="align-items-center" style="text-align: center"><span class="text-white align-items-center" style="text-align: center">STAFF</span></th>
+                <th class="text-uppercase text-white" style="text-align: center">Sun</th>
                 <th class="text-uppercase text-white" style="text-align: center">Mon</th>
                 <th class="text-uppercase text-white" style="text-align: center">Tue</th>
                 <th class="text-uppercase text-white" style="text-align: center">Wed</th>
                 <th class="text-uppercase text-white" style="text-align: center">Thu</th>
                 <th class="text-uppercase text-white" style="text-align: center">Fri</th>
                 <th class="text-uppercase text-white" style="text-align: center">Sat</th>
-                <th class="text-uppercase text-white" style="text-align: center">Sun</th>
             </tr>
 
         </thead>
 
         <tbody>
 
-            @foreach (var shift in Model.physicianShifts)
+            @foreach (var physician in Model.physicianShifts)
             {
                 <tr>
 
                     <td>
 
-                        <img src="~/document/physician/@shift.PhysicianId/ProfilePhoto.jpg" class="rounded-circle" style="height:30px; width:30px;" />
-                        <span>@shift.PhysicianName</span>
+                        <img src="~/document/physician/@physician.PhysicianId/ProfilePhoto.jpg" class="rounded-circle" style="height:30px; width:30px;" />
+                        <span>@physician.PhysicianName</span>
 
                     </td>
 
-
-                    @try
+                    @for (int tableDay = 0; tableDay < 7; tableDay++)
                     {
-
-                        @if (shift.shiftDetails != null && shift.shiftDetails.Any())
+                        DateTime tableDate = Model.StartOfWeek.Date.AddDays(tableDay);
+                        @if (physician.shiftDetails.Any(shift => shift.Shiftdate == tableDate))
                         {
-                            @foreach (var shiftdetail in shift.shiftDetails)
-                            {
-                                @if(shiftdetail != null)
+                            int count = 0;
+
+                            <td>
+                                @foreach (var shift in physician.shiftDetails.Where(shift => shift.Shiftdate == tableDate))
                                 {
-                                    <td class="pending-shift-bg">
-                                        @shiftdetail.Starttime - @shiftdetail.Endtime
-                                    </td>
+
+                                    string statusClass = "";
+
+                                    if (shift.Status == 1)
+                                    {
+                                        statusClass = "approved-shift-bg";
+                                    }
+                                    else if (shift.Status == 2)
+                                    {
+                                        statusClass = "pending-shift-bg";
+                                    }
+
+                                    @if (count < 2)
+                                    {
+                                        <div data-shiftdetailid="@shift.Shiftdetailid" data-physicianid="@physician.PhysicianId" style="cursor:pointer;" class="@statusClass view-shift-btn d-flex justify-content-center mb-1">
+                                            @shift.Starttime.ToString("hh:mm tt") - @shift.Endtime.ToString("hh:mm tt")
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="week-wise-view-all-btn d-flex justify-content-center btn text-info p-0 m-0" data-date="@tableDate.Day" data-month="@tableDate.Month" data-year="@tableDate.Year">View All</div>
+                                        break;
+                                    }
+
+                                    count++;
                                 }
-                            }
+                            </td>
+
+                        }
+                        else
+                        {
+                            <td></td>
                         }
                     }
-                    catch (Exception e)
-                    {
-
-                    }
-
-
 
                 </tr>
             }
-
-            @* @foreach (var physician in Model.physicians)
-            {
-
-                <tr>
-
-                    <td>
-
-                        <img src="~/document/physician/@physician.Physicianid/ProfilePhoto.png" class="rounded-circle" style="height:30px; width:30px;" />
-                        <span>@physician.Firstname @physician.Lastname</span>
-
-                    </td>
-
-
-                    @{
-                        var list = Model.physicianShifts.Where(shift => shift.PhysicianId == physician.Physicianid);
-                    }
-
-                @try{
-
-                        @if (list != null && list.Any())
-                        {
-                            @foreach (var shift in list)
-                            {
-                                <td class="pending-shift-bg">
-                                    @shift.shiftDetail.Starttime - @shift.shiftDetail.Endtime
-                                </td>
-                            }
-                        }
-                }
-                    catch(Exception e)
-                    {
-                        
-                    }
-
-
-
-                </tr>
-
-            } *@
-
 
         </tbody>
 
     </table>
 
 </div>
+
+<script>
+
+    $('.week-wise-view-all-btn').click(function () {
+
+        let weekTableDate = $(this).data("date");
+        let weekTableMonth = $(this).data("month");
+        let weekTableYear = $(this).data("year");
+
+        console.log('Week Date: ' + weekTableDate);
+        console.log('Week Month: ' + weekTableMonth);
+        console.log('Week Year: ' + weekTableYear);
+
+        currentDate = new Date(weekTableYear, (weekTableMonth - 1), weekTableDate);
+        console.log(currentDate);
+        $('#day-wise-schedule-btn').click();
+
+    });
+
+    $('.view-shift-btn').click(function () {
+
+        var sDetailId = $(this).data("shiftdetailid");
+        console.log('shift detail id: ' + sDetailId);
+
+        var phyId = $(this).data("physicianid");
+        console.log('phy id: ' + phyId);
+
+        $.ajax({
+            url: "/Admin/ViewShiftModal",
+            data: { shiftDetailId: sDetailId, physicianId: phyId },
+            type: 'GET',
+            success: function (result) {
+                $('#modal-div').html(result);
+                $('#viewShiftModal').modal('show');
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
+
+    });
+
+</script>

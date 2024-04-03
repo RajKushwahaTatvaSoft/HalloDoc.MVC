@@ -36,9 +36,10 @@ namespace Business_Layer.Helpers
                     return "Clear";
                 case (int)RequestStatus.Block:
                     return "Block";
+                default:
+                    return "";
             }
 
-            return "";
         }
 
     }

@@ -40,7 +40,6 @@ namespace Data_Layer.ViewModels.Admin
         public DateTime StartOfWeek { get; set; }
         public DateTime EndOfWeek { get; set; }
         public IEnumerable<PhysicianShift> physicianShifts { get; set; }
-        public IEnumerable<DataModels.Physician> physicians { get; set; }
 
     }
 

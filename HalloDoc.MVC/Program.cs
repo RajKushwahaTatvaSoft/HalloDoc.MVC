@@ -12,6 +12,8 @@ using Business_Layer.Interface.TableInterface;
 using Business_Layer.Services;
 using Business_Layer.Interface.Services;
 using HalloDoc.MVC.Services;
+using AspNetCoreHero.ToastNotification;
+using AspNetCoreHero.ToastNotification.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,6 +58,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
      };
  });
 
+builder.Services.AddNotyf(config => { config.DurationInSeconds = 10; config.IsDismissable = true; config.Position = NotyfPosition.BottomRight; });
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -70,7 +74,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseSession();
-
+app.UseNotyf();
 app.UseAuthorization();
 
 app.MapControllerRoute(

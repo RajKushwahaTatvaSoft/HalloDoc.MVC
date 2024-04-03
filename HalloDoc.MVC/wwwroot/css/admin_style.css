@@ -443,6 +443,10 @@ x::-webkit-file-upload-button, input[type=file]:after {
     background-color: lightgreen;
 }
 
+.week-wise-table {
+    font-size: 14px;
+}
+
 .calender-filter {
     border: 1px solid #10bce9;
 }

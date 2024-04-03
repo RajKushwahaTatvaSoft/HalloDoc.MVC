@@ -1,0 +1,126 @@
+﻿@model ViewShiftModel
+
+<div class="modal fade" id="viewShiftModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <div class="modal-dark modal-title text-white" id="exampleModalLongTitle">
+                    View Shift
+                </div>
+                <button type="button" class="btn" aria-label="Close" data-bs-dismiss="modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
+                         fill="#FFFFFF">
+                        <path d="M0 0h24v24H0V0z" fill="none" />
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
+                    </svg>
+                </button>
+            </div>
+            <form method="post" asp-action="EditShift" asp-controller="Admin">
+
+                <div class="modal-body">
+
+                    <fieldset id="view-shift-fieldset" disabled>
+
+                        <div class="modal-flex my-3">
+
+                            <input id="shift-detail-id" hidden asp-for="ShiftDetailId" />
+                            <div class="col-12">
+
+                                <div class="form-floating w-100 h-100">
+                                    <select asp-for="RegionId" id="regionList2" class="form-select">
+                                        <option>select any profession type</option>
+                                        @foreach (var region in Model.regions)
+                                        {
+                                            <option value="@region.Regionid">@region.Name </option>
+                                        }
+
+                                    </select>
+                                </div>
+
+                            </div>
+
+                            <div class="col-12 mt-3">
+                                <div class="form-floating w-100 h-100">
+                                    <select asp-for="PhysicianId" id="physicianList2" class="form-select">
+
+                                        <option>select any physician</option>
+                                        @foreach (var physician in Model.selectedPhysicians)
+                                        {
+                                            <option value="@physician.Physicianid">@physician.Firstname @physician.Lastname </option>
+                                        }
+
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-12 mt-3">
+                                <div class="form-floating d-flex  w-100">
+
+                                    <input asp-for="ShiftDate" id="Editshiftdate" class="py-1 mt-1 form-control" type="date" style="height:60px;" />
+                                    <label for="floatingInput" class="">Shift Date</label>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between col-12 mt-3">
+                                <div class=" col-5 mx-1">
+                                    <div class="form-floating">
+                                        <input asp-for="ShiftStartTime" id="EditshiftstartTime" type="time" class="form-control" placeholder="">
+                                        <label for="floatingInput">Start</label>
+                                    </div>
+                                </div>
+                                <div class=" col-5 mx-1">
+                                    <div class="form-floating">
+                                        <input asp-for="ShiftEndTime" id="EditshiftendTime" type="time" class="form-control" placeholder="">
+                                        <label for="floatingInput">End</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </fieldset>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" data-bs-dismiss="modal" class="btn btn-primary me-1">Return</button>
+                    <button type="button" id="view-shift-edit-btn" class="btn btn-primary me-1 m-1">Edit</button>
+                    <button type="submit" data-bs-dismiss="modal" id="view-shift-save-btn" class="btn btn-primary me-1 " style="display: none;">Save</button>
+                    <button type="button" id="view-shift-delete-btn" class="btn btn-danger me-1 ">Delete</button>
+                </div>
+
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>    
+
+    $('#view-shift-delete-btn').click(function () {
+        $.ajax({
+            url: '/Admin/DeleteShift',
+            type: 'POST',
+            data: {
+                shiftDetailId: $('#shift-detail-id').val(),
+            },
+            success: function (result) {
+                location.reload();
+            },
+            error: function (err) {
+                console.error(err);
+            }
+        });
+    });
+
+
+    $('#view-shift-edit-btn').click(function () {
+
+        document.getElementById("view-shift-fieldset").disabled = false;
+
+        $('#view-shift-save-btn').show();
+        $('#view-shift-edit-btn').hide();
+
+    });
+
+</script>

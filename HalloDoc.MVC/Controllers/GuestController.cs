@@ -14,6 +14,7 @@ using System.IdentityModel.Tokens.Jwt;
 using Business_Layer.Utilities;
 using Business_Layer.Interface.Services;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using AspNetCoreHero.ToastNotification.Abstractions;
 
 
 namespace HalloDoc.MVC.Controllers
@@ -25,13 +26,15 @@ namespace HalloDoc.MVC.Controllers
         private readonly IWebHostEnvironment _environment;
         private readonly IConfiguration _config;
         private readonly IUtilityService _utilityService;
-        public GuestController(IUnitOfWork unitOfWork, IJwtService jwt, IWebHostEnvironment environment, IConfiguration config, IUtilityService utilityService)
+        private readonly INotyfService _notyf;
+        public GuestController(IUnitOfWork unitOfWork, IJwtService jwt, IWebHostEnvironment environment, IConfiguration config, IUtilityService utilityService, INotyfService notyf)
         {
             _jwtService = jwt;
             _unitOfWork = unitOfWork;
             _environment = environment;
             _config = config;
             _utilityService = utilityService;
+            _notyf = notyf;
         }
 
         [HttpPost]
@@ -57,11 +60,11 @@ namespace HalloDoc.MVC.Controllers
             var roleClaim = jwtToken.Claims.FirstOrDefault(claims => claims.Type == "accountTypeId");
             int roleId = Convert.ToInt32(roleClaim?.Value);
 
-            if(roleId == (int)AllowRole.Patient)
+            if (roleId == (int)AllowRole.Patient)
             {
-                return RedirectToAction("Dashboard","Patient");
+                return RedirectToAction("Dashboard", "Patient");
             }
-            else if(roleId == (int)AllowRole.Physician)
+            else if (roleId == (int)AllowRole.Physician)
             {
                 return RedirectToAction("Dashboard", "Physician");
             }
@@ -312,8 +315,9 @@ namespace HalloDoc.MVC.Controllers
 
                     controller = "Admin";
 
-                    TempData["success"] = "Admin Login Successful";
+                    //TempData["success"] = "Admin Login Successful";
 
+                _notyf.Success("Login Successfull", 3);
                 }
 
 
@@ -603,7 +607,7 @@ namespace HalloDoc.MVC.Controllers
                 string familyNumber = "+" + friendViewModel.Countrycode + '-' + friendViewModel.Phone;
                 string patientNumber = "+" + friendViewModel.patientDetails.Countrycode + '-' + friendViewModel.patientDetails.Phone;
                 string state = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == friendViewModel.patientDetails.RegionId).Name;
-                string city = _unitOfWork.CityRepository.GetFirstOrDefault(city=> city.Id == friendViewModel.patientDetails.CityId).Name;
+                string city = _unitOfWork.CityRepository.GetFirstOrDefault(city => city.Id == friendViewModel.patientDetails.CityId).Name;
 
                 if (!isUserExists)
                 {

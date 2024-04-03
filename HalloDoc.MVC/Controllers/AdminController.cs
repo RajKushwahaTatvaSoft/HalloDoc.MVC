@@ -1,4 +1,5 @@
-﻿using Business_Layer.Helpers;
+﻿using AspNetCoreHero.ToastNotification.Abstractions;
+using Business_Layer.Helpers;
 using Business_Layer.Interface;
 using Business_Layer.Interface.AdminInterface;
 using Business_Layer.Interface.Services;
@@ -38,8 +39,9 @@ namespace HalloDoc.MVC.Controllers
         private readonly IEmailService _emailService;
         private readonly IUtilityService _utilityService;
         private readonly ApplicationDbContext _context;
+        private readonly INotyfService _notyf;
 
-        public AdminController(IUnitOfWork unitOfWork, IDashboardRepository dashboard, IWebHostEnvironment environment, IConfiguration config, ApplicationDbContext context, IEmailService emailService, IUtilityService utilityService)
+        public AdminController(IUnitOfWork unitOfWork, IDashboardRepository dashboard, IWebHostEnvironment environment, IConfiguration config, ApplicationDbContext context, IEmailService emailService, IUtilityService utilityService, INotyfService notyf)
         {
             _unitOfWork = unitOfWork;
             _dashboardRepository = dashboard;
@@ -47,7 +49,8 @@ namespace HalloDoc.MVC.Controllers
             _config = config;
             _emailService = emailService;
             _context = context;
-            _utilityService = utilityService;
+            _utilityService = utilityService; 
+            _notyf = notyf;
         }
 
 
@@ -69,7 +72,7 @@ namespace HalloDoc.MVC.Controllers
             IEnumerable<Region> regions = _unitOfWork.RegionRepository.GetAll();
             IEnumerable<int> adminRegions = _unitOfWork.AdminRegionRepo.Where(region => region.Adminid == adminId).ToList().Select(x => (int)x.Regionid);
             IEnumerable<City> adminMailCityList = _context.Cities.Where(city => city.Regionid == admin.Regionid);
-            int cityId = _context.Cities.FirstOrDefault(city=> city.Name == admin.City)?.Id ?? 0;
+            int cityId = _context.Cities.FirstOrDefault(city => city.Name == admin.City)?.Id ?? 0;
 
             AdminProfileViewModel model = new()
             {
@@ -1732,6 +1735,109 @@ namespace HalloDoc.MVC.Controllers
 
         #region Providers
 
+        #region ProviderModals
+
+        [HttpPost]
+        public bool DeleteShift(int shiftDetailId)
+        {
+            try
+            {
+                Shiftdetail? sd = _context.Shiftdetails.FirstOrDefault(s => s.Shiftdetailid == shiftDetailId);
+
+                if (sd == null)
+                {
+                    TempData["error"] = "Cannot Find Shift";
+                    return false;
+
+                }
+
+                sd.Isdeleted = true;
+                _context.Shiftdetails.Update(sd);
+                _context.SaveChanges();
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                TempData["error"] = e.Message;
+                return false;
+            }
+
+        }
+
+        [HttpPost]
+        public IActionResult EditShift(ViewShiftModel model)
+        {
+            Shiftdetail? sd = _context.Shiftdetails.FirstOrDefault(s => s.Shiftdetailid == model.ShiftDetailId);
+
+            if (sd == null)
+            {
+                TempData["error"] = "Cannot Find Shift";
+                return RedirectToAction("Scheduling");
+
+            }
+
+            sd.Starttime = model.ShiftStartTime;
+            sd.Endtime = model.ShiftEndTime;
+            sd.Shiftdate = model.ShiftDate;
+            sd.Modifieddate = DateTime.Now;
+
+            //TODO: Update modified by everywhere
+            sd.Modifiedby = "061d38d4-2b2f-48f6-ad21-5a80db6c4e69";
+
+            _context.Shiftdetails.Update(sd);
+            _context.SaveChanges();
+
+            TempData["success"] = "Shift Edited Successfully";
+
+            return RedirectToAction("Scheduling");
+        }
+
+        public IActionResult AddShiftModal(string dateString)
+        {
+            DateTime dateTime = DateTime.Parse(dateString);
+            return PartialView("Modals/AddShiftModal");
+        }
+
+        public IActionResult ViewShiftModal(int shiftDetailId, int? physicianId)
+        {
+            Shiftdetail shiftdetail = _context.Shiftdetails.FirstOrDefault(shift => shift.Shiftdetailid == shiftDetailId);
+            if (shiftdetail == null)
+            {
+                return View("Error");
+            }
+
+            if(physicianId == null)
+            {
+                Shift shift = _context.Shifts.FirstOrDefault(shift => shift.Shiftid == shiftdetail.Shiftid);
+
+                physicianId = shift.Physicianid;
+            }
+
+            DateTime currentTime = DateTime.Now;
+
+            //if (shiftdetail.Shiftdate < currentTime || shiftdetail.Starttime < TimeOnly.FromDateTime(currentTime))
+            //{
+            //    return null;
+            //}
+
+            ViewShiftModel model = new ViewShiftModel()
+            {
+                PhysicianId = physicianId ?? 0,
+                RegionId = shiftdetail.Regionid ?? 0,
+                regions = _unitOfWork.RegionRepository.GetAll(),
+                selectedPhysicians = _unitOfWork.PhysicianRepository.Where(phy => phy.Regionid == shiftdetail.Regionid),
+                ShiftDate = shiftdetail.Shiftdate,
+                ShiftEndTime = shiftdetail.Endtime,
+                ShiftStartTime = shiftdetail.Starttime,
+            };
+
+            return PartialView("Modals/ViewShiftModal", model);
+
+        }
+
+        #endregion
+
         public IActionResult Scheduling()
         {
             SchedulingViewModel model = new SchedulingViewModel();
@@ -1859,85 +1965,69 @@ namespace HalloDoc.MVC.Controllers
             return startDate.AddDays(daysToAdd);
         }
 
-        public IActionResult DaySchedule()
-        {
-            // Assume you have a list of ShiftViewModel objects populated from your database
-            List<string> hours = GenerateHours();
+        //public IActionResult DaySchedule()
+        //{
+        //    // Assume you have a list of ShiftViewModel objects populated from your database
+        //    List<string> hours = GenerateHours();
 
-            ShiftTableViewModel viewModel = new()
-            {
-                Hours = hours,
-            };
+        //    ShiftTableViewModel viewModel = new()
+        //    {
+        //        Hours = hours,
+        //    };
 
-            return PartialView("ScheduleDayWiseTable", viewModel);
-        }
+        //    return PartialView("ScheduleDayWiseTable", viewModel);
+        //}
 
 
-        private List<string> GenerateHours()
-        {
-            List<string> hours = new List<string>();
+        //private List<string> GenerateHours()
+        //{
+        //    List<string> hours = new List<string>();
 
-            // Generate hours from 12 AM to 11 PM
-            for (int i = 0; i < 24; i++)
-            {
-                string hour = (i % 12 == 0 ? "12" : (i % 12).ToString()) + (i < 12 ? "A" : "P");
-                hours.Add(hour);
-            }
+        //    // Generate hours from 12 AM to 11 PM
+        //    for (int i = 0; i < 24; i++)
+        //    {
+        //        string hour = (i % 12 == 0 ? "12" : (i % 12).ToString()) + (i < 12 ? "A" : "P");
+        //        hours.Add(hour);
+        //    }
 
-            return hours;
-        }
+        //    return hours;
+        //}
 
-        private List<string> GenerateHourTime()
-        {
-            List<string> hours = new List<string>();
+        //private List<string> GenerateHourTime()
+        //{
+        //    List<string> hours = new List<string>();
 
-            // Generate hours from 12 AM to 11 PM
-            for (int i = 0; i < 24; i++)
-            {
-                string hour = ((i).ToString()) + ":00:00";
-                hours.Add(hour);
-            }
+        //    // Generate hours from 12 AM to 11 PM
+        //    for (int i = 0; i < 24; i++)
+        //    {
+        //        string hour = ((i).ToString()) + ":00:00";
+        //        hours.Add(hour);
+        //    }
 
-            return hours;
-        }
-        
-        [HttpPost]
-        public IActionResult EditShift(int shiftId, TimeOnly startTime, TimeOnly endTime, DateTime shiftdate)
-        {
-            Shiftdetail sd = _context.Shiftdetails.FirstOrDefault(s => s.Shiftdetailid == shiftId);
-            if (sd != null)
-            {
+        //    return hours;
+        //}
 
-                sd.Starttime = startTime;
-                sd.Endtime = endTime;
-                sd.Shiftdate = shiftdate;
-            }
-            _context.Shiftdetails.Update(sd);
-            _context.SaveChanges();
-            return RedirectToAction("SchedulingHeader");
-        }
+        //private List<ShiftViewModel> GetShiftViewModels(DateTime currentDate)
+        //{
+        //    // Retrieve shift details from the database or any other data source
 
-        private List<ShiftViewModel> GetShiftViewModels(DateTime currentDate)
-        {
-            // Retrieve shift details from the database or any other data source
+        //    var query = (from s in _context.Shifts
+        //                 join sd in _context.Shiftdetails on s.Shiftid equals sd.Shiftid
+        //                 join p in _context.Physicians on s.Physicianid equals p.Physicianid into subgroup
+        //                 from subitem in subgroup.DefaultIfEmpty()
+        //                 select new ShiftViewModel
+        //                 {
+        //                     ProviderName = subitem.Firstname + " " + subitem.Lastname,
+        //                     PhysicianId = subitem.Physicianid,
+        //                     StartTime = sd.Starttime,
+        //                     EndTime = sd.Endtime,
+        //                     Status = sd.Status,
+        //                     shiftDate = sd.Shiftdate
 
-            var query = (from s in _context.Shifts
-                         join sd in _context.Shiftdetails on s.Shiftid equals sd.Shiftid
-                         join p in _context.Physicians on s.Physicianid equals p.Physicianid into subgroup
-                         from subitem in subgroup.DefaultIfEmpty()
-                         select new ShiftViewModel
-                         {
-                             ProviderName = subitem.Firstname + " " + subitem.Lastname,
-                             PhysicianId = subitem.Physicianid,
-                             StartTime = sd.Starttime,
-                             EndTime = sd.Endtime,
-                             Status = sd.Status,
-                             shiftDate = sd.Shiftdate
+        //                 }).Where(x => x.shiftDate == currentDate);
 
-                         }).Where(x => x.shiftDate == currentDate);
-
-            return query.ToList();
-        }
+        //    return query.ToList();
+        //}
 
         [HttpPost]
         public IActionResult ScheduleMonthWisePartial(int shiftMonth, int shiftYear)
@@ -1976,77 +2066,22 @@ namespace HalloDoc.MVC.Controllers
         }
 
         [HttpPost]
-        public IActionResult ScheduleWeekWisePartial(DateTime startDate)
+        public IActionResult ScheduleDayWisePartial(DateTime dayDate)
         {
-
-            DateTime start = startDate.ToLocalTime();
-            DateTime end = start.AddDays(7);
+            DateTime current = dayDate.ToLocalTime().Date;
 
             ShiftWeekViewModel model = new ShiftWeekViewModel();
 
-            //var query = (from p in _context.Physicians
-            //             select new PhysicianShift
-            //             {
-            //                 PhysicianId = p.Physicianid,
-            //                 PhysicianName = p.Firstname,
-            //                 shiftDetails = GetPhyShiftDetails(startDate,p.Physicianid)
-            //             });
-
-            //var query = (from p in _context.Physicians
-            //             join s in _context.Shifts on p.Physicianid equals s.Physicianid into shiftGroup
-            //             from shiftItem in shiftGroup.DefaultIfEmpty()
-            //             join sd in _context.Shiftdetails on shiftItem.Shiftid equals sd.Shiftid into detailGroup
-            //             from detailItem in detailGroup.DefaultIfEmpty()
-            //             where (detailItem.Shiftdate <= end)
-            //             group detailItem by p.Physicianid into sdGroup
-            //             select new PhysicianShift
-            //             {
-            //                 PhysicianId = sdGroup.Key,
-            //                 shiftDetails = sdGroup.ToList(),
-            //             });
-
-            //var query = (from p in _context.Physicians
-            //             join s in _context.Shifts on p.Physicianid equals s.Physicianid into shiftGroup
-            //             from shiftItem in shiftGroup.DefaultIfEmpty()
-            //             join sd in _context.Shiftdetails on shiftItem.Shiftid equals sd.Shiftid 
-            //             where (sd.Shiftdate <= end)
-            //             group sd by p.Physicianid into sdGroup
-            //             select new PhysicianShift
-            //             {
-            //                 PhysicianId = sdGroup.Key,
-            //                 shiftDetails = sdGroup.ToList(),
-            //             });
-
-            //var query = (from p in _context.Physicians
-            //             join sgroup in
-            //             (from s in _context.Shifts
-            //             join sd in _context.Shiftdetails on s.Shiftid equals sd.Shiftid) on p.Physicianid equals sgroup.Physicianid into phyGroup
-            //             from phyItem in 
-            //             where (sd.Shiftdate <= end)
-            //             group sd by p.Physicianid into sdGroup
-            //             select new PhysicianShift
-            //             {
-            //                 PhysicianId = sdGroup.Key,
-            //                 shiftDetails = sdGroup.ToList(),
-            //             });
-
             IEnumerable<Physician> phyList = _context.Physicians.ToList();
             List<PhysicianShift> physicianShifts = new List<PhysicianShift>();
-
-
-      
 
             foreach (var phy in phyList)
             {
                 var query = (from sd in _context.Shiftdetails
                              join s in _context.Shifts on sd.Shiftid equals s.Shiftid
-                             where (s.Physicianid == phy.Physicianid && sd.Shiftdate >= start && sd.Shiftdate <= end)
-                             select new Shiftdetail
-                             {
-                                 Shiftid = s.Shiftid,
-                                 Starttime = sd.Starttime,
-                                 Endtime = sd.Endtime,
-                             });
+                             where (sd.Isdeleted != true)
+                             where (s.Physicianid == phy.Physicianid && sd.Shiftdate == current)
+                             select sd);
 
                 PhysicianShift shift = new()
                 {
@@ -2059,58 +2094,104 @@ namespace HalloDoc.MVC.Controllers
             }
 
             model.physicianShifts = physicianShifts;
-            model.physicians = phyList;
+
+            return PartialView("Partial/ScheduleDayWiseTable", model);
+
+        }
+
+        public static DateTime StartOfWeek(DateTime dt, DayOfWeek startOfWeek)
+        {
+            int diff = (7 + (dt.DayOfWeek - startOfWeek)) % 7;
+            return dt.AddDays(-1 * diff).Date;
+        }
+
+        [HttpPost]
+        public IActionResult ScheduleWeekWisePartial(DateTime startDate)
+        {
+
+            DateTime start = startDate.ToLocalTime().Date;
+
+            if(start.DayOfWeek != DayOfWeek.Sunday)
+            {
+                start = StartOfWeek(start, DayOfWeek.Sunday);
+            }
+
+            DateTime end = start.AddDays(7);
+
+            IEnumerable<Physician> phyList = _context.Physicians.ToList();
+            List<PhysicianShift> physicianShifts = new List<PhysicianShift>();
+
+            foreach (var phy in phyList)
+            {
+                var query = (from sd in _context.Shiftdetails
+                             join s in _context.Shifts on sd.Shiftid equals s.Shiftid
+                             where (s.Physicianid == phy.Physicianid && sd.Shiftdate >= start && sd.Shiftdate <= end)
+                             select sd);
+
+                PhysicianShift shift = new()
+                {
+                    PhysicianId = phy.Physicianid,
+                    PhysicianName = phy.Firstname,
+                    shiftDetails = query,
+                };
+
+                physicianShifts.Add(shift);
+            }
+
+            ShiftWeekViewModel model = new ShiftWeekViewModel();
+            model.StartOfWeek = start;
+            model.physicianShifts = physicianShifts;
 
             return PartialView("Partial/ScheduleWeekWiseTable", model);
         }
 
-        public IEnumerable<Shiftdetail> GetPhyShiftDetails(DateTime startDate, int physicianId)
-        {
+        //public IEnumerable<Shiftdetail> GetPhyShiftDetails(DateTime startDate, int physicianId)
+        //{
 
-            DateTime start = startDate.ToLocalTime();
-            DateTime end = start.AddDays(7);
+        //    DateTime start = startDate.ToLocalTime();
+        //    DateTime end = start.AddDays(7);
 
-            var query = (from s in _context.Shifts
-                         join sd in _context.Shiftdetails on s.Shiftid equals sd.Shiftid
-                         join p in _context.Physicians on s.Physicianid equals p.Physicianid
-                         where (p.Physicianid == physicianId && sd.Shiftdate >= start && sd.Shiftdate <= end)
-                         select new Shiftdetail
-                         {
-                             Starttime = sd.Starttime,
-                             Endtime = sd.Endtime,
-                         });
+        //    var query = (from s in _context.Shifts
+        //                 join sd in _context.Shiftdetails on s.Shiftid equals sd.Shiftid
+        //                 join p in _context.Physicians on s.Physicianid equals p.Physicianid
+        //                 where (p.Physicianid == physicianId && sd.Shiftdate >= start && sd.Shiftdate <= end)
+        //                 select new Shiftdetail
+        //                 {
+        //                     Starttime = sd.Starttime,
+        //                     Endtime = sd.Endtime,
+        //                 });
 
-            return query;
-        }
+        //    return query;
+        //}
 
-        [HttpPost]
-        public IActionResult SchedulePartialTable(int shiftStatus, int typeFilter, DateTime dayFilter, int regionFilter, DateTime startDate)
-        {
-            if (dayFilter != null)
-            {
-                //    DateTime myDate = DateTime.ParseExact("2024-03-31 00:00:00,000", "yyyy-MM-dd HH:mm:ss,fff",
-                //                           System.Globalization.CultureInfo.InvariantCulture);
+        //[HttpPost]
+        //public IActionResult SchedulePartialTable(int shiftStatus, int typeFilter, DateTime dayFilter, int regionFilter, DateTime startDate)
+        //{
+        //    if (dayFilter != null)
+        //    {
+        //        //    DateTime myDate = DateTime.ParseExact("2024-03-31 00:00:00,000", "yyyy-MM-dd HH:mm:ss,fff",
+        //        //                           System.Globalization.CultureInfo.InvariantCulture);
 
-                DateTime currentDate = startDate.ToLocalTime();
-                List<ShiftViewModel> shiftViewModels = GetShiftViewModels(currentDate);
-                List<string> hours = GenerateHours();
-                List<string> hourtimes = GenerateHourTime();
+        //        DateTime currentDate = startDate.ToLocalTime();
+        //        List<ShiftViewModel> shiftViewModels = GetShiftViewModels(currentDate);
+        //        List<string> hours = GenerateHours();
+        //        List<string> hourtimes = GenerateHourTime();
 
-                ShiftTableViewModel viewModel = new()
-                {
-                    hourTime = hourtimes,
-                    Hours = hours,
-                    Shifts = shiftViewModels,
-                    physicians = _context.Physicians,
-                };
-                return PartialView("Partial/ScheduleDayWiseTable", viewModel);
+        //        ShiftTableViewModel viewModel = new()
+        //        {
+        //            hourTime = hourtimes,
+        //            Hours = hours,
+        //            Shifts = shiftViewModels,
+        //            physicians = _context.Physicians,
+        //        };
+        //        return PartialView("Partial/ScheduleDayWiseTable", viewModel);
 
-            }
-            else
-            {
-                return View("error");
-            }
-        }
+        //    }
+        //    else
+        //    {
+        //        return View("error");
+        //    }
+        //}
 
 
         public void InsertFileAfterRename(IFormFile file, string path, string updateName)
@@ -2486,7 +2567,7 @@ namespace HalloDoc.MVC.Controllers
                     _unitOfWork.PhysicianRepository.Add(phy);
                     _unitOfWork.Save();
 
-                    foreach(int regionId in model.selectedRegions)
+                    foreach (int regionId in model.selectedRegions)
                     {
                         Physicianregion phyRegion = new Physicianregion()
                         {
@@ -2861,7 +2942,7 @@ namespace HalloDoc.MVC.Controllers
 
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
             Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(a => a.Adminid == adminId);
-            string? City = _context.Cities.FirstOrDefault(city=> city.Id == CityId)?.Name;
+            string? City = _context.Cities.FirstOrDefault(city => city.Id == CityId)?.Name;
 
             if (admin == null)
             {
@@ -3224,11 +3305,11 @@ namespace HalloDoc.MVC.Controllers
             {
                 emailLogs = logs,
             };
-            return PartialView("Partial/EmailLogPartialTable",model);
+            return PartialView("Partial/EmailLogPartialTable", model);
         }
 
         [HttpPost]
-        public IActionResult SearchRecordPartialTable(string patientName, int requestStatus, int requestType,string phoneNumber, DateTime fromDateOfService, DateTime toDateOfService,string providerName, string email)
+        public IActionResult SearchRecordPartialTable(string patientName, int requestStatus, int requestType, string phoneNumber, DateTime fromDateOfService, DateTime toDateOfService, string providerName, string email)
         {
 
             // TODO: Add dateOfService filter in page
@@ -3236,7 +3317,7 @@ namespace HalloDoc.MVC.Controllers
                          join rc in _context.Requestclients on r.Requestid equals rc.Requestid
                          join phy in _context.Physicians on r.Physicianid equals phy.Physicianid into phyGroup
                          from phyItem in phyGroup.DefaultIfEmpty()
-                         where ( (string.IsNullOrEmpty(patientName) || (rc.Firstname+ " " + rc.Lastname).ToLower().Contains(patientName.ToLower()))
+                         where ((string.IsNullOrEmpty(patientName) || (rc.Firstname + " " + rc.Lastname).ToLower().Contains(patientName.ToLower()))
                          && (requestStatus == 0 || r.Status == requestStatus)
                          && (requestType == 0 || r.Requesttypeid == requestType)
                          && (string.IsNullOrEmpty(phoneNumber) || rc.Phonenumber.ToLower().Contains(phoneNumber.ToLower()))
@@ -3259,7 +3340,7 @@ namespace HalloDoc.MVC.Controllers
                              PhysicianNote = "",
                              AdminNote = "",
                              CancelledByPhysicianNote = "",
-                             PatientNote = "",                             
+                             PatientNote = "",
                          });
 
             SearchRecordViewModel model = new SearchRecordViewModel()
@@ -3267,7 +3348,7 @@ namespace HalloDoc.MVC.Controllers
                 searchRecordTRows = query
             };
 
-            return PartialView("Partial/SearchRecordPartialTable",model);
+            return PartialView("Partial/SearchRecordPartialTable", model);
         }
 
 
@@ -3278,7 +3359,7 @@ namespace HalloDoc.MVC.Controllers
                 requeststatuses = _context.Requeststatuses,
                 requesttypes = _context.Requesttypes,
             };
-            return View("Records/SearchRecords",model);
+            return View("Records/SearchRecords", model);
         }
 
         public IActionResult EmailLogs()
@@ -3288,7 +3369,7 @@ namespace HalloDoc.MVC.Controllers
             {
                 roles = _unitOfWork.RoleRepo.GetAll(),
             };
-            return View("Records/EmailLogs",model);
+            return View("Records/EmailLogs", model);
         }
 
         public IActionResult SMSLogs()
@@ -3297,7 +3378,7 @@ namespace HalloDoc.MVC.Controllers
             {
                 roles = _unitOfWork.RoleRepo.GetAll(),
             };
-            return View("Records/SMSLogs",model);
+            return View("Records/SMSLogs", model);
         }
 
         public IActionResult PatientRecords()
@@ -3311,6 +3392,59 @@ namespace HalloDoc.MVC.Controllers
         }
 
 
+
+        #endregion
+
+        #region Partners
+
+        public IActionResult Vendors()
+        {
+            return View("Partners/Vendors");
+        }
+
+        public async Task<IActionResult> BusinessTable(int pageNumber, int pageSize, string Name, int professionId)
+        {
+            pageNumber = pageNumber < 1 ? 1 : pageNumber;
+            pageSize = pageSize == 0 ? 3 : pageSize;
+
+            if (Name != null || professionId != 0)
+            {
+                var parseData = (from t1 in _context.Healthprofessionals
+                                 join t2 in _context.Healthprofessionaltypes on t1.Profession equals t2.Healthprofessionalid
+                                 where t1.Isdeleted != true && (t1.Vendorname.ToUpper().Contains(Name) || t2.Healthprofessionalid == professionId)
+                                 select new VendorTRow
+                                 {
+                                     BusinessId = t1.Vendorid,
+                                     BusinessName = t1.Vendorname,
+                                     ProfessionId = t2.Healthprofessionalid,
+                                     ProfessionName = t2.Professionname,
+                                     Email = t1.Email,
+                                     PhoneNumber = t1.Phonenumber,
+                                     FaxNumber = t1.Faxnumber,
+                                     BusinessContact = t1.Businesscontact
+                                 });
+
+                return PartialView("Partners/_businessTable", parseData);
+            }
+            else
+            {
+                var parseData = (from t1 in _context.Healthprofessionals
+                                 join t2 in _context.Healthprofessionaltypes on t1.Profession equals t2.Healthprofessionalid
+                                 where t1.Isdeleted != true
+                                 select new VendorTRow
+                                 {
+                                     BusinessId = t1.Vendorid,
+                                     BusinessName = t1.Vendorname,
+                                     ProfessionId = t2.Healthprofessionalid,
+                                     ProfessionName = t2.Professionname,
+                                     Email = t1.Email,
+                                     PhoneNumber = t1.Phonenumber,
+                                     FaxNumber = t1.Faxnumber,
+                                     BusinessContact = t1.Businesscontact
+                                 });
+                return PartialView("Partners/_businessTable", parseData);
+            }
+        }
 
         #endregion
 
