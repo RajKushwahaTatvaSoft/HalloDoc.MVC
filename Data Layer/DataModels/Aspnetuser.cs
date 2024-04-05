@@ -38,8 +38,8 @@ public partial class Aspnetuser
     [Column("modifieddate", TypeName = "timestamp without time zone")]
     public DateTime? Modifieddate { get; set; }
 
-    [Column("roleid")]
-    public int Roleid { get; set; }
+    [Column("accounttypeid")]
+    public int? Accounttypeid { get; set; } = null;
 
     [InverseProperty("Aspnetuser")]
     public virtual ICollection<Admin> AdminAspnetusers { get; set; } = new List<Admin>();

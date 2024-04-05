@@ -1,0 +1,163 @@
+﻿@model EditBusinessViewModel;
+
+@{
+    Layout = "_AdminDashboardLayout";
+    ViewData["Title"] = "Add Business";
+}
+
+<div class="container-fluid d-flex justify-content-center row ">
+
+    <div class="col-8">
+
+        <div class="container-fluid d-flex justify-content-between mt-4">
+            <h4>
+                Update Information
+            </h4>
+
+            <button class="btn btn-outline-info" onclick="history.back(-1)">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="#01bce9" width="15" height="15" viewBox="0 -960 960 960">
+                    <path d="m142-480 294 294q15 15 14.5 35T435-116q-15 15-35 15t-35-15L57-423q-12-12-18-27t-6-30q0-15 6-30t18-27l308-308q15-15 35.5-14.5T436-844q15 15 15 35t-15 35L142-480Z" />
+                </svg>
+                <span>Back</span>
+            </button>
+
+        </div>
+        <div class="mt-4">
+            <div class="viewCaseForm form-floating shadow patient-request-form p-3">
+
+                <form method="post">
+                    <input asp-for="VendorId" hidden />
+                    <div class="row g-2 m-1">
+                        <div class="col-md">
+                            <div class="form-floating">
+                                <input type="text" asp-for="BusinessName" class="form-control" id="businessName" />
+                                <label for="userName">Business Name</label>
+                            </div>
+                        </div>
+                        <div class="col-md">
+                            <div class="form-floating">
+                                <select class="form-select mb-3" id="role" asp-for="ProfessionId">
+                                    <option selected disabled>Select A Profession</option>
+                                    @foreach (var item in Model.professions)
+                                    {
+                                        <option value="@item.Healthprofessionalid">@item.Professionname</option>
+                                    }
+                                </select>
+                                <label for="role">Select A Profession</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2 m-1">
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="text" asp-for="FaxNumber" class="form-control" id="faxNumber" />
+                                <label for="userName">Fax Number</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="tel" asp-for="PhoneNumber" class="form-control">
+                                <label for="">Phone Number</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2 m-1">
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="email" class="form-control" asp-for="Email">
+                                <label for="">Email</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating phone-div w-100 h-100">
+                                <input type="tel" class="patientPhone form-control w-100 h-100" asp-for="BusinessContact">
+                                <label for="">Business Contact</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2 m-1">
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" asp-for="Street">
+                                <label for="">Street</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <select asp-for="CityId" class="form-select" id="business-city" required>
+                                    <option disabled selected value=""> -- Select City -- </option>
+                                </select>
+                                <label for="business-city">City</label>
+                                <span asp-validation-for="CityId" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2 m-1">
+                        <div class="col-md-6">
+                            <div class="form-floating phone-div w-100 h-100 ">
+                                <select class="form-select border-0" asp-for="RegionId" id="business-state">
+                                    <option selected disabled>Select A Region</option>
+                                    @foreach (var items in Model.regions)
+                                    {
+                                        <option value="@items.Regionid">@items.Name</option>
+                                    }
+                                </select>
+                                <label for="">Select A Region</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="text" asp-for="Zip" class="form-control">
+                                <label for="">Zip/Postal</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-info text-white float-end m-1 ">Save</button>
+                        <button type="reset" class="btn btn-outline-info float-end m-1 ">Cancel</button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<script>
+
+    $("#business-state").change(function () {
+
+        var regId = $('option:selected', this).val();
+
+        $.ajax({
+            url: '/Guest/GetCitiesByRegion',
+            type: 'POST',
+            data: {
+                regionId: regId,
+            },
+            success: function (result) {
+                console.log(result);
+                $('#business-city').empty();
+                $('#business-city').append($('<option>', {
+                    value: "",
+                    text: '-- Select City --',
+                    selected: true,
+                    disabled: true
+                }));
+                $.each(result, function (index, object) {
+
+                    $('#business-city').append($('<option>', {
+                        value: object["id"],
+                        text: object["name"]
+                    }));
+
+                });
+            },
+            error: function (err) {
+                console.error(err);
+            }
+        });
+    });
+
+</script>

@@ -1,8 +1,6 @@
 ﻿using Business_Layer.Interface;
-using Business_Layer.Repository;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using NuGet.Protocol;
 using System.IdentityModel.Tokens.Jwt;
 
 namespace HalloDoc.MVC.Services
@@ -17,11 +15,9 @@ namespace HalloDoc.MVC.Services
             _roleId = roleId;
         }
 
-
         
         public void OnAuthorization(AuthorizationFilterContext context)
         {
-
 
             if(_roleId == 0)
             {
@@ -31,7 +27,6 @@ namespace HalloDoc.MVC.Services
 
             var jwtService = context.HttpContext.RequestServices.GetService<IJwtService>();
 
-
             if (jwtService == null)
             {
                 context.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Guest", action = "Index" }));
@@ -39,7 +34,7 @@ namespace HalloDoc.MVC.Services
             }
 
             var token = context.HttpContext.Request.Cookies["hallodoc"];
-                        
+         
             if (token == null || !jwtService.ValidateToken(token, out JwtSecurityToken jwtToken))
             {
 
@@ -68,8 +63,7 @@ namespace HalloDoc.MVC.Services
             context.HttpContext.Request.Headers.Add("userName",userNameClaim.Value);
 
             if (roleClaim == null)
-            {
-                
+            {                
                 context.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Guest", action = "Index" }));
                 return;
             }

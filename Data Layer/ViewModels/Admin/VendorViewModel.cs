@@ -9,9 +9,6 @@ namespace Data_Layer.ViewModels.Admin
 {
     public class VendorViewModel
     {
-        public List<Healthprofessionaltype> Healthprofessionaltypes { get; set; }
-        public int PageSize { get; set; }
-        public int PageNumber { get; set; }
-
+        public IEnumerable<Healthprofessionaltype> Healthprofessionaltypes { get; set; }
     }
 }

@@ -1,0 +1,86 @@
+﻿@model PagedList<SearchRecordTRow>
+<div class="table-responsive mt-3 d-none d-md-block" style="height:400px;">
+    <table class="table admin-dashboard">
+
+        <thead class="table-head align-middle">
+
+            <tr>
+                <th style="text-align: center;">Patient Name</th>
+                <th style="text-align: center;">Requestor</th>
+                <th style="text-align: center;">Date Of Service</th>
+                <th style="text-align: center;">Close Case Date</th>
+                <th style="text-align: center;">Email</th>
+                <th style="text-align: center;">Phone Number</th>
+                <th style="text-align: center;">Address</th>
+                <th style="text-align: center;">Zip</th>
+                <th style="text-align: center;">Request Status</th>
+                <th style="text-align: center;">Physician</th>
+                <th style="text-align: center;">Physician Note</th>
+                <th style="text-align: center;">Cancelled By Provider Note</th>
+                <th style="text-align: center;">Admin Note</th>
+                <th style="text-align: center;">Patient Note</th>
+                <th style="text-align: center;">Delete Permanently</th>
+            </tr>
+
+        </thead>
+
+        <tbody class="align-middle" id="dashboard-table-body">
+
+            @foreach (var record in Model)
+            {
+                <tr>
+                    <td>@record.PatientName</td>
+                    <td>@record.Requestor</td>
+                    <td>@record.DateOfService</td>
+                    <td>@record.CloseCaseDate</td>
+                    <td>@record.Email</td>
+                    <td>@record.PhoneNumber</td>
+                    <td>@record.Address</td>
+                    <td>@record.Zip</td>
+                    <td>@record.RequestStatus</td>
+                    <td>@record.Physician</td>
+                    <td>@record.PhysicianNote</td>
+                    <td>@record.CancelledByPhysicianNote</td>
+                    <td>@record.AdminNote</td>
+                    <td>@record.PatientNote</td>
+                    <td>
+
+                        <button type="button" class="btn btn-outline-info align-middle">
+                            <span class="text-info">Delete</span>
+                        </button>
+
+                    </td>
+                </tr>
+            }
+        </tbody>
+
+    </table>
+</div>
+
+<div class="pagination d-flex justify-content-center align-content-center mt-3">
+
+    @if (Model.hasPrevious)
+    {
+        <button class="border-0 mx-1 page-item" onclick="loadSearchRecordTable(1)">❮❮</button>
+        <button class="page-item mx-1 border-0" onclick="loadSearchRecordTable(@(Model.CurrentPage-1))">❮</button>
+    }
+    else
+    {
+        <button disabled class="disabled border-0 mx-1 page-item">❮❮</button>
+        <button disabled class="disabled page-item mx-1 border-0">❮</button>
+    }
+
+    <button class="page-item mx-1 active border-0">@Model.CurrentPage</button>
+
+    @if (Model.hasNext)
+    {
+        <button class="page-item mx-1 border-0" onclick="loadSearchRecordTable(@(Model.CurrentPage+1))">❯</button>
+        <button class="page-item mx-1 border-0" onclick="loadSearchRecordTable(@Model.TotalPages)">❯❯</button>
+    }
+    else
+    {
+        <button disabled class="page-item disabled mx-1 border-0">❯</button>
+        <button disabled class="page-item disabled mx-1 border-0">❯❯</button>
+    }
+
+</div>

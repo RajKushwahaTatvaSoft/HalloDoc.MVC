@@ -60,15 +60,15 @@ namespace HalloDoc.MVC.Controllers
             var roleClaim = jwtToken.Claims.FirstOrDefault(claims => claims.Type == "accountTypeId");
             int roleId = Convert.ToInt32(roleClaim?.Value);
 
-            if (roleId == (int)AllowRole.Patient)
+            if (roleId == (int)AccountType.Patient)
             {
                 return RedirectToAction("Dashboard", "Patient");
             }
-            else if (roleId == (int)AllowRole.Physician)
+            else if (roleId == (int)AccountType.Physician)
             {
                 return RedirectToAction("Dashboard", "Physician");
             }
-            else if (roleId == (int)AllowRole.Admin)
+            else if (roleId == (int)AccountType.Admin)
             {
                 return RedirectToAction("Dashboard", "Admin");
             }
@@ -248,7 +248,7 @@ namespace HalloDoc.MVC.Controllers
                 SessionUser sessionUser = new SessionUser();
                 string controller = "";
 
-                if (aspUser.Roleid == (int)AllowRole.Patient)
+                if (aspUser.Accounttypeid == (int)AccountType.Patient)
                 {
 
                     User patientUser = _unitOfWork.UserRepository.GetFirstOrDefault(u => u.Aspnetuserid == aspUser.Id);
@@ -262,7 +262,7 @@ namespace HalloDoc.MVC.Controllers
                     {
                         UserId = patientUser.Userid,
                         Email = patientUser.Email,
-                        AccountTypeId = aspUser.Roleid,
+                        AccountTypeId = aspUser.Accounttypeid ?? 0,
                         RoleId = 0,
                         UserName = patientUser.Firstname + (String.IsNullOrEmpty(patientUser.Lastname) ? "" : " " + patientUser.Lastname),
                     };
@@ -271,7 +271,7 @@ namespace HalloDoc.MVC.Controllers
 
                     controller = "Patient";
                 }
-                else if (aspUser.Roleid == (int)AllowRole.Physician)
+                else if (aspUser.Accounttypeid == (int)AccountType.Physician)
                 {
 
                     Physician physicianUser = _unitOfWork.PhysicianRepository.GetFirstOrDefault(u => u.Aspnetuserid == aspUser.Id);
@@ -285,7 +285,7 @@ namespace HalloDoc.MVC.Controllers
                     {
                         UserId = physicianUser.Physicianid,
                         Email = physicianUser.Email,
-                        AccountTypeId = aspUser.Roleid,
+                        AccountTypeId = aspUser.Accounttypeid ?? 0,
                         RoleId = physicianUser.Roleid ?? 0,
                         UserName = physicianUser.Firstname + (String.IsNullOrEmpty(physicianUser.Lastname) ? "" : " " + physicianUser.Lastname),
                     };
@@ -294,7 +294,7 @@ namespace HalloDoc.MVC.Controllers
 
                     controller = "Physician";
                 }
-                else if (aspUser.Roleid == (int)AllowRole.Admin)
+                else if (aspUser.Accounttypeid == (int)AccountType.Admin)
                 {
 
                     Admin adminUser = _unitOfWork.AdminRepository.GetFirstOrDefault(u => u.Aspnetuserid == aspUser.Id);
@@ -308,7 +308,7 @@ namespace HalloDoc.MVC.Controllers
                     {
                         UserId = adminUser.Adminid,
                         Email = adminUser.Email,
-                        AccountTypeId = aspUser.Roleid,
+                        AccountTypeId = aspUser.Accounttypeid ?? 0,
                         RoleId = adminUser.Roleid ?? 0,
                         UserName = adminUser.Firstname + (String.IsNullOrEmpty(adminUser.Lastname) ? "" : " " + adminUser.Lastname),
                     };
@@ -560,7 +560,7 @@ namespace HalloDoc.MVC.Controllers
 
         public void InsertRequestWiseFile(IFormFile document)
         {
-            string path = _environment.WebRootPath + "/document";
+            string path = _environment.WebRootPath + "/document/patient";
             string fileName = document.FileName;
 
             if (!Directory.Exists(path))
@@ -1427,7 +1427,7 @@ namespace HalloDoc.MVC.Controllers
             DateTime todayStart = DateTime.Now.Date;
             int count = _unitOfWork.RequestRepository.Count(req => req.Createddate > todayStart);
 
-            string confirmationNumber = regionAbbr + user.Createddate.Date.ToString("D2") + user.Createddate.Month.ToString("D2") + user.Lastname.Substring(0, 2).ToUpper() + user.Firstname.Substring(0, 2).ToUpper() + (count + 1).ToString("D4");
+            string confirmationNumber = regionAbbr + user.Createddate.Day.ToString("D2") + user.Createddate.Month.ToString("D2") + (user.Lastname?.Substring(0, 2).ToUpper() ?? "NA") + user.Firstname.Substring(0, 2).ToUpper() + (count + 1).ToString("D4");
             return confirmationNumber;
         }
 

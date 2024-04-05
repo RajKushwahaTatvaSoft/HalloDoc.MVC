@@ -1,8 +1,140 @@
-﻿@{
+﻿@model PatientRecordsViewModel
+@{
     Layout = "_AdminDashboardLayout";
 }
 
-<h3>Patient Records</h3>
+<div class="container-md container-fluid ">
+    <div>
+        <div class=" d-flex justify-content-between mt-5">
+            <h4>Patient history</h4>
+
+            <button class="btn btn-outline-info align-middle" onclick="history.back(-1)">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="#01bce9" width="15" height="15" viewBox="0 -960 960 960">
+                    <path d="m142-480 294 294q15 15 14.5 35T435-116q-15 15-35 15t-35-15L57-423q-12-12-18-27t-6-30q0-15 6-30t18-27l308-308q15-15 35.5-14.5T436-844q15 15 15 35t-15 35L142-480Z" />
+                </svg>
+                <span>Back</span>
+            </button>
+
+        </div>
+
+        <div class="shadow dashboard-card container mt-4 pb-3 px-3">
+
+            <form id="patient-records-filter-form">
+
+                <div class="row align-items-center">
+
+
+                    <div class="col-lg-3 mt-3">
+
+                        <div class="form-floating">
+                            <input name="FirstName" type="text" class="form-control" placeholder="Receiver Name" id="floatingTextarea2" required>
+                            <label for="floatingTextarea2">First Name</label>
+                        </div>
+
+                    </div>
+
+                    <div class="col-lg-3 mt-3">
+                        <div class="form-floating">
+                            <input name="LastName" type="text" class="form-control" placeholder="Receiver Name" id="floatingTextarea2" required>
+                            <label for="floatingTextarea2">Last Name</label>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-3 mt-3">
+                        <div class="form-floating">
+                            <input name="EmailAddress" type="text" class="form-control" placeholder="Email Id" id="floatingTextarea2" required>
+                            <label for="floatingTextarea2">Email Id</label>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-3 mt-3">
+
+                        <div class="form-floating d-flex " style="height:58px;">
+                            <input id="phone-country" name="CountryCode" hidden />
+
+                            <input id="phone" class="py-4 form-control" type="tel" name="PhoneNumber" />
+                        </div>
+
+                    </div>
+
+                </div>
+                <div class="row d-flex justify-content-end">
+
+
+                    <div class="col-lg-2 d-flex justify-content-end mt-3">
+
+                        <div class="">
+
+                            <button type="button" class="btn btn-info align-middle" id="email-log-search-btn">
+                                <span class="text-white">Search</span>
+                            </button>
+
+                        </div>
+
+                        <div class="ms-3">
+
+                            <button type="reset" class="btn btn-outline-info align-middle">
+                                <span class="text-info">Clear</span>
+                            </button>
+
+                        </div>
+                    </div>
+
+
+                </div>
+
+
+            </form>
+
+            <div id="patient-records-partial-table"></div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    const phoneInputField2 = document.getElementById("phone");
+    var patientPhoneInput2 = window.intlTelInput(phoneInputField2, {
+        utilsScript:
+            "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+        preferredCountries: ["in"],
+        separateDialCode: true,
+        initialCountry: "in"
+    });
+
+
+    function changeCountryCode2() {
+        var countryCode2 = document.getElementById("phone-country");
+        countryCode2.value = patientPhoneInput2.getSelectedCountryData().dialCode;
+        console.log(countryCode2.value);
+    }
+
+    $('#email-log-search-btn').click(function () {
+
+        var formData = $('#patient-records-filter-form').serialize();
+        console.log(formData);
+
+        $.ajax({
+            url: "/Admin/PatientRecordsPartial",
+            type: 'POST',
+            data: formData,
+            success: function (result) {
+                $('#patient-records-partial-table').html(result);
+            },
+            complete: function () {
+
+            },
+            error: function (error) {
+                console.log(error);
+                alert('error fetching details')
+            },
+        });
+
+    });
+
+    $('#email-log-search-btn').click();
+
+</script>
 
 <script>
 

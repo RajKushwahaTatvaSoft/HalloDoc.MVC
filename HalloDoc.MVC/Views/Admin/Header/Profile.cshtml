@@ -25,7 +25,7 @@
 
         <div class="shadow dashboard-card container mt-4 px-3">
 
-            <form method="post" id="admin-account-info-form">
+            <form method="post">
 
                 <div class="row border-2">
 
@@ -33,7 +33,7 @@
 
                     <div class="col-md-6 mt-4 ">
                         <div class=" floating-label form-floating">
-                            <input asp-for="Username" type="text" class="form-control" placeholder="Username" id="floatingInput" disabled>
+                            <input asp-for="Username" type="text" class="form-control account-info-input" disabled placeholder="Username" id="account-info-user-name">
                             <label for="floatingInput">Username</label>
                         </div>
 
@@ -41,14 +41,14 @@
 
                     <div class="col-md-6 mt-4 ">
                         <div class="floating-label form-floating">
-                            <input asp-for="Password" type="text" class="form-control" placeholder="Password" id="floatingInput">
+                            <input asp-for="Password" type="text" class="form-control" placeholder="Password" id="account-info-password">
                             <label for="floatingInput">Password</label>
                         </div>
 
                     </div>
 
                     <div class=" col-md-6 col-12 mt-4">
-                        <select disabled asp-for="StatusId" class="form-select" id="adminStatusSelect" style="height:60px;">
+                        <select asp-for="StatusId" class="form-select account-info-input" id="account-info-status" disabled style="height:60px;">
                             <option selected value="0">-- Select Status --</option>
                             <option value="1">Active</option>
                             <option value="2">Pending</option>
@@ -58,20 +58,22 @@
                     </div>
 
                     <div class="col-md-6 col-12 mt-4">
-                        <select disabled asp-for="RoleId" class="form-select" id="adminStatusSelect" style="height:60px;">
-                            <option value="1">Role 1</option>
-                            <option value="1">Role 2</option>
-                            <option value="1">Role 3</option>
+                        <select asp-for="RoleId" class="form-select account-info-input" id="account-info-role" disabled style="height:60px;">
+                            <option selected value="">-- Select Status --</option>
+                            @foreach (var role in Model.roles)
+                            {
+                                <option value="@role.Roleid">@role.Name</option>
+                            }
                         </select>
                     </div>
 
-                    <div class=" d-flex justify-content-end mt-4">
 
-                        <button class="btn btn-outline-info" type="submit">
+                    <div class="d-flex justify-content-end mt-3">
 
-                            <span>Reset Password</span>
-
-                        </button>
+                        <button id="account-info-edit-btn" type="button" class="btn btn-primary m-1">Edit</button>
+                        <button type="reset" id="account-info-cancel-btn" class="btn btn-danger me-1 d-none">Cancel</button>
+                        <button type="button" id="account-info-save-btn" class="btn btn-primary me-1 d-none">Save</button><br />
+                        <button id="account-info-reset-pass-btn" type="button" class="btn btn-outline-info m-1">Reset Password</button><br />
 
                     </div>
 
@@ -82,85 +84,81 @@
 
             <form method="post" asp-controller="Admin" asp-action="AdministratorInfo">
 
-                <div class="row">
-
-                    <h4 class="mt-4 col-12 text-grey  fs-6">Administrator information</h4>
-
-                    <div class="col-md-6 mt-4 ">
-                        <div class=" floating-label form-floating">
-                            <input asp-for="FirstName" type="text" class="changeable form-control" placeholder="First Name" id="firstNameInput" disabled>
-                            <label for="floatingInput">First Name</label>
-                        </div>
-                    </div>
-                    <div class="col-md-6 mt-4 ">
-                        <div class="floating-label form-floating">
-                            <input asp-for="LastName" type="text" class="changeable form-control" placeholder="Last Name" id="lastNameInput" disabled>
-                            <label for="floatingInput">Last Name</label>
-                        </div>
-
-                    </div>
-
-                    <div class=" col-md-6 col-12 mt-4">
-                        <div class=" floating-label form-floating">
-                            <input asp-for="Email" type="text" class="changeable form-control" placeholder="Email" id="emailInput" disabled>
-                            <label for="floatingInput">Email</label>
-                        </div>
-                    </div>
-                    <div class="col-md-6 col-12 mt-4">
-                        <div class=" floating-label form-floating">
-                            <input asp-for="ConfirmEmail" type="text" class="changeable form-control" placeholder="Confirm Email" id="floatingInput" disabled>
-                            <label for="floatingInput">Confirm Email</label>
-                        </div>
-
-                    </div>
-
-                    <div class="col-md-6  mt-4">
-                        <div class="form-floating d-flex  w-100">
-                            <input asp-for="CountryCode" id="admin-phone-country" class="changeable" hidden style="height:60px;" disabled />
-                            <input asp-for="PhoneNumber" id="admin-phone" class="changeable py-4 form-control" type="tel" style="height:60px;" disabled />
-                        </div>
-                    </div>
-
-                    <div class="col-md-6 col-12 mt-4">
-                        <select multiple data-live-search="true" class="form-select col-6 selectpicker" id="adminSelectedRegions" asp-for="selectedRegions">
-
-                            @foreach (var region in Model.regions)
-                            {
-
-                                <option value="@region.Regionid" style="font-size: 10px;">@region.Name</option>
-@* 
-                                if (Model.selectedRegions.Contains(region.Regionid))
-                                {
-                                    <option selected value="@region.Regionid" style="font-size: 10px;">@region.Name</option>
-                                }
-                                else
-                                {
-                                    <option value="@region.Regionid" style="font-size: 10px;">@region.Name</option>
-                                } *@
-                            }
-
-                        </select>
-
-                    </div>
-
+                <fieldset id="administrator-info-set" disabled>
 
                     <div class="row">
 
-                        <div class="d-flex justify-content-end">
+                        <h4 class="mt-4 col-12 text-grey  fs-6">Administrator information</h4>
 
-                            <button id="editBtn" type="button" onclick="editDetails()" class="btn my-4 py-2 px-4" style="background-color: #10bce9; color: white;">
-                                Edit
-                            </button>
+                        <div class="col-md-6 mt-4 ">
+                            <div class=" floating-label form-floating">
+                                <input asp-for="FirstName" type="text" class=" form-control" placeholder="First Name" id="firstNameInput">
+                                <label for="floatingInput">First Name</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mt-4 ">
+                            <div class="floating-label form-floating">
+                                <input asp-for="LastName" type="text" class=" form-control" placeholder="Last Name" id="lastNameInput">
+                                <label for="floatingInput">Last Name</label>
+                            </div>
 
-                            <button id="administratorSaveBtn" type="button" class="btn my-4 py-2 px-4" style="background-color: #10bce9; color: white; display:none;">
-                                Save
-                            </button>
+                        </div>
+
+                        <div class=" col-md-6 col-12 mt-4">
+                            <div class=" floating-label form-floating">
+                                <input asp-for="Email" type="text" class=" form-control" placeholder="Email" id="emailInput">
+                                <label for="floatingInput">Email</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-12 mt-4">
+                            <div class=" floating-label form-floating">
+                                <input asp-for="ConfirmEmail" type="text" class=" form-control" placeholder="Confirm Email" id="floatingInput">
+                                <label for="floatingInput">Confirm Email</label>
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-6  mt-4">
+                            <div class="form-floating d-flex  w-100">
+                                <input asp-for="CountryCode" id="admin-phone-country" class="" hidden style="height:60px;" />
+                                <input asp-for="PhoneNumber" id="admin-phone" class=" py-4 form-control" type="tel" style="height:60px;" />
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-12 mt-4">
+                            <select multiple data-live-search="true" class="form-select col-6 selectpicker" id="adminSelectedRegions" asp-for="selectedRegions">
+
+                                @foreach (var region in Model.regions)
+                                {
+                                    <option value="@region.Regionid" style="font-size: 10px;">@region.Name</option>
+                                }
+
+                            </select>
 
                         </div>
 
 
                     </div>
+
+                </fieldset>
+
+                <div class="row">
+
+                    <div class="d-flex justify-content-end">
+
+                        <button id="editBtn" type="button" onclick="editDetails()" class="btn my-4 py-2 px-4" style="background-color: #10bce9; color: white;">
+                            Edit
+                        </button>
+
+                        <button id="administratorSaveBtn" type="button" class="btn my-4 py-2 px-4" style="background-color: #10bce9; color: white; display:none;">
+                            Save
+                        </button>
+
+                    </div>
+
+
                 </div>
+
             </form>
 
             <form method="post" id="admin-billing-info-form">
@@ -188,7 +186,8 @@
                         <select disabled asp-for="CityId" class="form-select billingChange" id="admin-billing-city">
                             <option disabled value="0"> -- Select City -- </option>
 
-                            @if(Model.adminMailCities != null && Model.adminMailCities.Any()){
+                            @if (Model.adminMailCities != null && Model.adminMailCities.Any())
+                            {
                                 @foreach (var city in Model.adminMailCities)
                                 {
                                     <option value="@city.Id">@city.Name</option>
@@ -254,6 +253,76 @@
 </div>
 
 <script>
+
+    var phyAccountInfoEdit = document.getElementById("account-info-edit-btn");
+    var phyAccountInfoSave = document.getElementById("account-info-save-btn");
+    var phyAccountInfoCancel = document.getElementById("account-info-cancel-btn");
+
+    $('#account-info-edit-btn').click(function () {
+
+        var inputs = document.getElementsByClassName("account-info-input");
+        for (var i = 0; i < inputs.length; i++) {
+            inputs[i].disabled = false;
+        }
+
+        phyAccountInfoEdit.classList.add('d-none');
+        phyAccountInfoSave.classList.remove('d-none');
+        phyAccountInfoCancel.classList.remove('d-none');
+
+    });
+
+    $('#account-info-reset-pass-btn').click(function () {
+
+        $.ajax({
+            url: '/Admin/AdminResetPassword',
+            type: 'POST',
+            data: {
+                password: $('#account-info-password').val(),
+            },
+            success: function (result) {
+                location.reload();
+            },
+            error: function (err) {
+                console.error(err);
+            }
+        });
+    });
+
+    $('#account-info-save-btn').click(function () {
+
+        console.log('save btn');
+
+        $.ajax({
+            url: '/Admin/SaveAdminAccountInfo',
+            type: 'POST',
+            data: {
+                userName: $('#account-info-user-name').val(),
+                roleId: $('#account-info-role').val(),
+            },
+            success: function (result) {
+                location.reload();
+            },
+            error: function (err) {
+                console.error(err);
+            }
+        });
+    });
+
+    $('#account-info-cancel-btn').click(function () {
+
+        var inputs = document.getElementsByClassName("account-info-input");
+        for (var i = 0; i < inputs.length; i++) {
+            inputs[i].disabled = true;
+        }
+
+        phyAccountInfoEdit.classList.remove('d-none');
+        phyAccountInfoSave.classList.add('d-none');
+        phyAccountInfoCancel.classList.add('d-none');
+
+    });
+</script>
+
+<script>
     $("#admin-billing-state").change(function () {
 
         var regId = $('option:selected', this).val();
@@ -314,27 +383,6 @@
 </script>
 
 <script>
-
-    $('#admin-account-info-form').submit(function (e) {
-        e.preventDefault();
-
-        let formData = $(this).serialize();
-        console.log(formData);
-
-        $.ajax({
-            url: "/Admin/SaveAdminAccountInfo",
-            data: formData,
-            type: 'POST',
-            success: function (result) {
-                location.reload();
-            },
-            error: function (error) {
-                console.log(error);
-                alert('Error Cancelling Request')
-            },
-        });
-
-    });
 
     $('#admin-billing-info-form').submit(function (e) {
         e.preventDefault();
@@ -402,10 +450,7 @@
 
     function editDetails() {
 
-        var inputs = document.getElementsByClassName("changeable");
-        for (var i = 0; i < inputs.length; i++) {
-            inputs[i].disabled = false;
-        }
+        document.getElementById("administrator-info-set").disabled = false;
 
         var editBtn = document.getElementById("editBtn");
         editBtn.style.display = "none";
@@ -461,7 +506,6 @@
         countryCode1.value = patientPhoneInput1.getSelectedCountryData().dialCode;
 
     }
-
 
 
 </script>

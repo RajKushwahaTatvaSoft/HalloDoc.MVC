@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -29,6 +30,8 @@ namespace Business_Layer.Repository
         public IEnumerable<T> GetAll()
         {
             IEnumerable<T> query = dbSet;
+
+            //.Where(x => Convert.ToBoolean(x.GetType().GetProperty("isdeleted").GetValue(x).ToString())); 
             return query;
         }
 

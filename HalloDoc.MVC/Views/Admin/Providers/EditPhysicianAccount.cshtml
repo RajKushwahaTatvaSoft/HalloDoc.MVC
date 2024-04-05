@@ -4,6 +4,14 @@
     ViewData["Title"] = "Physician Account";
 }
 
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/1.1.2/js/bootstrap-multiselect.min.js" integrity="sha512-lxQ4VnKKW7foGFV6L9zlSe+6QppP9B2t+tMMaV4s4iqAv4iHIyXED7O+fke1VeLNaRdoVkVt8Hw/jmZ+XocsXQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/1.1.2/css/bootstrap-multiselect.css" integrity="sha512-tlP4yGOtHdxdeW9/VptIsVMLtgnObNNr07KlHzK4B5zVUuzJ+9KrF86B/a7PJnzxEggPAMzoV/eOipZd8wWpag==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/css/bootstrap-select.css" />
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/js/bootstrap-select.min.js"></script>
+
+
 <div class="">
     <div class="container-fluid d-flex justify-content-between mt-4" style="max-width:1000px">
         <h4>
@@ -27,7 +35,7 @@
             <div class="row g-2 m-1">
                 <div class="col-md">
                     <div class="form-floating">
-                        <input type="text" class="form-control account-info-input" id="userName" placeholder="User Name" disabled>
+                        <input asp-for="UserName" type="text" class="form-control" id="userName" placeholder="User Name" disabled>
                         <label for="userName">User Name</label>
                     </div>
                 </div>
@@ -128,26 +136,17 @@
                             <label for="">Synchronization Email Address</label>
                         </div>
                     </div>
+                    <div class="col-md-6 col-12">
 
-                    <div class="col-md-6 d-flex justify-content-start flex-wrap mt-4">
-                        @foreach (Region region in Model.regions)
-                        {
-                            if (Model.physicianRegions.Contains(region.Regionid))
+                        <select multiple data-live-search="true" class="form-select col-6 selectpicker" id="adminSelectedRegions" asp-for="selectedRegions">
+
+                            @foreach (var region in Model.regions)
                             {
-                                <div class="form-floating mt-1 me-3 checkColor ">
-                                    <input checked class="check form-check-input" value="@region.Regionid" type="checkbox" style="" />
-                                    <span>@region.Name</span>
-                                </div>
-                            }
-                            else
-                            {
-                                <div class="form-floating mt-1 me-3 checkColor ">
-                                    <input class="check form-check-input" value="@region.Regionid" type="checkbox" style="" />
-                                    <span>@region.Name</span>
-                                </div>
+                                <option value="@region.Regionid" style="font-size: 10px;">@region.Name</option>
                             }
 
-                        }
+                        </select>
+
                     </div>
                 </div>
             </fieldset>
@@ -186,8 +185,14 @@
                     </div>
                     <div class="col-md-6">
                         <div class="form-floating">
-                            <input asp-for="City" type="text" class="form-control" placeholder="City">
-                            <label for="">City</label>
+
+                            <select disabled asp-for="CityId" class="form-select billingChange" id="create-phy-city">
+                                <option disabled value=""> -- Select City -- </option>
+
+                            </select>
+                            <label for="admin-billing-city">City</label>
+                            <span asp-validation-for="CityId" class="text-danger"></span>
+
                         </div>
                     </div>
                     <div class="col-md-6">

@@ -24,11 +24,10 @@
 
                 <div class="row align-items-center">
 
-
                     <div class="col-lg-2 mt-3">
 
                         <div class="form-floating">
-                            <select class="form-select" id="patient-state" required name="roleIdFilter">
+                            <select class="form-select" id="email-log-role-filter" required name="roleIdFilter">
                                 <option selected value="0"> All Roles </option>
                                 @foreach(var role in Model.roles){
                                     <option value="@role.Roleid">@role.Name</option>
@@ -42,7 +41,7 @@
                     <div class="col-lg-2 mt-3">
                         <div class="form-floating">
                             <input name="receiverName" type="text" class="form-control" placeholder="Receiver Name"
-                                   id="floatingTextarea2" required>
+                                   id="email-log-receiver-name" required>
                             <label for="floatingTextarea2">Receiver Name</label>
                         </div>
                     </div>
@@ -50,7 +49,7 @@
                     <div class="col-lg-2 mt-3">
                         <div class="form-floating">
                             <input name="emailAddress" type="text" class="form-control" placeholder="Email Id"
-                                   id="floatingTextarea2" required>
+                                   id="email-log-email-id" required>
                             <label for="floatingTextarea2">Email Id</label>
                         </div>
                     </div>
@@ -60,7 +59,7 @@
                         <div class="form-floating">
 
                             <input class="form-control" placeholder="Created Date" type="date"
-                                   id="floatingTextarea2" name="createdDate">
+                                   id="email-log-created-date" name="createdDate">
                             <label for="floatingTextarea2">Created Date</label>
 
                         </div>
@@ -73,7 +72,7 @@
                         <div class="form-floating">
 
                             <input class="form-control" placeholder="Sent Date" type="date"
-                                   id="floatingTextarea2" name="sentDate">
+                                   id="email-log-sent-date" name="sentDate">
                             <label for="floatingTextarea2">Sent Date</label>
 
                         </div>
@@ -85,7 +84,7 @@
 
                         <div class="">
 
-                            <button type="button" class="btn btn-info align-middle" id="email-log-search-btn">
+                            <button onclick="loadPartialTable(1)" type="button" class="btn btn-info align-middle">
                                 <span class="text-white">Search</span>
                             </button>
 
@@ -114,15 +113,18 @@
 
 <script>
 
-    $('#email-log-search-btn').click(function () {
-
-        var formData = $('#email-log-filter-form').serialize();
-        console.log(formData);
-
+    function loadPartialTable(pageNo) {
         $.ajax({
             url: "/Admin/EmailLogsPartialTable",
             type: 'POST',
-            data: formData,
+            data: {
+                pageNo: pageNo,
+                roleIdFilter: $('#email-log-role-filter').val(),
+                receiverName: $('#email-log-receiver-name').val(),
+                emailAddress: $('#email-log-email-id').val(),
+                createdDate: $('#email-log-created-date').val(),
+                sentDate: $('#email-log-sent-date').val(),
+            },
             success: function (result) {
                 $('#email-logs-partial-table').html(result);
             },
@@ -134,10 +136,31 @@
                 alert('error fetching details')
             },
         });
+    }
 
-    });
+    loadPartialTable(1);
+    // $('#email-log-search-btn').click(function () {
 
-    $('#email-log-search-btn').click();
+    //     var formData = $('form').serialize();
+
+    //     $.ajax({
+    //         url: "/Admin/EmailLogsPartialTable",
+    //         type: 'POST',
+    //         data: formData,
+    //         success: function (result) {
+    //             $('#email-logs-partial-table').html(result);
+    //         },
+    //         complete: function () {
+
+    //         },
+    //         error: function (error) {
+    //             console.log(error);
+    //             alert('error fetching details')
+    //         },
+    //     });
+
+    // });
+
 
 </script>
 

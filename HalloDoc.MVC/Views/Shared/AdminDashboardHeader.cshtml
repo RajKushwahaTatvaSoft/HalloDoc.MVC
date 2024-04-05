@@ -1,4 +1,8 @@
-﻿
+﻿@using Business_Layer.Interface
+@using Business_Layer.Utilities
+@using Microsoft.AspNetCore.Http
+@inject IUnitOfWork IUnitOfWork
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor Accessor
 
 <style>
 
@@ -71,69 +75,139 @@
 <hr class="m-0">
 
 <ul class="nav nav-pills ps-4 shadow" id="myTab" role="tablist">
-    <li class="nav-item" role="presentation">
 
-        <a asp-controller="Admin" asp-action="Dashboard" class="nav-link px-0 admin-tab" id="dashboard-tab">
-            <span class="tabHeader py-2 px-3">Dashboard</span>
-        </a>
-    </li>
-    <li class="nav-item" role="presentation">
-        <a asp-controller="Admin" asp-action="ProviderLocation" class="nav-link px-0 admin-tab" id="provider-location-tab">
-            <span class="tabHeader py-2 px-3">Provider Location</span>
-        </a>
-    </li>
-    <li class="nav-item" role="presentation">
-        <a asp-controller="Admin" asp-action="Profile" class="nav-link px-0 admin-tab" id="profile-tab">
-            <span class="tabHeader py-2 px-3">My Profile</span>
-        </a>
-    </li>
+    @{
+        string menus = Accessor.HttpContext?.Session.GetString("roleMenu") ?? "";
 
-    <li class="admin-tab nav-item" role="presentation" id="provider-parent">
+        List<int> list = new List<int>();
 
-        <a style="cursor:pointer" class="nav-link admin-tab px-0" id="provider-tab" data-bs-toggle="dropdown">
-            <span class="tabHeader py-2 px-3">Providers</span>
-        </a>
+        foreach (string menu in menus.Split("-"))
+        {
+            list.Add(Convert.ToInt32(menu));
+        }
+    }
 
-        <ul class="dropdown-menu" aria-labelledby="provider-tab">
-            <li><a class="dropdown-item" asp-controller="Admin" asp-action="ProviderMenu">Providers</a></li>
-            <li><a class="dropdown-item" asp-controller="Admin" asp-action="Scheduling">Scheduling</a></li>
-            <li><a class="dropdown-item" asp-controller="Admin" asp-action="Invoicing">Invoicing</a></li>
-        </ul>
+    @if (list.Contains((int)AllowMenu.AdminDashboard))
+    {
+        <li class="nav-item" role="presentation">
 
-    </li>
+            <a asp-controller="Admin" asp-action="Dashboard" class="nav-link px-0 admin-tab" id="dashboard-tab">
+                <span class="tabHeader py-2 px-3">Dashboard</span>
+            </a>
+        </li>
+    }
+    @if (list.Contains((int)AllowMenu.ProviderLocation))
+    {
+        <li class="nav-item" role="presentation">
+            <a asp-controller="Admin" asp-action="ProviderLocation" class="nav-link px-0 admin-tab" id="provider-location-tab">
+                <span class="tabHeader py-2 px-3">Provider Location</span>
+            </a>
+        </li>
+    }
+    @if (list.Contains((int)AllowMenu.MyProfile))
+    {
+        <li class="nav-item" role="presentation">
+            <a asp-controller="Admin" asp-action="Profile" class="nav-link px-0 admin-tab" id="profile-tab">
+                <span class="tabHeader py-2 px-3">My Profile</span>
+            </a>
+        </li>
+    }
+    @if (list.Contains((int)AllowMenu.ProviderMenu) || list.Contains((int)AllowMenu.Scheduling) || list.Contains((int)AllowMenu.Invoicing))
+    {
+        <li class="admin-tab nav-item" role="presentation" id="provider-parent">
 
-    <li class="nav-item" role="presentation">
-        <a asp-controller="Admin" asp-action="Vendors" class="nav-link px-0 admin-tab" id="partner-tab">
-            <span class="tabHeader py-2 px-3">Partners</span>
-        </a>
-    </li>
+            <a style="cursor:pointer" class="nav-link admin-tab px-0" id="provider-tab" data-bs-toggle="dropdown">
+                <span class="tabHeader py-2 px-3">Providers</span>
+            </a>
 
-    <li class="admin-tab nav-item" role="presentation" id="access-parent">
+            <ul class="dropdown-menu" aria-labelledby="provider-tab">
 
-        <a style="cursor:pointer" class="nav-link admin-tab px-0" id="access-tab" data-bs-toggle="dropdown">
-            <span class="tabHeader py-2 px-3">Access</span>
-        </a>
 
-        <ul class="dropdown-menu" aria-labelledby="access-tab">
-            <li><a class="dropdown-item" asp-controller="Admin" asp-action="AccountAccess">Account Access</a></li>
-            <li><a class="dropdown-item" asp-controller="Admin" asp-action="UserAccess">User Access</a></li>
-        </ul>
+                @if (list.Contains((int)AllowMenu.ProviderMenu))
+                {
+                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="ProviderMenu">Providers</a></li>
 
-    </li>
+                }
+                @if (list.Contains((int)AllowMenu.Scheduling))
+                {
+                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="Scheduling">Scheduling</a></li>
 
-    <li class="admin-tab nav-item" role="presentation" id="record-parent">
+                }
+                @if (list.Contains((int)AllowMenu.Invoicing))
+                {
+                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="Invoicing">Invoicing</a></li>
+                }
+            </ul>
 
-        <a style="cursor:pointer" class="nav-link admin-tab px-0" id="record-tab" data-bs-toggle="dropdown">
-            <span class="tabHeader py-2 px-3">Records</span>
-        </a>
+        </li>
+    }
 
-        <ul class="dropdown-menu" aria-labelledby="access-tab">
-            <li><a class="dropdown-item" asp-controller="Admin" asp-action="SearchRecords">Search Records</a></li>
-            <li><a class="dropdown-item" asp-controller="Admin" asp-action="EmailLogs">Email Logs</a></li>
-            <li><a class="dropdown-item" asp-controller="Admin" asp-action="SMSLogs">SMS Logs</a></li>
-            <li><a class="dropdown-item" asp-controller="Admin" asp-action="PatientRecords">Patient Records</a></li>
-            <li><a class="dropdown-item" asp-controller="Admin" asp-action="BlockedHistory">Blocked History</a></li>
-        </ul>
+    @if (list.Contains((int)AllowMenu.Partners))
+    {
+        <li class="nav-item" role="presentation">
+            <a asp-controller="Admin" asp-action="Vendors" class="nav-link px-0 admin-tab" id="partner-tab">
+                <span class="tabHeader py-2 px-3">Partners</span>
+            </a>
+        </li>
 
-    </li>
+    }
+    @if (list.Contains((int)AllowMenu.AccountAccess) || list.Contains((int)AllowMenu.UserAccess))
+    {
+        <li class="admin-tab nav-item" role="presentation" id="access-parent">
+
+            <a style="cursor:pointer" class="nav-link admin-tab px-0" id="access-tab" data-bs-toggle="dropdown">
+                <span class="tabHeader py-2 px-3">Access</span>
+            </a>
+
+            <ul class="dropdown-menu" aria-labelledby="access-tab">
+
+                @if (list.Contains((int)AllowMenu.AccountAccess))
+                {
+                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="AccountAccess">Account Access</a></li>
+
+                }
+                @if (list.Contains((int)AllowMenu.UserAccess))
+                {
+                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="UserAccess">User Access</a></li>
+
+                }
+            </ul>
+
+        </li>
+    }
+    @if (list.Contains((int)AllowMenu.SearchRecords) || list.Contains((int)AllowMenu.EmailLogs) || list.Contains((int)AllowMenu.SMSLogs) || list.Contains((int)AllowMenu.PatientRecords) || list.Contains((int)AllowMenu.BlockedHistory))
+    {
+        <li class="admin-tab nav-item" role="presentation" id="record-parent">
+
+            <a style="cursor:pointer" class="nav-link admin-tab px-0" id="record-tab" data-bs-toggle="dropdown">
+                <span class="tabHeader py-2 px-3">Records</span>
+            </a>
+
+            <ul class="dropdown-menu" aria-labelledby="access-tab">
+
+                @if (list.Contains((int)AllowMenu.SearchRecords))
+                {
+                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="SearchRecords">Search Records</a></li>
+
+                }
+                @if (list.Contains((int)AllowMenu.EmailLogs))
+                {
+                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="EmailLogs">Email Logs</a></li>
+                }
+                @if (list.Contains((int)AllowMenu.SMSLogs))
+                {
+                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="SMSLogs">SMS Logs</a></li>
+                }
+                @if (list.Contains((int)AllowMenu.PatientRecords))
+                {
+                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="PatientRecords">Patient Records</a></li>
+                }
+                @if (list.Contains((int)AllowMenu.BlockedHistory))
+                {
+                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="BlockedHistory">Blocked History</a></li>
+                }
+            </ul>
+
+        </li>
+    }
 </ul>

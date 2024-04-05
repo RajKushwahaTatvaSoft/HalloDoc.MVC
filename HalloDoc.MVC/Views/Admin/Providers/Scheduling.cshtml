@@ -42,13 +42,13 @@
 
             <div class="col-md-7 p-0 mt-md-0 mt-2 mx-0 col-12 d-flex flex-wrap  align-items-center justify-content-md-end ">
 
-                <button type="button" id="" class="btn btn-info d-flex flex-wrap justify-content-md-end mt-md-0 mt-2 mx-1 text-white" onclick="">
+                <a asp-controller="Admin" asp-action="ProviderOnCall" class="btn btn-info d-flex flex-wrap justify-content-md-end mt-md-0 mt-2 mx-1 text-white">
                     Providers On call
-                </button>
+                </a>
 
-                <button type="button" id="" class="btn btn-info mx-1 d-flex flex-wrap justify-content-md-end mt-md-0 mt-2  text-white" onclick="">
+                <a asp-controller="Admin" asp-action="RequestedShift" class="btn btn-info mx-1 d-flex flex-wrap justify-content-md-end mt-md-0 mt-2 text-white">
                     Shifts for Review
-                </button>
+                </a>
 
                 <button type="button" id="" data-bs-toggle="modal" data-bs-target="#CreateShiftModal" class="btn btn-info mx-1 d-flex flex-wrap justify-content-md-end  mt-md-0 mt-2 text-white" onclick="">
                     Add new shift
@@ -102,7 +102,6 @@
 
         <div id="providerSchedulingPartial">
         </div>
-
     </div>
 </div>
 
@@ -308,13 +307,10 @@
 
                 $.each(result, function (index, object) {
 
-
-
                     $('#physicianList2').append($('<option>', {
                         value: object["physicianid"],
                         text: object["firstname"] + " " + object["lastname"]
                     }));
-
 
                 });
             },
@@ -390,8 +386,6 @@
 
         }
 
-
-
     });
 
     $("#regionList").change(function () {
@@ -414,13 +408,10 @@
 
                 $.each(result, function (index, object) {
 
-
-
                     $('#physicianList').append($('<option>', {
                         value: object["physicianid"],
                         text: object["firstname"] + " " + object["lastname"]
                     }));
-
 
                 });
             },

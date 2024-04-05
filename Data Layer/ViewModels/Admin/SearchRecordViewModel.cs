@@ -12,6 +12,5 @@ namespace Data_Layer.ViewModels.Admin
     {
         public IEnumerable<Requeststatus> requeststatuses { get; set; }
         public IEnumerable<Requesttype> requesttypes { get; set; }
-        public IEnumerable<SearchRecordTRow> searchRecordTRows { get; set; }
     }
 }

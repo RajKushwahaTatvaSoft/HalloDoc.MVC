@@ -13,7 +13,7 @@ using static Org.BouncyCastle.Math.EC.ECCurve;
 
 namespace HalloDoc.MVC.Controllers
 {
-    [CustomAuthorize((int)AllowRole.Physician)]
+    [CustomAuthorize((int)AccountType.Physician)]
     public class PhysicianController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;

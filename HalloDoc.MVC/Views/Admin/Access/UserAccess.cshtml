@@ -1,5 +1,4 @@
-﻿@model UserAccessViewModel
-@{
+﻿@{
     Layout = "_AdminDashboardLayout";
 }
 
@@ -9,63 +8,82 @@
             <h3>User Access</h3>
         </div>
     </div>
-    <div class=" border-0 shadow p-4 mb-5 rounded">
-        <div class="row justify-content-end">
 
-            <div class="d-flex justify-content-end" style="border-radius:5px;">
-                <a asp-controller="Admin" asp-action="CreateAdminAccount" class="btn btn-outline-info d-flex justify-content-center mx-2" style="width:fit-content">
-                    <span class="text-info">Create Admin Account</span>
-                </a>
+    <div class="border-0 shadow p-4 mb-5 rounded">
+        <div class="d-flex justify-content-between">
+
+            <div class="col-12 col-lg-4 d-flex normal-input rounded align-items-center ps-2">
+
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 50 50">
+                    <path d="M 21 3 C 11.654545 3 4 10.654545 4 20 C 4 29.345455 11.654545 37 21 37 C 24.701287 37 28.127393 35.786719 30.927734 33.755859 L 44.085938 46.914062 L 46.914062 44.085938 L 33.875 31.046875 C 36.43682 28.068316 38 24.210207 38 20 C 38 10.654545 30.345455 3 21 3 z M 21 5 C 29.254545 5 36 11.745455 36 20 C 36 28.254545 29.254545 35 21 35 C 12.745455 35 6 28.254545 6 20 C 6 11.745455 12.745455 5 21 5 z">
+                    </path>
+                </svg>
+
+                <select id="filter-account-type" class="form-select border-0" aria-label="Default select example">
+                    <option selected value="0">All</option>
+                    <option value="1">Admin</option>
+                    <option value="2">Physician</option>
+                </select>
+
+            </div>
+
+            <div id="create-admin-account-div" style="display:none;">
+                <div class="d-flex justify-content-end" style="border-radius:5px;">
+                    <a asp-controller="Admin" asp-action="CreateAdminAccount" class="btn btn-outline-info d-flex justify-content-center mx-2" style="width:fit-content">
+                        <span class="text-info">Create Admin Account</span>
+                    </a>
+                </div>
             </div>
 
         </div>
 
-        <div class="w-100 d-none d-md-block my-3 table-responsive">
-            <table class="table table-hover " style="height:75px; text-align:match-parent">
-                <thead class="">
-                    <tr class="table-secondary">
-                        <th class="text-dark">Account Type</th>
-                        <th class="text-dark">Account POC</th>
-                        <th class="text-dark">Phone</th>
-                        <th class="text-dark">Status</th>
-                        <th class="text-dark">Open Requests</th>
-                        <th class="text-dark">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var role in Model.userList)
-                    {
-                        <tr>
-
-                            <td>
-                                @role.AccountType
-                            </td>
-                            <td>
-                                @role.AccountPOC
-                            </td>
-                            <td>
-                                @role.Phone
-                            </td>
-                            <td>
-                                @role.Status
-                            </td>
-                            <td>
-                                @role.OpenRequests
-                            </td>
-                            <td class="d-flex justify-content-end">
-
-                                <a class="btn mx-1 btn-outline-info " asp-controller="Admin" asp-action="Profile">Edit</a>
-
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
+        <div id="user-access-partial-table"></div>
 
     </div>
 
 </div>
+
+<script>
+
+    var account_type_filter = 0;
+
+    function loadUserAccessPartialTable(pageNo) {
+        $.ajax({
+            url: "/Admin/UserAccessPartialTable",
+            type: 'POST',
+            data: {
+                pageNo: pageNo,
+                accountType: account_type_filter,
+            },
+            success: function (result) {
+                $('#user-access-partial-table').html(result);
+            },
+            complete: function () {
+
+            },
+            error: function (error) {
+                console.log(error);
+                alert('error fetching details')
+            },
+        });
+    }
+
+    loadUserAccessPartialTable(1);
+
+    $('#filter-account-type').change(function () {
+        account_type_filter = $(this).val();
+
+        if(account_type_filter == 1){
+            $('#create-admin-account-div').show();
+        }
+        else{
+            $('#create-admin-account-div').hide();
+        }
+
+        loadUserAccessPartialTable(1);
+    });
+
+</script>
 
 <script>
 

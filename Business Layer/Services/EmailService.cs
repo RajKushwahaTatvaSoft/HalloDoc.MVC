@@ -4,6 +4,8 @@ using Microsoft.Extensions.Configuration;
 using Business_Layer.Interface.Services;
 using Data_Layer.DataContext;
 using Data_Layer.DataModels;
+using Microsoft.AspNetCore.Server.IIS.Core;
+using Org.BouncyCastle.Asn1.X509;
 
 namespace Business_Layer.Services
 {
@@ -17,8 +19,10 @@ namespace Business_Layer.Services
             _config = config;
             _context = context;
         }
-        public void SendMail(string toEmail, string body, string subject)
+        public void SendMail(string toEmail, string body, string subject, out int sentTries, out bool isSent)
         {
+            sentTries = 0;
+            isSent = false;
 
             string? senderEmail = _config.GetSection("OutlookSMTP")["Sender"];
             string? senderPassword = _config.GetSection("OutlookSMTP")["Password"];
@@ -42,12 +46,9 @@ namespace Business_Layer.Services
 
             mailMessage.To.Add(toEmail);
 
-            int count = 0;
-            bool isSent = false;
-
-            while (count < 5)
+            while (sentTries < 3)
             {
-                count++;
+                sentTries++;
                 try
                 {
                     client.Send(mailMessage);
@@ -62,22 +63,7 @@ namespace Business_Layer.Services
 
             }
 
-            Emaillog log = new Emaillog()
-            {
-                Emailtemplate = "1",
-                Subjectname = subject,
-                Emailid = toEmail,
-                Confirmationnumber = "-",
-                Roleid = 1,
-                Senttries = count,
-                Isemailsent = isSent,
-                Sentdate = DateTime.Now,
-            };
-
-            _context.Add(log);
-            _context.SaveChanges();
-
-
         }
+
     }
 }

@@ -3,6 +3,7 @@ using Business_Layer.Helpers;
 using Business_Layer.Interface;
 using Business_Layer.Interface.AdminInterface;
 using Business_Layer.Interface.Services;
+using Business_Layer.Repository.TableRepo;
 using Business_Layer.Utilities;
 using ClosedXML.Excel;
 using CsvHelper;
@@ -16,20 +17,20 @@ using Data_Layer.ViewModels.Admin;
 using HalloDoc.MVC.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis;
-using Microsoft.EntityFrameworkCore;
-using Org.BouncyCastle.Utilities;
 using System.Data;
+using System.Drawing.Printing;
 using System.Globalization;
 using System.IO.Compression;
 using System.Net;
 using System.Net.Mail;
 using System.Text;
 using System.Text.Json.Nodes;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace HalloDoc.MVC.Controllers
 {
 
-    [CustomAuthorize((int)AllowRole.Admin)]
+    [CustomAuthorize((int)AccountType.Admin)]
     public class AdminController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;
@@ -49,10 +50,9 @@ namespace HalloDoc.MVC.Controllers
             _config = config;
             _emailService = emailService;
             _context = context;
-            _utilityService = utilityService; 
+            _utilityService = utilityService;
             _notyf = notyf;
         }
-
 
         #region Header
 
@@ -63,7 +63,14 @@ namespace HalloDoc.MVC.Controllers
 
             if (admin == null)
             {
-                TempData["error"] = "Admin not found , please login!";
+                _notyf.Error("Admin Not Found");
+                return RedirectToAction("Index");
+            }
+
+            Aspnetuser aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(user => user.Id == admin.Aspnetuserid);
+            if (aspUser == null)
+            {
+                _notyf.Error("AspUser Not Found");
                 return RedirectToAction("Index");
             }
 
@@ -76,7 +83,7 @@ namespace HalloDoc.MVC.Controllers
 
             AdminProfileViewModel model = new()
             {
-                Username = admin.Firstname + " " + admin.Lastname,
+                Username = aspUser.Username,
                 StatusId = admin.Status,
                 RoleId = admin.Roleid,
                 FirstName = admin.Firstname,
@@ -95,12 +102,62 @@ namespace HalloDoc.MVC.Controllers
                 RegionId = admin.Regionid ?? 0,
                 selectedRegions = adminRegions,
                 CityId = cityId,
+                roles = _unitOfWork.RoleRepo.Where(role => role.Accounttype == (int)AccountType.Admin),
             };
 
             return View("Header/Profile", model);
 
         }
 
+        [HttpPost]
+        public bool SaveAdminAccountInfo(string userName, int roleId)
+        {
+
+            try
+            {
+
+                int? adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+
+                if (adminId == null)
+                {
+                    _notyf.Error("Cannot find admin Id.");
+                    return false;
+                }
+
+                Admin? admin = _unitOfWork.AdminRepository.GetFirstOrDefault(admin => admin.Adminid == adminId);
+                if (admin == null)
+                {
+                    _notyf.Error("Cannot find admin .");
+
+                    return false;
+                }
+
+                Aspnetuser? aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(user => user.Id == admin.Aspnetuserid);
+
+                if (aspUser == null)
+                {
+                    _notyf.Error("Cannot find AspUser.");
+
+                    return false;
+                }
+
+                aspUser.Username = userName;
+                _unitOfWork.AspNetUserRepository.Update(aspUser);
+                _unitOfWork.Save();
+
+                admin.Roleid = roleId;
+                _unitOfWork.AdminRepository.Update(admin);
+                _unitOfWork.Save();
+
+                _notyf.Success("Successfully Updated Account Info");
+                return true;
+            }
+            catch (Exception e)
+            {
+                _notyf.Error(e.Message);
+                return false;
+            }
+        }
         public IActionResult Partners()
         {
             return View("Header/Partners");
@@ -491,7 +548,7 @@ namespace HalloDoc.MVC.Controllers
                     Phonenumber = reqCli.Phonenumber,
                     Email = reqCli.Email,
                     Reason = model.Reason,
-                    Requestid = model.RequestId.ToString(),
+                    Requestid = model.RequestId,
                     Createddate = DateTime.Now,
                     Isactive = true,
                 };
@@ -603,13 +660,15 @@ namespace HalloDoc.MVC.Controllers
                     UseDefaultCredentials = false
                 };
 
+                string subject = "Set up your Account";
+                string body = "<h1>Hello , Patient!!</h1><p>You can review your agrrement and accept it to go ahead with the medical process, which  sent by the physician. </p><a href=\"" + agreementLink + "\" >Click here to accept agreement</a>";
+
                 MailMessage mailMessage = new MailMessage
                 {
                     From = new MailAddress(senderEmail, "HalloDoc"),
-                    Subject = "Set up your Account",
+                    Subject = subject,
                     IsBodyHtml = true,
-                    Body = "<h1>Hello , Patient!!</h1><p>You can review your agrrement and accept it to go ahead with the medical process, which  sent by the physician. </p><a href=\"" + agreementLink + "\" >Click here to accept agreement</a>",
-
+                    Body = body,
                 };
 
                 mailMessage.To.Add(model.PatientEmail);
@@ -636,14 +695,16 @@ namespace HalloDoc.MVC.Controllers
         [HttpPost]
         public IActionResult SendLinkForCreateRequest(SendLinkModel model)
         {
+            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
+
             if (ModelState.IsValid)
             {
                 try
                 {
-                    string sendPatientLink = Url.Action("SubmitRequest", "Guest", new { }, Request.Scheme);
+                    string? sendPatientLink = Url.Action("SubmitRequest", "Guest", new { }, Request.Scheme);
 
-                    string senderEmail = _config.GetSection("OutlookSMTP")["Sender"];
-                    string senderPassword = _config.GetSection("OutlookSMTP")["Password"];
+                    string? senderEmail = _config.GetSection("OutlookSMTP")["Sender"];
+                    string? senderPassword = _config.GetSection("OutlookSMTP")["Password"];
 
                     SmtpClient client = new SmtpClient("smtp.office365.com")
                     {
@@ -654,18 +715,46 @@ namespace HalloDoc.MVC.Controllers
                         UseDefaultCredentials = false
                     };
 
-                    MailMessage mailMessage = new MailMessage
-                    {
-                        From = new MailAddress(senderEmail, "HalloDoc"),
-                        Subject = "Set up your Account",
-                        IsBodyHtml = true,
-                        Body = "<h1>Hola , " + model.FirstName + " " + model.LastName + "!!</h1><p>Clink the link below to create request.</p><a href=\"" + sendPatientLink + "\" >Submit Request Link</a>",
+                    string subject = "Set up your Account";
+                    string body = "<h1>Hola , " + model.FirstName + " " + model.LastName + "!!</h1><p>Clink the link below to create request.</p><a href=\"" + sendPatientLink + "\" >Submit Request Link</a>";
 
+                    if (senderEmail != null)
+                    {
+
+                        _emailService.SendMail(model.Email, body, subject, out int sentTries, out bool isSent);
+
+                        Emaillog emailLog = new Emaillog()
+                        {
+                            Emailtemplate = "1",
+                            Subjectname = subject,
+                            Emailid = model.Email,
+                            Roleid = (int)AccountType.Patient,
+                            Adminid = adminId,
+                            Createdate = DateTime.Now,
+                            Sentdate = DateTime.Now,
+                            Isemailsent = isSent,
+                            Senttries = sentTries,
+                        };
+
+                        _context.Emaillogs.Add(emailLog);
+                        _context.SaveChanges();
+
+                    }
+
+                    Smslog smsLog = new Smslog()
+                    {
+                        Smstemplate = "1",
+                        Mobilenumber = model.Phone,
+                        Roleid = (int)AccountType.Patient,
+                        Adminid = adminId,
+                        Createdate = DateTime.Now,
+                        Sentdate = DateTime.Now,
+                        Issmssent = true,
+                        Senttries = 1,
                     };
 
-                    mailMessage.To.Add(model.Email);
-
-                    client.Send(mailMessage);
+                    _context.Smslogs.Add(smsLog);
+                    _context.SaveChanges();
 
                     return Redirect("/Admin/Dashboard");
                 }
@@ -1271,9 +1360,18 @@ namespace HalloDoc.MVC.Controllers
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
             string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
 
-            IEnumerable<Requeststatuslog> statusLogs = _unitOfWork.RequestStatusLogRepository.Where(log => log.Requestid == Requestid).OrderBy(_ => _.Createddate);
+
+            IEnumerable<Requeststatuslog> statusLogs = (from log in _unitOfWork.RequestStatusLogRepository.GetAll()
+                                                        where log.Requestid == Requestid
+                                                        && log.Status != (int)RequestStatus.Cancelled
+                                                        && log.Status != (int)RequestStatus.CancelledByPatient
+                                                        select log
+                                                        ).OrderBy(_ => _.Createddate);
 
             Requestnote notes = _unitOfWork.RequestNoteRepository.GetFirstOrDefault(notes => notes.Requestid == Requestid);
+
+            string? cancelledByAdmin = _unitOfWork.RequestStatusLogRepository.GetFirstOrDefault(log => log.Status == (int)RequestStatus.Cancelled)?.Notes;
+            string? cancelledByPatient = _unitOfWork.RequestStatusLogRepository.GetFirstOrDefault(log => log.Status == (int)RequestStatus.CancelledByPatient)?.Notes;
 
             ViewNotesViewModel model = new ViewNotesViewModel();
 
@@ -1284,6 +1382,8 @@ namespace HalloDoc.MVC.Controllers
             {
                 model.AdminNotes = notes.Adminnotes;
                 model.PhysicianNotes = notes.Physiciannotes;
+                model.AdminCancellationNotes = cancelledByAdmin;
+                model.PatientCancellationNotes = cancelledByPatient;
             }
 
             return View("Dashboard/ViewNotes", model);
@@ -1807,7 +1907,7 @@ namespace HalloDoc.MVC.Controllers
                 return View("Error");
             }
 
-            if(physicianId == null)
+            if (physicianId == null)
             {
                 Shift shift = _context.Shifts.FirstOrDefault(shift => shift.Shiftid == shiftdetail.Shiftid);
 
@@ -1837,6 +1937,78 @@ namespace HalloDoc.MVC.Controllers
         }
 
         #endregion
+
+        public IActionResult ProviderOnCall()
+        {
+            ProviderOnCallViewModel model = new ProviderOnCallViewModel();
+            model.regions = _unitOfWork.RegionRepository.GetAll();
+            return View("Providers/ProviderOnCall", model);
+        }
+
+        [HttpPost]
+        public IActionResult POCpartial(int regionFilter)
+        {
+            ProviderOnCallViewModel model = new ProviderOnCallViewModel();
+            DateTime current = DateTime.Now;
+
+            var onDutyQuery = from shiftDetail in _context.Shiftdetails
+                              join physician in _context.Physicians on shiftDetail.Shift.Physicianid equals physician.Physicianid
+                              join physicianRegion in _context.Physicianregions on physician.Physicianid equals physicianRegion.Physicianid
+                              where (regionFilter == 0 || physicianRegion.Regionid == regionFilter)
+                              && shiftDetail.Shiftdate.Date == current.Date
+                              && TimeOnly.FromDateTime(current) >= shiftDetail.Starttime
+                              && TimeOnly.FromDateTime(current) <= shiftDetail.Endtime
+                              && shiftDetail.Isdeleted != true
+                              select physician;
+
+            var onDuty = onDutyQuery.Distinct();
+
+            var offDuty = _context.Physicians.Except(onDuty).ToList();
+
+            model.physiciansOnCall = onDuty.ToList();
+            model.physiciansOffDuty = offDuty;
+
+            return PartialView("Providers/Partial/_ProviderOnCallPartial", model);
+        }
+
+
+        public IActionResult RequestedShift()
+        {
+            RequestShiftViewModel model = new RequestShiftViewModel()
+            {
+                regions = _unitOfWork.RegionRepository.GetAll(),
+            };
+
+
+            return View("Providers/RequestedShifts", model);
+
+        }
+
+        public async Task<IActionResult> RequestShiftPartialTable(int pageNo)
+        {
+            int pageNumber = pageNo;
+            int pageSize = 5;
+
+            var list = (from sd in _context.Shiftdetails
+                        join r in _context.Regions on sd.Regionid equals r.Regionid
+                        join s in _context.Shifts on sd.Shiftid equals s.Shiftid
+                        join p in _context.Physicians on s.Physicianid equals p.Physicianid
+                        select new RequestShiftTRow
+                        {
+                            ShiftDetailId = sd.Shiftdetailid,
+                            ShiftDate = sd.Shiftdate,
+                            ShiftStartTime = sd.Starttime,
+                            ShiftEndTime = sd.Endtime,
+                            Staff = p.Firstname + " " + p.Lastname,
+                            RegionName = r.Name,
+                        }).AsQueryable();
+
+
+            PagedList<RequestShiftTRow> pagedList = await PagedList<RequestShiftTRow>.CreateAsync(
+            list, pageNumber, pageSize);
+
+            return PartialView("Providers/Partial/_RequestShiftPartialTable", pagedList);
+        }
 
         public IActionResult Scheduling()
         {
@@ -2062,7 +2234,7 @@ namespace HalloDoc.MVC.Controllers
                 shiftDetails = query,
             };
 
-            return PartialView("Partial/ScheduleMonthWiseTable", model);
+            return PartialView("Providers/Partial/_ScheduleMonthWiseTable", model);
         }
 
         [HttpPost]
@@ -2095,7 +2267,7 @@ namespace HalloDoc.MVC.Controllers
 
             model.physicianShifts = physicianShifts;
 
-            return PartialView("Partial/ScheduleDayWiseTable", model);
+            return PartialView("Providers/Partial/_ScheduleDayWiseTable", model);
 
         }
 
@@ -2111,7 +2283,7 @@ namespace HalloDoc.MVC.Controllers
 
             DateTime start = startDate.ToLocalTime().Date;
 
-            if(start.DayOfWeek != DayOfWeek.Sunday)
+            if (start.DayOfWeek != DayOfWeek.Sunday)
             {
                 start = StartOfWeek(start, DayOfWeek.Sunday);
             }
@@ -2142,7 +2314,7 @@ namespace HalloDoc.MVC.Controllers
             model.StartOfWeek = start;
             model.physicianShifts = physicianShifts;
 
-            return PartialView("Partial/ScheduleWeekWiseTable", model);
+            return PartialView("Providers/Partial/_ScheduleWeekWiseTable", model);
         }
 
         //public IEnumerable<Shiftdetail> GetPhyShiftDetails(DateTime startDate, int physicianId)
@@ -2454,15 +2626,30 @@ namespace HalloDoc.MVC.Controllers
 
         }
 
-
         public IActionResult CreatePhysicianAccount()
         {
             EditPhysicianViewModel model = new EditPhysicianViewModel()
             {
                 regions = _unitOfWork.RegionRepository.GetAll(),
-                roles = _context.Roles,
+                roles = _unitOfWork.RoleRepo.Where(role => role.Accounttype == (int)AccountType.Physician),
             };
             return View("Providers/CreatePhysicianAccount", model);
+        }
+
+        public string GenerateUserName(bool isAdmin, string firstName, string lastName)
+        {
+            string prefix = isAdmin ? "AD" : "MD";
+
+            string userName = prefix + "." + lastName + "." + firstName.ElementAt(0);
+
+            int count = 0;
+            while (_context.Aspnetusers.Any(aspUser => aspUser.Username == userName))
+            {
+                count++;
+                userName = userName + count.ToString();
+            }
+
+            return userName;
         }
 
 
@@ -2470,12 +2657,13 @@ namespace HalloDoc.MVC.Controllers
         {
             try
             {
+                string city = _unitOfWork.CityRepository.GetFirstOrDefault(city => city.Id == model.CityId).Name;
                 string state = _unitOfWork.RegionRepository.GetFirstOrDefault(reg => reg.Regionid == model.RegionId).Name;
 
                 using (var client = new HttpClient())
                 {
                     string apiKey = _config.GetSection("Geocoding")["ApiKey"];
-                    string baseUrl = $"https://geocode.maps.co/search?city={model.City}&state={state}&postalcode={model.Zip}&country=India&api_key=" + apiKey;
+                    string baseUrl = $"https://geocode.maps.co/search?city={city}&state={state}&postalcode={model.Zip}&country=India&api_key=" + apiKey;
                     //HTTP GET
 
                     var responseTask = client.GetAsync(baseUrl);
@@ -2513,178 +2701,215 @@ namespace HalloDoc.MVC.Controllers
         [HttpPost]
         public IActionResult CreatePhysicianAccount(EditPhysicianViewModel model)
         {
-            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
-            Admin? admin = _context.Admins.FirstOrDefault(x => x.Adminid == adminId);
-
-            List<string> validProfileExtensions = new List<string> { ".jpeg", ".png", ".jpg" };
-            List<string> validDocumentExtensions = new List<string> { ".pdf" };
-
-            if (admin != null && ModelState.IsValid)
+            try
             {
+                int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
+                Admin? admin = _context.Admins.FirstOrDefault(x => x.Adminid == adminId);
 
-                try
+                if (admin != null && ModelState.IsValid)
                 {
-                    Guid generatedId = Guid.NewGuid();
+                    List<string> validProfileExtensions = new List<string> { ".jpeg", ".png", ".jpg" };
+                    List<string> validDocumentExtensions = new List<string> { ".pdf" };
+                    string city = _unitOfWork.CityRepository.GetFirstOrDefault(city => city.Id == model.CityId).Name;
 
-                    Aspnetuser aspUser = new()
+                    try
                     {
-                        Id = generatedId.ToString(),
-                        Username = model.UserName,
-                        Passwordhash = AuthHelper.GenerateSHA256(model.Password),
-                        Email = model.Email,
-                        Phonenumber = model.Phone,
-                        Createddate = DateTime.Now,
-                        Roleid = (int)AllowRole.Physician,
-                    };
+                        Guid generatedId = Guid.NewGuid();
 
-                    _unitOfWork.AspNetUserRepository.Add(aspUser);
-                    _unitOfWork.Save();
-
-                    Physician phy = new()
-                    {
-                        Aspnetuserid = generatedId.ToString(),
-                        Firstname = model.FirstName,
-                        Lastname = model.LastName,
-                        Email = model.Email,
-                        Mobile = model.Phone,
-                        Medicallicense = model.MedicalLicenseNumber,
-                        Adminnotes = model.AdminNotes,
-                        Address1 = model.Address1,
-                        Address2 = model.Address2,
-                        City = model.City,
-                        Regionid = model.RegionId,
-                        Zip = model.Zip,
-                        Altphone = model.MailPhone,
-                        Createdby = admin.Aspnetuserid,
-                        Createddate = DateTime.Now,
-                        Status = (short)model.StatusId,
-                        Roleid = model.RoleId,
-                        Npinumber = model.NPINumber,
-                        Businessname = model.BusinessName,
-                        Businesswebsite = model.BusinessWebsite,
-                    };
-
-                    _unitOfWork.PhysicianRepository.Add(phy);
-                    _unitOfWork.Save();
-
-                    foreach (int regionId in model.selectedRegions)
-                    {
-                        Physicianregion phyRegion = new Physicianregion()
+                        Aspnetuser aspUser = new()
                         {
-                            Regionid = regionId,
-                            Physicianid = phy.Physicianid,
+                            Id = generatedId.ToString(),
+                            Username = GenerateUserName(false, model.FirstName, model.LastName),
+                            Passwordhash = AuthHelper.GenerateSHA256(model.Password),
+                            Email = model.Email,
+                            Phonenumber = model.Phone,
+                            Createddate = DateTime.Now,
+                            Accounttypeid = (int)AccountType.Physician,
                         };
 
-                        _unitOfWork.PhysicianRegionRepo.Add(phyRegion);
-                    }
+                        _unitOfWork.AspNetUserRepository.Add(aspUser);
+                        _unitOfWork.Save();
 
-                    _unitOfWork.Save();
-
-
-                    string path = Path.Combine(_environment.WebRootPath, "document", "physician", phy.Physicianid.ToString());
-
-                    if (model.PhotoFile != null)
-                    {
-                        string fileExtension = Path.GetExtension(model.PhotoFile.FileName);
-                        if (validProfileExtensions.Contains(fileExtension))
+                        Physician phy = new()
                         {
-                            phy.Isnondisclosuredoc = true;
-                            InsertFileAfterRename(model.PhotoFile, path, "ProfilePhoto");
-                        }
-                    }
+                            Aspnetuserid = generatedId.ToString(),
+                            Firstname = model.FirstName,
+                            Lastname = model.LastName,
+                            Email = model.Email,
+                            Mobile = model.Phone,
+                            Medicallicense = model.MedicalLicenseNumber,
+                            Adminnotes = model.AdminNotes,
+                            Address1 = model.Address1,
+                            Address2 = model.Address2,
+                            City = city,
+                            Regionid = model.RegionId,
+                            Zip = model.Zip,
+                            Altphone = model.MailPhone,
+                            Createdby = admin.Aspnetuserid,
+                            Createddate = DateTime.Now,
+                            Status = (short)model.StatusId,
+                            Roleid = model.RoleId,
+                            Npinumber = model.NPINumber,
+                            Businessname = model.BusinessName,
+                            Businesswebsite = model.BusinessWebsite,
+                        };
 
-                    if (model.SignatureFile != null)
-                    {
-                        string fileExtension = Path.GetExtension(model.SignatureFile.FileName);
-                        if (validProfileExtensions.Contains(fileExtension))
+                        _unitOfWork.PhysicianRepository.Add(phy);
+                        _unitOfWork.Save();
+
+                        foreach (int regionId in model.selectedRegions)
                         {
-                            phy.Isnondisclosuredoc = true;
-                            InsertFileAfterRename(model.SignatureFile, path, "Signature");
+                            Physicianregion phyRegion = new Physicianregion()
+                            {
+                                Regionid = regionId,
+                                Physicianid = phy.Physicianid,
+                            };
+
+                            _unitOfWork.PhysicianRegionRepo.Add(phyRegion);
                         }
-                    }
+
+                        _unitOfWork.Save();
 
 
-                    if (model.ICAFile != null)
-                    {
-                        string fileExtension = Path.GetExtension(model.ICAFile.FileName);
-                        if (validDocumentExtensions.Contains(fileExtension))
+                        string path = Path.Combine(_environment.WebRootPath, "document", "physician", phy.Physicianid.ToString());
+
+                        if (model.PhotoFile != null)
                         {
-                            phy.Isnondisclosuredoc = true;
-                            InsertFileAfterRename(model.ICAFile, path, "ICA");
+                            string fileExtension = Path.GetExtension(model.PhotoFile.FileName);
+                            string renameTo = "ProfilePhoto";
+                            if (validProfileExtensions.Contains(fileExtension))
+                            {
+                                phy.Isnondisclosuredoc = true;
+                                phy.Photo = renameTo + fileExtension;
+                                InsertFileAfterRename(model.PhotoFile, path, renameTo);
+                            }
                         }
-                    }
 
-                    if (model.BGCheckFile != null)
-                    {
-                        string fileExtension = Path.GetExtension(model.BGCheckFile.FileName);
-                        if (validDocumentExtensions.Contains(fileExtension))
+                        if (model.SignatureFile != null)
                         {
-                            phy.Isnondisclosuredoc = true;
-                            InsertFileAfterRename(model.BGCheckFile, path, "BackgroundCheck");
+                            string fileExtension = Path.GetExtension(model.SignatureFile.FileName);
+                            string renameTo = "Signature";
+                            if (validProfileExtensions.Contains(fileExtension))
+                            {
+                                phy.Isnondisclosuredoc = true;
+                                phy.Signature = renameTo + fileExtension;
+                                InsertFileAfterRename(model.SignatureFile, path, renameTo);
+                            }
                         }
-                    }
 
-                    if (model.HIPAAComplianceFile != null)
-                    {
-                        string fileExtension = Path.GetExtension(model.HIPAAComplianceFile.FileName);
-                        if (validDocumentExtensions.Contains(fileExtension))
+
+                        if (model.ICAFile != null)
                         {
-                            phy.Isnondisclosuredoc = true;
-                            InsertFileAfterRename(model.HIPAAComplianceFile, path, "HipaaCompliance");
+                            string fileExtension = Path.GetExtension(model.ICAFile.FileName);
+                            if (validDocumentExtensions.Contains(fileExtension))
+                            {
+                                phy.Isnondisclosuredoc = true;
+                                InsertFileAfterRename(model.ICAFile, path, "ICA");
+                            }
                         }
-                    }
 
-                    if (model.NDAFile != null)
-                    {
-                        string fileExtension = Path.GetExtension(model.NDAFile.FileName);
-                        if (validDocumentExtensions.Contains(fileExtension))
+                        if (model.BGCheckFile != null)
                         {
-                            phy.Isnondisclosuredoc = true;
-                            InsertFileAfterRename(model.NDAFile, path, "NDA");
+                            string fileExtension = Path.GetExtension(model.BGCheckFile.FileName);
+                            if (validDocumentExtensions.Contains(fileExtension))
+                            {
+                                phy.Isnondisclosuredoc = true;
+                                InsertFileAfterRename(model.BGCheckFile, path, "BackgroundCheck");
+                            }
                         }
-                    }
 
-                    if (model.LicenseDocFile != null)
-                    {
-                        string fileExtension = Path.GetExtension(model.LicenseDocFile.FileName);
-                        if (validDocumentExtensions.Contains(fileExtension))
+                        if (model.HIPAAComplianceFile != null)
                         {
-                            phy.Isnondisclosuredoc = true;
-                            InsertFileAfterRename(model.LicenseDocFile, path, "LicenseDoc");
+                            string fileExtension = Path.GetExtension(model.HIPAAComplianceFile.FileName);
+                            if (validDocumentExtensions.Contains(fileExtension))
+                            {
+                                phy.Isnondisclosuredoc = true;
+                                InsertFileAfterRename(model.HIPAAComplianceFile, path, "HipaaCompliance");
+                            }
                         }
+
+                        if (model.NDAFile != null)
+                        {
+                            string fileExtension = Path.GetExtension(model.NDAFile.FileName);
+                            if (validDocumentExtensions.Contains(fileExtension))
+                            {
+                                phy.Isnondisclosuredoc = true;
+                                InsertFileAfterRename(model.NDAFile, path, "NDA");
+                            }
+                        }
+
+                        if (model.LicenseDocFile != null)
+                        {
+                            string fileExtension = Path.GetExtension(model.LicenseDocFile.FileName);
+                            if (validDocumentExtensions.Contains(fileExtension))
+                            {
+                                phy.Isnondisclosuredoc = true;
+                                InsertFileAfterRename(model.LicenseDocFile, path, "LicenseDoc");
+                            }
+                        }
+
+                        _unitOfWork.PhysicianRepository.Update(phy);
+                        _unitOfWork.Save();
+
+                        TempData["success"] = "Physician Created Successfully";
+
+                        return RedirectToAction("ProviderMenu");
+                    }
+                    catch (Exception e)
+                    {
+                        TempData["error"] = e.Message;
+                        model.roles = _unitOfWork.RoleRepo.GetAll();
+                        model.regions = _unitOfWork.RegionRepository.GetAll();
+                        return View("Providers/CreatePhysicianAccount", model);
                     }
 
-                    _unitOfWork.PhysicianRepository.Update(phy);
-                    _unitOfWork.Save();
 
-                    TempData["success"] = "Physician Created Successfully";
-
-                    return RedirectToAction("ProviderMenu");
                 }
-                catch (Exception e)
-                {
-                    TempData["error"] = e.Message;
-                    model.roles = _unitOfWork.RoleRepo.GetAll();
-                    model.regions = _unitOfWork.RegionRepository.GetAll();
-                    return View("Providers/CreatePhysicianAccount", model);
-                }
 
+                model.roles = _unitOfWork.RoleRepo.Where(role => role.Accounttype == (int)AccountType.Physician);
+                model.regions = _unitOfWork.RegionRepository.GetAll();
 
+                return View("Providers/CreatePhysicianAccount", model);
             }
-
-            model.roles = _unitOfWork.RoleRepo.GetAll();
-            model.regions = _unitOfWork.RegionRepository.GetAll();
-            return View("Providers/CreatePhysicianAccount", model);
+            catch (Exception e)
+            {
+                return View("Error");
+            }
 
         }
 
-        public IActionResult EditPhysicianAccount(int physicianId)
+        public IActionResult EditPhysicianAccount(int physicianId, string? phyAspId)
         {
-            Physician physician = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Physicianid == physicianId);
-            IEnumerable<int> phyRegions = _unitOfWork.PhysicianRegionRepo.Where(pr => pr.Physicianid == physicianId).ToList().Select(_ => (int)_.Regionid); ;
+            Physician? physician;
+            if (phyAspId != null)
+            {
+                physician = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Aspnetuserid == phyAspId);
+            }
+            else
+            {
+                physician = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Physicianid == physicianId);
+            }
+
+            if(physician == null)
+            {
+                return View("Error");
+            }
+
+            Aspnetuser? aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(user => user.Id == physician.Aspnetuserid);
+
+            if (aspUser == null)
+            {
+                return View("Error");
+            }
+
+            int? cityId = _unitOfWork.CityRepository.GetFirstOrDefault(city => city.Name == physician.City)?.Id;
+
+            IEnumerable<int> phyRegions = _unitOfWork.PhysicianRegionRepo.Where(pr => pr.Physicianid == physician.Physicianid).ToList().Select(_ => (int)_.Regionid); ;
 
             EditPhysicianViewModel model = new EditPhysicianViewModel()
             {
+                UserName = aspUser.Username,
+                PhysicianId = physician.Physicianid,
                 FirstName = physician.Firstname,
                 LastName = physician.Lastname,
                 Email = physician.Email,
@@ -2694,21 +2919,22 @@ namespace HalloDoc.MVC.Controllers
                 SyncEmail = physician.Syncemailaddress,
                 Address1 = physician.Address1,
                 Address2 = physician.Address2,
-                City = physician.City,
                 RegionId = physician.Regionid,
                 Zip = physician.Zip,
                 RoleId = (int)physician.Roleid,
                 MailPhone = physician.Altphone,
                 BusinessName = physician.Businessname,
+                CityId = cityId,
                 BusinessWebsite = physician.Businesswebsite,
                 regions = _unitOfWork.RegionRepository.GetAll(),
-                roles = _unitOfWork.RoleRepo.GetAll(),
+                roles = _unitOfWork.RoleRepo.Where(role => role.Accounttype == (int) AccountType.Physician),
                 physicianRegions = phyRegions,
                 IsICA = physician.Isagreementdoc ?? false,
                 IsBGCheck = physician.Isbackgrounddoc ?? false,
                 IsHIPAA = physician.Iscredentialdoc ?? false,
-                IsLicenseDoc = physician.Islicensedoc ?? false,
+                IsLicenseDoc = physician.Islicensedoc ?? false,                
                 IsNDA = physician.Isnondisclosuredoc ?? false,
+                selectedRegions = _unitOfWork.PhysicianRegionRepo.Where(pr => pr.Physicianid == physician.Physicianid).Select(_ => _.Regionid),
             };
 
             return View("Providers/EditPhysicianAccount", model);
@@ -2741,30 +2967,41 @@ namespace HalloDoc.MVC.Controllers
             }
         }
 
+        public async Task<IActionResult> ProviderMenuPartialTable(int pageNo, int regionFilter)
+        {
+            int pageNumber = pageNo;
+            int pageSize = 5;
+            var physicianList = (from phy in _context.Physicians
+                                 join role in _context.Roles on phy.Roleid equals role.Roleid
+                                 join pn in _context.Physiciannotifications on phy.Physicianid equals pn.Physicianid into notiGroup
+                                 from notiItem in notiGroup.DefaultIfEmpty()
+                                 where (regionFilter == 0 || phy.Regionid == regionFilter)
+                                 select new ProviderMenuTRow
+                                 {
+                                     PhysicianId = phy.Physicianid,
+                                     PhysicianName = phy.Firstname + " " + phy.Lastname,
+                                     Email = phy.Email,
+                                     PhoneNumber = phy.Mobile ?? "Mobile",
+                                     Role = role.Name,
+                                     Status = phy.Status.ToString() ?? "Status",
+                                     OnCallStatus = "Busy",
+                                     IsNotificationStopped = notiItem.Isnotificationstopped ? true : false,
+                                 }).OrderBy(_ => _.PhysicianId);
+
+            PagedList<ProviderMenuTRow> pagedList = await PagedList<ProviderMenuTRow>.CreateAsync(
+            physicianList, pageNumber, pageSize);
+
+            return PartialView("Providers/Partial/_ProviderMenuPartialTable", pagedList);
+        }
+
         public IActionResult ProviderMenu()
         {
 
             string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
-            IEnumerable<ProviderMenuRow> physicianList = (from phy in _context.Physicians
-                                                          join role in _context.Roles on phy.Roleid equals role.Roleid
-                                                          join pn in _context.Physiciannotifications on phy.Physicianid equals pn.Physicianid into notiGroup
-                                                          from notiItem in notiGroup.DefaultIfEmpty()
-                                                          select new ProviderMenuRow
-                                                          {
-                                                              PhysicianId = phy.Physicianid,
-                                                              PhysicianName = phy.Firstname + " " + phy.Lastname,
-                                                              Email = phy.Email,
-                                                              PhoneNumber = phy.Mobile ?? "Mobile",
-                                                              Role = role.Name,
-                                                              Status = phy.Status.ToString() ?? "Status",
-                                                              OnCallStatus = "Busy",
-                                                              IsNotificationStopped = notiItem.Isnotificationstopped ? true : false,
-                                                          }).OrderBy(_ => _.PhysicianId);
-
             ProviderMenuViewModel model = new ProviderMenuViewModel()
             {
                 UserName = adminName,
-                physicianList = physicianList,
+                regions = _unitOfWork.RegionRepository.GetAll(),
             };
             return View("Providers/ProviderMenu", model);
         }
@@ -2782,27 +3019,89 @@ namespace HalloDoc.MVC.Controllers
         [HttpPost]
         public IActionResult ContactYourProviderModal(ContactYourProviderModel model)
         {
+            // CommunicationType : 1 = SMS , 2 = MAIL , 3 = BOTH
+
+            int adminId = Convert.ToInt32(HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "userId").Value);
             try
             {
-
                 if (ModelState.IsValid)
                 {
                     Physician physician = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Physicianid == model.PhysicianId);
-                    if (model.CommunicationType == 2 || model.CommunicationType == 3)
+                    if (model.CommunicationType == 3 || model.CommunicationType == 2)
                     {
                         string subject = "Contacting Provider";
                         string body = "<h2>Admin Message</h2><h5>" + model.Message + "</h5>";
                         string toEmail = physician.Email;
-                        _emailService.SendMail(toEmail, body, subject);
+
+                        try
+                        {
+                            _emailService.SendMail(toEmail, body, subject, out int sentTries, out bool isSent);
+
+                            Emaillog emailLog = new Emaillog()
+                            {
+                                Emailtemplate = "1",
+                                Subjectname = subject,
+                                Emailid = toEmail,
+                                Roleid = (int)AccountType.Patient,
+                                Adminid = adminId,
+                                Createdate = DateTime.Now,
+                                Sentdate = DateTime.Now,
+                                Isemailsent = isSent,
+                                Senttries = sentTries,
+                            };
+
+                            _context.Emaillogs.Add(emailLog);
+                            _context.SaveChanges();
+
+                            _notyf.Success("Email Sent Successfully");
+                        }
+                        catch (Exception e)
+                        {
+                            _notyf.Error("Cannot send email. Error : " + e.Message);
+                        }
+
                     }
+
+                    if (model.CommunicationType == 3 || model.CommunicationType == 1)
+                    {
+                        try
+                        {
+                            Smslog smsLog = new Smslog()
+                            {
+                                Smstemplate = "1",
+                                Mobilenumber = physician.Mobile,
+                                Roleid = (int)AccountType.Patient,
+                                Adminid = adminId,
+                                Createdate = DateTime.Now,
+                                Sentdate = DateTime.Now,
+                                Issmssent = true,
+                                Senttries = 1,
+                            };
+
+                            _context.Smslogs.Add(smsLog);
+                            _context.SaveChanges();
+
+                            _notyf.Success("SMS Sent Successfully");
+
+                        }
+                        catch (Exception e)
+                        {
+                            _notyf.Error("Cannot send SMS. Error : " + e.Message);
+                        }
+
+                    }
+
+                }
+                else
+                {
+                    _notyf.Error("Please Input All Required ");
                 }
 
-                TempData["success"] = "Messages sent successfully.";
 
             }
             catch (Exception e)
             {
-                TempData["error"] = e.Message;
+                _notyf.Error(e.Message);
             }
             return Redirect("/Admin/ProviderMenu");
         }
@@ -2818,7 +3117,7 @@ namespace HalloDoc.MVC.Controllers
 
 
         [HttpPost]
-        public bool SaveAdminAccountInfo(string password)
+        public bool AdminResetPassword(string password)
         {
 
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
@@ -2980,6 +3279,38 @@ namespace HalloDoc.MVC.Controllers
 
         #region Access
 
+        public IActionResult EditAdminAccount(string adminAspId)
+        {
+            Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(ad => ad.Aspnetuserid == adminAspId);
+            Aspnetuser aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(user => user.Id == admin.Aspnetuserid);
+            int? cityId = admin?.City == null ? null : _unitOfWork.CityRepository.GetFirstOrDefault(city => city.Name == admin.City)?.Id;
+            string state = _unitOfWork.RegionRepository.GetFirstOrDefault(reg => reg.Regionid == admin.Regionid).Name;
+
+            AdminProfileViewModel model = new AdminProfileViewModel()
+            {
+                AdminId = admin.Adminid,
+                Username = aspUser.Username,
+                RoleId = admin.Roleid,
+                FirstName = admin.Firstname,
+                LastName = admin.Lastname,
+                Email = admin.Email,
+                PhoneNumber = admin.Mobile,
+                selectedRegions = _unitOfWork.AdminRegionRepo.Where(ar => ar.Adminid == admin.Adminid).Select(_ => _.Regionid ?? 0),
+                Address1 = admin.Address1,
+                Address2 = admin.Address2,
+                CityId = cityId ?? 0,
+                State = state,
+                Zip = admin.Zip,
+                AltPhoneNumber = admin.Altphone,
+                RegionId = admin.Regionid ?? 0,
+                roles = _unitOfWork.RoleRepo.GetAll(),
+                regions = _unitOfWork.RegionRepository.GetAll(),
+                adminMailCities = _unitOfWork.CityRepository.Where(city => city.Regionid == admin.Regionid),
+
+            };
+            return View("Access/EditAdminAccount", model);
+        }
+
 
         [HttpGet]
         public IActionResult CreateAdminAccount()
@@ -2997,6 +3328,9 @@ namespace HalloDoc.MVC.Controllers
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
             Admin? admin = _context.Admins.FirstOrDefault(x => x.Adminid == adminId);
 
+            string city = _unitOfWork.CityRepository.GetFirstOrDefault(city => city.Id == model.CityId).Name;
+
+
             if (admin != null && ModelState.IsValid)
             {
                 Guid generatedId = Guid.NewGuid();
@@ -3009,7 +3343,7 @@ namespace HalloDoc.MVC.Controllers
                     Email = model.Email,
                     Phonenumber = model.Phone,
                     Createddate = DateTime.Now,
-                    Roleid = 1,
+                    Accounttypeid = (int)AccountType.Admin,
                 };
 
                 _unitOfWork.AspNetUserRepository.Add(aspnetuser);
@@ -3024,7 +3358,7 @@ namespace HalloDoc.MVC.Controllers
                     Mobile = model.Phone,
                     Address1 = model.Address1,
                     Address2 = model.Address2,
-                    City = model.City,
+                    City = city,
                     Regionid = model.RegionId,
                     Zip = model.Zip,
                     Createdby = aspnetuser.Id,
@@ -3111,6 +3445,7 @@ namespace HalloDoc.MVC.Controllers
         public bool roleEditSubmit(List<int> menus, int roleid)
         {
 
+            //HttpContext.Session.Remove("roleMenu");
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
             Admin? admin = _context.Admins.FirstOrDefault(a => a.Adminid == adminId);
             if (admin == null)
@@ -3261,24 +3596,33 @@ namespace HalloDoc.MVC.Controllers
 
         }
 
+        public async Task<IActionResult> UserAccessPartialTable(int pageNo, int accountType)
+        {
+            int pageNumber = pageNo;
+            int pageSize = 5;
+            var list = (from aspUser in _context.Aspnetusers
+                        where aspUser.Accounttypeid != (int)AccountType.Patient
+                        && (accountType == 0 || aspUser.Accounttypeid == accountType)
+                        select new UserAccessTRow
+                        {
+                            AccountTypeId = aspUser.Accounttypeid ?? 0,
+                            AspnetUserId = aspUser.Id,
+                            AccountType = aspUser.Username,
+                            AccountPOC = aspUser.Email ?? "",
+                            Phone = aspUser.Phonenumber ?? "+91 XX XX XX XX XX",
+                            Status = "Offline",
+                            OpenRequests = "0",
+                        });
+
+            PagedList<UserAccessTRow> pagedList = await PagedList<UserAccessTRow>.CreateAsync(
+            list, pageNumber, pageSize);
+
+            return PartialView("Access/Partial/_UserAccessPartialTable", pagedList);
+        }
+
         public IActionResult UserAccess()
         {
-            IEnumerable<UserAccessTRow> list = (from user in _context.Aspnetusers
-                                                select new UserAccessTRow
-                                                {
-                                                    AccountTypeId = user.Roleid,
-                                                    AspnetUserId = user.Id,
-                                                    AccountType = user.Username,
-                                                    AccountPOC = user.Roleid.ToString(),
-                                                    Phone = user.Phonenumber ?? "+91 XX XX XX XX XX",
-                                                    Status = "Offline",
-                                                    OpenRequests = "0",
-                                                });
-            UserAccessViewModel model = new()
-            {
-                userList = list,
-            };
-            return View("Access/UserAccess", model);
+            return View("Access/UserAccess");
         }
         #endregion
 
@@ -3287,34 +3631,50 @@ namespace HalloDoc.MVC.Controllers
         [HttpPost]
         public IActionResult SMSLogsPartialTable(int roleIdFilter, string receiverName, string mobileNumber, DateTime createdDate, DateTime sentDate)
         {
-            IEnumerable<Smslog> logs = _context.Smslogs;
+            IEnumerable<Smslog> logs = (from log in _context.Smslogs
+                                        where (roleIdFilter == 0 || log.Roleid == roleIdFilter)
+                                        && (string.IsNullOrEmpty(mobileNumber) || log.Mobilenumber == mobileNumber)
+                                        && (createdDate == null || log.Createdate == createdDate)
+                                        && (sentDate == null || log.Sentdate == sentDate)
+                                        select log);
 
             SMSLogsViewModel model = new()
             {
                 smsLogs = logs,
             };
-            return PartialView("Partial/SMSLogPartialTable", model);
+            return PartialView("Records/Partial/_SMSLogPartialTable", model);
         }
 
         [HttpPost]
-        public IActionResult EmailLogsPartialTable(int roleIdFilter, string receiverName, string emailAddress, DateTime createdDate, DateTime sentDate)
+        public async Task<IActionResult> EmailLogsPartialTable(int pageNo, int roleIdFilter, string receiverName, string emailAddress, DateTime? createdDate, DateTime? sentDate)
         {
-            IEnumerable<Emaillog> logs = _context.Emaillogs;
+            int pageSize = 4;
+            int pageNumber = pageNo;
 
-            EmailLogsViewModel model = new()
-            {
-                emailLogs = logs,
-            };
-            return PartialView("Partial/EmailLogPartialTable", model);
+            var query = (from log in _context.Emaillogs
+                         where (roleIdFilter == 0 || log.Roleid == roleIdFilter)
+                         && (string.IsNullOrEmpty(emailAddress) || log.Emailid == emailAddress)
+                         && (createdDate == null || log.Createdate == createdDate)
+                         && (sentDate == null || log.Sentdate == sentDate)
+                         select log);
+
+            PagedList<Emaillog> pagedList = await PagedList<Emaillog>.CreateAsync(
+            query, pageNumber, pageSize);
+
+            return PartialView("Records/Partial/_EmailLogPartialTable", pagedList);
         }
 
         [HttpPost]
-        public IActionResult SearchRecordPartialTable(string patientName, int requestStatus, int requestType, string phoneNumber, DateTime fromDateOfService, DateTime toDateOfService, string providerName, string email)
+        public async Task<IActionResult> SearchRecordPartialTable(int pageNo, string patientName, int requestStatus, int requestType, string phoneNumber, DateTime? fromDateOfService, DateTime? toDateOfService, string providerName, string patientEmail)
         {
+            int pageSize = 4;
+            int pageNumber = pageNo;
 
             // TODO: Add dateOfService filter in page
             var query = (from r in _context.Requests
                          join rc in _context.Requestclients on r.Requestid equals rc.Requestid
+                         join rs in _context.Requeststatuses on r.Status equals rs.Statusid
+                         join rt in _context.Requesttypes on r.Requesttypeid equals rt.Requesttypeid
                          join phy in _context.Physicians on r.Physicianid equals phy.Physicianid into phyGroup
                          from phyItem in phyGroup.DefaultIfEmpty()
                          where ((string.IsNullOrEmpty(patientName) || (rc.Firstname + " " + rc.Lastname).ToLower().Contains(patientName.ToLower()))
@@ -3322,20 +3682,22 @@ namespace HalloDoc.MVC.Controllers
                          && (requestType == 0 || r.Requesttypeid == requestType)
                          && (string.IsNullOrEmpty(phoneNumber) || rc.Phonenumber.ToLower().Contains(phoneNumber.ToLower()))
                          && (string.IsNullOrEmpty(providerName) || (phyItem.Firstname + " " + phyItem.Lastname).ToLower().Contains(providerName.ToLower()))
-                         && (string.IsNullOrEmpty(email) || rc.Email.ToLower().Contains(email.ToLower()))
+                         && (string.IsNullOrEmpty(patientEmail) || rc.Email.ToLower().Contains(patientEmail.ToLower()))
+                         && ((fromDateOfService == null) || r.Accepteddate >= fromDateOfService)
+                         && ((toDateOfService == null) || r.Accepteddate <= toDateOfService)
                          )
                          select new SearchRecordTRow
                          {
                              RequestId = r.Requestid,
                              PatientName = rc.Firstname + " " + rc.Lastname,
-                             Requestor = GetRequestType(r.Requesttypeid),
+                             Requestor = rt.Name,
                              DateOfService = DateTime.Now,
                              CloseCaseDate = DateTime.Now,
                              Email = rc.Email ?? "",
                              PhoneNumber = rc.Phonenumber ?? "",
                              Address = rc.Address ?? "",
                              Zip = rc.Zipcode ?? "",
-                             RequestStatus = RequestHelper.GetRequestStatusString(r.Status),
+                             RequestStatus = rs.Statusname,
                              Physician = phyItem.Firstname + " " + phyItem.Lastname,
                              PhysicianNote = "",
                              AdminNote = "",
@@ -3343,14 +3705,11 @@ namespace HalloDoc.MVC.Controllers
                              PatientNote = "",
                          });
 
-            SearchRecordViewModel model = new SearchRecordViewModel()
-            {
-                searchRecordTRows = query
-            };
+            PagedList<SearchRecordTRow> pagedList = await PagedList<SearchRecordTRow>.CreateAsync(
+            query, pageNumber, pageSize);
 
-            return PartialView("Partial/SearchRecordPartialTable", model);
+            return PartialView("Records/Partial/_SearchRecordPartialTable", pagedList);
         }
-
 
         public IActionResult SearchRecords()
         {
@@ -3383,12 +3742,82 @@ namespace HalloDoc.MVC.Controllers
 
         public IActionResult PatientRecords()
         {
-            return View("Records/PatientRecords");
+
+            PatientRecordsViewModel model = new()
+            {
+                roles = _context.Roles.ToList(),
+            };
+            return View("Records/PatientRecords", model);
+        }
+
+        [HttpPost]
+        public IActionResult PatientRecordsPartial(string FirstName, string LastName, string EmailAddress, string PhoneNumber)
+        {
+            List<User> logs = _context.Users.Where(user =>
+            (string.IsNullOrEmpty(FirstName) || user.Firstname.ToLower().Contains(FirstName.ToLower()))
+            && (string.IsNullOrEmpty(LastName) || user.Lastname.ToLower().Contains(LastName.ToLower()))
+            && (string.IsNullOrEmpty(EmailAddress) || user.Email.ToLower().Contains(EmailAddress.ToLower()))
+            && (string.IsNullOrEmpty(PhoneNumber) || user.Mobile.ToLower().Contains(PhoneNumber))).ToList();
+
+            PatientRecordsViewModel model = new()
+            {
+                users = logs,
+            };
+            return PartialView("Records/Partial/_PatientRecordPartialTable", model);
+        }
+
+        public IActionResult Explore(int id)
+        {
+            var list = (from r in _context.Requests
+                        join p in _context.Physicians on r.Physicianid equals p.Physicianid
+                        join e in _context.Encounterforms on r.Requestid equals e.Requestid into subgroup
+                        from subitem in subgroup.DefaultIfEmpty()
+                        join file in _context.Requestwisefiles
+                on r.Requestid equals file.Requestid into filesGroup
+                        where r.Userid == id
+                        select new exploreViewModel
+                        {
+                            id = r.Requestid,
+                            Name = r.Firstname + " " + r.Lastname,
+                            confirmationNumber = r.Confirmationnumber,
+                            status = RequestHelper.GetRequestStatusString(r.Status),
+                            createdAt = r.Createddate,
+                            concludedDate = DateTime.Now,
+                            count = filesGroup.Count(),
+                            finalReport = subitem.Isfinalize ? true : false,
+                        });
+
+            PatientRecordsViewModel model = new()
+            {
+                explores = list.ToList(),
+            };
+            return View("Records/PatientExplore", model);
         }
 
         public IActionResult BlockedHistory()
         {
             return View("Records/BlockedHistory");
+        }
+
+        [HttpPost]
+        public IActionResult BlockedHistoryPartialTable()
+        {
+            List<BlockedHistory> list = (from br in _context.Blockrequests
+                                         join r in _context.Requests on br.Requestid equals r.Requestid
+                                         join rc in _context.Requestclients on r.Requestid equals rc.Requestid
+                                         select new BlockedHistory
+                                         {
+                                             BlockedRequestID = br.Blockrequestid,
+                                             RequestId = r.Requestid,
+                                             PatientName = rc.Firstname + " " + rc.Lastname,
+                                             CreatedDate = br.Createddate,
+                                             PhoneNumber = br.Phonenumber,
+                                             Email = br.Email,
+                                             Notes = "",
+                                             IsActive = (bool)br.Isactive
+                                         }).ToList();
+
+            return View("Records/Partial/_BlockHistoryPartialTable", list);
         }
 
 
@@ -3397,53 +3826,177 @@ namespace HalloDoc.MVC.Controllers
 
         #region Partners
 
-        public IActionResult Vendors()
+        public IActionResult AddBusiness()
         {
-            return View("Partners/Vendors");
+            EditBusinessViewModel model = new EditBusinessViewModel()
+            {
+                regions = _unitOfWork.RegionRepository.GetAll(),
+                professions = _unitOfWork.HealthProfessionalTypeRepo.GetAll(),
+            };
+
+            return View("Partners/AddBusiness", model);
         }
 
-        public async Task<IActionResult> BusinessTable(int pageNumber, int pageSize, string Name, int professionId)
+        [HttpPost]
+        public bool DeleteBusiness(int vendorId)
         {
-            pageNumber = pageNumber < 1 ? 1 : pageNumber;
-            pageSize = pageSize == 0 ? 3 : pageSize;
-
-            if (Name != null || professionId != 0)
+            try
             {
-                var parseData = (from t1 in _context.Healthprofessionals
-                                 join t2 in _context.Healthprofessionaltypes on t1.Profession equals t2.Healthprofessionalid
-                                 where t1.Isdeleted != true && (t1.Vendorname.ToUpper().Contains(Name) || t2.Healthprofessionalid == professionId)
-                                 select new VendorTRow
-                                 {
-                                     BusinessId = t1.Vendorid,
-                                     BusinessName = t1.Vendorname,
-                                     ProfessionId = t2.Healthprofessionalid,
-                                     ProfessionName = t2.Professionname,
-                                     Email = t1.Email,
-                                     PhoneNumber = t1.Phonenumber,
-                                     FaxNumber = t1.Faxnumber,
-                                     BusinessContact = t1.Businesscontact
-                                 });
 
-                return PartialView("Partners/_businessTable", parseData);
+                Healthprofessional? vendor = _context.Healthprofessionals.FirstOrDefault(x => x.Vendorid == vendorId);
+                if (vendor == null)
+                {
+                    _notyf.Error("Cannot Find Vendor. Please try again later.");
+                    return false;
+                }
+
+                vendor.Isdeleted = true;
+                _context.Healthprofessionals.Update(vendor);
+                _context.SaveChanges();
+
+                _notyf.Success("Vendor Deleted Successfully");
+
+                return true;
             }
-            else
+            catch (Exception e)
             {
-                var parseData = (from t1 in _context.Healthprofessionals
-                                 join t2 in _context.Healthprofessionaltypes on t1.Profession equals t2.Healthprofessionalid
-                                 where t1.Isdeleted != true
-                                 select new VendorTRow
-                                 {
-                                     BusinessId = t1.Vendorid,
-                                     BusinessName = t1.Vendorname,
-                                     ProfessionId = t2.Healthprofessionalid,
-                                     ProfessionName = t2.Professionname,
-                                     Email = t1.Email,
-                                     PhoneNumber = t1.Phonenumber,
-                                     FaxNumber = t1.Faxnumber,
-                                     BusinessContact = t1.Businesscontact
-                                 });
-                return PartialView("Partners/_businessTable", parseData);
+                _notyf.Error(e.Message);
+                return false;
             }
+
+        }
+
+        [HttpPost]
+        public IActionResult AddBusiness(EditBusinessViewModel model)
+        {
+            try
+            {
+
+                string? city = _unitOfWork.CityRepository.GetFirstOrDefault(city => city.Id == model.CityId)?.Name;
+                string? state = _unitOfWork.RegionRepository.GetFirstOrDefault(x => x.Regionid == model.RegionId)?.Name;
+                Healthprofessional healthprofessional = new()
+                {
+                    Vendorname = model.BusinessName,
+                    Profession = model.ProfessionId,
+                    Faxnumber = model.FaxNumber,
+                    Address = model.Street,
+                    City = city,
+                    State = state,
+                    Zip = model.Zip,
+                    Regionid = model.RegionId,
+                    Createddate = DateTime.Now,
+                    Phonenumber = model.PhoneNumber,
+                    Businesscontact = model.BusinessContact,
+                    Email = model.Email,
+                    Isdeleted = false,
+                };
+
+                _unitOfWork.HealthProfessionalRepo.Add(healthprofessional);
+                _unitOfWork.Save();
+
+                _notyf.Success("Business Created Successfully");
+
+            }
+            catch (Exception e)
+            {
+                _notyf.Error(e.Message);
+            }
+            return RedirectToAction("Vendors");
+
+        }
+
+        public IActionResult EditBusiness(int vendorId)
+        {
+
+            Healthprofessional? vendor = _unitOfWork.HealthProfessionalRepo.GetFirstOrDefault(x => x.Vendorid == vendorId);
+            int? cityId = vendor?.City == null ? null : _unitOfWork.CityRepository.GetFirstOrDefault(city => city.Name == vendor.City)?.Id;
+
+            EditBusinessViewModel model = new()
+            {
+                VendorId = vendorId,
+                BusinessName = vendor?.Vendorname,
+                ProfessionId = vendor?.Profession ?? 0,
+                Email = vendor?.Email,
+                PhoneNumber = vendor?.Phonenumber,
+                FaxNumber = vendor?.Faxnumber,
+                BusinessContact = vendor?.Businesscontact,
+                Street = vendor?.Address,
+                CityId = cityId ?? 0,
+                Zip = vendor?.Zip,
+                regions = _unitOfWork.RegionRepository.GetAll(),
+                professions = _unitOfWork.HealthProfessionalTypeRepo.GetAll(),
+                selectedCities = vendor?.Regionid == null ? null : _unitOfWork.CityRepository.Where(city => city.Regionid == vendor.Regionid),
+                RegionId = vendor?.Regionid,
+            };
+            return View("Partners/EditBusiness", model);
+        }
+
+        [HttpPost]
+        public IActionResult EditBusiness(EditBusinessViewModel model)
+        {
+            try
+            {
+                Healthprofessional vendor = _context.Healthprofessionals.FirstOrDefault(x => x.Vendorid == model.VendorId);
+
+                string? city = _unitOfWork.CityRepository.GetFirstOrDefault(city => city.Id == model.CityId)?.Name;
+                string? state = _unitOfWork.RegionRepository.GetFirstOrDefault(x => x.Regionid == model.RegionId)?.Name;
+
+                vendor.Vendorname = model.BusinessName;
+                vendor.Profession = model.ProfessionId;
+                vendor.Email = model.Email;
+                vendor.Faxnumber = model.FaxNumber;
+                vendor.Phonenumber = model.PhoneNumber;
+                vendor.Businesscontact = model.BusinessContact;
+                vendor.Address = model.Street;
+                vendor.City = city;
+                vendor.State = state;
+                vendor.Zip = model.Zip;
+                vendor.Regionid = model.RegionId;
+
+                _context.Healthprofessionals.Update(vendor);
+                _context.SaveChanges();
+
+                _notyf.Success("Vendor Updated Successfully.");
+            }
+            catch (Exception e)
+            {
+                _notyf.Error(e.Message);
+            }
+
+            return RedirectToAction("Vendors");
+        }
+
+        public IActionResult Vendors()
+        {
+            VendorViewModel model = new()
+            {
+                Healthprofessionaltypes = _unitOfWork.HealthProfessionalTypeRepo.GetAll(),
+            };
+            return View("Partners/Vendors", model);
+        }
+
+        public IActionResult BusinessTable(int pageNumber, int pageSize, string vendorName, int professionId)
+        {
+
+            var parseData = (from vendor in _context.Healthprofessionals
+                             join vendorType in _context.Healthprofessionaltypes on vendor.Profession equals vendorType.Healthprofessionalid
+                             where vendor.Isdeleted != true
+                             && (string.IsNullOrEmpty(vendorName) || vendor.Vendorname.ToLower().Contains(vendorName.ToLower()))
+                             && (professionId == 0 || vendorType.Healthprofessionalid == professionId)
+                             select new VendorTRow
+                             {
+                                 BusinessId = vendor.Vendorid,
+                                 BusinessName = vendor.Vendorname,
+                                 ProfessionId = vendorType.Healthprofessionalid,
+                                 ProfessionName = vendorType.Professionname,
+                                 Email = vendor.Email,
+                                 PhoneNumber = vendor.Phonenumber,
+                                 FaxNumber = vendor.Faxnumber,
+                                 BusinessContact = vendor.Businesscontact
+                             }).ToList();
+
+            return PartialView("Partial/VendorPartialTable", parseData);
+
         }
 
         #endregion
@@ -3466,6 +4019,8 @@ namespace HalloDoc.MVC.Controllers
 
         public void SendMailForCreateAccount(string email)
         {
+            int adminId = Convert.ToInt32(HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "userId").Value);
+
             try
             {
                 Aspnetuser aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(user => user.Email == email);
@@ -3489,7 +4044,25 @@ namespace HalloDoc.MVC.Controllers
                 string subject = "Set up your Account";
                 string body = "<h1>Create Account By clicking below</h1><a href=\"" + createLink + "\" >Create Account link</a>";
 
-                _emailService.SendMail(email, body, subject);
+
+                _emailService.SendMail(email, body, subject, out int sentTries, out bool isSent);
+
+                Emaillog emailLog = new Emaillog()
+                {
+                    Emailtemplate = "1",
+                    Subjectname = subject,
+                    Emailid = email,
+                    Roleid = (int)AccountType.Patient,
+                    Adminid = adminId,
+                    Createdate = DateTime.Now,
+                    Sentdate = DateTime.Now,
+                    Isemailsent = isSent,
+                    Senttries = sentTries,
+                };
+
+                _context.Emaillogs.Add(emailLog);
+                _context.SaveChanges();
+
 
                 TempData["success"] = "Email has been successfully sent to " + email + " for create account link.";
             }

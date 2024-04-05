@@ -4,6 +4,14 @@
     ViewData["Title"] = "Physician Account";
 }
 
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/1.1.2/js/bootstrap-multiselect.min.js" integrity="sha512-lxQ4VnKKW7foGFV6L9zlSe+6QppP9B2t+tMMaV4s4iqAv4iHIyXED7O+fke1VeLNaRdoVkVt8Hw/jmZ+XocsXQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/1.1.2/css/bootstrap-multiselect.css" integrity="sha512-tlP4yGOtHdxdeW9/VptIsVMLtgnObNNr07KlHzK4B5zVUuzJ+9KrF86B/a7PJnzxEggPAMzoV/eOipZd8wWpag==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/css/bootstrap-select.css" />
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/js/bootstrap-select.min.js"></script>
+
+
 <div class="EditPhysicianAccount">
     <div class="container-fluid d-flex justify-content-between mt-4" style="max-width:1000px">
         <h4 class="fw-bold">
@@ -28,8 +36,8 @@
             <div class="row">
                 <div class="col-md-4">
                     <div class="form-floating">
-                        <input type="text" asp-for="UserName" class="form-control" placeholder="User Name(MD.Lastname.F)">
-                        <label for="">User Name(MD.Lastname.F)</label>
+                        <input type="text" asp-for="UserName" class="form-control" placeholder="User Name" disabled>
+                        <label for="">User Name</label>
                     </div>
                 </div>
 
@@ -39,6 +47,7 @@
                         <label for="floatingSelectGrid">Password</label>
                     </div>
                 </div>
+
                 <div class="col-md-4">
                     <div class="form-floating w-100 h-100">
                         <select asp-for="RoleId" class="form-select border-0" aria-label="Default select example">
@@ -97,17 +106,19 @@
                         <label for="">NPI Number</label>
                     </div>
                 </div>
-                <div class="col-6 d-flex justify-content-start flex-wrap mt-4">
-                    <div>
-                        @foreach (var item in Model.regions)
+                <div class="col-md-6 col-12">
+
+                    <select multiple data-live-search="true" class="form-select col-6 selectpicker changeable" id="adminSelectedRegions" asp-for="selectedRegions">
+
+                        @foreach (var region in Model.regions)
                         {
-                            <input name="selectedRegions" class="form-check-input" type="checkbox" value="@item.Regionid" id="flexCheckDefault">
-                            <label class="form-check-label" for="flexCheckDefault">
-                                @item.Name
-                            </label>
+                            <option value="@region.Regionid" style="font-size: 10px;">@region.Name</option>
                         }
-                    </div>
+
+                    </select>
+
                 </div>
+
             </div>
 
 
@@ -128,13 +139,19 @@
                 </div>
                 <div class="col-md-6">
                     <div class="form-floating">
-                        <input asp-for="City" type="text" class="form-control" placeholder="">
-                        <label for="">City</label>
+
+                        <select asp-for="CityId" class="form-select billingChange" id="create-phy-city">
+                            <option disabled value=""> -- Select City -- </option>
+
+                        </select>
+                        <label for="admin-billing-city">City</label>
+                        <span asp-validation-for="CityId" class="text-danger"></span>
+
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-floating phone-div w-100 h-100 ">
-                        <select asp-for="RegionId" class="form-select border-0" aria-label="Default select example">
+                        <select asp-for="RegionId" class="form-select border-0"  id="create-phy-state">
                             @foreach (var region in Model.regions)
                             {
                                 <option value="@region.Regionid">@region.Name</option>
@@ -234,6 +251,7 @@
                     <div>
                         <button type="button" id="clear-signature">Clear</button>
                         <button type="button" id="save-signature">Save</button>
+                        <button type="button" id="cancel-signature">Cancel</button>
                     </div>
 
                 </div>
@@ -369,6 +387,46 @@
 
 
 <script>
+    $("#create-phy-state").change(function () {
+
+        var regId = $('option:selected', this).val();
+
+        $.ajax({
+            url: '/Admin/GetCitiesByRegion',
+            type: 'POST',
+            data: {
+                regionId: regId,
+            },
+            success: function (result) {
+                console.log(result);
+                $('#create-phy-city').empty();
+                $('#create-phy-city').append($('<option>', {
+                    value: 0,
+                    text: '-- Select City --',
+                    selected: true,
+                    disabled: true
+                }));
+                $.each(result, function (index, object) {
+
+                    $('#create-phy-city').append($('<option>', {
+                        value: object["id"],
+                        text: object["name"]
+                    }));
+
+                });
+            },
+            error: function (err) {
+                console.error(err);
+            }
+        });
+    });
+
+</script>
+
+
+<script>
+
+    
 
     function dataURLtoFile(dataurl, filename) {
         var arr = dataurl.split(','),
@@ -388,6 +446,11 @@
         var signaturePad = new SignaturePad(canvas);
 
         $('#clear-signature').on('click', function () {
+            signaturePad.clear();
+        });
+
+        $('#cancel-signature').click(function(){
+            $('#signature-div').css("display", "none");
             signaturePad.clear();
         });
 

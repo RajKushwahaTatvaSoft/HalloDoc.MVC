@@ -2,7 +2,91 @@
     Layout = "_AdminDashboardLayout";
 }
 
-<h3>Blocked History</h3>
+<div class="container-fluid">
+    <div class="mx-3">
+        <div class=" d-flex px-3 justify-content-between mt-5">
+            <h4 class="mt-4">Blocked History</h4>
+
+            <button class="btn btn-outline-info align-middle mt-4" onclick="history.back(-1)">
+                Back
+            </button>
+
+        </div>
+
+        <div class="shadow dashboard-card container-fluid mt-4   pb-3 px-3">
+
+            <form id="block-filter-form">
+
+                <div class="row align-items-center">
+
+                    <div class="col-3 mt-3">
+                        <div class="form-floating">
+                            <input name="patientName" type="text" class="form-control" placeholder="Enter patient name"
+                                   id="floatingTextarea2" required>
+                            <label for="floatingTextarea2">Name</label>
+                        </div>
+                    </div>
+                    <div class="col-3 mt-3">
+                        <div class="form-floating">
+                            <input type="date" class="form-control" placeholder="Created Date"
+                                   id="floatingTextarea2" required name="phoneNumber">
+                            <label for="floatingTextarea2">Date</label>
+                        </div>
+                    </div>
+                    <div class="col-3 mt-3">
+                        <div class="form-floating">
+                            <input name="patientName" type="text" class="form-control" placeholder="Enter Email ID"
+                                   id="floatingTextarea2" required>
+                            <label for="floatingTextarea2">Email</label>
+                        </div>
+                    </div>
+
+                    <div class="col-3 mt-3">
+                        <div class="form-floating">
+                            <input type="tel" class="form-control" placeholder="Sent Date"
+                                   id="floatingTextarea2" required name="phoneNumber">
+                            <label for="floatingTextarea2">Phone Number</label>
+                        </div>
+                    </div>
+                    <div class="col-12 d-flex justify-content-end">
+
+                        <button type="button" class="btn btn-info align-middle text-white m-2" id="search-record-search-btn">
+                            Search
+                        </button>
+                        <button type="reset" class="btn btn-outline-info align-middle m-2">
+                            Clear
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </form>
+
+            <div id="block-history-partial-table"></div>
+
+        </div>
+    </div>
+</div>
+<script>
+
+    $(document).ready(function () {
+
+        $.ajax({
+            url: "/Admin/BlockedHistoryPartialTable",
+            type: 'POST',
+            data: {},
+            success: function (result) {
+                $('#block-history-partial-table').html(result);
+            },
+            error: function (error) {
+                console.log(error);
+                alert('error fetching details')
+            },
+        });
+    });
+
+</script>
 
 <script>
 

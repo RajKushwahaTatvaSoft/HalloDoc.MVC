@@ -6,28 +6,33 @@ using System.Threading.Tasks;
 
 namespace Business_Layer.Utilities
 {
-
     public enum AllowMenu
     {
-        Regions = 1,
-        Schedulign = 2,
-        History = 3,
-        Accounts = 4,
-        MyProfile = 5,
-        AdminDashboard = 6,
-        Role = 7,
-        Provider = 8,
+        AdminDashboard = 31,
+        ProviderLocation = 32,
+        MyProfile = 33,
+        ProviderMenu = 34,
+        Scheduling = 35,
+        Invoicing = 36,
+        Partners = 37,
+        AccountAccess = 38, 
+        UserAccess = 39,
+        SearchRecords = 40,
+        EmailLogs = 41,
+        SMSLogs = 42,
+        PatientRecords = 43,
+        BlockedHistory = 44,
     }
 
     public enum RequestStatus
     {
         Unassigned = 1,
         Accepted = 2,
-        Cancelled = 3,
+        Cancelled = 3, // cancelled by admin
         MDEnRoute = 4,
         MDOnSite = 5,
         Conclude = 6,
-        CancelledByPatient = 7,
+        CancelledByPatient = 7, // cancelled by patient
         Closed = 8,
         Unpaid = 9,
         Clear = 10,
@@ -52,11 +57,11 @@ namespace Business_Layer.Utilities
         Concierge = 4
     }
 
-    public enum AllowRole
+    public enum AccountType
     {
         Admin = 1,
-        Patient = 2,
-        Physician = 3
+        Physician = 2,
+        Patient = 3,
     }
 
 }

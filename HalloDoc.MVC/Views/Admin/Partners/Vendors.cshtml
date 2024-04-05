@@ -41,19 +41,7 @@
             </div>
         </div>
     </div>
-    <div class="row">
-        <label>Select Page Size</label><br />
-        <div class="col-10">
-            <select class="form-select" id="pageSize" asp-for="PageSize" style="width:fit-content">
-                <option value="3">3</option>
-                <option value="5">5</option>
-                <option value="10">10</option>
-                <option value="15">15</option>
-            </select>
-        </div>
-    </div>
     <div id="businessTable"></div>
-
 
 </div>
 
@@ -63,12 +51,39 @@
 </script>
 
 <script>
+    var search_filter = "";
+    var profession_filter = 0;
+
     $(document).ready(function () {
-        var pageSize = $('#pageSize').val();
+        loadBusinessTable();
+    });
+
+    $("#selectProfession").change(function () {
+        profession_filter = $(this).val();
+        loadBusinessTable();
+    });
+
+    var searchTimer;
+
+    $("#searchVendor").keyup(function (e) {
+        var searchValue = $(this).val().toLowerCase();
+        search_filter = searchValue;
+
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(function () {
+            loadBusinessTable();
+        }, 1000);
+
+    });
+
+    function loadBusinessTable() {
         $.ajax({
-            url: "/Admin/BusinessTable",
+            url: '/Admin/BusinessTable',
             type: 'POST',
-            data: { pageSize: pageSize },
+            data: {
+                vendorName: search_filter, 
+                professionId : profession_filter,
+            },
             success: function (result) {
                 $('#businessTable').html(result);
             },
@@ -77,69 +92,5 @@
                 alert('error fetching details')
             },
         });
-    });
-</script>
-
-<script>
-    $("#pageSize").change(function () {
-        var pageSize = $(this).val();
-        var professionid = $('#selectProfession').val();
-
-        $.ajax({
-            url: '/Admin/BusinessTable',
-            type: 'POST',
-            data: {
-                professionId: professionid,
-                pageSize: pageSize
-            },
-            success: function (result) {
-                $('#businessTable').html(result);
-            },
-            error: function (error) {
-                console.log(error);
-                alert('error fetching details')
-            },
-        })
-    })
-</script>
-<script>
-    $("#selectProfession").change(function () {
-        var professionid = $(this).val();
-        var pageSize = $('#pageSize').val();
-        $.ajax({
-            url: '/Admin/BusinessTable',
-            type: 'POST',
-            data: {
-                professionId: professionid,
-                pageSize: pageSize
-            },
-            success: function (result) {
-                $('#businessTable').html(result);
-            },
-            error: function (error) {
-                console.log(error);
-                alert('error fetching details')
-            },
-        })
-    })
-</script>
-<script>
-    //search box
-    $("#searchVendor").keyup(function (e) {
-        var Name = $(this).val();
-        $.ajax({
-            url: '/Admin/BusinessTable',
-            type: 'POST',
-            data: {
-                Name: Name
-            },
-            success: function (result) {
-                $('#businessTable').html(result);
-            },
-            error: function (error) {
-                console.log(error);
-                alert('error fetching details')
-            },
-        })
-    })
+    }
 </script>

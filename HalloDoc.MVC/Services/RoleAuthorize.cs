@@ -4,7 +4,7 @@ using Data_Layer.DataModels;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
-using Business_Layer.Repository;
+using System.Text;
 
 namespace HalloDoc.MVC.Services
 {
@@ -46,6 +46,21 @@ namespace HalloDoc.MVC.Services
             var roleId = Convert.ToInt32(jwtToken.Claims.FirstOrDefault(c => c.Type == "roleId")?.Value);
 
             IEnumerable<Rolemenu> roleMenus = dbService.Rolemenus.Where(rm => rm.Roleid == roleId);
+
+            var sessionRef = context.HttpContext.Session;
+            if (sessionRef.GetString("roleMenu") == null)
+            {
+                StringBuilder stringBuilder = new StringBuilder();
+                foreach (var rolemenu in roleMenus)
+                {
+                    stringBuilder.Append(rolemenu.Menuid.ToString() + "-");
+                }
+
+                stringBuilder.Length--;
+
+                sessionRef.SetString("roleMenu",stringBuilder.ToString());
+
+            }
 
             if (!roleMenus.Any(rm => rm.Menuid == _menuId))
             {

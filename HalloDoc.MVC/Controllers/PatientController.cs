@@ -15,7 +15,7 @@ using Business_Layer.Utilities;
 namespace HalloDoc.MVC.Controllers
 {
 
-    [CustomAuthorize((int)AllowRole.Patient)]
+    [CustomAuthorize((int)AccountType.Patient)]
     public class PatientController : Controller
     {
         private readonly IWebHostEnvironment _environment;

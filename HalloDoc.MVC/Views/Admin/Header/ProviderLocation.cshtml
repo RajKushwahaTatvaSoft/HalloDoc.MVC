@@ -33,16 +33,22 @@
     var map = tt.map({
         container: "tomtom-map",
         key: "EnwCRVttrNo5BJcEdEGzJWguGTXj6GQo",
-        center: [@Model.locationList.First().Longitude, @Model.locationList.First().Latitude],
-        zoom: 15,
-    });
-
-    @foreach (var row in Model.locationList)
+    @if (Model.locationList != null && Model.locationList.Any())
     {
-        @:console.log('hi');
-        @:var cmarker = new tt.Marker().setLngLat([@row.Longitude, @row.Latitude]).addTo(map);
-        @:var cpopup = new tt.Popup({ offset: popupOffsets }).setHTML("@row.PhysicianName");
-        @:cmarker.setPopup(cpopup).togglePopup();
+        @:center: [@Model.locationList.First().Longitude, @Model.locationList.First().Latitude],
     }
+        zoom: 15, });
+
+    @if (Model.locationList != null && Model.locationList.Any())
+    {
+        foreach (var row in Model.locationList)
+        {
+            @:console.log('hi');
+            @:var cmarker = new tt.Marker().setLngLat([@row.Longitude, @row.Latitude]).addTo(map);
+            @:var cpopup = new tt.Popup({ offset: popupOffsets }).setHTML("@row.PhysicianName");
+            @:cmarker.setPopup(cpopup).togglePopup();
+        }
+    }
+    
 
 </script>

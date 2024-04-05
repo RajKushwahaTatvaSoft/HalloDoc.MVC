@@ -145,7 +145,7 @@ input[type="checkbox"]:checked {
     color: #282828;
 }
 
-.btn:hover {
+.btn-outline-info:hover {
     background-color: #e3e3e3;
 }
 

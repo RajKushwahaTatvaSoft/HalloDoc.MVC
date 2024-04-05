@@ -1,9 +1,7 @@
 ﻿@model ProviderMenuViewModel
-
 @{
     Layout = "_AdminDashboardLayout";
     ViewData["UserName"] = Model.UserName;
-
 }
 
 <div class="container mt-5">
@@ -18,16 +16,23 @@
     <div class="dashboard-card border-0 shadow p-4 mb-5 rounded">
         <div class="row justify-content-between">
 
-            <div class="col-12 col-lg-4 ms-2 d-flex normal-input rounded align-items-center ps-2">
+            <div class="col-12 col-lg-4 d-flex normal-input rounded align-items-center ps-2">
 
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 50 50">
                     <path d="M 21 3 C 11.654545 3 4 10.654545 4 20 C 4 29.345455 11.654545 37 21 37 C 24.701287 37 28.127393 35.786719 30.927734 33.755859 L 44.085938 46.914062 L 46.914062 44.085938 L 33.875 31.046875 C 36.43682 28.068316 38 24.210207 38 20 C 38 10.654545 30.345455 3 21 3 z M 21 5 C 29.254545 5 36 11.745455 36 20 C 36 28.254545 29.254545 35 21 35 C 12.745455 35 6 28.254545 6 20 C 6 11.745455 12.745455 5 21 5 z">
                     </path>
                 </svg>
 
-                <input type="text" class="form-control" id="search-filter" placeholder="All">
+                <select id="filter-regions" class="form-select border-0" aria-label="Default select example">
+                    <option selected value="0">All Regions</option>
+                    @foreach (Region region in Model.regions)
+                    {
+                        <option value="@region.Regionid">@region.Name</option>
+                    }
+                </select>
 
             </div>
+
 
             <div class="d-flex col-3 mr-0">
                 <a asp-controller="Admin" asp-action="CreatePhysicianAccount" class="btn btn-outline-info mx-2" style="width:fit-content">
@@ -37,132 +42,45 @@
 
         </div>
 
-        <div class="my-3 table-responsive">
-            <table class="table">
-
-                <colgroup>
-                    <col span="1" style="width: 6%;">
-                    <col span="1" style="width: 29%;">
-                    <col span="1" style="width: 15%;">
-                    <col span="1" style="width: 20%;">
-                    <col span="1" style="width: 15%;">
-                    <col span="1" style="width: 15%;">
-                </colgroup>
-
-                <thead class="table-head align-middle">
-                    <tr>
-                        <td class="text-center">Stop Notification</td>
-                        <td>Provider Name</td>
-                        <td>Role</td>
-                        <td>OnCall Status</td>
-                        <td>Status</td>
-                        <td>Actions</td>
-                    </tr>
-                </thead>
-
-                <tbody>
-
-                    @foreach (var physician in Model.physicianList)
-                    {
-                        <tr>
-                            <td class="align-middle">
-
-                                @if (physician.IsNotificationStopped)
-                                {
-                                    <input onchange="toggleStopNotification(@physician.PhysicianId)" checked type="checkbox" />
-                                }
-                                else
-                                {
-                                    <input onchange="toggleStopNotification(@physician.PhysicianId)" type="checkbox" />
-                                }
-                            </td>
-
-                            <td>
-                                @physician.PhysicianName
-                            </td>
-                            <td>
-                                @physician.Role
-                            </td>
-                            <td>
-                                @physician.OnCallStatus
-                            </td>
-                            <td>
-                                @physician.Status
-                            </td>
-                            <td>
-                                <button class="btn btn-outline-info contact-provider-btn" data-physician-id="@physician.PhysicianId">Contact</button>
-                                <a class="btn btn-outline-info" asp-controller="Admin" asp-action="EditPhysicianAccount" asp-route-physicianId="@physician.PhysicianId">Edit</a>
-                            </td>
-                        </tr>
-                    }
-
-                </tbody>
-
-            </table>
-
-        </div>
+        <div id="provider-menu-partial-table"></div>
 
     </div>
+
 </div>
 
 <div id="modal-div"></div>
 
 <script>
 
-    function toggleStopNotification(phyId) {
+    var region_filter = 0;
 
-        $.ajax({
-            url: "/Admin/StopNotification",
-            data: { physicianId: phyId },
-            type: 'POST',
-            success: function (result) {
-                location.reload();
-            },
-            error: function (error) {
-                console.log(error);
-                alert('Error Fetching Request')
-            },
-        });
-
-    }
-
-</script>
-<script>
-
-    $('.contact-provider-btn').click(function () {
-        var phyId = $(this).data("physician-id");
-
-        $.ajax({
-            url: "/Admin/ContactYourProviderModal",
-            data: { physicianId: phyId },
-            type: 'GET',
-            success: function (result) {
-                $('#modal-div').html(result);
-                $('#contactYourProviderModal').modal('show');
-            },
-            error: function (error) {
-                console.log(error);
-                alert('Error Fetching Request')
-            },
-        });
+    $('#filter-regions').change(function () {
+        region_filter = $(this).val();
+        loadPartialTable(1);
     });
-</script>
 
-<script>
-    function stopNotification(physicianId) {
+    function loadPartialTable(pageNo) {
         $.ajax({
-            url: "/Admin/StopNotification",
-            data: { PhysicianId: physicianId },
+            url: "/Admin/ProviderMenuPartialTable",
             type: 'POST',
+            data: {
+                pageNo: pageNo,
+                regionFilter: region_filter,
+            },
             success: function (result) {
+                $('#provider-menu-partial-table').html(result);
+            },
+            complete: function () {
 
             },
             error: function (error) {
                 console.log(error);
-                alert('Error Fetching Request')
+                alert('error fetching details')
             },
         });
     }
+
+    loadPartialTable(1);
 
 </script>
 

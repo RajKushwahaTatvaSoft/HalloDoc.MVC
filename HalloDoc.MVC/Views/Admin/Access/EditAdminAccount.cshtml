@@ -1,0 +1,476 @@
+﻿@model AdminProfileViewModel
+@{
+    Layout = "_AdminDashboardLayout";
+}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/1.1.2/js/bootstrap-multiselect.min.js" integrity="sha512-lxQ4VnKKW7foGFV6L9zlSe+6QppP9B2t+tMMaV4s4iqAv4iHIyXED7O+fke1VeLNaRdoVkVt8Hw/jmZ+XocsXQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/1.1.2/css/bootstrap-multiselect.css" integrity="sha512-tlP4yGOtHdxdeW9/VptIsVMLtgnObNNr07KlHzK4B5zVUuzJ+9KrF86B/a7PJnzxEggPAMzoV/eOipZd8wWpag==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/css/bootstrap-select.css" />
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/js/bootstrap-select.min.js"></script>
+
+<div class="container-md container-fluid ">
+    <div>
+        <div class=" d-flex justify-content-between mt-5">
+            <h4>Edit Admin Account</h4>
+
+            <button class="btn btn-outline-info align-middle" onclick="history.back(-1)">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="#01bce9" width="15" height="15" viewBox="0 -960 960 960">
+                    <path d="m142-480 294 294q15 15 14.5 35T435-116q-15 15-35 15t-35-15L57-423q-12-12-18-27t-6-30q0-15 6-30t18-27l308-308q15-15 35.5-14.5T436-844q15 15 15 35t-15 35L142-480Z" />
+                </svg>
+                <span>Back</span>
+            </button>
+
+        </div>
+
+        <div class="shadow dashboard-card container mt-4 px-3">
+
+            <form method="post" id="admin-account-info-form">
+
+                <input hidden asp-for="AdminId"/>
+                <div class="row border-2">
+
+                    <h4 class="mt-4 col-12  fs-6">Account Information</h4>
+
+                    <div class="col-md-6 mt-4 ">
+                        <div class=" floating-label form-floating">
+                            <input asp-for="Username" type="text" class="form-control" placeholder="Username" id="floatingInput" disabled>
+                            <label for="floatingInput">Username</label>
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-6 mt-4 ">
+                        <div class="floating-label form-floating">
+                            <input asp-for="Password" type="text" class="form-control" placeholder="Password" id="floatingInput">
+                            <label for="floatingInput">Password</label>
+                        </div>
+
+                    </div>
+
+                    <div class=" col-md-6 col-12 mt-4">
+                        <select disabled asp-for="StatusId" class="form-select" id="adminStatusSelect" style="height:60px;">
+                            <option selected value="0">-- Select Status --</option>
+                            <option value="1">Active</option>
+                            <option value="2">Pending</option>
+                            <option value="3">F</option>
+                            <option value="4">Sleepy</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6 col-12 mt-4">
+                        <select disabled asp-for="RoleId" class="form-select" id="adminStatusSelect" style="height:60px;">
+                            <option value="1">Role 1</option>
+                            <option value="1">Role 2</option>
+                            <option value="1">Role 3</option>
+                        </select>
+                    </div>
+
+                    <div class=" d-flex justify-content-end mt-4">
+
+                        <button class="btn btn-outline-info" type="submit">
+
+                            <span>Reset Password</span>
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </form>
+
+
+            <form method="post" asp-controller="Admin" asp-action="AdministratorInfo">
+
+                <div class="row">
+
+                    <h4 class="mt-4 col-12 text-grey  fs-6">Administrator information</h4>
+
+                    <div class="col-md-6 mt-4 ">
+                        <div class=" floating-label form-floating">
+                            <input asp-for="FirstName" type="text" class="changeable form-control" placeholder="First Name" id="firstNameInput" disabled>
+                            <label for="floatingInput">First Name</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mt-4 ">
+                        <div class="floating-label form-floating">
+                            <input asp-for="LastName" type="text" class="changeable form-control" placeholder="Last Name" id="lastNameInput" disabled>
+                            <label for="floatingInput">Last Name</label>
+                        </div>
+
+                    </div>
+
+                    <div class=" col-md-6 col-12 mt-4">
+                        <div class=" floating-label form-floating">
+                            <input asp-for="Email" type="text" class="changeable form-control" placeholder="Email" id="emailInput" disabled>
+                            <label for="floatingInput">Email</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-12 mt-4">
+                        <div class=" floating-label form-floating">
+                            <input asp-for="ConfirmEmail" type="text" class="changeable form-control" placeholder="Confirm Email" id="floatingInput" disabled>
+                            <label for="floatingInput">Confirm Email</label>
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-6  mt-4">
+                        <div class="form-floating d-flex  w-100">
+                            <input asp-for="CountryCode" id="admin-phone-country" class="changeable" hidden style="height:60px;" disabled />
+                            <input asp-for="PhoneNumber" id="admin-phone" class="changeable py-4 form-control" type="tel" style="height:60px;" disabled />
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 col-12 mt-4">
+                        <select multiple data-live-search="true" class="form-select col-6 selectpicker" id="adminSelectedRegions" asp-for="selectedRegions">
+
+                            @foreach (var region in Model.regions)
+                            {
+
+                                <option value="@region.Regionid" style="font-size: 10px;">@region.Name</option>
+                                @*
+                            if (Model.selectedRegions.Contains(region.Regionid))
+                            {
+                            <option selected value="@region.Regionid" style="font-size: 10px;">@region.Name</option>
+                            }
+                            else
+                            {
+                            <option value="@region.Regionid" style="font-size: 10px;">@region.Name</option>
+                            } *@
+                            }
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="row">
+
+                        <div class="d-flex justify-content-end">
+
+                            <button id="editBtn" type="button" onclick="editDetails()" class="btn my-4 py-2 px-4" style="background-color: #10bce9; color: white;">
+                                Edit
+                            </button>
+
+                            <button id="administratorSaveBtn" type="button" class="btn my-4 py-2 px-4" style="background-color: #10bce9; color: white; display:none;">
+                                Save
+                            </button>
+
+                        </div>
+
+
+                    </div>
+                </div>
+            </form>
+
+            <form method="post" id="admin-billing-info-form">
+                <div class="row">
+
+                    <h4 class="mt-4 col-12 text-grey  fs-6">Mailing and billing information</h4>
+
+                    <div class="col-md-6 mt-4 ">
+                        <div class=" floating-label form-floating">
+                            <input asp-for="Address1" type="text" class="billingChange form-control" placeholder="Address1" id="floatingInput" disabled>
+                            <label for="floatingInput">Address 1</label>
+                        </div>
+
+                    </div>
+                    <div class="col-md-6 mt-4 ">
+                        <div class="floating-label form-floating">
+                            <input asp-for="Address2" type="text" class="billingChange form-control" placeholder="Address2" id="floatingInput" disabled>
+                            <label for="floatingInput">Address 2</label>
+                        </div>
+
+                    </div>
+
+
+                    <div class="col-md-6 col-12 mt-4 form-floating floating-label">
+                        <select disabled asp-for="CityId" class="form-select billingChange" id="admin-billing-city">
+                            <option disabled value="0"> -- Select City -- </option>
+
+                            @if (Model.adminMailCities != null && Model.adminMailCities.Any())
+                            {
+                                @foreach (var city in Model.adminMailCities)
+                                {
+                                    <option value="@city.Id">@city.Name</option>
+                                }
+
+                            }
+                        </select>
+                        <label for="admin-billing-city">City</label>
+                        <span asp-validation-for="CityId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 col-12 mt-4 form-floating floating-label">
+                        <select disabled asp-for="RegionId" class="form-select billingChange" id="admin-billing-state">
+                            <option disabled value="0"> -- Select State -- </option>
+
+                            @foreach (var region in Model.regions)
+                            {
+                                <option value="@region.Regionid">@region.Name</option>
+                            }
+
+                        </select>
+                        <label for="admin-billing-state">State</label>
+                        <span asp-validation-for="RegionId" class="text-danger"></span>
+
+                    </div>
+
+                    <div class="col-md-6  mt-4">
+                        <div class=" floating-label form-floating">
+                            <input asp-for="Zip" type="number" class="billingChange form-control" placeholder="Zip" id="floatingInput" disabled>
+                            <label for="floatingInput">Zip</label>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 d-flex justify-content-evenly flex-wrap mt-4">
+                        <div class="form-floating d-flex  w-100">
+                            <input asp-for="AltCountryCode" id="alt-phone-country" class="billingChange" hidden style="height:60px;" disabled />
+                            <input asp-for="AltPhoneNumber" id="alt-phone" class="billingChange py-4 form-control" type="tel" style="height:60px;" disabled />
+                        </div>
+                    </div>
+                    <div class="row">
+
+                        <div class="d-flex justify-content-end">
+
+                            <button id="billingeditBtn" type="button" onclick="billingeditDetails()" class="btn my-4 py-2 px-4" style="background-color: #10bce9; color: white;">
+                                Edit
+                            </button>
+
+                            <button id="billingsaveBtn" type="submit" class="btn my-4 py-2 px-4" style="background-color: #10bce9; color: white; display:none;">
+                                Save
+                            </button>
+
+                        </div>
+
+
+                    </div>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    $("#admin-billing-state").change(function () {
+
+        var regId = $('option:selected', this).val();
+
+        $.ajax({
+            url: '/Admin/GetCitiesByRegion',
+            type: 'POST',
+            data: {
+                regionId: regId,
+            },
+            success: function (result) {
+                console.log(result);
+                $('#admin-billing-city').empty();
+                $('#admin-billing-city').append($('<option>', {
+                    value: 0,
+                    text: '-- Select City --',
+                    selected: true,
+                    disabled: true
+                }));
+                $.each(result, function (index, object) {
+
+                    $('#admin-billing-city').append($('<option>', {
+                        value: object["id"],
+                        text: object["name"]
+                    }));
+
+                });
+            },
+            error: function (err) {
+                console.error(err);
+            }
+        });
+    });
+
+</script>
+
+
+<script>
+
+    const phoneInputField = document.getElementById("admin-phone");
+    var patientPhoneInput = window.intlTelInput(phoneInputField, {
+        utilsScript:
+            "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+        preferredCountries: ["in"],
+        separateDialCode: true,
+        initialCountry: "in"
+    });
+
+    const phoneInputField1 = document.getElementById("alt-phone");
+    var patientPhoneInput1 = window.intlTelInput(phoneInputField1, {
+        utilsScript:
+            "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+        preferredCountries: ["in"],
+        separateDialCode: true,
+        initialCountry: "in"
+    });
+
+</script>
+
+<script>
+
+    $('#admin-account-info-form').submit(function (e) {
+        e.preventDefault();
+
+        let formData = $(this).serialize();
+        console.log(formData);
+
+        $.ajax({
+            url: "/Admin/SaveAdminAccountInfo",
+            data: formData,
+            type: 'POST',
+            success: function (result) {
+                location.reload();
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
+
+    });
+
+    $('#admin-billing-info-form').submit(function (e) {
+        e.preventDefault();
+
+        let countryCode1 = document.getElementById("alt-phone-country");
+        countryCode1.value = patientPhoneInput1.getSelectedCountryData().dialCode;
+        console.log(countryCode1);
+
+        let formData = $(this).serialize();
+        console.log(formData);
+
+        $.ajax({
+            url: "/Admin/SaveAdminBillingInfo",
+            data: formData,
+            type: 'POST',
+            success: function (result) {
+                location.reload();
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
+
+    });
+
+</script>
+
+<script>
+
+    $('#administratorSaveBtn').click(function () {
+
+        let selectedRegions = [];
+        let checkboxes = document.querySelectorAll(".check");
+        console.log("regions-selected");
+
+        checkboxes.forEach(function (checkbox) {
+            if (checkbox.checked) {
+                selectedRegions.push(checkbox.value);
+            }
+        });
+
+        var countryCode = document.getElementById("admin-phone-country");
+        countryCode.value = patientPhoneInput.getSelectedCountryData().dialCode;
+
+        let adminPhone = "+" + $('#admin-phone-country').val() + "-" + $('#admin-phone').val();
+
+        $.ajax({
+            url: "/Admin/SaveAdministratorInfo",
+            data: { regions: $('#adminSelectedRegions').val(), firstName: $('#firstNameInput').val(), lastName: $('#lastNameInput').val(), email: $('#emailInput').val(), phone: adminPhone },
+            type: 'POST',
+            success: function (result) {
+                location.reload();
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
+
+    });
+</script>
+
+<script>
+
+    function editDetails() {
+
+        var inputs = document.getElementsByClassName("changeable");
+        for (var i = 0; i < inputs.length; i++) {
+            inputs[i].disabled = false;
+        }
+
+        var editBtn = document.getElementById("editBtn");
+        editBtn.style.display = "none";
+
+        var saveBtn = document.getElementById("administratorSaveBtn");
+        saveBtn.style.display = "block";
+
+    }
+
+    function saveDetails() {
+
+        var inputs = document.getElementsByClassName("changeable");
+        for (var i = 0; i < inputs.length; i++) {
+            inputs[i].disabled = true;
+        }
+
+        var editBtn = document.getElementById("editBtn");
+        editBtn.style.display = "block";
+
+        var saveBtn = document.getElementById("administratorSaveBtn");
+        saveBtn.style.display = "none";
+
+    }
+    function billingeditDetails() {
+
+        var inputs = document.getElementsByClassName("billingChange");
+        for (var i = 0; i < inputs.length; i++) {
+            inputs[i].disabled = false;
+        }
+
+        var editBtn = document.getElementById("billingeditBtn");
+        editBtn.style.display = "none";
+
+        var saveBtn = document.getElementById("billingsaveBtn");
+        saveBtn.style.display = "block";
+
+    }
+
+    function billingsaveDetails() {
+
+        var inputs = document.getElementsByClassName("billingChange");
+        for (var i = 0; i < inputs.length; i++) {
+            inputs[i].disabled = true;
+        }
+
+        var editBtn = document.getElementById("billingeditBtn");
+        editBtn.style.display = "block";
+
+        var saveBtn = document.getElementById("billingsaveBtn");
+        saveBtn.style.display = "none";
+
+        var countryCode1 = document.getElementById("phone-country");
+        countryCode1.value = patientPhoneInput1.getSelectedCountryData().dialCode;
+
+    }
+
+
+
+</script>
+
+<script>
+
+    $('.admin-tab').removeClass("active");
+    $('#access-tab').addClass("active");
+
+</script>

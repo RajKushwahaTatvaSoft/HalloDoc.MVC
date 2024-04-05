@@ -126,8 +126,6 @@ public partial class ApplicationDbContext : DbContext
         modelBuilder.Entity<Aspnetuser>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("aspnetusers_pkey");
-
-            entity.Property(e => e.Roleid).HasDefaultValueSql("2");
         });
 
         modelBuilder.Entity<Aspnetuserrole>(entity =>
@@ -434,6 +432,8 @@ public partial class ApplicationDbContext : DbContext
         modelBuilder.Entity<Smslog>(entity =>
         {
             entity.HasKey(e => e.Smslogid).HasName("smslog_pkey");
+
+            entity.Property(e => e.Smslogid).UseIdentityAlwaysColumn();
         });
 
         modelBuilder.Entity<User>(entity =>
