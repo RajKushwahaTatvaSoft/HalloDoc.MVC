@@ -87,13 +87,13 @@
                                       transform=" matrix(1 0 0 1 0 0) " stroke-linecap="round" />
                             </g>
                         </svg>
-                        <div class="ms-2">
+                        <div class="ms-2 text-truncate">
                             <h6 class="fw-bold">Transfer Notes</h6>
 
-                            @if (Model.transferNotesLogs != null && Model.transferNotesLogs.Any())
+                            @if (Model.requeststatuslogs != null && Model.requeststatuslogs.Any())
                             {
                                 <span class="m-0 fw-normal" style="color:grey;">
-                                    @Model.transferNotesLogs.First().Notes
+                                    @Model.requeststatuslogs.First().Notes
                                 </span>
                             }
                             else
@@ -173,7 +173,7 @@
                     </div>
                 </div>
 
-                @if (string.IsNullOrEmpty(Model.AdminCancellationNotes))
+                @if (!string.IsNullOrEmpty(Model.AdminCancellationNotes))
                 {
                     <div class="col-md-6 col-12">
                         <div class="d-flex shadow dashboard-card w-100 p-3 mx-1">
@@ -203,7 +203,7 @@
                     </div>
                 }
 
-                @if (string.IsNullOrEmpty(Model.PatientCancellationNotes))
+                @if (!string.IsNullOrEmpty(Model.PatientCancellationNotes))
                 {
                     <div class="col-md-6 col-12">
                         <div class="d-flex shadow dashboard-card w-100 p-3 mx-1">
@@ -233,7 +233,7 @@
                     </div>
                 }
 
-                @if (string.IsNullOrEmpty(Model.PhysicianCancellationNotes))
+                @if (!string.IsNullOrEmpty(Model.PhysicianCancellationNotes))
                 {
                     <div class="col-md-6 col-12">
                         <div class="d-flex shadow dashboard-card w-100 p-3 mx-1">

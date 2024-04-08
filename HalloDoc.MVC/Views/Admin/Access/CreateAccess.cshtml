@@ -35,9 +35,9 @@
                             <select asp-for="accounttype" class="white-back form-select" id="accountType" style="height:60px;">
                                 <option disabled selected value="0"> -- Select Account Type -- </option>
 
-                                @for (int i = 0; i < Model.netRoles.Count; i++)
+                                @foreach (var netRole in Model.netRoles)
                                 {
-                                    <option value="@Model.netRoles[i].Id">@Model.netRoles[i].Name</option>
+                                    <option value="@netRole.Id">@netRole.Name</option>
                                 }
 
 

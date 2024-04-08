@@ -8,9 +8,10 @@ using System.IO.Compression;
 using System.Net.Mail;
 using System.Net;
 using Microsoft.CodeAnalysis;
-using Business_Layer.Interface;
 using HalloDoc.MVC.Services;
 using Business_Layer.Utilities;
+using Business_Layer.Repository.IRepository;
+using Business_Layer.Services.Patient.Interface;
 
 namespace HalloDoc.MVC.Controllers
 {

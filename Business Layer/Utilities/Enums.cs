@@ -6,23 +6,34 @@ using System.Threading.Tasks;
 
 namespace Business_Layer.Utilities
 {
+
+    public enum RequestCallType
+    {
+        HouseCall = 1,
+        Consult = 2,
+    }
     public enum AllowMenu
     {
-        AdminDashboard = 31,
-        ProviderLocation = 32,
-        MyProfile = 33,
-        ProviderMenu = 34,
-        Scheduling = 35,
-        Invoicing = 36,
-        Partners = 37,
-        AccountAccess = 38, 
-        UserAccess = 39,
-        SearchRecords = 40,
-        EmailLogs = 41,
-        SMSLogs = 42,
-        PatientRecords = 43,
-        BlockedHistory = 44,
+        AdminDashboard = 1,
+        ProviderLocation = 2,
+        AdminProfile = 3,
+        ProviderMenu = 4,
+        Scheduling = 5,
+        Invoicing = 6,
+        Partners = 7,
+        AccountAccess = 8,
+        UserAccess = 9,
+        SearchRecords = 10,
+        EmailLogs = 11,
+        SMSLogs = 12,
+        PatientRecords = 13,
+        BlockedHistory = 14,
+        ProviderDashboard = 15,
+        ProviderInvoicing = 16,
+        ProviderSchedule = 17,
+        ProviderProfile = 18,
     }
+
 
     public enum RequestStatus
     {

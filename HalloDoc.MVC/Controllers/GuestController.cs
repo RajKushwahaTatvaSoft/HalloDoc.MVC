@@ -1,6 +1,4 @@
-﻿using Business_Layer.Helpers;
-using Business_Layer.Interface;
-using Data_Layer.CustomModels;
+﻿using Data_Layer.CustomModels;
 using Data_Layer.DataModels;
 using Data_Layer.ViewModels;
 using Microsoft.AspNetCore.Mvc;
@@ -12,9 +10,9 @@ using Data_Layer.ViewModels.Admin;
 using HalloDoc.MVC.Services;
 using System.IdentityModel.Tokens.Jwt;
 using Business_Layer.Utilities;
-using Business_Layer.Interface.Services;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using AspNetCoreHero.ToastNotification.Abstractions;
+using Business_Layer.Repository.IRepository;
+using Business_Layer.Services.Helper.Interface;
 
 
 namespace HalloDoc.MVC.Controllers

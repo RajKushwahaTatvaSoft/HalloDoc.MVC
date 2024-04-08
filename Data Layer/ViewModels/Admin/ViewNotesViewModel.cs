@@ -14,7 +14,6 @@ namespace Data_Layer.ViewModels.Admin
         public int RequestId { get; set; }
         public string AdminNotes { get; set; }
         public string PhysicianNotes { get; set; }
-        public IEnumerable<TransferNotesLog> transferNotesLogs { get; set; }
         public IEnumerable<Requeststatuslog> requeststatuslogs { get; set; }
         public string? AdminCancellationNotes {  get; set; }
         public string? PatientCancellationNotes {  get; set; }

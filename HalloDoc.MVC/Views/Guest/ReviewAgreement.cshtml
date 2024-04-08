@@ -1,5 +1,111 @@
-﻿@model SendAgreementViewModel@{
+﻿@model SendAgreementViewModel
+@{
     Layout = "_Layout";
-}@* Cancel Agreement *@<div class="modal  fade" id="cancelAgreementModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"     aria-hidden="true">    <div class="modal-dialog modal-dialog-centered" role="document">        <div class="modal-content">            <div class="modal-header bg-info">                <div class="modal-dark modal-title text-white" id="exampleModalLongTitle">                    Cancel Confirmation                 </div>                <button type="button" class="btn" aria-label="Close" data-bs-dismiss="modal">                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"                         fill="#FFFFFF">                        <path d="M0 0h24v24H0V0z" fill="none" />                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />                    </svg>                </button>            </div>            <form>                <div class="modal-body">                    <span class="modal-head">Patient Name : <b style="color: var(--primary);">@Model.PatientName</b></span>                    <div class="modal-flex my-3">                        <div class="form-floating mt-3">                            <input type="text" id="blockCaseRequestId" hidden />                            <textarea style="height: 100px;" type="text" class="form-control" id="cancelAgreementModalNotes" placeholder="Please provide a brief explanation for your cancellation"></textarea>                            <label for="cancelAgreementModalNotes">Please provide a brief explanation for your cancellation</label>                        </div>                    </div>                </div>                <div class="modal-footer">                    <button id="cancel-agreement-submit-btn" type="button" class="btn btn-info text-white" data-bs-dismiss="modal">Continue</button>                    <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>                </div>            </form>        </div>    </div></div><div class="position-relative container h-75 d-flex flex-column justify-content-between">    <div class="top-50">        <div class="p-4 d-flex justify-content-center align-items-center">            <div>                <p>To provide best medical service, we cannot determine the cost right away. If you agree to our service, so we will provide care and follow-up until all care is completed. So with this points, if you like us to provide care to you click on "Agree" and we'll get started immediately, if you do not agree simply click "Cancel".</p>            </div>        </div>        <form method="post">            <input asp-for="requestId" hidden />            <div class=" d-flex justify-content-between">                <div class="d-flex justify-content-end col-4">                    <button id="agreement-accept-btn" type="button" class="btn  btn-success">Agree</button>                </div>                <div class="col-4 "></div>                <div class="col-4 d-flex justify-content-start">                    <button data-bs-toggle="modal" data-bs-target="#cancelAgreementModal" type="button" class="btn  btn-danger">Cancel</button>                </div>            </div>        </form>    </div></div><script>    $('#agreement-accept-btn').click(function () {        $.ajax({            url: "/Guest/AcceptAgreement",            data: { requestId: @Model.requestId },            type: 'POST',            success: function (result) {                if (result) {                    location.href = "/Guest/PatientLogin";                }                else {                    location.reload();                }            },            error: function (error) {                console.log(error);                alert('Error Cancelling Request')            },        });    });    $('#cancel-agreement-submit-btn').click(function () {
-        $.ajax({            url: "/Guest/CancelAgreement",            data: { requestId: @Model.requestId, reason: $('#cancelAgreementModalNotes').val() },            type: 'POST',            success: function (result) {                if (result) {                    location.href = "/Guest/PatientLogin";                }                else {                    location.reload();                }            },            error: function (error) {                console.log(error);                alert('Error Cancelling Request')            },        });    });
+}
+
+@* Cancel Agreement *@
+<div class="modal  fade" id="cancelAgreementModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <div class="modal-dark modal-title text-white" id="exampleModalLongTitle">
+                    Cancel Confirmation 
+                </div>
+                <button type="button" class="btn" aria-label="Close" data-bs-dismiss="modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
+                         fill="#FFFFFF">
+                        <path d="M0 0h24v24H0V0z" fill="none" />
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
+                    </svg>
+                </button>
+            </div>
+            <form>
+                <div class="modal-body">
+                    <span class="modal-head">Patient Name : <b style="color: var(--primary);">@Model.PatientName</b></span>
+                    <div class="modal-flex my-3">
+                        <div class="form-floating mt-3">
+                            <input type="text" id="blockCaseRequestId" hidden />
+                            <textarea style="height: 100px;" type="text" class="form-control" id="cancelAgreementModalNotes" placeholder="Please provide a brief explanation for your cancellation"></textarea>
+                            <label for="cancelAgreementModalNotes">Please provide a brief explanation for your cancellation</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="cancel-agreement-submit-btn" type="button" class="btn btn-info text-white" data-bs-dismiss="modal">Continue</button>
+                    <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<div class="position-relative container h-75 d-flex flex-column justify-content-between">
+    <div class="top-50">
+        <div class="p-4 d-flex justify-content-center align-items-center">
+            <div>
+                <p>To provide best medical service, we cannot determine the cost right away. If you agree to our service, so we will provide care and follow-up until all care is completed. So with this points, if you like us to provide care to you click on "Agree" and we'll get started immediately, if you do not agree simply click "Cancel".</p>
+            </div>
+
+        </div>
+        <form method="post">
+            <input asp-for="requestId" hidden />
+            <div class=" d-flex justify-content-between">
+                <div class="d-flex justify-content-end col-4">
+                    <button id="agreement-accept-btn" type="button" class="btn  btn-success">Agree</button>
+                </div>
+
+                <div class="col-4 "></div>
+                <div class="col-4 d-flex justify-content-start">
+                    <button data-bs-toggle="modal" data-bs-target="#cancelAgreementModal" type="button" class="btn  btn-danger">Cancel</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+
+    $('#agreement-accept-btn').click(function () {
+
+        $.ajax({
+            url: "/Guest/AcceptAgreement",
+            data: { requestId: @Model.requestId },
+            type: 'POST',
+            success: function (result) {
+                if (result) {
+                    location.href = "/Guest/Login";
+                }
+                else {
+                    location.reload();
+                }
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
+    });
+
+    $('#cancel-agreement-submit-btn').click(function () {
+
+        $.ajax({
+            url: "/Guest/CancelAgreement",
+            data: { requestId: @Model.requestId, reason: $('#cancelAgreementModalNotes').val() },
+            type: 'POST',
+            success: function (result) {
+                if (result) {
+                    location.href = "/Guest/Login";
+                }
+                else {
+                    location.reload();
+                }
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
+    });
 </script>

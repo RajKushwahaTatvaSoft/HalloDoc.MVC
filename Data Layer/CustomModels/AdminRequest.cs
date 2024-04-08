@@ -16,13 +16,12 @@ namespace Data_Layer.CustomModels
         public string Requestor { get; set; }
         public string RequestDate { get; set; }
         public string RegionName { get; set; } = "Region Name";
-        public string PhysicianName { get; set; } = "Physician Name";
-        public string DateOfService { get; set; } = "Date Of Service";
+        public int? PhysicianId {  get; set; }
+        public string? PhysicianName { get; set; } = "Physician Name";
+        public DateTime? DateOfService { get; set; }
         public string PatientPhone { get; set; }
         public string Phone { get; set; }
         public string Address { get; set; }
         public string Notes { get; set; }
-        public string ProviderPhone { get; set; }
-        public string ProviderMail { get; set; }
     }
 }

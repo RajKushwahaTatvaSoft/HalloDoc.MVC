@@ -15,6 +15,6 @@ namespace Data_Layer.ViewModels.Admin
         public string? roleName { get; set; }
         public IEnumerable<int?> list { get; set; }
         public IEnumerable<int>? selectedMenus { get; set; }
-        public List<Menu>? Menus { get; set; }
+        public IEnumerable<Menu>? Menus { get; set; }
     }
 }

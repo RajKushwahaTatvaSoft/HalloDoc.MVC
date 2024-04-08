@@ -1,6 +1,4 @@
-﻿using Business_Layer.Interface;
-using Business_Layer.Interface.TableInterface;
-using Business_Layer.Repository.TableRepo;
+﻿using Business_Layer.Repository.IRepository;
 using Data_Layer.DataContext;
 
 namespace Business_Layer.Repository
@@ -37,6 +35,17 @@ namespace Business_Layer.Repository
             PhysicianRegionRepo = new PhysicianRegionRepository(_context);
             PhysicianLocationRepo = new PhysicianLocationRepo(_context);
             CityRepository = new CityRepository(_context);
+            EmailLogRepository = new EmailLogRepository(_context);
+            SMSLogRepository = new SMSLogRepository(_context);
+            ShiftRepository = new ShiftRepository(_context);
+            ShiftDetailRepository = new ShiftDetailRepository(_context);
+            ShiftDetailRegionRepository = new ShiftDetailRegionRepo(_context);
+            PhysicianNotificationRepo = new PhysicianNotificationRepository(_context);
+            RoleMenuRepository = new RoleMenuRepository(_context);
+            MenuRepository = new MenuRepository(_context);
+            AspNetRoleRepository = new AspNetRoleRepository(_context);
+            RequestStatusRepository = new RequestStatusRepository(_context);
+            RequestTypeRepository = new RequestTypeRepository(_context);
         }
 
         public IAdminRepository AdminRepository { get; private set; }
@@ -65,6 +74,28 @@ namespace Business_Layer.Repository
         public IRoleRepository RoleRepo { get; private set; }
         public IPhysicianLocationRepo PhysicianLocationRepo { get; private set; }
         public ICityRepository CityRepository { get; private set; }
+
+        public IEmailLogRepository EmailLogRepository {  get; private set; }
+
+        public ISMSLogRepository SMSLogRepository { get; private set; }
+
+        public IShiftRepository ShiftRepository { get; private set; }
+
+        public IShiftDetailRepository ShiftDetailRepository { get; private set; }
+
+        public IShiftDetailRegionRepository ShiftDetailRegionRepository { get; private set; }
+
+        public IPhysicianNotificationRepo PhysicianNotificationRepo { get; private set; }
+
+        public IRoleMenuRepository RoleMenuRepository { get; private set; }
+
+        public IMenuRepository MenuRepository { get; private set; }
+
+        public IAspNetRoleRepository AspNetRoleRepository { get; private set; }
+
+        public IRequestStatusRepository RequestStatusRepository { get; private set; }
+
+        public IRequestTypeRepository RequestTypeRepository { get; private set; }
 
         public void Save()
         {

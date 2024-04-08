@@ -1,10 +1,10 @@
-﻿using Business_Layer.Interface;
-using Data_Layer.DataContext;
+﻿using Data_Layer.DataContext;
 using Data_Layer.DataModels;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
+using Business_Layer.Services.Helper.Interface;
 
 namespace HalloDoc.MVC.Services
 {
@@ -48,19 +48,17 @@ namespace HalloDoc.MVC.Services
             IEnumerable<Rolemenu> roleMenus = dbService.Rolemenus.Where(rm => rm.Roleid == roleId);
 
             var sessionRef = context.HttpContext.Session;
-            if (sessionRef.GetString("roleMenu") == null)
+
+            StringBuilder stringBuilder = new StringBuilder();
+            foreach (var rolemenu in roleMenus)
             {
-                StringBuilder stringBuilder = new StringBuilder();
-                foreach (var rolemenu in roleMenus)
-                {
-                    stringBuilder.Append(rolemenu.Menuid.ToString() + "-");
-                }
-
-                stringBuilder.Length--;
-
-                sessionRef.SetString("roleMenu",stringBuilder.ToString());
-
+                stringBuilder.Append(rolemenu.Menuid.ToString() + "-");
             }
+
+            stringBuilder.Length--;
+
+            sessionRef.SetString("roleMenu", stringBuilder.ToString());
+
 
             if (!roleMenus.Any(rm => rm.Menuid == _menuId))
             {

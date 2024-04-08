@@ -27,19 +27,19 @@
                 <div class="row mt-4">
 
                     <div class="col-12 d-flex justify-content-start flex-wrap mt-4">
-                        @for (int i = 0; i < Model.Menus.Count; i++)
+                        @foreach(var menu in Model.Menus)
                         {
                             <div class="form-floating mt-1 me-3 checkColor ">
-                                @if (Model.list.Contains(Model.Menus[i].Menuid))
+                                @if (Model.list.Contains(menu.Menuid))
                                 {
-                                    <input name="selectedMenus" class="changeable check form-check-input" value="@Model.Menus[i].Menuid" type="checkbox" style="" disabled checked />
+                                    <input name="selectedMenus" class="changeable check form-check-input" value="@menu.Menuid" type="checkbox" style="" disabled checked />
                                 }
                                 else
                                 {
-                                    <input name="selectedMenus" class="changeable check form-check-input" value="@Model.Menus[i].Menuid" type="checkbox" style="" disabled />
+                                    <input name="selectedMenus" class="changeable check form-check-input" value="@menu.Menuid" type="checkbox" style="" disabled />
 
                                 }
-                                <span class="me-3">@Model.Menus[i].Name</span>
+                                <span class="me-3">@menu.Name</span>
 
                             </div>
                         }

@@ -1,4 +1,5 @@
 ﻿using Data_Layer.CustomModels;
+using Data_Layer.CustomModels.TableRow.Physician;
 using Data_Layer.DataModels;
 using Data_Layer.ViewModels.Admin;
 
@@ -6,8 +7,7 @@ namespace Data_Layer.ViewModels.Physician
 {
     public class PhysicianDashboardViewModel
     {
-        public PagedList<AdminRequest> pagedList {  get; set; }
-        public List<AdminRequest> adminRequests {  get; set; }
+        public PagedList<PhyDashboardTRow> pagedList {  get; set; }
         public IEnumerable<Casetag> casetags { get; set; }
         public IEnumerable<Region> regions { get; set; }
         public IEnumerable<DataModels.Physician> physicians { get; set; }
@@ -18,8 +18,6 @@ namespace Data_Layer.ViewModels.Physician
         public int PendingReqCount { get; set; }
         public int ActiveReqCount { get; set; }
         public int ConcludeReqCount { get; set; }
-        public int ToCloseReqCount { get; set; }
-        public int UnpaidReqCount { get; set; }
         public int CurrentPage {  get; set; }
     }
 }

@@ -136,6 +136,12 @@
                                 </div>
                             </a>
                         </div>
+                        @if (dstatus == 1 && currentRequest.PhysicianId != null)
+                        {
+                            <div>
+                                <span class="px-2 py-1 rounded bg-danger">Assigned</span>
+                            </div>
+                        }
                     </td>
                     @if (dstatus != 6)
                     {
@@ -204,7 +210,10 @@
                                 <ul class="dropdown-menu" aria-labelledby="dropdownMenu2">
                                     @if (dstatus == 1)
                                     {
-                                        <li><button class="dropdown-item assign-case-btn" data-id="@currentRequest.RequestId" type="button">Assign Case</button></li>
+                                        if (currentRequest.PhysicianId == null)
+                                        {
+                                            <li><button class="dropdown-item assign-case-btn" data-id="@currentRequest.RequestId" type="button">Assign Case</button></li>
+                                        }
                                         <li><button class="dropdown-item cancel-case-btn" type="button" data-name="@currentRequest.PatientName" data-id="@currentRequest.RequestId">Cancel Case</button></li>
                                         <li><a asp-controller="Admin" asp-action="ViewCase" asp-route-Requestid="@currentRequest.RequestId" class="dropdown-item">View Case</a></li>
                                         <li><a asp-controller="Admin" asp-action="ViewNotes" asp-route-Requestid="@currentRequest.RequestId" class="dropdown-item" type="button">View Notes</a></li>
@@ -323,7 +332,7 @@
                             </div>
                         </div>
 
-                        @if(dstatus == 1)
+                        @if (dstatus == 1)
                         {
                             <div class="d-flex">
                                 <svg class="mx-2" xmlns="http://www.w3.org/2000/svg" data-name="Layer 1" viewBox="0 0 100 125" x="0px" y="0px" fill="#01bce9" width="30px" height="30px">
@@ -340,7 +349,7 @@
 
                                 <span>Wait time : <b> @currentRequest.RequestDate </b></span>
 
-                            </div>                            
+                            </div>
                         }
 
 

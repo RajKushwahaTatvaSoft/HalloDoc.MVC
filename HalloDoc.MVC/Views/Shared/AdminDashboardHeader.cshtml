@@ -1,4 +1,4 @@
-﻿@using Business_Layer.Interface
+﻿@using Business_Layer.Repository.IRepository
 @using Business_Layer.Utilities
 @using Microsoft.AspNetCore.Http
 @inject IUnitOfWork IUnitOfWork
@@ -104,7 +104,7 @@
             </a>
         </li>
     }
-    @if (list.Contains((int)AllowMenu.MyProfile))
+    @if (list.Contains((int)AllowMenu.AdminProfile))
     {
         <li class="nav-item" role="presentation">
             <a asp-controller="Admin" asp-action="Profile" class="nav-link px-0 admin-tab" id="profile-tab">

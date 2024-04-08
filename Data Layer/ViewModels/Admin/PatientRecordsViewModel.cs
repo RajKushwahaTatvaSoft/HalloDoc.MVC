@@ -9,10 +9,10 @@ namespace Data_Layer.ViewModels.Admin
 {
     public class PatientRecordsViewModel
     {
-        public List<Role>? roles { get; set; }
-        public List<User>? users { get; set; }
-        public List<Request>? requests { get; set; }
-        public List<exploreViewModel>? explores { get; set; }
+        public IEnumerable<Role>? roles { get; set; }
+        public IEnumerable<User>? users { get; set; }
+        public IEnumerable<Request>? requests { get; set; }
+        public IEnumerable<exploreViewModel>? explores { get; set; }
     }
 
     public class exploreViewModel

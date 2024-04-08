@@ -43,25 +43,25 @@
                 </tr>
             </thead>
             <tbody class="table-body align-middle">
-                @for (int i = 0; i < Model.explores.Count; i++)
+                @foreach (var explore in Model.explores)
                 {
                     <tr class="table-row">
                         <td>
-                            @Model.explores[i].Name
+                            @explore.Name
                         </td>
-                        <td>@Model.explores[i].createdAt  </td>
+                        <td>@explore.createdAt  </td>
 
-                        <td class="text-grey">@Model.explores[i].confirmationNumber</td>
+                        <td class="text-grey">@explore.confirmationNumber</td>
                         <td class="text-grey">
-                            @Model.explores[i].providerName
+                            @explore.providerName
                         </td>
-                        <td>@Model.explores[i].concludedDate </td>
-                        <td>@Model.explores[i].status </td>
+                        <td>@explore.concludedDate </td>
+                        <td>@explore.status </td>
 
-                        @if ((bool)Model.explores[i].finalReport)
+                        @if ((bool)explore.finalReport)
                         {
                             <td>
-                                <a asp-controller="AdminRecord" asp-action="ViewEncounter" asp-route-id="@Model.explores[i].id" class="btn btn-outline-info align-middle">
+                                <a asp-controller="AdminRecord" asp-action="ViewEncounter" asp-route-id="@explore.id" class="btn btn-outline-info align-middle">
                                     <span class="text-info">View</span>
                                 </a>
                             </td>
@@ -78,8 +78,8 @@
                             </a>
 
                             <ul class="dropdown-menu" aria-labelledby="provider-tab">
-                                <li><a class="dropdown-item" asp-controller="Admin" asp-action="ViewCase" asp-route-RequestID="@Model.explores[i].id">View Case</a></li>
-                                <li><a class="dropdown-item" asp-controller="Admin" asp-action="ViewUploads" asp-route-RequestID="@Model.explores[i].id">(@Model.explores[i].count) Documenst</a></li>
+                                <li><a class="dropdown-item" asp-controller="Admin" asp-action="ViewCase" asp-route-RequestID="@explore.id">View Case</a></li>
+                                <li><a class="dropdown-item" asp-controller="Admin" asp-action="ViewUploads" asp-route-RequestID="@explore.id">(@explore.count) Documenst</a></li>
                             </ul>
 
                         </td>

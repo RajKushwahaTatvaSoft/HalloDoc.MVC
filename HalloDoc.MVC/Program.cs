@@ -4,16 +4,15 @@ using Business_Layer.Repository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using Business_Layer.Interface;
-using Business_Layer.Interface.AdminInterface;
-using Business_Layer.Repository.AdminRepo;
-using Business_Layer.Repository.TableRepo;
-using Business_Layer.Interface.TableInterface;
-using Business_Layer.Services;
-using Business_Layer.Interface.Services;
-using HalloDoc.MVC.Services;
+using Business_Layer.Repository.IRepository;
 using AspNetCoreHero.ToastNotification;
 using AspNetCoreHero.ToastNotification.Extensions;
+using Business_Layer.Services.Admin.Interface;
+using Business_Layer.Services.Admin;
+using Business_Layer.Services.Helper.Interface;
+using Business_Layer.Services.Helper;
+using Business_Layer.Services.Patient.Interface;
+using Business_Layer.Services.Patient;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,8 +22,8 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 options.UseNpgsql(builder.Configuration.GetConnectionString("ApplicationDbContext")));
 
-builder.Services.AddScoped<IRequestRepository, RequestRepository>();
 builder.Services.AddScoped<IPatientDashboardRepository, PatientDashboardRepository>();
+builder.Services.AddScoped<IPhysicianDashboardService, PhysicianDashboardService>();
 builder.Services.AddScoped<IPatientAuthRepository, PatientAuthRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();

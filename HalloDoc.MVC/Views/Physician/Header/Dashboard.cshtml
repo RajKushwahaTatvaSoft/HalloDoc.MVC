@@ -1,0 +1,684 @@
+﻿@model PhysicianDashboardViewModel
+@{
+    Layout = "_PhysicianDashboardLayout";
+    ViewData["UserName"] = Model.UserName;
+}
+
+<style>
+    .encounter-type-btn {
+        color: #10bce9;
+    }
+
+    .encounter-active {
+        background-color: #10bce9;
+        color: white;
+    }
+
+</style>
+
+@* MODALS *@
+
+@* Before Encounter Modal *@
+<div class="modal fade" id="beforeEncounterModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <div class="modal-dark modal-title text-white" id="exampleModalLongTitle">Select Type Of Care</div>
+                <button type="button" class="btn-close" aria-label="Close" data-bs-dismiss="modal"></button>
+            </div>
+            <form>
+                <input hidden id="encounter-modal-request-id"/>
+                <div class="modal-body">
+                    <div class="modal-flex d-flex justify-content-center my-3">
+                        <div class="btn encounter-type-btn border border-1 border-info" data-id="1"> House Call </div>
+                        <a id="request-me-anchor" asp-controller="Patient" asp-action="RequestForMe" hidden></a>
+                        <div class="btn ms-2 border border-1 encounter-type-btn border-info" data-id="2"> Consult </div>
+                        <a id="request-someone-else-anchor" asp-controller="Patient" asp-action="RequestForSomeoneElse" hidden></a>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a type="button" class="btn btn-info text-white" data-bs-dismiss="modal" onclick="submitEncounterModal()">Save</a>
+                    <button type="button" class="btn cancel-btn" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+@* Tranfer Case *@
+<div class="modal  fade" id="transferModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <div class="modal-dark modal-title text-white" id="exampleModalLongTitle">
+                    Transfer Request
+                </div>
+                <button type="button" class="btn" aria-label="Close" data-bs-dismiss="modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
+                         fill="#FFFFFF">
+                        <path d="M0 0h24v24H0V0z" fill="none" />
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
+                    </svg>
+                </button>
+            </div>
+            <form method="post" id="phy-transfer-modal-form">
+                <div class="modal-body">
+                    <span class="modal-head">This request will be transferred to admin.</span>
+                    <div class="modal-flex my-3">
+                        <div class="form-floating mt-3">
+                            <input type="text" name="requestId" id="transferCaseRequestId" hidden />
+                            <textarea name="description" id="transferCaseDescription" style="height: 100px;" type="text" class="form-control"></textarea>
+                            <label for="blockCaseModalNotes">Description</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-info text-white" data-bs-dismiss="modal">Continue</button>
+                    <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* Cancel Case *@
+<div class="modal  fade" id="cancelModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <div class="modal-dark modal-title text-white" id="exampleModalLongTitle">
+                    Confirm Cancellation
+                </div>
+                <button type="button" class="btn" aria-label="Close" data-bs-dismiss="modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
+                         fill="#FFFFFF">
+                        <path d="M0 0h24v24H0V0z" fill="none" />
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
+                    </svg>
+                </button>
+            </div>
+            <form>
+                <div class="modal-body">
+                    <span class="modal-head">Patient Name : <b id="cancelModalPatientName" style="color: var(--primary);">test test</b></span>
+                    <div class="modal-flex my-3">
+
+                        <div class="form-floating mt-3">
+                            <select class="form-select" id="cancelModalCaseTag">
+                                <option disabled selected value="0"> -- select casetag -- </option>
+
+                                @foreach (var casetag in Model.casetags)
+                                {
+                                    <option value="@casetag.Casetagid">@casetag.Name</option>
+                                }
+                            </select>
+                            <label for="cancelModalCaseTag">Reasons for Cancellation</label>
+                        </div>
+
+                        <div class="form-floating mt-3">
+                            <input type="text" id="cancelCaseRequestId" hidden />
+                            <input type="text" class="form-control" id="cancelCaseNotes">
+                            <label for="cancelCaseNotes">Provide Additional Notes</label>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="cancel-modal-submit-btn" type="button" class="btn btn-info text-white" data-bs-dismiss="modal">
+                        Continue
+                    </button>
+                    <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* Assign Case *@
+<div class="modal fade" id="assignModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <div class="modal-dark modal-title text-white" id="exampleModalLongTitle">
+                    Assign Request
+                </div>
+                <button type="button" class="btn" aria-label="Close" data-bs-dismiss="modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
+                         fill="#FFFFFF">
+                        <path d="M0 0h24v24H0V0z" fill="none" />
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
+                    </svg>
+                </button>
+            </div>
+            <form>
+                <div class="modal-body">
+                    <span class="modal-head">To assign this request, search and select another Physician</span>
+                    <div class="modal-flex my-3">
+
+                        <input id="assignCaseRequestId" hidden />
+                        <div class="form-floating mt-3">
+                            <select class="form-select" id="assignCaseRegion">
+                                <option disabled selected value="0"> -- select region -- </option>
+
+                                @foreach (var region in Model.regions)
+                                {
+                                    <option value="@region.Regionid">@region.Name</option>
+                                }
+                            </select>
+                            <label for="assignCaseRegion">Narrow Search By Region</label>
+                        </div>
+
+
+                        <div class="form-floating mt-3">
+                            <select class="form-select" id="assignCasePhysician">
+                                <option disabled selected value="0"> -- Select Physician -- </option>
+                            </select>
+                            <label for="assignCasePhysician">Select Physician</label>
+                        </div>
+
+                        <div class="form-floating mt-3">
+                            <textarea style="height: 100px;" type="text" class="form-control" id="assignCaseNotes"></textarea>
+                            <label for="assignCaseNotes">Description</label>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="assign-modal-submit-btn" class="btn btn-info text-white" data-bs-dismiss="modal">Submit</button>
+                    <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* Block Case *@
+<div class="modal  fade" id="blockModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <div class="modal-dark modal-title text-white" id="exampleModalLongTitle">
+                    Confirm Block
+                </div>
+                <button type="button" class="btn" aria-label="Close" data-bs-dismiss="modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
+                         fill="#FFFFFF">
+                        <path d="M0 0h24v24H0V0z" fill="none" />
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
+                    </svg>
+                </button>
+            </div>
+            <form>
+                <div class="modal-body">
+                    <span class="modal-head">Patient Name : <b id="blockModalPatientName" style="color: var(--primary);">test test</b></span>
+                    <div class="modal-flex my-3">
+                        <div class="form-floating mt-3">
+                            <input type="text" id="blockCaseRequestId" hidden />
+                            <textarea style="height: 100px;" type="text" class="form-control" id="blockCaseModalNotes"></textarea>
+                            <label for="blockCaseModalNotes">Reason for Block Request</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="block-modal-submit-btn" type="button" class="btn btn-info text-white" data-bs-dismiss="modal">Continue</button>
+                    <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* Clear Case *@
+<div id="ClearCaseModal" class="modal fade" aria-labelledby="exampleModalCenterTitle">
+    <div class="modal-dialog rounded-3 modal-dialog-centered">
+        <div class="modal-content">
+            <form>
+                <div class="mt-4 pt-4 mx-4 modal-body align-items-center d-flex justify-content-center mt-4">
+                    <svg class="info-icon-shadow" xmlns="http://www.w3.org/2000/svg" height="100px" viewBox="0 0 24 24" width="100px"
+                         fill="#faaa04">
+                        <path d="M0 0h24v24H0z" fill="none" />
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+                    </svg>
+                </div>
+                <h3 class="d-flex justify-content-center">Confirmation for clear case</h3>
+
+                <div class="m-4 p-4 d-flex justify-content-center align-items-center">
+                    <input type="text" id="clearCaseRequestId" hidden />
+                    <p class="text-center ">
+                        Are you sure you want to clear this request? Once cleared , you won't be able to see this request.
+                    </p>
+                </div>
+
+                <div class="modal-footer d-flex justify-content-center">
+                    <button type="button" id="clear-modal-submit-btn" class="btn btn-info text-white" data-bs-dismiss="modal">
+                        Clear
+                    </button>
+                    <button type="button" class="btn cancel-btn" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* Send Agreement *@
+<div class="modal fade" id="SendAgreementModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog  modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <h5 class="modal-title text-white" id="exampleModalLongTitle">Send Agreement</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex align-items-center">
+                    <div class="border border-1 rounded-circle m-1 " id="circle" style="width: 15px; height:15px;"></div>
+                    <span class="fs-5" id="sendtype"></span>
+                </div>
+                <form>
+                    <div class="">
+                        <input type="text" id="sendAgreementRequestId" hidden />
+                        <span class="modal-head">To send agreement , make sure you are updating the correct email and phone number.</span>
+                        <div class="modal-flex my-3">
+                            <div class="form-floating mt-3">
+                                <div class="mb-3">
+                                    <label for="sendAgreementNumber" class="form-label">Phone number</label>
+                                    <input type="text" class="form-control" id="sendAgreementNumber" />
+
+                                </div>
+
+                            </div>
+                            <div class="mb-3">
+                                <label for="sendagreementEmail" class="form-label">Email address</label>
+                                <input type="email" class="form-control" id="sendagreementEmail" aria-describedby="emailHelp">
+
+                            </div>
+
+
+
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button id="sendAgreement-modal-submit-btn" type="button" class="btn btn-info text-white" data-bs-dismiss="modal">
+                            Send
+                        </button>
+                        <button type="button" class="btn cancel-btn" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="px-4 admin-dashboard">
+
+    <!-- status tabs -->
+    <div class="row">
+
+        <div class="col-4 col-md-2 mt-3 d-flex flex-column status-tab active align-items-center" id="status-new-tab">
+
+            <div class="py-2 ps-2 w-100 status-new d-flex flex-column justify-content-center align-items-md-start align-items-center">
+                <div class="d-flex">
+                    <svg class="me-2" height="24px" width="24px" version="1.1" id="_x32_" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" xml:space="preserve" fill="#213f99">
+
+<g id="SVGRepo_bgCarrier" stroke-width="0" />
+
+<g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" />
+
+<g id="SVGRepo_iconCarrier"> <style type="text/css">
+                                 .st0 {
+                                     fill: #213f99;
+                                 }
+</style> <g> <path class="st0" d="M13.175,203.061c0,0-0.004-0.013-0.007-0.026l-0.672-1.763L13.175,203.061z" /> 
+                    <path class="st0" d="M17.239,163.415l11.178-7.3c0.006,0,0.012-0.007,0.019-0.014L17.239,163.415z" /> 
+                    <path class="st0" d="M480.364,260.466c-0.549-1.436-0.823-2.951-0.823-4.466c0-1.521,0.274-3.042,0.826-4.492l16.869-44.275 l1.586-4.172c1.74-4.564,2.582-9.324,2.582-14.006c0.006-12.986-6.458-25.516-17.835-32.953l-5.599-3.656l-37.84-24.708 c-2.569-1.684-4.447-4.276-5.25-7.247l-13.548-50.047c-4.675-17.23-20.28-29.075-37.978-29.075c-0.669,0-1.335,0.013-2.004,0.052 L329.766,44v-0.006l-0.774,0.02c-2.896,0-5.687-0.98-7.933-2.788l-37.766-30.42l-2.598-2.089 C273.507,2.912,264.725-0.006,256.002,0c-8.72-0.013-17.504,2.912-24.697,8.717l0.01-0.007L195.11,37.87l-4.159,3.35 c-2.256,1.815-5.057,2.795-7.94,2.795L182.338,44l-51.555-2.572l-0.033-0.007c-0.8-0.046-1.502-0.052-2.102-0.052 c-17.701,0-33.303,11.844-37.978,29.075l-13.549,50.047c-0.806,2.983-2.693,5.582-5.278,7.273l-3.732,2.436l-39.694,25.915 c-11.371,7.444-17.828,19.966-17.822,32.946c0,4.675,0.839,9.415,2.573,13.973l18.465,48.473l0.003,0.006 c0.548,1.437,0.826,2.965,0.826,4.486c0,1.522-0.274,3.043-0.826,4.48l-18.461,48.46l0.003-0.006 c-1.74,4.564-2.583,9.318-2.583,13.999c-0.006,12.987,6.451,25.523,17.838,32.966l32.218,21.038l11.201,7.313 c2.583,1.684,4.463,4.27,5.269,7.26l13.549,50.041c4.671,17.23,20.28,29.075,37.978,29.081c0.6-0.006,1.254-0.013,1.952-0.052 l-1.482,0.078l53.439-2.67h-0.026l0.5-0.007c2.866,0,5.658,0.98,7.91,2.795l40.371,32.522h0.003 c7.185,5.792,15.964,8.71,24.687,8.704c8.72,0.007,17.502-2.912,24.691-8.71l43.841-35.318l-3.467,2.795 c2.253-1.815,5.038-2.788,7.907-2.788l0.6,0.013l52.189,2.605l-0.262-0.012c0.568,0.026,1.186,0.039,1.855,0.045 c17.691-0.006,33.306-11.844,37.978-29.081l13.548-50.041c0.806-2.99,2.684-5.569,5.262-7.254l43.45-28.37 c11.364-7.444,17.818-19.966,17.812-32.947c0-4.682-0.842-9.442-2.586-14.012L480.364,260.466z M455.38,241.988 c-1.72,4.512-2.582,9.265-2.582,14.012c0,4.754,0.862,9.507,2.582,14.019l18.449,48.44l0.003,0.007 c0.565,1.482,0.829,2.984,0.829,4.473c-0.007,4.166-2.063,8.188-5.716,10.571l-43.41,28.344h0.003 c-8.086,5.275-13.95,13.346-16.474,22.67l-13.548,50.04c-1.485,5.524-6.513,9.324-12.16,9.317l-0.751-0.02l-0.189-0.006 l-51.474-2.566h0.036c-0.634-0.039-1.303-0.052-2.004-0.059c-8.968,0-17.685,3.069-24.694,8.717l-3.47,2.801l-36.897,29.721 c-2.324,1.874-5.086,2.788-7.91,2.788c-2.82,0-5.586-0.914-7.913-2.788l-40.368-32.522c-7.006-5.641-15.719-8.71-24.69-8.71 c-0.601,0-1.303,0.007-2.106,0.052v0.007l-51.64,2.579l0.016-0.006l-0.652,0.013c-5.642,0.006-10.676-3.794-12.161-9.317 l-13.548-50.04c-2.524-9.324-8.387-17.394-16.474-22.67l-32.212-21.031l-11.194-7.313c-3.65-2.377-5.713-6.405-5.72-10.578 c0.003-1.496,0.265-2.997,0.826-4.466l18.461-48.454l-0.003,0.007c1.72-4.518,2.582-9.265,2.582-14.019 c0-4.753-0.858-9.506-2.582-14.018L38.848,195.33l-0.679-1.776c-0.565-1.489-0.826-2.997-0.83-4.492 c0.007-4.172,2.067-8.188,5.716-10.564l43.414-28.343l0.007-0.007c8.082-5.288,13.94-13.352,16.464-22.67l13.548-50.047 c1.482-5.517,6.523-9.324,12.161-9.317l0.503,0.006l51.91,2.592l0.056,0.007c0.63,0.026,1.264,0.04,1.894,0.046 c8.968,0,17.688-3.063,24.701-8.704l40.386-32.529c2.321-1.874,5.08-2.782,7.904-2.788c2.821,0,5.583,0.914,7.907,2.788 l-2.602-2.096l42.979,34.618c7.022,5.654,15.752,8.704,24.707,8.704c0.666,0,1.263-0.02,1.792-0.033h-0.14l52.075-2.599h0.035 l0.601-0.013c5.641-0.007,10.678,3.8,12.16,9.317l13.548,50.047c2.524,9.317,8.38,17.381,16.464,22.67l49.018,32.006l-5.602-3.656 c3.653,2.377,5.71,6.392,5.716,10.558c0,1.496-0.264,2.998-0.832,4.492l-20.832,54.683L455.38,241.988z" /> <path class="st0" d="M196.151,226.298l-13.784,2.709c-0.725,0.15-1.123,0.725-0.979,1.463l10.254,52.175l-0.597,0.124 l-39.528-46.423c-0.653-0.757-1.45-0.986-2.305-0.816l-14.636,2.88c-0.725,0.144-1.123,0.718-0.966,1.455l15.817,80.448 c0.14,0.738,0.725,1.136,1.45,0.992l13.783-2.71c0.725-0.15,1.123-0.731,0.983-1.469l-10.242-52.051l0.61-0.118l39.613,46.28 c0.653,0.757,1.338,0.999,2.318,0.816l14.509-2.86c0.724-0.144,1.122-0.725,0.966-1.463l-15.814-80.454 C197.46,226.54,196.876,226.155,196.151,226.298z" /> <path class="st0" d="M280.868,279.649l-35.731,7.026c-0.483,0.105-0.78-0.091-0.865-0.581l-3.385-17.192 c-0.102-0.483,0.098-0.77,0.581-0.874l29.757-5.85c0.725-0.144,1.123-0.719,0.983-1.449l-2.546-12.922 c-0.144-0.724-0.728-1.123-1.453-0.986l-29.754,5.857c-0.484,0.091-0.784-0.111-0.881-0.594l-3.232-16.454 c-0.098-0.49,0.101-0.784,0.584-0.875l35.731-7.026c0.725-0.144,1.123-0.725,0.966-1.456l-2.56-13.038 c-0.144-0.738-0.725-1.13-1.453-0.986l-53.152,10.454c-0.741,0.144-1.126,0.725-0.982,1.462l15.817,80.454 c0.156,0.732,0.724,1.123,1.465,0.98l53.152-10.454c0.728-0.144,1.126-0.725,0.97-1.456l-2.563-13.046 C282.178,279.91,281.593,279.506,280.868,279.649z" /> <path class="st0" d="M377.221,190.694l-15.605,3.068c-0.852,0.164-1.266,0.634-1.224,1.515l-1.221,54.291l-0.258,0.046 l-24.847-49.16c-0.398-0.699-0.983-1.084-1.708-0.94l-10.61,2.083c-0.839,0.17-1.237,0.744-1.338,1.541l-3.911,54.82l-0.242,0.052 l-22.19-49.701c-0.255-0.718-0.839-1.096-1.691-0.927l-15.732,3.082c-0.852,0.17-0.996,0.706-0.725,1.417l37.266,76.23 c0.398,0.685,0.98,1.084,1.708,0.94l12.19-2.403c0.852-0.163,1.25-0.751,1.348-1.528l4.368-54.415l0.242-0.045l24.521,48.728 c0.385,0.685,0.97,1.084,1.822,0.914l12.19-2.403c0.852-0.157,1.365-0.77,1.352-1.535l5.504-84.645 C378.4,190.955,378.073,190.524,377.221,190.694z" /> </g> </g>
+
+</svg>
+                    <span class="h6 text-uppercase">new</span>
+                </div>
+                <span class="fw-bold">@Model.NewReqCount</span>
+            </div>
+
+            <svg fill="#203f9a" height="10px" width="20px" viewBox="0 0 200 100">
+                <polygon points="0,0 100,100 200,0 " />
+            </svg>
+
+        </div>
+
+        <div class="col-4 col-md-2 mt-3  d-flex flex-column status-tab align-items-center" id="status-pending-tab">
+            <div class="py-2 ps-2 w-100 status-pending d-flex flex-column justify-content-center align-items-md-start align-items-center">
+                <div class="d-flex">
+                    <svg class="me-2" version="1.1" id="_x32_" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="24px" height="24px" viewBox="0 0 512 512" xml:space="preserve" fill="currentColor">
+<g id="SVGRepo_bgCarrier" stroke-width="0" />
+<g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" />
+<g id="SVGRepo_iconCarrier">
+                    <style type="text/css">
+                        .st0 {
+                            fill: currentColor;
+                        }
+</style> <g> <path class="st0" d="M110.547,411.844c-5.234,5.813-9.141,12.5-11.328,19.266c-1.531,4.766-2.266,9.469-2.266,13.875 c0,2.688,0.266,5.25,0.844,7.672c0.438,1.797,1.031,3.516,1.828,5.094c0.594,1.203,1.313,2.344,2.156,3.375 c1.266,1.531,2.828,2.859,4.688,3.781c1.844,0.938,3.969,1.438,6.125,1.422v-9.766c-0.453,0-0.797-0.063-1.125-0.156 c-0.578-0.156-1.047-0.422-1.578-0.891c-0.375-0.359-0.781-0.828-1.156-1.469c-0.563-0.922-1.094-2.203-1.453-3.734 c-0.359-1.547-0.563-3.344-0.563-5.328c0-3.297,0.578-7.047,1.797-10.891c1.141-3.531,2.953-7.188,5.328-10.656 c3.547-5.219,8.391-9.984,13.984-13.391c2.781-1.703,5.781-3.078,8.891-4.016c3.125-0.938,6.391-1.438,9.766-1.438 c4.5,0,8.813,0.906,12.844,2.531c6.031,2.406,11.484,6.453,15.844,11.281c4.344,4.813,7.578,10.406,9.266,15.688 c1.234,3.844,1.813,7.594,1.813,10.891c0,2.016-0.219,3.844-0.594,5.391c-0.266,1.156-0.641,2.188-1.047,3 c-0.313,0.625-0.641,1.125-0.984,1.547c-0.5,0.609-1,1-1.484,1.25c-0.5,0.234-1.016,0.375-1.766,0.391v9.766 c1.281,0.016,2.547-0.172,3.75-0.5c2.109-0.578,4-1.672,5.547-3.094c1.156-1.063,2.125-2.281,2.922-3.609 c1.219-2,2.063-4.219,2.609-6.594s0.813-4.906,0.813-7.547c0-4.406-0.734-9.125-2.266-13.875 c-1.453-4.516-3.672-8.984-6.547-13.188c-4.313-6.297-10.063-12.016-16.969-16.234c-3.453-2.094-7.188-3.813-11.172-5 c-3.984-1.219-8.203-1.875-12.578-1.875c-5.828,0-11.391,1.188-16.469,3.234C122.375,401.109,115.781,406.047,110.547,411.844z" /> <path class="st0" d="M165.594,452.109c-1.594,1.266-2.531,3.172-2.531,5.219v7.891c0,2.031,0.938,3.953,2.531,5.219 c1.594,1.25,3.688,1.719,5.656,1.25l5.266-1.25v-18.344l-5.266-1.25C169.281,450.375,167.188,450.844,165.594,452.109z" /> <path class="st0" d="M121.719,450.844l-5.281,1.25v18.344l5.281,1.25c1.969,0.469,4.063,0,5.656-1.25 c1.594-1.266,2.531-3.188,2.531-5.219v-7.891c0-2.047-0.938-3.953-2.531-5.219S123.688,450.375,121.719,450.844z" /> <path class="st0" d="M453.453,429.594c-2.016-7.531-4.859-14.281-8.359-20.281c-6.141-10.547-14.266-18.75-23.234-25.25 c-6.734-4.875-13.922-8.859-21.234-12.281c-10.953-5.125-22.156-9.063-32.5-12.891c-10.344-3.813-19.797-7.547-27.156-11.891 c-2.688-1.594-5.109-3.25-7.203-4.984c-3.125-2.609-5.563-5.391-7.328-8.5s-2.953-6.609-3.406-10.984 c-0.328-3.125-0.469-6.063-0.469-8.875c0-8.281,1.219-15.453,2.781-22.781c4.625-5.219,8.859-11.438,12.859-18.875 c4.016-7.484,7.828-16.219,11.625-26.563c2.438-1.109,4.891-2.438,7.281-4.063c5.469-3.656,10.656-8.781,14.984-15.609 c4.313-6.828,7.781-15.313,10.156-25.781c0.656-2.906,0.969-5.797,0.969-8.641c0.016-5.938-1.391-11.594-3.75-16.656 c-1.641-3.516-3.719-6.734-6.141-9.656c1.234-4.563,2.734-10.703,4.078-17.891c1.844-9.984,3.375-21.984,3.375-34.594 c0-8.141-0.641-16.547-2.297-24.844c-1.234-6.219-3.063-12.391-5.625-18.297c-3.859-8.891-9.469-17.25-17.266-24.156 c-7.219-6.391-16.266-11.484-27.188-14.75c-3.859-4.625-7.734-8.563-11.703-11.906c-3.438-2.875-6.953-5.297-10.547-7.281 c-5.406-3-11-4.984-16.734-6.188s-11.578-1.641-17.641-1.641c-8.359,0-17.156,0.828-26.875,1.781 c-3.672,0.375-6.75,0.828-9.422,1.297c-3.984,0.719-6.969,1.453-9.359,1.938c-1.203,0.234-2.25,0.422-3.281,0.547 c-1.031,0.109-2.031,0.188-3.172,0.188c-1.531,0-3.297-0.125-5.609-0.453c-7.078-1.031-13.547-2.625-18.625-4.188 c-2.531-0.766-4.719-1.531-6.438-2.188c-0.859-0.328-1.609-0.625-2.203-0.875c-0.609-0.25-1.063-0.484-1.328-0.609l0.016,0.016 c-0.781-0.406-1.531-0.625-2.203-0.75C182.609,0.031,182.016,0,181.5,0c-1.078,0-1.844,0.156-2.453,0.313s-1.078,0.344-1.5,0.516 c-0.813,0.328-1.438,0.672-2.063,1.047c-1.141,0.688-2.234,1.453-3.391,2.344c-2.016,1.563-4.234,3.5-6.594,5.781 c-3.531,3.406-7.313,7.531-10.75,12.031c-1.719,2.234-3.328,4.578-4.781,7s-2.734,4.906-3.75,7.516 c-4.969,12.922-8.25,24.828-10.281,35.813c-2.047,10.984-2.828,21.047-2.828,30.281c0,15.109,2.109,27.922,4.141,38.75 c0,0.516,0.016,1,0.047,1.516c0.063,1.016,0.172,2.063,0.281,3.156c0.172,1.625,0.359,3.297,0.5,4.703 c0.078,0.703,0.141,1.328,0.188,1.813c0.016,0.234,0.031,0.453,0.031,0.609l0.016,0.156v0.047v0.016v0.922l1.984,8.828 c-2.859,3.125-5.328,6.625-7.25,10.469c-2.688,5.344-4.281,11.375-4.281,17.75c0,2.813,0.328,5.719,0.984,8.609 c1.563,6.984,3.641,13.078,6.125,18.391c3.719,7.984,8.438,14.188,13.656,18.844c4.047,3.625,8.375,6.266,12.656,8.219 c3.781,10.344,7.594,19.063,11.609,26.547c4,7.453,8.219,13.656,12.844,18.875c1.563,7.328,2.781,14.516,2.797,22.797 c0,2.813-0.156,5.75-0.484,8.875c-0.313,3-0.969,5.594-1.922,7.938c-1.422,3.5-3.5,6.484-6.328,9.313 c-2.828,2.781-6.438,5.391-10.703,7.813c-4.328,2.453-9.344,4.75-14.797,6.938c-9.563,3.875-20.469,7.531-31.516,11.953 c-8.281,3.297-16.672,7.063-24.672,11.766c-6,3.531-11.766,7.625-17.078,12.484c-7.953,7.281-14.813,16.359-19.547,27.578 c-4.75,11.234-7.391,24.531-7.375,40.25c0,2.219,0.469,4.328,1.234,6.281c0.703,1.828,1.688,3.5,2.844,5.094 c2.188,2.969,5,5.625,8.453,8.188c6.063,4.469,14.109,8.656,24.531,12.594c15.625,5.891,36.563,11.188,63.641,15.031 c27.063,3.844,60.266,6.25,100.266,6.25c34.703,0,64.266-1.797,89.156-4.781c18.656-2.25,34.703-5.156,48.313-8.484 c10.219-2.484,19.078-5.219,26.672-8.094c5.688-2.156,10.688-4.406,15.031-6.719c3.25-1.734,6.125-3.516,8.672-5.344 c3.813-2.766,6.875-5.609,9.203-8.844c1.172-1.609,2.125-3.328,2.828-5.203c0.703-1.844,1.125-3.875,1.125-5.969 C456.984,447.813,455.75,438.203,453.453,429.594z M327.266,358.094l-50.156,78.328l-5.594-38.453l14.234-15.063l-9.219-15.375 l38.906-20.453c1.078,1.391,2.219,2.703,3.422,3.953C321.438,353.672,324.266,356,327.266,358.094z M183.078,87.156 c45.219,10.031,133.641-9.141,133.641-9.141s0.953,21.922,16.031,42.047c5.938,7.906,10.828,20.266,14.5,32.016 c-0.984-1.828-3.297-2.516-6.75-2.953c-7.75-1.047-19.266-1.719-32.234-1.094c-38.531,1.891-35.672,5.391-50.797,5.391 s-12.266-3.5-50.797-5.391c-12.969-0.625-24.484,0.047-32.25,1.094c-4.031,0.531-6.563,1.344-7.141,4.031 c-0.203,1-0.516,2.125-1.906,2.672C169.641,139.891,181.516,119.531,183.078,87.156z M339.922,176.469 c0,0.219-0.156,22.313-15.188,29.859c-5.109,2.578-11.516,4-18.031,4.016c-6.875,0-13.156-1.563-18.172-4.516 c-5.547-3.25-9.281-8.078-11.109-14.313c-0.438-1.453-0.828-2.906-1.234-4.313c-1.188-4.297-4.391-16.234,2.406-21.484 c4.375-3.422,17.953-5.578,30.969-5.578c11.828,0,23.891,1.609,27.422,5.297C339.313,167.875,340.219,172.219,339.922,176.469z M238.75,187.203c-0.406,1.406-0.813,2.859-1.234,4.313c-1.828,6.234-5.563,11.063-11.094,14.313 c-5.031,2.953-11.313,4.516-18.188,4.516c-6.516-0.016-12.906-1.438-18.031-4.016c-15.031-7.547-15.172-29.641-15.188-29.859 c-0.297-4.25,0.609-8.594,2.922-11.031c3.547-3.688,15.609-5.297,27.438-5.297c13,0,26.594,2.156,30.984,5.578 C243.141,170.969,239.938,182.906,238.75,187.203z M188.547,264.063c-3.922-7.313-7.828-16.406-11.844-27.75l-1.328-3.703 l-3.688-1.359c-2.563-0.938-5.063-2.156-7.453-3.766c-3.609-2.422-7.031-5.734-10.172-10.672s-5.953-11.563-7.984-20.516 c-0.391-1.703-0.547-3.328-0.547-4.922c0-3.594,0.859-7,2.5-10.25c1.344-2.703,3.219-5.25,5.5-7.563 c3.844,5.813,7.031,10.422,8.188,11.578c2.203,2.203,3.297,0.078,3.469-4.047c1.359,9.172,5.719,24.313,19.797,31.797 c20.266,10.766,50.516,6.734,60.781-17.234c4.641-10.813,4.703-21.375,11.703-21.375c6.984,0,7.063,10.563,11.703,21.375 c10.281,23.969,40.531,28,60.797,17.234c20.25-10.766,20.391-37.422,20.391-39.297c0-0.969,0.922-1.703,2.234-1.844 c1.719,7.234,2.609,12.141,2.609,12.141s1.938-3.703,4.844-8.641c1.734,2.031,3.172,4.219,4.234,6.5 c1.422,3.063,2.188,6.266,2.188,9.594c0,1.609-0.172,3.25-0.563,4.938c-1.344,5.969-3.047,10.906-4.953,15 c-2.875,6.125-6.188,10.344-9.656,13.438c-3.453,3.094-7.141,5.109-10.969,6.531l-3.703,1.344l-1.313,3.719 c-4.016,11.344-7.938,20.453-11.859,27.75c-3.938,7.313-7.844,12.813-11.906,17.094l-1.609,1.703l-0.5,2.266 c-1.813,8.359-3.625,17.594-3.625,28.531c0,3.375,0.172,6.891,0.547,10.594c0.453,4.344,1.453,8.422,2.938,12.172 c0.063,0.172,0.156,0.359,0.219,0.516l-50.891,26.766l-56.406-26.172c1.734-4.063,2.906-8.5,3.406-13.281 c0.391-3.703,0.547-7.219,0.547-10.594c0.016-10.938-1.797-20.188-3.625-28.547l-0.5-2.266l-1.609-1.688 C196.391,276.844,192.469,271.375,188.547,264.063z M188.094,355.594c2.938-2.359,5.641-5,8.031-7.969l43.016,19.969l-9.188,15.313 l14.219,15.063l-5.25,36.203l-54.875-75.609C185.438,357.609,186.797,356.625,188.094,355.594z M440.219,458.5 c-0.016,0.094-0.125,0.406-0.422,0.906c-0.563,0.969-1.875,2.531-4.094,4.313c-1.922,1.547-4.516,3.281-7.781,5.063 c-5.734,3.141-13.5,6.406-23.344,9.5c-14.781,4.656-34.297,8.906-58.922,12c-24.625,3.063-54.359,4.969-89.672,4.969 c-34.094,0-63-1.781-87.125-4.672c-18.094-2.172-33.5-4.984-46.344-8.109c-9.656-2.359-17.875-4.906-24.703-7.5 c-5.141-1.938-9.5-3.906-13.078-5.828c-2.688-1.438-4.953-2.859-6.797-4.172c-2.75-1.969-4.5-3.766-5.375-5 c-0.438-0.594-0.656-1.063-0.734-1.281c-0.047-0.094-0.063-0.156-0.063-0.188c0-9.375,1.063-17.406,2.906-24.375 c1.609-6.094,3.828-11.391,6.531-16.078c4.719-8.203,10.922-14.641,18.297-20.063c5.5-4.078,11.672-7.563,18.203-10.672 c7.328-3.484,15.109-6.484,22.922-9.375v16.875h5.859h5.859v-21.203c7.469-2.797,14.75-5.672,21.531-9.109l86.703,119.453 l75.75-118.266c0.234,0.359,0.469,0.719,0.688,1.063c3.156,5.078,5.359,10.609,6.828,16.875c1.453,6.25,2.125,13.25,2.125,21.047 c0,18.063,0,33.797,0,44.391H318.75v11.734h67v-11.734h-27.219c0-10.594,0-26.328,0-44.391c0-11.359-1.297-21.703-4.516-31.141 c-0.281-0.813-0.578-1.625-0.891-2.422c9.156,3.609,18.734,6.859,28.016,10.547c7.953,3.141,15.672,6.578,22.688,10.656 c5.281,3.063,10.172,6.5,14.516,10.406c6.516,5.922,11.859,12.906,15.703,21.859C437.875,433.516,440.219,444.516,440.219,458.5 L440.219,458.5z" /> </g> </g>
+</svg>
+                    <span class="h6 text-uppercase">pending</span>
+                </div>
+                <span class="fw-bold">@Model.PendingReqCount</span>
+            </div>
+
+            <svg fill="#00adef" height="10px" width="20px" viewBox="0 0 200 100">
+                <polygon points="0,0 100,100 200,0 " />
+            </svg>
+
+        </div>
+
+        <div class="col-4 col-md-2 mt-3  d-flex flex-column status-tab align-items-center" id="status-active-tab">
+            <div class="py-2 ps-2 w-100 status-active d-flex flex-column justify-content-center align-items-md-start align-items-center">
+                <div class="d-flex">
+                    <svg class="me-2" width="24px" height="24px" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+
+                        <g id="SVGRepo_bgCarrier" stroke-width="0" />
+
+                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" />
+
+                        <g id="SVGRepo_iconCarrier"> <path fill="currentColor" fill-rule="evenodd" d="M3 10a7 7 0 019.307-6.611 1 1 0 00.658-1.889 9 9 0 105.98 7.501 1 1 0 00-1.988.22A7 7 0 113 10zm14.75-5.338a1 1 0 00-1.5-1.324l-6.435 7.28-3.183-2.593a1 1 0 00-1.264 1.55l3.929 3.2a1 1 0 001.38-.113l7.072-8z" /> </g>
+
+                    </svg>
+                    <span class="h6 text-uppercase">active</span>
+                </div>
+                <span class="fw-bold">@Model.ActiveReqCount</span>
+            </div>
+
+            <svg fill="#228c20" height="10px" width="20px" viewBox="0 0 200 100">
+                <polygon points="0,0 100,100 200,0 " />
+            </svg>
+
+        </div>
+
+        <div class="col-4 col-md-2 mt-3  d-flex flex-column status-tab align-items-center" id="status-conclude-tab">
+            <div class="py-2 ps-2 w-100 status-conclude d-flex flex-column justify-content-center align-items-md-start align-items-center">
+                <div class="d-flex">
+                    <svg class="me-2" width="24px" height="24px" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+
+                        <g id="SVGRepo_bgCarrier" stroke-width="0" />
+
+                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" />
+
+                        <g id="SVGRepo_iconCarrier">
+                            <path d="M23 12C23 12.3545 22.9832 12.7051 22.9504 13.051C22.3838 12.4841 21.7204 12.014 20.9871 11.6675C20.8122 6.85477 16.8555 3.00683 12 3.00683C7.03321 3.00683 3.00683 7.03321 3.00683 12C3.00683 16.8555 6.85477 20.8122 11.6675 20.9871C12.014 21.7204 12.4841 22.3838 13.051 22.9504C12.7051 22.9832 12.3545 23 12 23C5.92487 23 1 18.0751 1 12C1 5.92487 5.92487 1 12 1C18.0751 1 23 5.92487 23 12Z" fill="currentColor" />
+                            <path d="M13 11.8812L13.8426 12.3677C13.2847 12.7802 12.7902 13.2737 12.3766 13.8307L11.5174 13.3346C11.3437 13.2343 11.2115 13.0898 11.1267 12.9235C11 12.7274 11 12.4667 11 12.4667V6C11 5.44771 11.4477 5 12 5C12.5523 5 13 5.44772 13 6V11.8812Z" fill="currentColor" />
+                            <path d="M15.2929 17.7071C15.6834 17.3166 16.3166 17.3166 16.7071 17.7071L17.3482 18.3482L19.2473 16.4491C19.6379 16.0586 20.271 16.0586 20.6615 16.4491C21.0521 16.8397 21.0521 17.4728 20.6615 17.8634L18.1213 20.4036C18.0349 20.49 17.9367 20.5573 17.8318 20.6054C17.4488 20.8294 16.9487 20.7772 16.6203 20.4487L15.2929 19.1213C14.9024 18.7308 14.9024 18.0976 15.2929 17.7071Z" fill="currentColor" />
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M18 24C21.3137 24 24 21.3137 24 18C24 14.6863 21.3137 12 18 12C14.6863 12 12 14.6863 12 18C12 21.3137 14.6863 24 18 24ZM18 22.0181C15.7809 22.0181 13.9819 20.2191 13.9819 18C13.9819 15.7809 15.7809 13.9819 18 13.9819C20.2191 13.9819 22.0181 15.7809 22.0181 18C22.0181 20.2191 20.2191 22.0181 18 22.0181Z" fill="currentColor" />
+                        </g>
+
+                    </svg>
+                    <span class="h6 text-uppercase">conclude</span>
+                </div>
+                <span class="fw-bold">@Model.ConcludeReqCount</span>
+            </div>
+
+            <svg fill="#da0f82" height="10px" width="20px" viewBox="0 0 200 100">
+                <polygon points="0,0 100,100 200,0 " />
+            </svg>
+
+        </div>
+
+    </div>
+
+    <div class="d-flex align-items-center justify-content-between mt-3">
+        @{
+            int dashboardStatus = Model.DashboardStatus;
+        }
+        <div class="d-flex align-items-center">
+            <h5>Patients</h5>
+            <span class="ms-1 fw-bold" id="status-text" style="color: #404a66; font-size: 12px;">(New)</span>
+        </div>
+
+        <div class="d-flex align-items-center">
+
+            <button type="submit" class="mx-1 px-2 py-1 btn btn-primary" style="background-color:#10bce9">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="#ffffff" width="24px" height="24px" enable-background="new 0 0 32 32" viewBox="0 0 32 32" id="telegram">
+                    <path fill="#ffffff" d="M24.687,30.163c-0.402,0-0.843-0.132-1.32-0.395l-10.803-7.976c-0.121-0.089-0.195-0.228-0.203-0.378
+	c-0.007-0.15,0.053-0.295,0.165-0.396L25.322,9.503c0.205-0.185,0.521-0.169,0.706,0.037c0.185,0.205,0.168,0.521-0.037,0.706
+	l-12.34,11.106l10.254,7.576c0.271,0.145,0.729,0.329,1.055,0.178c0.332-0.152,0.496-0.637,0.576-1.017l4.375-20.617
+	c0.17-0.681,0.088-1.229-0.215-1.481c-0.231-0.192-0.575-0.206-0.947-0.038L3.033,15.871C2.244,16.188,1.996,16.514,2,16.622
+	c0.003,0.071,0.173,0.267,0.68,0.422l6.375,1.99l6.999-4.416c0.234-0.146,0.542-0.077,0.689,0.156
+	c0.147,0.233,0.078,0.542-0.156,0.689l-7.194,4.539C9.269,20.08,9.116,20.1,8.977,20.057l-6.592-2.058
+	c-1.17-0.358-1.37-0.99-1.384-1.335c-0.02-0.473,0.253-1.157,1.667-1.723l25.695-9.908c0.697-0.318,1.445-0.25,1.974,0.191
+	c0.613,0.511,0.813,1.413,0.549,2.474l-4.371,20.598c-0.184,0.878-0.566,1.457-1.137,1.719
+	C25.163,30.114,24.933,30.163,24.687,30.163z"></path>
+                    <path fill="#ffffff" d="M24.687,30.163c-0.402,0-0.843-0.132-1.32-0.395l-6.72-4.959c-0.222-0.164-0.27-0.478-0.105-0.699
+c0.164-0.222,0.478-0.27,0.699-0.105l6.664,4.923c0.271,0.145,0.729,0.329,1.055,0.178c0.332-0.152,0.496-0.637,0.576-1.017
+l4.375-20.617c0.17-0.681,0.088-1.229-0.215-1.481c-0.231-0.192-0.575-0.206-0.947-0.038L3.033,15.871
+C2.244,16.188,1.996,16.514,2,16.622c0.003,0.071,0.173,0.267,0.68,0.422l6.594,2.058c0.158,0.049,0.281,0.174,0.33,0.332
+l2.267,7.461c0.061,0.167,0.108,0.333,0.149,0.477c0.032,0.114,0.072,0.256,0.099,0.298c-0.004-0.005,0.076,0.019,0.289,0.02
+c0.447,0,0.617-0.167,0.957-0.498l1.66-1.614c0.198-0.194,0.514-0.188,0.707,0.01c0.192,0.198,0.188,0.515-0.01,0.707L14.09,27.88
+c-0.402,0.393-0.828,0.809-1.682,0.809c-0.98,0-1.178-0.434-1.351-1.046c-0.035-0.124-0.075-0.267-0.135-0.432l-2.198-7.233
+l-6.339-1.979c-1.17-0.358-1.37-0.99-1.384-1.335c-0.02-0.473,0.253-1.157,1.667-1.723l25.695-9.908
+c0.697-0.318,1.445-0.25,1.974,0.191c0.613,0.511,0.813,1.413,0.549,2.474l-4.371,20.598c-0.184,0.878-0.566,1.457-1.137,1.719
+C25.163,30.114,24.933,30.163,24.687,30.163z"></path>
+                    <path fill="#ffffff" d="M18.5,14c0,0.275-0.225,0.5-0.5,0.5l0,0c-0.275,0-0.5-0.225-0.5-0.5l0,0c0-0.275,0.225-0.5,0.5-0.5
+						l0,0C18.275,13.5,18.5,13.725,18.5,14L18.5,14z"></path>
+                </svg>
+                <span class="ms-1 d-none d-md-inline text-white">Send Link</span>
+            </button>
+
+            <button type="submit" class="mx-1 px-2 py-1 btn btn-primary" style="background-color:#10bce9">
+                <svg fill="#ffffff" version="1.1" width="24px" height="24px" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+                     viewBox="0 0 60 60" xml:space="preserve">
+<g>
+                <path d="M57.407,35.724l-2.85-2.85c-1.164-1.164-3.057-1.162-4.221,0L34.946,48.265l-2.121,7.779l-0.519,0.519
+		c-0.388,0.388-0.389,1.014-0.006,1.405l-0.005,0.02l0.019-0.005c0.194,0.191,0.446,0.288,0.699,0.288
+		c0.256,0,0.512-0.098,0.707-0.293l0.52-0.52l7.778-2.121l15.39-15.391C58.572,38.781,58.572,36.888,57.407,35.724z M37.255,48.784
+		l10.243-10.243l4.243,4.243L41.498,53.027L37.255,48.784z M36.352,50.71l3.22,3.22l-4.428,1.208L36.352,50.71z M55.993,38.531
+		l-2.839,2.839l-4.243-4.242l2.839-2.839c0.385-0.385,1.01-0.384,1.394-0.001l2.85,2.85C56.378,37.521,56.378,38.147,55.993,38.531z
+        " />
+                <path d="M11.719,2h34v28h2V0h-36h-10v60h10h15v-2h-15V2z M3.719,58V2h6v56H3.719z" />
+                <path d="M40.719,24V10h-24v14H40.719z M18.719,12h20v10h-20V12z" />
+                <rect x="21.719" y="14" width="14" height="2" />
+                <rect x="21.719" y="18" width="14" height="2" />
+</g>
+</svg>
+                <span class="ms-1  d-none d-md-inline text-white">Create Request</span>
+            </button>
+
+        </div>
+
+    </div>
+
+    <div class="row d-flex px-3 align-items-center justify-content-between">
+
+        <div class="col-6 d-flex mt-3">
+
+            <div class="col-12 col-lg-4 ms-2 d-flex normal-input rounded align-items-center ps-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 50 50">
+                    <path d="M 21 3 C 11.654545 3 4 10.654545 4 20 C 4 29.345455 11.654545 37 21 37 C 24.701287 37 28.127393 35.786719 30.927734 33.755859 L 44.085938 46.914062 L 46.914062 44.085938 L 33.875 31.046875 C 36.43682 28.068316 38 24.210207 38 20 C 38 10.654545 30.345455 3 21 3 z M 21 5 C 29.254545 5 36 11.745455 36 20 C 36 28.254545 29.254545 35 21 35 C 12.745455 35 6 28.254545 6 20 C 6 11.745455 12.745455 5 21 5 z">
+                    </path>
+                </svg>
+                <input type="text" class="form-control" id="search-filter" placeholder="Search Patients">
+            </div>
+
+            <div class="col-12 col-lg-4 ms-2 d-flex normal-input rounded align-items-center ps-2">
+
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 50 50">
+                    <path d="M 21 3 C 11.654545 3 4 10.654545 4 20 C 4 29.345455 11.654545 37 21 37 C 24.701287 37 28.127393 35.786719 30.927734 33.755859 L 44.085938 46.914062 L 46.914062 44.085938 L 33.875 31.046875 C 36.43682 28.068316 38 24.210207 38 20 C 38 10.654545 30.345455 3 21 3 z M 21 5 C 29.254545 5 36 11.745455 36 20 C 36 28.254545 29.254545 35 21 35 C 12.745455 35 6 28.254545 6 20 C 6 11.745455 12.745455 5 21 5 z">
+                    </path>
+                </svg>
+                <select id="filter-regions" class="form-select border-0" aria-label="Default select example">
+                    <option selected value="0">All Regions</option>
+                    @foreach (Region region in Model.regions)
+                    {
+                        <option value="@region.Regionid">@region.Name</option>
+                    }
+                </select>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-6 col-12 d-flex align-items-center justify-content-lg-end justify-content-evenly mt-3">
+
+            <button class="active-filter filter-options d-flex align-items-center  px-2 py-1 rounded" id="filter-all">
+                <span>All</span>
+            </button>
+
+            <button class="filter-options  py-1 rounded d-md-flex align-items-center ms-2 " id="filter-patient">
+                <svg height="15" width="15" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <circle fill="#5fbc61" r="45" cx="50" cy="50" stroke="grey" stroke-width="3" />
+                </svg>
+                <div class="ms-md-2">Patient</div>
+            </button>
+
+            <button class="filter-options  py-1 rounded d-md-flex align-items-center ms-2" id="filter-friend">
+                <svg height="15" width="15" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <circle fill="#ed9124" r="45" cx="50" cy="50" stroke="grey" stroke-width="3" />
+                </svg>
+                <div class="ms-md-2">Family/Friend</div>
+            </button>
+            <button class="filter-options  py-1 rounded d-md-flex align-items-center ms-2" id="filter-business">
+                <svg height="15" width="15" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <circle fill="#e26277" r="45" cx="50" cy="50" stroke="grey" stroke-width="3" />
+                </svg>
+                <div class="ms-md-2">Business</div>
+            </button>
+            <button class="filter-options py-1 rounded d-md-flex align-items-center ms-2" id="filter-concierge">
+                <svg height="15" width="15" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <circle fill="#007fc6" r="45" cx="50" cy="50" stroke="grey" stroke-width="3" />
+                </svg>
+                <div class="ms-md-2">Concierge</div>
+            </button>
+            <button class="filter-options  py-1 rounded d-md-flex align-items-center ms-2" id="filter-vip">
+                <svg height="15" width="15" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <circle fill="#9966cd" r="45" cx="50" cy="50" stroke="grey" stroke-width="3" />
+                </svg>
+                <div class="ms-md-2">VIP</div>
+            </button>
+
+        </div>
+    </div>
+
+    <div id="loading-animation-div" class="align-items-center justify-content-center d-flex">
+
+        <div class="loading-animation" style="height:60px;width:60px">
+        </div>
+
+    </div>
+
+    <div id="partial-table"></div>
+
+</div>
+
+<script src="/js/physician-dashboard.js"></script>
+
+
+<script>
+
+    // House Call = 1; Consult = 2;
+    let encounter_type = 0;
+
+    $('.encounter-type-btn').click(function () {
+        $('.encounter-type-btn').removeClass('encounter-active');
+        $(this).addClass('encounter-active');
+
+        encounter_type = $(this).data("id");
+
+    });
+
+    function submitEncounterModal(){
+
+        if(encounter_type == 1){
+            $.ajax({
+                url: "/Physician/EncounterHouseCallBegin",
+                data: { requestId: $('#encounter-modal-request-id').val() },
+                type: 'POST',
+                success: function (result) {
+                    
+                },
+                error: function (error) {
+                    console.log('Error Updating Location')
+                    console.log(error);
+                },
+            });
+        }
+        else if(encounter_type == 2){
+            $.ajax({
+                url: "/Physician/EncounterConsult",
+                data: { requestId: $('#encounter-modal-request-id').val() },
+                type: 'POST',
+                success: function (result) {
+
+                },
+                error: function (error) {
+                    console.log('Error Updating Location')
+                    console.log(error);
+                },
+            });
+        }
+        else{
+            console.log("error");
+        }
+    }
+</script>
+
+<script>
+
+    $('#phy-transfer-modal-form').submit(function (event) {
+
+        event.preventDefault();
+
+        $.ajax({
+            url: "/Physician/TransferCaseModal",
+            data: {
+                requestId: $('#transferCaseRequestId').val(),
+                description: $('#transferCaseDescription').val()
+            },
+            type: 'POST',
+            success: function (result) {
+                if (result) {
+                    location.reload();
+                }
+            },
+            error: function (error) {
+                console.log('Error Updating Location')
+                console.log(error);
+            },
+        });
+    });
+
+    navigator.geolocation.getCurrentPosition(show_map);
+
+    function show_map(position) {
+        console.log('hi');
+        var lat = position.coords.latitude;
+        var lon = position.coords.longitude;
+
+        console.log(lat);
+        console.log(lon);
+
+        if (lat != null && lon != null) {
+
+            $.ajax({
+                url: "/Physician/UpdatePhysicianLocation",
+                data: { latitude: lat, longitude: lon },
+                type: 'POST',
+                success: function (result) {
+                    if (result) {
+                        console.log('successfully updated location.');
+                    }
+                    else {
+                        console.log('could not update location.');
+                    }
+                },
+                error: function (error) {
+                    console.log('Error Updating Location')
+                    console.log(error);
+                },
+            });
+        }
+
+        // var url = "/Home/Index?latitude=" + latitude + "&longtitude=" + longitude;
+        // $.post(url, function (data) {
+        // });
+    }
+
+</script>
