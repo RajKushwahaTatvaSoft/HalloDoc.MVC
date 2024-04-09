@@ -188,6 +188,7 @@ namespace HalloDoc.MVC.Controllers
             return Redirect("/Guest/Login");
         }
 
+        [RoleAuthorize((int)AllowMenu.AdminDashboard)]
         [HttpPost]
         public async Task<ActionResult> PartialTable(int status, int page, int typeFilter, string searchFilter, int regionFilter)
         {
@@ -240,7 +241,6 @@ namespace HalloDoc.MVC.Controllers
             int? region = HttpContext.Session.GetInt32("currentRegionFilter");
             int? type = HttpContext.Session.GetInt32("currentTypeFilter");
             string? search = HttpContext.Session.GetString("currentSearchFilter");
-
 
 
             if (status == null)
@@ -1271,8 +1271,86 @@ namespace HalloDoc.MVC.Controllers
             }
         }
 
+        public IActionResult RequestDTY(string message)
+        {
+            string? adminName = HttpContext.Request.Headers.Where(a => a.Key == "userName").FirstOrDefault().Value;
+            if (adminName == null)
+            {
+                TempData["failure"] = "Admin not found!!!";
+                return View("error");
+            }
+            Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(a => a.Firstname + " " + a.Lastname == adminName);
+            //PrviderOnCallViewModel model = new PrviderOnCallViewModel();
+            DateTime current = DateTime.Now;
+
+            var onDutyQuery = from shiftDetail in _unitOfWork.ShiftDetailRepository.GetAll()
+                              join physician in _unitOfWork.PhysicianRepository.GetAll() on shiftDetail.Shift.Physicianid equals physician.Physicianid
+                              //join physicianRegion in _context.Physicianregions on physician.Physicianid equals physicianRegion.Physicianid
+                              //where (regionFilter == 0 || physicianRegion.Regionid == regionFilter)
+                              where shiftDetail.Shiftdate.Date == current.Date
+                              && TimeOnly.FromDateTime(current) >= shiftDetail.Starttime
+                              && TimeOnly.FromDateTime(current) <= shiftDetail.Endtime
+                              && shiftDetail.Isdeleted != true
+                              select physician;
+
+            var onDuty = onDutyQuery.Distinct();
+            var offDuty = _unitOfWork.PhysicianRepository.GetAll().Except(onDuty).ToList();
+
+            string subject = "Need urgent help";
+            string? senderEmail = _config.GetSection("OutlookSMTP")["Sender"];
+            string? senderPassword = _config.GetSection("OutlookSMTP")["Password"];
+
+            SmtpClient client = new SmtpClient("smtp.office365.com")
+            {
+                Port = 587,
+                Credentials = new NetworkCredential(senderEmail, senderPassword),
+                EnableSsl = true,
+                DeliveryMethod = SmtpDeliveryMethod.Network,
+                UseDefaultCredentials = false
+            };
+
+            MailMessage mailMessage = new MailMessage
+            {
+                From = new MailAddress(senderEmail, "HalloDoc"),
+                Subject = subject,
+                IsBodyHtml = true,
+                Body = message,
+            };
+
+            foreach (Physician phy in offDuty)
+            {
+                string email = phy.Email;
+                mailMessage.To.Add(email);
+                Emaillog emaillog = new()
+                {
+                    Emailtemplate = "r",
+                    Subjectname = subject,
+                    Emailid = email,
+                    Roleid = admin.Roleid,
+                    Adminid = admin.Adminid,
+                    Createdate = DateTime.Now,
+                    Sentdate = DateTime.Now,
+                    Isemailsent = true,
+                };
+                _unitOfWork.EmailLogRepository.Add(emaillog);
+            }
+
+            _unitOfWork.Save();
+
+            if (offDuty.Count() >= 1)
+            {
+                client.Send(mailMessage);
+                TempData["success"] = "Email sent successfully to all the off duty physicians";
+                return RedirectToAction("Dashboard");
+            }
+
+            TempData["error"] = "Nobody's free";
+
+            return RedirectToAction("Dashboard");
+        }
+
         [RoleAuthorize((int)AllowMenu.AdminDashboard)]
-        public IActionResult ViewCase(int Requestid)
+        public IActionResult ViewCase(int? Requestid)
         {
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
             string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
@@ -1288,6 +1366,7 @@ namespace HalloDoc.MVC.Controllers
             ViewCaseViewModel model = new();
 
             model.UserName = adminName;
+            model.RequestId = Requestid ?? 0;
 
             string dobDate = client.Intyear + "-" + client.Strmonth + "-" + client.Intdate;
             model.Confirmation = req.Confirmationnumber;
@@ -1339,7 +1418,6 @@ namespace HalloDoc.MVC.Controllers
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
             string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
 
-
             IEnumerable<Requeststatuslog> statusLogs = (from log in _unitOfWork.RequestStatusLogRepository.GetAll()
                                                         where log.Requestid == Requestid
                                                         && log.Status != (int)RequestStatus.Cancelled
@@ -1372,8 +1450,9 @@ namespace HalloDoc.MVC.Controllers
         public IActionResult ViewNotes(ViewNotesViewModel vnvm)
         {
 
-            int adminId = 1;
-            string adminAspId = "061d38d4-2b2f-48f6-ad21-5a80db6c4e69";
+            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+            string adminAspId = HttpContext.Request.Headers.Where(x => x.Key == "userAspId").FirstOrDefault().Value;
+
             Requestnote oldnote = _unitOfWork.RequestNoteRepository.GetFirstOrDefault(rn => rn.Requestid == vnvm.RequestId);
 
             if (oldnote != null)
@@ -1513,7 +1592,8 @@ namespace HalloDoc.MVC.Controllers
                 uploadsVM.File = null;
 
             }
-            return ViewUploads(uploadsVM.RequestId);
+
+            return RedirectToAction("ViewUploads", new { Requestid = uploadsVM.RequestId });
         }
 
         [HttpPost]
@@ -2436,7 +2516,6 @@ namespace HalloDoc.MVC.Controllers
         [HttpPost]
         public bool SavePhysicianOnboardingInfo(int PhysicianId, IFormFile ICA, IFormFile BGCheck, IFormFile HIPAACompliance, IFormFile NDA, IFormFile LicenseDoc)
         {
-
 
             if (PhysicianId == null || PhysicianId == 0)
             {
@@ -3996,7 +4075,6 @@ namespace HalloDoc.MVC.Controllers
         #endregion
 
         #region HelperFunctions
-
 
         public string GenerateConfirmationNumber(User user)
         {

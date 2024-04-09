@@ -1,6 +1,6 @@
 ﻿@model ViewCaseViewModel
 @{
-    Layout = "_AdminDashboardLayout";
+    Layout = "_PhysicianDashboardLayout";
     ViewData["UserName"] = Model.UserName;
 }
 
@@ -345,27 +345,9 @@
 
         <div class="d-flex justify-content-end mt-3">
 
-            @if (dashboardStatus == 1)
-            {
-                <button type="button" data-bs-toggle="modal" data-bs-target="#assignModal" class="btn py-2 px-4" style="background-color: #10bce9; color: white;">
-                    Assign
-                </button>
-
-                <a asp-controller="Admin" asp-action="ViewNotes" class="btn py-2 px-4 ms-3" style="background-color: #10bce9; color: white;">
-                    View Notes
-                </a>
-
-                <button id="cancelBtn" data-bs-toggle="modal" data-bs-target="#cancelModal" type="button" class="btn py-2 px-4 ms-3 bg-danger" style="background-color: #10bce9; color: white;">
-                    Cancel
-                </button>
-            }
-            else
-            {
-                <a asp-controller="Admin" asp-action="ViewNotes" class="btn py-2 px-4 ms-3" style="background-color: #10bce9; color: white;">
-                    View Notes
-                </a>
-            }
-
+            <a asp-controller="Physician" asp-action="ViewNotes" asp-route-Requestid="@Model.RequestId" class="btn py-2 px-4 ms-3" style="background-color: #10bce9; color: white;">
+                View Notes
+            </a>
 
         </div>
 

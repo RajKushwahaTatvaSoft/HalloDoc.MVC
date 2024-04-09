@@ -351,7 +351,7 @@
                     Assign
                 </button>
 
-                <a asp-controller="Admin" asp-action="ViewNotes" class="btn py-2 px-4 ms-3" style="background-color: #10bce9; color: white;">
+                <a asp-controller="Admin" asp-action="ViewNotes" asp-route-Requestid="@Model.RequestId" class="btn py-2 px-4 ms-3" style="background-color: #10bce9; color: white;">
                     View Notes
                 </a>
 
@@ -361,7 +361,7 @@
             }
             else
             {
-                <a asp-controller="Admin" asp-action="ViewNotes" class="btn py-2 px-4 ms-3" style="background-color: #10bce9; color: white;">
+                <a asp-controller="Admin" asp-action="ViewNotes" asp-route-Requestid="@Model.RequestId" class="btn py-2 px-4 ms-3" style="background-color: #10bce9; color: white;">
                     View Notes
                 </a>
             }

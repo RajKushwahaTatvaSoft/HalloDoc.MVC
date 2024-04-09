@@ -13,6 +13,7 @@ using Business_Layer.Utilities;
 using AspNetCoreHero.ToastNotification.Abstractions;
 using Business_Layer.Repository.IRepository;
 using Business_Layer.Services.Helper.Interface;
+using Microsoft.AspNetCore.Authorization;
 
 
 namespace HalloDoc.MVC.Controllers
@@ -25,6 +26,7 @@ namespace HalloDoc.MVC.Controllers
         private readonly IConfiguration _config;
         private readonly IUtilityService _utilityService;
         private readonly INotyfService _notyf;
+
         public GuestController(IUnitOfWork unitOfWork, IJwtService jwt, IWebHostEnvironment environment, IConfiguration config, IUtilityService utilityService, INotyfService notyf)
         {
             _jwtService = jwt;
@@ -35,11 +37,6 @@ namespace HalloDoc.MVC.Controllers
             _notyf = notyf;
         }
 
-        [HttpPost]
-        public IEnumerable<City> GetCitiesByRegion(int regionId)
-        {
-            return _utilityService.GetCitiesByRegion(regionId);
-        }
 
         public IActionResult Index()
         {
@@ -73,6 +70,13 @@ namespace HalloDoc.MVC.Controllers
 
             return View();
 
+        }
+
+
+        [HttpPost]
+        public IEnumerable<City> GetCitiesByRegion(int regionId)
+        {
+            return _utilityService.GetCitiesByRegion(regionId);
         }
 
         // email token isdeleted createddate aspnetuserid expirydate
@@ -259,6 +263,7 @@ namespace HalloDoc.MVC.Controllers
                     sessionUser = new SessionUser()
                     {
                         UserId = patientUser.Userid,
+                        UserAspId = aspUser.Id,
                         Email = patientUser.Email,
                         AccountTypeId = aspUser.Accounttypeid ?? 0,
                         RoleId = 0,
@@ -282,6 +287,7 @@ namespace HalloDoc.MVC.Controllers
                     sessionUser = new SessionUser()
                     {
                         UserId = physicianUser.Physicianid,
+                        UserAspId = aspUser.Id,
                         Email = physicianUser.Email,
                         AccountTypeId = aspUser.Accounttypeid ?? 0,
                         RoleId = physicianUser.Roleid ?? 0,
@@ -305,6 +311,7 @@ namespace HalloDoc.MVC.Controllers
                     sessionUser = new SessionUser()
                     {
                         UserId = adminUser.Adminid,
+                        UserAspId = aspUser.Id,
                         Email = adminUser.Email,
                         AccountTypeId = aspUser.Accounttypeid ?? 0,
                         RoleId = adminUser.Roleid ?? 0,
@@ -315,7 +322,7 @@ namespace HalloDoc.MVC.Controllers
 
                     //TempData["success"] = "Admin Login Successful";
 
-                _notyf.Success("Login Successfull", 3);
+                    _notyf.Success("Login Successfull", 3);
                 }
 
 
@@ -362,7 +369,6 @@ namespace HalloDoc.MVC.Controllers
                 {
                     if (userViewModel.Password != null)
                     {
-
                         User user;
 
                         Guid generatedId = Guid.NewGuid();
@@ -1277,7 +1283,7 @@ namespace HalloDoc.MVC.Controllers
             {
                 int decryptedId = Convert.ToInt32(EncryptionService.Decrypt(requestId.Trim()));
 
-                Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == decryptedId);
+                Request? req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == decryptedId);
 
                 if (req.Status != (short)RequestStatus.Accepted)
                 {

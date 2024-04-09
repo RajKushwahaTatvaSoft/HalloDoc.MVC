@@ -101,6 +101,34 @@ $('.filter-options').click(function () {
 
 });
 
+
+function loadPageWithStatus(pageNo, status) {
+
+    if (status == 1) {
+        $('#status-new-tab').click();
+    }
+    else if (status == 2) {
+        $('#status-pending-tab').click();
+    }
+    else if (status == 3) {
+        $('#status-active-tab').click();
+    }
+    else if (status == 4) {
+        $('#status-conclude-tab').click();
+
+    }
+    else if (status == 5) {
+        $('#status-to-close-tab').click();
+
+    }
+    else if (status == 6) {
+        $('#status-unpaid-tab').click();
+    }
+
+    loadPage(pageNo);
+}
+
+
 function loadNextPage(currentpage) {
     loadPage(currentpage + 1);
 }

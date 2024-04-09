@@ -52,18 +52,20 @@ namespace Business_Layer.Services.Admin
             }
 
             var query = (from r in _context.Requests
-                         join rc in _context.Requestclients on r.Requestid equals rc.Requestid
-                         join phy in _context.Physicians on r.Physicianid equals phy.Physicianid into phyGroup
-                         from phyItem in phyGroup.DefaultIfEmpty()
                          where validRequestTypes.Contains(r.Status)
                          && (dashboardParams.RequestTypeFilter == 0 || r.Requesttypeid == dashboardParams.RequestTypeFilter)
-                         && (dashboardParams.RegionFilter == 0 || rc.Regionid == dashboardParams.RegionFilter)
+                         join rc in _context.Requestclients on r.Requestid equals rc.Requestid
+                         where (dashboardParams.RegionFilter == 0 || rc.Regionid == dashboardParams.RegionFilter)
                          && (string.IsNullOrEmpty(dashboardParams.PatientSearchText) || (rc.Firstname + " " + rc.Lastname).ToLower().Contains(dashboardParams.PatientSearchText.ToLower()))
+                         join phy in _context.Physicians on r.Physicianid equals phy.Physicianid into phyGroup
+                         from phyItem in phyGroup.DefaultIfEmpty()
+                         join region in _context.Regions on rc.Regionid equals region.Regionid into regionGroup
+                         from regionItem in regionGroup.DefaultIfEmpty()
                          select new AdminRequest
                          {
-                             PhysicianId = r.Physicianid,    
+                             PhysicianId = r.Physicianid,
                              DateOfService = r.Accepteddate,
-                             RegionName = rc.Regionid.ToString(),
+                             RegionName = regionItem.Name,
                              RequestId = r.Requestid,
                              Email = rc.Email,
                              PatientName = rc.Firstname + " " + rc.Lastname,

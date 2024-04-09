@@ -33,7 +33,7 @@
         public string? MedicationDispensed { get; set; }
         public string? Procedures { get; set; }
         public string? FollowUps { get; set; }
-        public int? RequestId { get; set; }
+        public int RequestId { get; set; }
 
 
     }

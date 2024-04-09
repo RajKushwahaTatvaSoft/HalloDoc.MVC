@@ -38,11 +38,10 @@
 
                         <div class="col-12 mt-3">
                             <div class="form-floating d-flex  w-100">
-                                <input asp-for="CountryCode" id="patient-phone-country" hidden style="height:60px;" />
-                                <input asp-for="Phone" id="patient-phone" class="py-4 form-control" type="tel" style="height:60px;" />
+                                <input asp-for="CountryCode" id="send-link-phone-country" hidden style="height:60px;" />
+                                <input asp-for="Phone" id="send-link-phone" class="py-4 form-control" type="tel" style="height:60px;" />
                             </div>
                         </div>
-
 
                         <div class="col-12 mt-3">
                             <div class="form-floating">
@@ -64,8 +63,8 @@
 
 <script>
 
-    const phoneInputField = document.getElementById("patient-phone");
-    var patientPhoneInput = window.intlTelInput(phoneInputField, {
+    sendLinkInputField = document.getElementById("send-link-phone");
+    sendLinkField = window.intlTelInput(sendLinkInputField, {
         utilsScript:
             "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
         preferredCountries: ["in"],
@@ -75,8 +74,8 @@
 
     function setCountryCode() {
 
-        var countryCode = document.getElementById("patient-phone-country");
-        countryCode.value = patientPhoneInput.getSelectedCountryData().dialCode;
+        let countryCode = document.getElementById("send-link-phone-country");
+        countryCode.value = sendLinkField.getSelectedCountryData().dialCode;
 
     }
 

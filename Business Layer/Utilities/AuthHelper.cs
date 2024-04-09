@@ -9,19 +9,20 @@ namespace Business_Layer.Utilities
 {
     public class AuthHelper
     {
+
         public static string GenerateSHA256(string input)
         {
-            var bytes = Encoding.UTF8.GetBytes(input);
-            using (var hashEngine = SHA256.Create())
+            byte[] bytes = Encoding.UTF8.GetBytes(input);
+            using (SHA256 hashEngine = SHA256.Create())
             {
-                var hashedBytes = hashEngine.ComputeHash(bytes, 0, bytes.Length);
-                var sb = new StringBuilder();
-                foreach (var b in hashedBytes)
+                byte[] hashedBytes = hashEngine.ComputeHash(bytes, 0, bytes.Length);
+                StringBuilder stringBuilder = new StringBuilder();
+                foreach (byte stringByte in hashedBytes)
                 {
-                    var hex = b.ToString("x2");
-                    sb.Append(hex);
+                    string hex = stringByte.ToString("x2");
+                    stringBuilder.Append(hex);
                 }
-                return sb.ToString();
+                return stringBuilder.ToString();
             }
         }
 

@@ -146,13 +146,13 @@
                                     {
                                         <li><button class="dropdown-item accept-case-btn" data-requestid="@currentRequest.RequestId" type="button">Accept</button></li>
                                         <li><a asp-controller="Physician" asp-action="ViewCase" asp-route-requestId="@currentRequest.RequestId" class="dropdown-item">View Case</a></li>
-                                        <li><a asp-controller="Physician" asp-action="ViewNotes" asp-route-Requestid="@currentRequest.RequestId" class="dropdown-item" type="button">View Notes</a></li>
+                                        <li><a asp-controller="Physician" asp-action="ViewNotes" asp-route-requestId="@currentRequest.RequestId" class="dropdown-item" type="button">View Notes</a></li>
                                     }
                                     else
                                     {
-                                        <li><a asp-controller="Physician" asp-action="ViewCase" asp-route-Requestid="@currentRequest.RequestId" class="dropdown-item">View Case</a></li>
-                                        <li><a asp-controller="Physician" asp-action="ViewUploads" asp-route-Requestid="@currentRequest.RequestId" class="dropdown-item" type="button">View Uploads</a></li>
-                                        <li><a asp-controller="Physician" asp-action="ViewNotes" asp-route-Requestid="@currentRequest.RequestId" class="dropdown-item" type="button">View Notes</a></li>
+                                        <li><a asp-controller="Physician" asp-action="ViewCase" asp-route-requestId="@currentRequest.RequestId" class="dropdown-item">View Case</a></li>
+                                        <li><a asp-controller="Physician" asp-action="ViewUploads" asp-route-requestId="@currentRequest.RequestId" class="dropdown-item" type="button">View Uploads</a></li>
+                                        <li><a asp-controller="Physician" asp-action="ViewNotes" asp-route-requestId="@currentRequest.RequestId" class="dropdown-item" type="button">View Notes</a></li>
                                     }
 
                                     @if (dstatus == 2)
@@ -163,12 +163,19 @@
                                     @if (dstatus == 3)
                                     {
                                         <li><a asp-controller="Physician" asp-action="Orders" asp-route-requestId="@currentRequest.RequestId" class="dropdown-item" type="button">Orders</a></li>
-                                        <li><button data-bs-toggle="modal" data-bs-target="#beforeEncounterModal" data-requestid="@currentRequest.RequestId" class="dropdown-item encounter-case-btn" type="button">Encounter</button></li>
+                                        if (currentRequest.Status)
+                                        {
+                                            <li><a asp-controller="Physician" asp-action="EncounterForm" asp-route-requestId="@currentRequest.RequestId" class="dropdown-item" type="button">Encounter</a></li>
+                                        }
+                                        else
+                                        {
+                                            <li><button data-bs-toggle="modal" data-bs-target="#beforeEncounterModal" data-requestid="@currentRequest.RequestId" class="dropdown-item encounter-case-btn" type="button">Encounter</button></li>
+                                        }
                                     }
                                     @if (dstatus == 4)
                                     {
                                         <li><a asp-controller="Physician" asp-action="ConcludeCare" asp-route-requestId="@currentRequest.RequestId" class="dropdown-item" type="button">Conclude Care</a></li>
-                                        <li><button class="dropdown-item" type="button">Encounter</button></li>
+                                        <li><a asp-controller="Physician" asp-action="EncounterForm" asp-route-requestId="@currentRequest.RequestId" class="dropdown-item" type="button">Encounter</a></li>
                                     }
                                 </ul>
                             </div>

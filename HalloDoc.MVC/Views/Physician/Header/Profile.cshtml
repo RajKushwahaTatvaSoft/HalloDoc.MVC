@@ -1,7 +1,844 @@
-﻿@{
+﻿@model EditPhysicianViewModel
+@{
     Layout = "_PhysicianDashboardLayout";
+    ViewData["Title"] = "Physician Account";
 }
-<h3>MY PROFILE</h3>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/1.1.2/js/bootstrap-multiselect.min.js" integrity="sha512-lxQ4VnKKW7foGFV6L9zlSe+6QppP9B2t+tMMaV4s4iqAv4iHIyXED7O+fke1VeLNaRdoVkVt8Hw/jmZ+XocsXQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/1.1.2/css/bootstrap-multiselect.css" integrity="sha512-tlP4yGOtHdxdeW9/VptIsVMLtgnObNNr07KlHzK4B5zVUuzJ+9KrF86B/a7PJnzxEggPAMzoV/eOipZd8wWpag==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/css/bootstrap-select.css" />
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/js/bootstrap-select.min.js"></script>
+
+
+<div class="">
+    <div class="container-fluid d-flex justify-content-between mt-4" style="max-width:1000px">
+        <h4>
+            My Profile
+        </h4>
+        <button class="btn btn-outline-info align-middle" onclick="history.back(-1)">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="#01bce9" width="15" height="15" viewBox="0 -960 960 960">
+                <path d="m142-480 294 294q15 15 14.5 35T435-116q-15 15-35 15t-35-15L57-423q-12-12-18-27t-6-30q0-15 6-30t18-27l308-308q15-15 35.5-14.5T436-844q15 15 15 35t-15 35L142-480Z" />
+            </svg>
+            <span>Back</span>
+        </button>
+
+    </div>
+
+    <div class="container-fluid justify-content-center mt-4" style="max-width:1000px">
+
+        <input id="adminId" hidden />
+
+        <form method="post" id="physician-account-info-form">
+
+            <h5>Account Information</h5>
+            <div class="row g-2 m-1">
+                <div class="col-md">
+                    <div class="form-floating">
+                        <input asp-for="UserName" type="text" class="form-control" id="userName" placeholder="User Name" disabled>
+                        <label for="userName">User Name</label>
+                    </div>
+                </div>
+
+                <div class="col-md">
+                    <div class="form-floating">
+                        <input type="text" class="form-control" id="password" placeholder="Password">
+                        <label for="floatingSelectGrid">Password</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-2 m-1">
+                <div class="col-md-6">
+                    <div class="form-floating">
+                        <select asp-for="StatusId" class="form-select mb-3 account-info-input" id="status" placeholder="Status" disabled>
+                            <option>Active</option>
+                            <option>Out</option>
+                            <option>Died</option>
+                        </select>
+                        <label for="">Status</label>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-floating phone-div w-100 h-100 ">
+                        <select asp-for="RoleId" class="form-select mb-3 account-info-input" placeholder="Role" disabled>
+                            @foreach (var role in Model.roles)
+                            {
+                                <option value="@role.Roleid">@role.Name</option>
+                            }
+                        </select>
+                        <label for="">Role</label>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="d-flex justify-content-end">
+
+                <button id="account-info-edit-btn" type="button" class="btn btn-primary m-1">Edit</button>
+                <button type="reset" id="account-info-cancel-btn" class="btn btn-danger me-1 d-none">Cancel</button>
+                <button type="submit" id="account-info-save-btn" class="btn btn-primary me-1 d-none">Save</button><br />
+                <button type="button" class="btn btn-outline-info m-1">Reset Password</button><br />
+
+            </div>
+
+        </form>
+
+        <form method="post" id="physician-info-form">
+
+            <h5>Physician Information</h5>
+
+            <input asp-for="PhysicianId" hidden />
+
+            <fieldset id="physician-information-set" disabled>
+
+                <div class="row g-2 m-1">
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input asp-for="FirstName" type="text" class="form-control" placeholder="First Name">
+                            <label for="">First Name</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input asp-for="LastName" type="text" class="form-control" placeholder="Last Name">
+                            <label for="floatingSelectGrid">Last Name</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input asp-for="Email" type="email" class="form-control" placeholder="Email">
+                            <label for="">Email</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating phone-div w-100 h-100 ">
+                            <input id="phy-phone-country" asp-for="CountryCode" hidden />
+                            <input id="phy-phone" class="py-4 form-control" type="tel" asp-for="Phone" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input asp-for="MedicalLicenseNumber" class="form-control" placeholder="Medical License Number">
+                            <label for="">Medical License Number</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input asp-for="NPINumber" class="form-control" placeholder="NPI Number">
+                            <label for="">NPI Number</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input asp-for="SyncEmail" class="form-control" placeholder="Synchronization Email Address">
+                            <label for="">Synchronization Email Address</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-12">
+
+                        <select multiple data-live-search="true" class="form-select col-6 selectpicker" id="adminSelectedRegions" asp-for="selectedRegions">
+
+                            @foreach (var region in Model.regions)
+                            {
+                                <option value="@region.Regionid" style="font-size: 10px;">@region.Name</option>
+                            }
+
+                        </select>
+
+                    </div>
+                </div>
+            </fieldset>
+
+            <div class="d-flex justify-content-end">
+
+                <button type="reset" id="physician-info-edit-btn" class="btn btn-primary me-1 m-1">Edit</button>
+                <button type="reset" id="physician-info-cancel-btn" class="btn btn-danger me-1 d-none">Cancel</button>
+                <button type="submit" id="physician-info-save-btn" class="btn btn-primary me-1 d-none">Save</button><br />
+
+            </div>
+
+
+        </form>
+
+        <form method="post" id="physician-mailing-billing-form">
+
+            <h5>Mailing & Billing Information</h5>
+
+            <fieldset disabled id="physician-mailing-billing-set">
+
+                <input asp-for="PhysicianId" hidden />
+
+                <div class="row g-2 m-1">
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input asp-for="Address1" type="text" class="form-control" placeholder="Address 1">
+                            <label for="">Address 1</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input asp-for="Address2" type="text" class="form-control" placeholder="Address 2">
+                            <label for="floatingSelectGrid">Address 2</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+
+                            <select disabled asp-for="CityId" class="form-select billingChange" id="create-phy-city">
+                                <option disabled value=""> -- Select City -- </option>
+
+                            </select>
+                            <label for="admin-billing-city">City</label>
+                            <span asp-validation-for="CityId" class="text-danger"></span>
+
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating phone-div w-100 h-100 ">
+                            <select asp-for="RegionId" class="form-select billingChange" placeholder="State" id="patientRequestRegion">
+                                <option disabled value="0"> -- Select State -- </option>
+
+                                @foreach (var region in Model.regions)
+                                {
+                                    <option value="@region.Regionid">@region.Name</option>
+                                }
+
+                            </select>
+                            <label for="">State</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input asp-for="Zip" type="text" class="form-control" placeholder="Zip">
+                            <label for="">Zip</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating phone-div w-100 h-100 ">
+                            <input asp-for="MailCountryCode" hidden id="phy-alt-phone-country" />
+                            <input asp-for="MailPhone" type="tel" id="phy-alt-phone" class="form-control w-100 h-100" placeholder="Phone">
+                        </div>
+                    </div>
+                </div>
+
+            </fieldset>
+
+            <div class="d-flex justify-content-end">
+
+                <button type="reset" id="physician-mailing-billing-edit" class="btn btn-primary me-1 m-1">Edit</button>
+                <button type="reset" id="physician-mailing-billing-cancel" class="btn btn-danger me-1 d-none">Cancel</button>
+                <button type="submit" id="physician-mailing-billing-save" class="btn btn-primary me-1 d-none">Save</button><br />
+
+            </div>
+
+        </form>
+
+        <form method="post" id="physician-profile-form">
+
+            <h5>Provider Profile</h5>
+
+            <input asp-for="PhysicianId" hidden />
+
+            <fieldset id="physician-profile-set" disabled>
+
+                <div class="row">
+
+                    <div class="col-md-6 mt-2">
+                        <div class="form-floating">
+                            <input asp-for="BusinessName" type="text" class="form-control" placeholder="Business Name">
+                            <label for="">Business Name</label>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mt-2">
+                        <div class="form-floating">
+                            <input asp-for="BusinessWebsite" type="text" class="form-control" placeholder="Business Website">
+                            <label for="floatingSelectGrid">Business Website</label>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mt-2">
+
+                        <input asp-for="PhotoFile" accept="image/png, image/jpeg, image/jpg" class="form-control" type="file" id="phy_photo_input_id" style="display:none;">
+
+                        <div class="input-group mb-3">
+                            <input type="text" id="phy_photo_text_input_id" class="form-control" placeholder="Select Photo"
+                                   style="caret-color: transparent" autocomplete="off">
+
+                            <span class="input-group-text" id="phy_photo_span_input_id" style="background-color: #10bce9;">
+                                <label for="text_input_span_id">
+                                    <button style="background-color: #10bce9; border: none;" type="button">
+                                        <img src="/images/upload_icon.svg" alt="upload-icon">
+                                        <span class="ms-1 text-white">Upload</span>
+                                    </button>
+                                </label>
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-6 mt-2">
+
+                        <div class="d-flex">
+
+                            <input asp-for="SignatureFile" accept="image/png, image/jpeg, image/jpg" class="form-control" type="file" id="phy_sign_input_id" style="display:none;">
+
+                            <div class="input-group mb-3">
+                                <input type="text" id="phy_sign_text_input_id" class="form-control" placeholder="Select Signature"
+                                       style="caret-color: transparent" autocomplete="off">
+
+                                <span class="input-group-text" id="phy_sign_span_input_id" style="background-color: #10bce9;">
+                                    <label for="phy_sign_span_input_id">
+                                        <button style="background-color: #10bce9; border: none;" type="button">
+                                            <img src="/images/upload_icon.svg" alt="upload-icon">
+                                            <span class="ms-1 text-white">Upload</span>
+                                        </button>
+                                    </label>
+                                </span>
+
+                            </div>
+
+                            <div id="create-signature-btn" style="height: 42px;color:white;" class="ms-1 btn btn-primary d-flex align-items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
+                                    <path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z" />
+                                </svg>
+                                <span class="ms-1 text-white">Create</span>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                </div>
+
+                <div id="signature-div" style="display:none;">
+
+                    <canvas id="signature-pad" width="450" height="150" style="border: 1px solid #ddd;"></canvas>
+
+                    <div>
+                        <button type="button" id="clear-signature">Clear</button>
+                        <button type="button" id="save-signature">Save</button>
+                    </div>
+
+                </div>
+
+
+            </fieldset>
+
+            <button type="reset" id="physician-profile-edit" class="btn btn-primary float-end m-1">Edit</button>
+            <button type="reset" id="physician-profile-cancel" class="btn btn-danger float-end m-1 d-none">Cancel</button>
+            <button type="submit" id="physician-profile-save" class="btn btn-primary float-end m-1 d-none">Save</button><br /> <br />
+
+        </form>
+
+        <hr />
+
+        <form method="post" id="phy-onboarding-form">
+
+            <h5>Onboarding</h5>
+
+            <input asp-for="PhysicianId" hidden />
+
+            <div class="row my-1">
+                <div class="wrapper d-flex">
+                    <div class="col-1 m-1">
+                        <input type="checkbox" @(Model.IsICA ? "checked" : "") style="height:20px;width:20px" class="btn-outline-info" />
+                    </div>
+                    <div class="col-4">
+                        <span>Independent Contract Agreement</span>
+                    </div>
+                    <div class="col-2">
+                        <button id="ica-upload-btn" type="button" class="btn btn-primary">Upload</button>
+                    </div>
+                    <div class="col-2">
+                        @if (Model.IsICA)
+                        {
+                            <button type="button" class="btn btn-primary">View</button>
+                        }
+                    </div>
+                    <div class="col">
+                        <input asp-for="ICAFile" type="file" accept="application/pdf" id="ica-file-input" hidden />
+                        <span id="ica-file-name-text" class="fw-bole"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row my-1">
+                <div class="wrapper d-flex">
+                    <div class="col-1 m-1">
+                        <input type="checkbox" @(Model.IsBGCheck ? "checked" : "") style="height:20px;width:20px" class="btn-outline-info" />
+                    </div>
+                    <div class="col-4">
+                        <span>Background Check</span>
+                    </div>
+                    <div class="col-2">
+                        <button id="bg-check-upload-btn" type="button" class="btn btn-primary">Upload</button>
+                    </div>
+                    <div class="col-2">
+                        @if (Model.IsBGCheck)
+                        {
+                            <button type="button" class="btn btn-primary">View</button>
+                        }
+                    </div>
+                    <div class="col">
+                        <input asp-for="BGCheckFile" type="file" accept="application/pdf" id="bg-check-file-input" hidden />
+                        <span id="bg-check-file-name-text" class="fw-bole"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row my-1">
+                <div class="wrapper d-flex">
+                    <div class="col-1 m-1">
+                        <input type="checkbox" @(Model.IsHIPAA ? "checked" : "") style="height:20px;width:20px" class="btn-outline-info" />
+                    </div>
+                    <div class="col-4">
+                        <span>HIPAA Compliance</span>
+                    </div>
+                    <div class="col-2">
+                        <button id="hipaa-upload-btn" type="button" class="btn btn-primary">Upload</button>
+                    </div>
+                    <div class="col-2">
+                        @if (Model.IsHIPAA)
+                        {
+                            <button type="button" class="btn btn-primary">View</button>
+                        }
+                    </div>
+                    <div class="col">
+                        <input asp-for="HIPAAComplianceFile" accept="application/pdf" type="file" id="hipaa-file-input" hidden />
+                        <span id="hipaa-file-name-text" class="fw-bole"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row my-1">
+                <div class="wrapper d-flex">
+                    <div class="col-1 m-1">
+                        <input type="checkbox" @(Model.IsNDA ? "checked" : "") style="height:20px;width:20px" class="btn-outline-info" />
+                    </div>
+                    <div class="col-4">
+                        <span>Non-Disclosure Agreement</span>
+                    </div>
+                    <div class="col-2">
+                        <button id="nda-upload-btn" type="button" class="btn btn-primary">Upload</button>
+                    </div>
+                    <div class="col-2">
+                        @if (Model.IsNDA)
+                        {
+                            <button type="button" class="btn btn-primary">View</button>
+                        }
+                    </div>
+                    <div class="col">
+                        <input asp-for="NDAFile" type="file" accept="application/pdf" id="nda-file-input" hidden />
+                        <span id="nda-file-name-text" class="fw-bole"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row my-1">
+                <div class="wrapper d-flex">
+                    <div class="col-1 m-1">
+                        <input type="checkbox" @(Model.IsLicenseDoc ? "checked" : "") style="height:20px;width:20px" class="btn-outline-info" />
+                    </div>
+                    <div class="col-4">
+                        <span>License Document</span>
+                    </div>
+                    <div class="col-2">
+                        <button id="license-upload-btn" type="button" class="btn btn-primary">Upload</button>
+                    </div>
+                    <div class="col-2">
+                        @if (Model.IsLicenseDoc)
+                        {
+                            <button type="button" class="btn btn-primary">View</button>
+                        }
+                    </div>
+                    <div class="col">
+                        <input asp-for="LicenseDocFile" type="file" accept="application/pdf" id="license-file-input" hidden />
+                        <span id="license-file-name-text" class="fw-bole"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="border-bottom border-5"></div>
+            <button type="reset" class="btn btn-danger float-end m-1 ">Delete Account</button>
+            <button type="submit" class="btn btn-primary float-end m-1 ">Save</button>
+        </form>
+
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.1.min.js"
+        integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous">
+</script>
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+
+<script>
+
+    var phyAccountInfoEdit = document.getElementById("account-info-edit-btn");
+    var phyAccountInfoSave = document.getElementById("account-info-save-btn");
+    var phyAccountInfoCancel = document.getElementById("account-info-cancel-btn");
+
+    $('#account-info-edit-btn').click(function () {
+
+        var inputs = document.getElementsByClassName("account-info-input");
+        for (var i = 0; i < inputs.length; i++) {
+            inputs[i].disabled = false;
+        }
+
+        phyAccountInfoEdit.classList.add('d-none');
+        phyAccountInfoSave.classList.remove('d-none');
+        phyAccountInfoCancel.classList.remove('d-none');
+
+    });
+
+    $('#account-info-cancel-btn').click(function () {
+
+        var inputs = document.getElementsByClassName("account-info-input");
+        for (var i = 0; i < inputs.length; i++) {
+            inputs[i].disabled = true;
+        }
+
+        phyAccountInfoEdit.classList.remove('d-none');
+        phyAccountInfoSave.classList.add('d-none');
+        phyAccountInfoCancel.classList.add('d-none');
+
+    });
+
+</script>
+
+<script>
+
+    function dataURLtoFile(dataurl, filename) {
+        var arr = dataurl.split(','),
+            mime = arr[0].match(/:(.*?);/)[1],
+            bstr = atob(arr[arr.length - 1]),
+            n = bstr.length,
+            u8arr = new Uint8Array(n);
+        while (n--) {
+            u8arr[n] = bstr.charCodeAt(n);
+        }
+        return new File([u8arr], filename, { type: mime });
+    }
+
+    jQuery(document).ready(function ($) {
+
+        var canvas = document.getElementById("signature-pad");
+        var signaturePad = new SignaturePad(canvas);
+
+        $('#clear-signature').on('click', function () {
+            signaturePad.clear();
+        });
+
+        $('#save-signature').on('click', function () {
+            const signatureImage = signaturePad.toDataURL();
+            const fileName = "Digital_Signature.png";
+
+            $('#phy_sign_text_input_id').val(fileName);
+
+            let fileInputElement = document.getElementById('phy_sign_input_id');
+
+            let container = new DataTransfer();
+            let data = new Blob();
+            let file = dataURLtoFile(signatureImage, fileName);
+            container.items.add(file);
+            fileInputElement.files = container.files;
+
+            $('#signature-div').css("display", "none");
+
+        });
+
+        $('#create-signature-btn').click(function () {
+            $('#signature-div').css("display", "flex");
+        });
+
+    });
+
+
+
+</script>
+
+<script>
+
+    const phoneInputField = document.getElementById("phy-phone");
+    var patientPhoneInput = window.intlTelInput(phoneInputField, {
+        utilsScript:
+            "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+        preferredCountries: ["in"],
+        separateDialCode: true,
+        initialCountry: "in"
+    });
+
+    const phoneInputField1 = document.getElementById("phy-alt-phone");
+    var patientPhoneInput1 = window.intlTelInput(phoneInputField1, {
+        utilsScript:
+            "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+        preferredCountries: ["in"],
+        separateDialCode: true,
+        initialCountry: "in"
+    });
+
+</script>
+
+<script>
+
+    $('#phy-onboarding-form').submit(function (event) {
+        event.preventDefault();
+
+
+        var formData = new FormData($(this)[0]);
+
+        $.ajax({
+            url: "/Physician/SavePhysicianOnboardingInfo",
+            data: formData,
+            processData: false,
+            contentType: false,
+            type: 'POST',
+            success: function (result) {
+                location.reload();
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
+
+    });
+
+    $('#physician-profile-form').submit(function (event) {
+        event.preventDefault();
+
+
+        var formData = new FormData($(this)[0]);
+
+        $.ajax({
+            url: "/Physician/SavePhysicianProfileInfo",
+            data: formData,
+            processData: false,
+            contentType: false,
+            type: 'POST',
+            success: function (result) {
+                location.reload();
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
+
+    });
+
+    $('#physician-info-form').submit(function (event) {
+        event.preventDefault();
+
+        let countryCode1 = document.getElementById("phy-phone-country");
+        countryCode1.value = patientPhoneInput.getSelectedCountryData().dialCode;
+
+        let selectedRegions = [];
+        let checkboxes = document.querySelectorAll(".check");
+        console.log("regions-selected");
+
+        checkboxes.forEach(function (checkbox) {
+            if (checkbox.checked) {
+                selectedRegions.push(checkbox.value);
+            }
+        });
+
+        var formData = new FormData($(this)[0]);
+
+        selectedRegions.forEach(item => {
+            formData.append('selectedRegions', item);
+        });
+
+        $.ajax({
+            url: "/Physician/SavePhysicianInformation",
+            data: formData,
+            processData: false,
+            contentType: false,
+            type: 'POST',
+            success: function (result) {
+                location.reload();
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
+
+    });
+
+    $('#physician-mailing-billing-form').submit(function (event) {
+        event.preventDefault();
+
+        let countryCode2 = document.getElementById("phy-alt-phone-country");
+        countryCode2.value = patientPhoneInput1.getSelectedCountryData().dialCode;
+
+        var formData = new FormData($(this)[0]);
+
+        $.ajax({
+            url: "/Physician/SavePhysicianBillingInfo",
+            data: formData,
+            processData: false,
+            contentType: false,
+            type: 'POST',
+            success: function (result) {
+                location.reload();
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
+
+    });
+
+</script>
+
+<script>
+
+    var phyInfoEdit = document.getElementById("physician-info-edit-btn");
+    var phyInfoSave = document.getElementById("physician-info-save-btn");
+    var phyInfoCancel = document.getElementById("physician-info-cancel-btn");
+
+    $("#physician-info-edit-btn").click(function () {
+        document.getElementById("physician-information-set").disabled = false;
+
+        phyInfoEdit.classList.add('d-none');
+        phyInfoSave.classList.remove('d-none');
+        phyInfoCancel.classList.remove('d-none');
+    });
+
+    $("#physician-info-cancel-btn").click(function () {
+        document.getElementById("physician-information-set").disabled = true;
+
+        phyInfoEdit.classList.remove('d-none');
+        phyInfoSave.classList.add('d-none');
+        phyInfoCancel.classList.add('d-none');
+
+    });
+
+    var editBtn2 = document.getElementById("physician-mailing-billing-edit");
+    var saveBtn2 = document.getElementById("physician-mailing-billing-save");
+    var cancelBtn2 = document.getElementById("physician-mailing-billing-cancel");
+
+    $("#physician-mailing-billing-edit").click(function () {
+        document.getElementById("physician-mailing-billing-set").disabled = false;
+
+        editBtn2.classList.add('d-none');
+        cancelBtn2.classList.remove('d-none');
+        saveBtn2.classList.remove('d-none');
+
+    });
+
+    $("#physician-mailing-billing-cancel").click(function () {
+        document.getElementById("physician-mailing-billing-set").disabled = true;
+
+        editBtn2.classList.remove('d-none');
+        cancelBtn2.classList.add('d-none');
+        saveBtn2.classList.add('d-none');
+
+    });
+
+
+    var phyProfileEdit = document.getElementById("physician-profile-edit");
+    var phyProfileSave = document.getElementById("physician-profile-save");
+    var phyProfileCancel = document.getElementById("physician-profile-cancel");
+
+    $("#physician-profile-edit").click(function () {
+        document.getElementById("physician-profile-set").disabled = false;
+
+        phyProfileEdit.classList.add('d-none');
+        phyProfileCancel.classList.remove('d-none');
+        phyProfileSave.classList.remove('d-none');
+
+    });
+
+    $("#physician-profile-cancel").click(function () {
+        document.getElementById("physician-profile-set").disabled = true;
+        $('#signature-div').css("display", "none");
+        signaturePad.clear();
+
+        phyProfileEdit.classList.remove('d-none');
+        phyProfileSave.classList.add('d-none');
+        phyProfileCancel.classList.add('d-none');
+
+    });
+
+</script>
+
+<script>
+
+    $('#ica-upload-btn').click(function () {
+        $("#ica-file-input").trigger('click');
+    });
+    $("#ica-file-input").change(function () {
+        $('#ica-file-name-text').text(this.value.replace(/C:\\fakepath\\/i, ''))
+    });
+
+    $('#bg-check-upload-btn').click(function () {
+        $("#bg-check-file-input").trigger('click');
+    });
+    $("#bg-check-file-input").change(function () {
+        $('#bg-check-file-name-text').text(this.value.replace(/C:\\fakepath\\/i, ''))
+    });
+
+    $('#hipaa-upload-btn').click(function () {
+        $("#hipaa-file-input").trigger('click');
+    });
+    $("#hipaa-file-input").change(function () {
+        $('#hipaa-file-name-text').text(this.value.replace(/C:\\fakepath\\/i, ''))
+    });
+
+
+    $('#nda-upload-btn').click(function () {
+        $("#nda-file-input").trigger('click');
+    });
+    $("#nda-file-input").change(function () {
+        $('#nda-file-name-text').text(this.value.replace(/C:\\fakepath\\/i, ''))
+    });
+
+
+    $('#license-upload-btn').click(function () {
+        $("#license-file-input").trigger('click');
+    });
+    $("#license-file-input").change(function () {
+        $('#license-file-name-text').text(this.value.replace(/C:\\fakepath\\/i, ''))
+    });
+
+
+</script>
+
+<script>
+
+    $('#phy_photo_text_input_id').click(function () {
+        $("#phy_photo_input_id").trigger('click');
+    });
+
+    $('#phy_photo_span_input_id').click(function () {
+        $("#phy_photo_input_id").trigger('click');
+    });
+
+    $("#phy_photo_input_id").change(function () {
+        $('#phy_photo_text_input_id').val(this.value.replace(/C:\\fakepath\\/i, ''))
+    })
+
+
+
+    $('#phy_sign_span_input_id').click(function () {
+        $("#phy_sign_input_id").trigger('click');
+    });
+
+    $('#phy_sign_text_input_id').click(function () {
+        $("#phy_sign_input_id").trigger('click');
+    });
+
+    $("#phy_sign_input_id").change(function () {
+        $('#phy_sign_text_input_id').val(this.value.replace(/C:\\fakepath\\/i, ''))
+    })
+
+</script>
 
 <script>
 

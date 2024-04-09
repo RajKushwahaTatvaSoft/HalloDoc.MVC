@@ -5,6 +5,8 @@ var dashboardStatus = 0;
 var type_filter = 0;
 var region_filter = 0;
 var search_filter = "";
+var sendLinkInputField;
+var sendLinkField;
 
 //Pagination And Backend Filters
 

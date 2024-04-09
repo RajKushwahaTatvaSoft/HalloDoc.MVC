@@ -16,7 +16,7 @@ namespace Business_Layer.Services.Helper
 
         public IEnumerable<City> GetCitiesByRegion(int regionId)
         {
-            IEnumerable<City> cities = _context.Cities.Where(city => city.Regionid == regionId);
+            IEnumerable<City> cities = _context.Cities.Where(city => city.Regionid == regionId).OrderBy(_ => _.Name);
             return cities;
         }
 

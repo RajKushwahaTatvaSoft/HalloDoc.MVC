@@ -9,7 +9,7 @@ namespace Data_Layer.ViewModels.Admin
 {
     public class SendOrderViewModel
     {
-        public string UserName { get; set; }
+        public string? UserName { get; set; }
         public IEnumerable<Healthprofessional>? vendorsList { get; set; }
         public IEnumerable<Healthprofessionaltype>? professionalTypeList { get; set; }
         public int SelectedVendor { get; set; }

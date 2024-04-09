@@ -18,6 +18,68 @@
 
 @* MODALS *@
 
+@* SEND LINK MODAL *@
+<div class="modal fade" id="sendLinkModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <div class="modal-dark modal-title text-white" id="exampleModalLongTitle">
+                    Send mail to patient for submitting request
+                </div>
+                <button type="button" class="btn" aria-label="Close" data-bs-dismiss="modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
+                         fill="#FFFFFF">
+                        <path d="M0 0h24v24H0V0z" fill="none" />
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
+                    </svg>
+                </button>
+            </div>
+
+            <form method="post" asp-controller="Physician" asp-action="SendLinkForCreateRequest">
+                <div class="modal-body">
+                    <div class="modal-flex my-3">
+
+                        <input hidden />
+                        <div class="col-12">
+                            <div class="form-floating">
+                                <input name="FirstName" type="text" class="form-control" placeholder="First Name">
+                                <label for="floatingInput">First Name</label>
+                            </div>
+                        </div>
+
+                        <div class="col-12 mt-3">
+                            <div class="form-floating">
+                                <input name="LastName" type="text" class="form-control" placeholder="Last Name">
+                                <label for="floatingInput">Last Name</label>
+                            </div>
+                        </div>
+
+                        <div class="col-12 mt-3">
+                            <div class="form-floating d-flex  w-100">
+                                <input name="CountryCode" id="send-link-phone-country" hidden style="height:60px;" />
+                                <input name="Phone" id="send-link-phone" class="py-4 form-control" type="tel" style="height:60px;" />
+                            </div>
+                        </div>
+
+                        <div class="col-12 mt-3">
+                            <div class="form-floating">
+                                <input name="Email" type="text" class="form-control" placeholder="Email">
+                                <label for="floatingInput">Email</label>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" onclick="setCountryCode()" class="btn btn-info text-white" data-bs-dismiss="modal">Submit</button>
+                    <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @* Before Encounter Modal *@
 <div class="modal fade" id="beforeEncounterModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
      aria-hidden="true">
@@ -45,7 +107,6 @@
         </div>
     </div>
 </div>
-
 
 @* Tranfer Case *@
 <div class="modal  fade" id="transferModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
@@ -436,7 +497,7 @@
 
         <div class="d-flex align-items-center">
 
-            <button type="submit" class="mx-1 px-2 py-1 btn btn-primary" style="background-color:#10bce9">
+            <button data-bs-toggle="modal" data-bs-target="#sendLinkModal" type="button" class="mx-1 px-2 py-1 btn btn-primary" style="background-color:#10bce9">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="#ffffff" width="24px" height="24px" enable-background="new 0 0 32 32" viewBox="0 0 32 32" id="telegram">
                     <path fill="#ffffff" d="M24.687,30.163c-0.402,0-0.843-0.132-1.32-0.395l-10.803-7.976c-0.121-0.089-0.195-0.228-0.203-0.378
 	c-0.007-0.15,0.053-0.295,0.165-0.396L25.322,9.503c0.205-0.185,0.521-0.169,0.706,0.037c0.185,0.205,0.168,0.521-0.037,0.706
@@ -463,7 +524,7 @@ C25.163,30.114,24.933,30.163,24.687,30.163z"></path>
                 <span class="ms-1 d-none d-md-inline text-white">Send Link</span>
             </button>
 
-            <button type="submit" class="mx-1 px-2 py-1 btn btn-primary" style="background-color:#10bce9">
+            <a asp-controller="Physician" asp-action="CreateRequest" type="button" class="mx-1 px-2 py-1 btn btn-primary" style="background-color:#10bce9">
                 <svg fill="#ffffff" version="1.1" width="24px" height="24px" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
                      viewBox="0 0 60 60" xml:space="preserve">
 <g>
@@ -480,7 +541,7 @@ C25.163,30.114,24.933,30.163,24.687,30.163z"></path>
 </g>
 </svg>
                 <span class="ms-1  d-none d-md-inline text-white">Create Request</span>
-            </button>
+            </a>
 
         </div>
 
@@ -570,6 +631,60 @@ C25.163,30.114,24.933,30.163,24.687,30.163z"></path>
 
 <script src="/js/physician-dashboard.js"></script>
 
+<script>
+
+    var sendLinkInputField;
+    var sendLinkField;
+
+    sendLinkInputField = document.getElementById("send-link-phone");
+    sendLinkField = window.intlTelInput(sendLinkInputField, {
+        utilsScript:
+            "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+        preferredCountries: ["in"],
+        separateDialCode: true,
+        initialCountry: "in"
+    });
+
+    function setCountryCode() {
+
+        let countryCode = document.getElementById("send-link-phone-country");
+        countryCode.value = sendLinkField.getSelectedCountryData().dialCode;
+
+    }
+
+</script>
+
+<script>
+
+    var currentStatus = @Model.filterOptions.status;
+    var currentPage = @Model.filterOptions.pageNumber;
+    var currentRegion = @Model.filterOptions.RegionFilter;
+    var currentType = @Model.filterOptions.RequestTypeFilter;
+    var currentSearch = "@Model.filterOptions.PatientSearchText";
+
+    console.log(currentStatus);
+    console.log(currentPage);
+    console.log(currentRegion);
+    console.log(currentType);
+    console.log(currentSearch);
+
+    if (currentStatus != null) {
+
+        dashboardStatus = currentStatus;
+        type_filter = currentType;
+        region_filter = currentRegion;
+        search_filter = currentSearch;
+
+        console.log('Region: ' + region_filter);
+
+        loadPageWithStatus(currentPage, currentStatus);
+    }
+    else {
+        console.log('should not come here');
+        $("#status-new-tab").click();
+    }
+
+</script>
 
 <script>
 

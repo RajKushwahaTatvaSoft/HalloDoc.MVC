@@ -9,6 +9,7 @@ namespace Data_Layer.CustomModels.TableRow.Physician
     public class PhyDashboardTRow
     {
         public int? RequestId { get; set; }
+        public int? CallType {  get; set; }
         public string Email { get; set; }
         public string PatientName { get; set; }
         public int RequestType { get; set; }

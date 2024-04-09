@@ -12,6 +12,7 @@ namespace Business_Layer.Utilities
         HouseCall = 1,
         Consult = 2,
     }
+
     public enum AllowMenu
     {
         AdminDashboard = 1,
@@ -33,7 +34,6 @@ namespace Business_Layer.Utilities
         ProviderSchedule = 17,
         ProviderProfile = 18,
     }
-
 
     public enum RequestStatus
     {

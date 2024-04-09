@@ -14,7 +14,7 @@ namespace HalloDoc.MVC.Services
         {
             _roleId = roleId;
         }
-                
+ 
         public void OnAuthorization(AuthorizationFilterContext context)
         {
 
@@ -58,8 +58,10 @@ namespace HalloDoc.MVC.Services
             var roleClaim = jwtToken.Claims.FirstOrDefault(claims => claims.Type == "accountTypeId");
             var userIdClaim = jwtToken.Claims.FirstOrDefault(claims => claims.Type == "userId");
             var userNameClaim = jwtToken.Claims.FirstOrDefault(claims => claims.Type == "userName");
+            var userAspIdClaim = jwtToken.Claims.FirstOrDefault(claims => claims.Type == "userAspId");
             context.HttpContext.Request.Headers.Add("userId",userIdClaim.Value);
             context.HttpContext.Request.Headers.Add("userName",userNameClaim.Value);
+            context.HttpContext.Request.Headers.Add("userAspId", userAspIdClaim.Value);
 
             if (roleClaim == null)
             {                

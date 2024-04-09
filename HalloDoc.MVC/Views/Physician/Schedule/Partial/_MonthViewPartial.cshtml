@@ -1,0 +1,107 @@
+﻿@model ShiftMonthViewModel
+
+<div class="p-0 week-wise-table container-fluid mt-4">
+
+    <table class=" p-0 table mt-4  table-bordered">
+
+        <colgroup>
+            @for (int i = 0; i < 7; i++)
+            {
+                <col span="1" style="width: 14.29%;">
+            }
+        </colgroup>
+
+        <thead class="p-0" style="background-color: dimgrey;">
+
+            <tr class="">
+                <th class="text-uppercase text-white" style="text-align: center">Sun</th>
+                <th class="text-uppercase text-white" style="text-align: center">Mon</th>
+                <th class="text-uppercase text-white" style="text-align: center">Tue</th>
+                <th class="text-uppercase text-white" style="text-align: center">Wed</th>
+                <th class="text-uppercase text-white" style="text-align: center">Thu</th>
+                <th class="text-uppercase text-white" style="text-align: center">Fri</th>
+                <th class="text-uppercase text-white" style="text-align: center">Sat</th>
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+            @{
+                int monthDays = 1;
+                int rowsForEachDay = 3;
+                int temp = 1;
+            }
+
+            @for (int row = 0; row < rowsForEachDay; row++)
+            {
+                temp = monthDays;
+                <tr>
+                    @for (int tableDayOfWeek = 0; tableDayOfWeek < 7; tableDayOfWeek++)
+                    {
+
+                        @if ((DayOfWeek)tableDayOfWeek < Model.StartDayOfWeek)
+                        {
+                            <td></td>
+                        }
+                        else
+                        {
+                            <td>@temp</td>
+                            temp++;
+
+                        }
+
+                    }
+                </tr>
+            }
+
+
+        </tbody>
+
+    </table>
+
+</div>
+
+<script>
+
+    $('.week-wise-view-all-btn').click(function () {
+
+        let weekTableDate = $(this).data("date");
+        let weekTableMonth = $(this).data("month");
+        let weekTableYear = $(this).data("year");
+
+        console.log('Week Date: ' + weekTableDate);
+        console.log('Week Month: ' + weekTableMonth);
+        console.log('Week Year: ' + weekTableYear);
+
+        currentDate = new Date(weekTableYear, (weekTableMonth - 1), weekTableDate);
+        console.log(currentDate);
+        $('#day-wise-schedule-btn').click();
+
+    });
+
+    $('.view-shift-btn').click(function () {
+
+        var sDetailId = $(this).data("shiftdetailid");
+        console.log('shift detail id: ' + sDetailId);
+
+        var phyId = $(this).data("physicianid");
+        console.log('phy id: ' + phyId);
+
+        $.ajax({
+            url: "/Admin/ViewShiftModal",
+            data: { shiftDetailId: sDetailId, physicianId: phyId },
+            type: 'GET',
+            success: function (result) {
+                $('#modal-div').html(result);
+                $('#viewShiftModal').modal('show');
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
+
+    });
+
+</script>
