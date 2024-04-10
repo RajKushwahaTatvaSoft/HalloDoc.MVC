@@ -1,5 +1,17 @@
 ﻿@model ShiftMonthViewModel
 
+<style>
+    td {
+        height: 50px;
+        text-align: center;
+    }
+
+    .row-header {
+        background-color: lightyellow !important;
+    }
+
+</style>
+
 <div class="p-0 week-wise-table container-fluid mt-4">
 
     <table class=" p-0 table mt-4  table-bordered">
@@ -28,32 +40,147 @@
         <tbody>
 
             @{
-                int monthDays = 1;
-                int rowsForEachDay = 3;
-                int temp = 1;
+                int monthDaysCounter = 1; // will increase after all rows for each week are printed
+                int rowsForEachDay = 4; // rows to show for each day - including the header
+                int tempCounter = 1; // will increase for each day in week
             }
 
             @for (int row = 0; row < rowsForEachDay; row++)
             {
-                temp = monthDays;
+                tempCounter = monthDaysCounter;
                 <tr>
+
                     @for (int tableDayOfWeek = 0; tableDayOfWeek < 7; tableDayOfWeek++)
                     {
 
-                        @if ((DayOfWeek)tableDayOfWeek < Model.StartDayOfWeek)
+                        @if ((DayOfWeek)tableDayOfWeek < Model.StartDate.DayOfWeek)
                         {
                             <td></td>
+                            continue;
+                        }
+
+
+                        if (row == 0)
+                        {
+                            <td class="row-header">@tempCounter</td>
+                            tempCounter++;
+                            continue;
+                        }
+
+
+                        DateTime tableDate = Model.StartDate.AddDays(tempCounter - 1);
+
+                        IEnumerable<Shiftdetail> shifts = Model.shiftDetails.Where(shift => shift.Shiftdate == tableDate).Skip(row - 1);
+                        Shiftdetail? shift = shifts.FirstOrDefault();
+
+                        if (shift != null)
+                        {
+
+                            string statusClass = "";
+
+                            if (shift.Status == 1)
+                            {
+                                statusClass = "approved-shift-bg";
+                            }
+                            else if (shift.Status == 2)
+                            {
+                                statusClass = "pending-shift-bg";
+                            }
+
+                            <td class="@statusClass">
+                                @shift.Starttime - @shift.Endtime
+                            </td>
+
                         }
                         else
                         {
-                            <td>@temp</td>
-                            temp++;
-
+                            <td class=""></td>
                         }
+
+                        tempCounter++;
+
 
                     }
                 </tr>
             }
+
+            @{
+                monthDaysCounter = tempCounter;
+            }
+
+            @while (monthDaysCounter <= Model.DaysInMonth)
+            {
+
+                @for (int row = 0; row < rowsForEachDay; row++)
+                {
+                    tempCounter = monthDaysCounter;
+
+                    <tr>
+                        @for (int tableDayOfWeek = 0; tableDayOfWeek < 7; tableDayOfWeek++)
+                        {
+
+                            DateTime tableDate = Model.StartDate.AddDays(tempCounter - 1);
+                            @if (tempCounter <= Model.DaysInMonth)
+                            {
+
+                                if (row == 0)
+                                {
+                                    <td class="row-header">@tempCounter</td>
+                                    tempCounter++;
+                                    continue;
+                                }
+
+
+                                var shifts = Model.shiftDetails.Where(shift => shift.Shiftdate == tableDate).Skip(row - 1);
+
+                                if (row == (rowsForEachDay - 1) && shifts.Count() > 1)
+                                {
+                                    <td>
+                                        <button class="view-all-btn btn text-info p-0 m-0" data-date="@tableDate.Day" data-month="@tableDate.Month" data-year="@tableDate.Year">View All</button>
+                                    </td>
+                                    tempCounter++;
+                                    continue;
+                                }
+
+                                Shiftdetail? shift = shifts.FirstOrDefault();
+
+                                if (shift != null)
+                                {
+
+                                    string statusClass = "";
+
+                                    if (shift.Status == 1)
+                                    {
+                                        statusClass = "approved-shift-bg";
+                                    }
+                                    else if (shift.Status == 2)
+                                    {
+                                        statusClass = "pending-shift-bg";
+                                    }
+
+                                    <td class="@statusClass">
+                                        @shift.Starttime - @shift.Endtime
+                                    </td>
+                                }
+                                else
+                                {
+                                    <td></td>
+                                }
+
+                                tempCounter++;
+
+                            }
+                            else
+                            {
+                                <td></td>
+                            }
+
+                        }
+                    </tr>
+                }
+                monthDaysCounter = tempCounter;
+            }
+
 
 
         </tbody>
@@ -62,21 +189,34 @@
 
 </div>
 
+
+
 <script>
 
-    $('.week-wise-view-all-btn').click(function () {
+    $('td').addClass('align-middle');
 
-        let weekTableDate = $(this).data("date");
-        let weekTableMonth = $(this).data("month");
-        let weekTableYear = $(this).data("year");
+    $('.view-all-btn').click(function () {
 
-        console.log('Week Date: ' + weekTableDate);
-        console.log('Week Month: ' + weekTableMonth);
-        console.log('Week Year: ' + weekTableYear);
+        let tableDate = $(this).data("date");
+        let tableMonth = $(this).data("month");
+        let tableYear = $(this).data("year");
 
-        currentDate = new Date(weekTableYear, (weekTableMonth - 1), weekTableDate);
-        console.log(currentDate);
-        $('#day-wise-schedule-btn').click();
+        // month adjusted for 1st indexed month in c# to 0 indexed month in js
+        currentDate = new Date(tableYear, (tableMonth - 1), tableDate);
+
+        $.ajax({
+            url: "/Physician/ShowDayShiftsModal",
+            data: { jsDate: currentDate.toISOString() },
+            type: 'GET',
+            success: function (result) {
+                $('#modal-div').html(result);
+                $('#dayShiftModal').modal('show');
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
 
     });
 
@@ -89,7 +229,7 @@
         console.log('phy id: ' + phyId);
 
         $.ajax({
-            url: "/Admin/ViewShiftModal",
+            url: "/Physician/ViewShiftModal",
             data: { shiftDetailId: sDetailId, physicianId: phyId },
             type: 'GET',
             success: function (result) {

@@ -75,4 +75,20 @@ namespace Business_Layer.Utilities
         Patient = 3,
     }
 
+    public enum ShiftStatus
+    {
+        Pending = 2,
+        Approved = 1
+    }
+    public enum ShiftWeekDays
+    {
+        Sunday = 1,
+        Monday = 2,
+        Tuesday = 3,
+        Wednesday = 4,
+        Thursday = 5,
+        Friday = 6,
+        Saturday = 7
+    }
+
 }

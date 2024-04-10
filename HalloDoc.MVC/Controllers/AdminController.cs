@@ -57,7 +57,9 @@ namespace HalloDoc.MVC.Controllers
         public IActionResult Profile()
         {
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-            Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(a => a.Adminid == adminId);
+            string? adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+
+            Admin? admin = _unitOfWork.AdminRepository.GetFirstOrDefault(a => a.Adminid == adminId);
 
             if (admin == null)
             {
@@ -65,7 +67,7 @@ namespace HalloDoc.MVC.Controllers
                 return RedirectToAction("Index");
             }
 
-            Aspnetuser aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(user => user.Id == admin.Aspnetuserid);
+            Aspnetuser? aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(user => user.Id == admin.Aspnetuserid);
             if (aspUser == null)
             {
                 _notyf.Error("AspUser Not Found");
@@ -81,7 +83,8 @@ namespace HalloDoc.MVC.Controllers
 
             AdminProfileViewModel model = new()
             {
-                Username = aspUser.Username,
+                UserName = adminName,
+                AspUserName = aspUser.Username,
                 StatusId = admin.Status,
                 RoleId = admin.Roleid,
                 FirstName = admin.Firstname,
@@ -161,6 +164,8 @@ namespace HalloDoc.MVC.Controllers
         [RoleAuthorize((int)AllowMenu.ProviderLocation)]
         public IActionResult ProviderLocation()
         {
+            string? adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+
             IEnumerable<PhyLocationRow> list = (from pl in _unitOfWork.PhysicianLocationRepo.GetAll()
                                                 select new PhyLocationRow
                                                 {
@@ -168,11 +173,13 @@ namespace HalloDoc.MVC.Controllers
                                                     Latitude = pl.Latitude ?? 0,
                                                     Longitude = pl.Longitude ?? 0,
                                                 });
-            string apiKey = _config.GetSection("TomTom")["ApiKey"];
+
+            string? apiKey = _config.GetSection("TomTom")["ApiKey"];
             ProviderLocationViewModel model = new ProviderLocationViewModel()
             {
                 locationList = list,
                 ApiKey = apiKey,
+                UserName = adminName,                
             };
             return View("Header/ProviderLocation", model);
         }
@@ -2073,8 +2080,11 @@ namespace HalloDoc.MVC.Controllers
         [RoleAuthorize((int)AllowMenu.Scheduling)]
         public IActionResult Scheduling()
         {
+            string? adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+
             SchedulingViewModel model = new SchedulingViewModel();
             model.regions = _unitOfWork.RegionRepository.GetAll();
+            model.UserName = adminName;
 
             return View("Providers/Scheduling", model);
         }
@@ -2082,21 +2092,6 @@ namespace HalloDoc.MVC.Controllers
         public List<Physician> GetPhyByRegion(int id)
         {
             return _unitOfWork.PhysicianRepository.Where(a => a.Regionid == id).ToList();
-        }
-        public enum shiftStatus
-        {
-            Pending = 2,
-            Approved = 1
-        }
-        public enum shiftWeekDays
-        {
-            Sunday = 1,
-            Monday = 2,
-            Tuesday = 3,
-            Wednesday = 4,
-            Thursday = 5,
-            Friday = 6,
-            Saturday = 7
         }
 
         public int GetOffSet(int currentDay, List<int> repeatDays)
@@ -2139,7 +2134,7 @@ namespace HalloDoc.MVC.Controllers
                     Regionid = model.addShiftRegion,
                     Starttime = (TimeOnly)model.shiftStartTime,
                     Endtime = (TimeOnly)model.shiftEndTime,
-                    Status = (short)shiftStatus.Approved,
+                    Status = (short)ShiftStatus.Approved,
                     Isdeleted = false
                 };
                 _unitOfWork.ShiftDetailRepository.Add(shiftdetail1);
@@ -2165,7 +2160,7 @@ namespace HalloDoc.MVC.Controllers
                             Regionid = model.addShiftRegion,
                             Starttime = (TimeOnly)model.shiftStartTime,
                             Endtime = (TimeOnly)model.shiftEndTime,
-                            Status = (short)shiftStatus.Approved,
+                            Status = (short)ShiftStatus.Approved,
                             Isdeleted = false
                         };
 
@@ -3177,7 +3172,9 @@ namespace HalloDoc.MVC.Controllers
         [RoleAuthorize((int)AllowMenu.Invoicing)]
         public IActionResult Invoicing()
         {
-            return View("Providers/Invoicing");
+            string? adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+
+            return View("Providers/Invoicing",adminName);
         }
 
         #endregion
@@ -3358,7 +3355,7 @@ namespace HalloDoc.MVC.Controllers
             AdminProfileViewModel model = new AdminProfileViewModel()
             {
                 AdminId = admin.Adminid,
-                Username = aspUser.Username,
+                AspUserName = aspUser.Username,
                 RoleId = admin.Roleid,
                 FirstName = admin.Firstname,
                 LastName = admin.Lastname,
@@ -3467,8 +3464,8 @@ namespace HalloDoc.MVC.Controllers
             int adminId = Convert.ToInt32(HttpContext.Request.Headers
                 .Where(x => x.Key == "userId")
                 .FirstOrDefault().Value);
+            string? adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
 
-            Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(a => a.Adminid == adminId);
             AccountAccessViewModel model = new AccountAccessViewModel();
 
             IEnumerable<AccountAccessTRow> accessTables = (from r in _unitOfWork.RoleRepo.GetAll()
@@ -3482,6 +3479,7 @@ namespace HalloDoc.MVC.Controllers
                                                            });
 
             model.roles = accessTables;
+            model.UserName = adminName;
             return View("Access/AccountAccess", model);
         }
 
@@ -3685,7 +3683,9 @@ namespace HalloDoc.MVC.Controllers
         [RoleAuthorize((int)AllowMenu.UserAccess)]
         public IActionResult UserAccess()
         {
-            return View("Access/UserAccess");
+            string? adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+
+            return View("Access/UserAccess",adminName);
         }
         #endregion
 
@@ -3777,8 +3777,11 @@ namespace HalloDoc.MVC.Controllers
         [RoleAuthorize((int)AllowMenu.SearchRecords)]
         public IActionResult SearchRecords()
         {
+            string? adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+
             SearchRecordViewModel model = new SearchRecordViewModel()
             {
+                UserName = adminName,
                 requeststatuses = _unitOfWork.RequestStatusRepository.GetAll(),
                 requesttypes = _unitOfWork.RequestTypeRepository.GetAll(),
             };
@@ -3789,9 +3792,11 @@ namespace HalloDoc.MVC.Controllers
         [RoleAuthorize((int)AllowMenu.EmailLogs)]
         public IActionResult EmailLogs()
         {
+            string? adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
 
             EmailLogsViewModel model = new()
             {
+                UserName = adminName,
                 roles = _unitOfWork.RoleRepo.GetAll(),
             };
             return View("Records/EmailLogs", model);
@@ -3802,8 +3807,11 @@ namespace HalloDoc.MVC.Controllers
         [RoleAuthorize((int)AllowMenu.SMSLogs)]
         public IActionResult SMSLogs()
         {
+            string? adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+
             SMSLogsViewModel model = new()
             {
+                UserName = adminName,
                 roles = _unitOfWork.RoleRepo.GetAll(),
             };
             return View("Records/SMSLogs", model);
@@ -3813,9 +3821,11 @@ namespace HalloDoc.MVC.Controllers
         [RoleAuthorize((int)AllowMenu.PatientRecords)]
         public IActionResult PatientRecords()
         {
+            string? adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
 
             PatientRecordsViewModel model = new()
             {
+                UserName = adminName,
                 roles = _unitOfWork.RoleRepo.GetAll(),
             };
             return View("Records/PatientRecords", model);
@@ -3867,7 +3877,9 @@ namespace HalloDoc.MVC.Controllers
         [RoleAuthorize((int)AllowMenu.BlockedHistory)]
         public IActionResult BlockedHistory()
         {
-            return View("Records/BlockedHistory");
+            string? adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+
+            return View("Records/BlockedHistory",adminName);
         }
 
         [HttpPost]
@@ -4041,8 +4053,11 @@ namespace HalloDoc.MVC.Controllers
         [RoleAuthorize((int)AllowMenu.Partners)]
         public IActionResult Vendors()
         {
+            string? adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+
             VendorViewModel model = new()
             {
+                UserName = adminName,
                 Healthprofessionaltypes = _unitOfWork.HealthProfessionalTypeRepo.GetAll(),
             };
             return View("Partners/Vendors", model);

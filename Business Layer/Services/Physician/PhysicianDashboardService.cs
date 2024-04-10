@@ -53,15 +53,17 @@ namespace Business_Layer.Services.Admin
             }
 
             var query = (from r in _context.Requests
-                         join rc in _context.Requestclients on r.Requestid equals rc.Requestid
                          where (r.Physicianid == physicianId)
                          && validRequestTypes.Contains(r.Status)
-                         && (dashboardParams.RequestTypeFilter == 0 || r.Requesttypeid == dashboardParams.RequestTypeFilter)
+                         join rc in _context.Requestclients on r.Requestid equals rc.Requestid
+                         where (dashboardParams.RequestTypeFilter == 0 || r.Requesttypeid == dashboardParams.RequestTypeFilter)
                          && (dashboardParams.RegionFilter == 0 || rc.Regionid == dashboardParams.RegionFilter)
                          && (string.IsNullOrEmpty(dashboardParams.PatientSearchText) || (rc.Firstname + " " + rc.Lastname).ToLower().Contains(dashboardParams.PatientSearchText.ToLower()))
+                         join form in _context.Encounterforms on r.Requestid equals form.Requestid into formGroup
+                         from formItem in formGroup.DefaultIfEmpty()
                          select new PhyDashboardTRow
                          {
-                             Status = (r.Status == (int)RequestStatus.MDOnSite) ? true : false,
+                             IsHouseCall = (r.Status == (int)RequestStatus.MDOnSite) ? true : false,
                              RequestId = r.Requestid,
                              Email = rc.Email,
                              PatientName = rc.Firstname + " " + rc.Lastname,
@@ -69,6 +71,7 @@ namespace Business_Layer.Services.Admin
                              PatientPhone = rc.Phonenumber,
                              Phone = r.Phonenumber,
                              Address = rc.Address,
+                             IsFinalize = formItem.Isfinalize ? true : false,
                          }).AsQueryable();
 
             return await PagedList<PhyDashboardTRow>.CreateAsync(

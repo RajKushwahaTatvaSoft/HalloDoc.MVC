@@ -105,6 +105,7 @@
         console.log('Week Month: ' + weekTableMonth);
         console.log('Week Year: ' + weekTableYear);
 
+        // month adjusted for 1st indexed month in c# to 0 indexed month in js
         currentDate = new Date(weekTableYear, (weekTableMonth - 1), weekTableDate);
         console.log(currentDate);
         $('#day-wise-schedule-btn').click();

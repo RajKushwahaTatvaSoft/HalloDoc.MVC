@@ -10,6 +10,7 @@
   <ItemGroup>
     <PackageReference Include="ClosedXML" Version="0.104.0-preview2" />
     <PackageReference Include="CsvHelper" Version="31.0.2" />
+    <PackageReference Include="itextsharp.xmlworker" Version="5.5.13.3" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.15" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Features" Version="6.0.0-preview.4.21253.5" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.15">
@@ -23,7 +24,7 @@
     <PackageReference Include="Microsoft.Office.Interop.Excel" Version="12.0.4518.1014" />
     <PackageReference Include="NETCore.MailKit" Version="2.1.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.11" />
-    <PackageReference Include="Rotativa" Version="1.7.4-rc" />
+    <PackageReference Include="Rotativa.AspNetCore" Version="1.3.2" />
   </ItemGroup>
 
 </Project>

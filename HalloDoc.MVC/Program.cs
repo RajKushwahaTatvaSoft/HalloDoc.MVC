@@ -13,6 +13,7 @@ using Business_Layer.Services.Helper.Interface;
 using Business_Layer.Services.Helper;
 using Business_Layer.Services.Patient.Interface;
 using Business_Layer.Services.Patient;
+using Rotativa.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -76,7 +77,7 @@ app.UseRouting();
 app.UseSession();
 app.UseNotyf();
 app.UseAuthorization();
-
+app.UseRotativa();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Guest}/{action=Index}");

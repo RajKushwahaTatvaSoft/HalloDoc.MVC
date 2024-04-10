@@ -144,6 +144,8 @@ function applyFilters() {
 function loadPage(pageNo) {
 
     let loading_div = document.getElementById('loading-animation-div');
+    let partial_table_div = document.getElementById('partial-table');
+    partial_table_div.setAttribute('style', 'display:none');
     loading_div.setAttribute('style', 'display:static !important;margin-top:200px;');
 
     $.ajax({
@@ -154,8 +156,8 @@ function loadPage(pageNo) {
             $('#partial-table').html(result);
         },
         complete: function () {
-            console.log('complete');
             loading_div.setAttribute('style', 'display:none !important;margin-top:200px;');
+            partial_table_div.setAttribute('style', 'display:static');
         },
         error: function (error) {
             console.log(error);

@@ -10,6 +10,7 @@ namespace Data_Layer.ViewModels.Admin
 {
     public class SearchRecordViewModel
     {
+        public string? UserName {  get; set; }
         public IEnumerable<Requeststatus> requeststatuses { get; set; }
         public IEnumerable<Requesttype> requesttypes { get; set; }
     }

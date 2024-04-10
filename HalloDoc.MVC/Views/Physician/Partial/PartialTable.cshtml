@@ -125,7 +125,7 @@
                     {
                         <td>
 
-                            @if (currentRequest.Status)
+                            @if (currentRequest.IsHouseCall)
                             {
                                 <button data-requestid="@currentRequest.RequestId" class="btn btn-info text-white house-call-btn">House Call</button>
                             }
@@ -163,19 +163,33 @@
                                     @if (dstatus == 3)
                                     {
                                         <li><a asp-controller="Physician" asp-action="Orders" asp-route-requestId="@currentRequest.RequestId" class="dropdown-item" type="button">Orders</a></li>
-                                        if (currentRequest.Status)
+                                        if (currentRequest.IsHouseCall)
                                         {
                                             <li><a asp-controller="Physician" asp-action="EncounterForm" asp-route-requestId="@currentRequest.RequestId" class="dropdown-item" type="button">Encounter</a></li>
                                         }
                                         else
                                         {
-                                            <li><button data-bs-toggle="modal" data-bs-target="#beforeEncounterModal" data-requestid="@currentRequest.RequestId" class="dropdown-item encounter-case-btn" type="button">Encounter</button></li>
+                                            if (currentRequest.IsFinalize)
+                                            {
+                                                <li><button data-bs-toggle="modal" data-bs-target="#encounterFinalizeModal" data-requestid="@currentRequest.RequestId" class="dropdown-item encounter-finalized-btn" type="button">Encounter</button></li>
+                                            }
+                                            else
+                                            {
+                                                <li><button data-bs-toggle="modal" data-bs-target="#beforeEncounterModal" data-requestid="@currentRequest.RequestId" class="dropdown-item encounter-case-btn" type="button">Encounter</button></li>
+                                            }
                                         }
                                     }
                                     @if (dstatus == 4)
                                     {
                                         <li><a asp-controller="Physician" asp-action="ConcludeCare" asp-route-requestId="@currentRequest.RequestId" class="dropdown-item" type="button">Conclude Care</a></li>
-                                        <li><a asp-controller="Physician" asp-action="EncounterForm" asp-route-requestId="@currentRequest.RequestId" class="dropdown-item" type="button">Encounter</a></li>
+                                        if (currentRequest.IsFinalize)
+                                        {
+                                            <li><button data-bs-toggle="modal" data-bs-target="#encounterFinalizeModal" data-requestid="@currentRequest.RequestId" class="dropdown-item encounter-finalized-btn" type="button">Encounter</button></li>
+                                        }
+                                        else
+                                        {
+                                            <li><a asp-controller="Physician" asp-action="EncounterForm" asp-route-requestId="@currentRequest.RequestId" class="dropdown-item" type="button">Encounter</a></li>
+                                        }
                                     }
                                 </ul>
                             </div>
@@ -238,6 +252,12 @@
                 alert('Error Cancelling Request')
             },
         });
+    });
+
+    $('.encounter-finalized-btn').click(function () {
+        let encounterReqId = $(this).data("requestid");
+
+        $('#encounter-finalize-modal-request-id').val(encounterReqId);
     });
 
     $('.encounter-case-btn').click(function () {

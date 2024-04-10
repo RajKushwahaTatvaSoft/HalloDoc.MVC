@@ -11,6 +11,43 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/js/bootstrap-select.min.js"></script>
 
 
+@* Request To Admin Case *@
+<div class="modal fade" id="requestToAdminModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <div class="modal-dark modal-title text-white" id="exampleModalLongTitle">
+                    Request To Administrator
+                </div>
+                <button type="button" class="btn" aria-label="Close" data-bs-dismiss="modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
+                         fill="#FFFFFF">
+                        <path d="M0 0h24v24H0V0z" fill="none" />
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
+                    </svg>
+                </button>
+            </div>
+            <form method="post" asp-controller="Physician" asp-action="SendMessageToAdmin">
+                <div class="modal-body">
+                    <span class="modal-head">Need to send message to edit</span>
+                    <div class="modal-flex my-3">
+                        <div class="form-floating mt-3">
+                            <textarea style="height: 100px;" id="rtaMessage" type="text" class="form-control" name="message" placeholder="Message"></textarea>
+                            <label for="rtaMessage">Message</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-info text-white" data-bs-dismiss="modal">Send</button>
+                    <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
 <div class="">
     <div class="container-fluid d-flex justify-content-between mt-4" style="max-width:1000px">
         <h4>
@@ -25,11 +62,11 @@
 
     </div>
 
-    <div class="container-fluid justify-content-center mt-4" style="max-width:1000px">
+    <div class="container-fluid dashboard-card justify-content-center mt-4" style="max-width:1000px">
 
-        <input id="adminId" hidden />
-
-        <form method="post" id="physician-account-info-form">
+        <div class="d-flex justify-content-end">
+            <button data-bs-toggle="modal" data-bs-target="#requestToAdminModal" class="btn btn-outline-info">Request To Admin</button>
+        </div>
 
             <h5>Account Information</h5>
             <div class="row g-2 m-1">
@@ -42,48 +79,16 @@
 
                 <div class="col-md">
                     <div class="form-floating">
-                        <input type="text" class="form-control" id="password" placeholder="Password">
+                        <input type="text" class="form-control" id="phy-password" placeholder="Password">
                         <label for="floatingSelectGrid">Password</label>
                     </div>
                 </div>
             </div>
 
-            <div class="row g-2 m-1">
-                <div class="col-md-6">
-                    <div class="form-floating">
-                        <select asp-for="StatusId" class="form-select mb-3 account-info-input" id="status" placeholder="Status" disabled>
-                            <option>Active</option>
-                            <option>Out</option>
-                            <option>Died</option>
-                        </select>
-                        <label for="">Status</label>
-                    </div>
-                </div>
-
-                <div class="col-md-6">
-                    <div class="form-floating phone-div w-100 h-100 ">
-                        <select asp-for="RoleId" class="form-select mb-3 account-info-input" placeholder="Role" disabled>
-                            @foreach (var role in Model.roles)
-                            {
-                                <option value="@role.Roleid">@role.Name</option>
-                            }
-                        </select>
-                        <label for="">Role</label>
-                    </div>
-                </div>
-
+            <div class="d-flex justify-content-end mt-1">
+                <button class="btn btn-outline-info" id="reset-password-btn">Reset Password</button>
             </div>
 
-            <div class="d-flex justify-content-end">
-
-                <button id="account-info-edit-btn" type="button" class="btn btn-primary m-1">Edit</button>
-                <button type="reset" id="account-info-cancel-btn" class="btn btn-danger me-1 d-none">Cancel</button>
-                <button type="submit" id="account-info-save-btn" class="btn btn-primary me-1 d-none">Save</button><br />
-                <button type="button" class="btn btn-outline-info m-1">Reset Password</button><br />
-
-            </div>
-
-        </form>
 
         <form method="post" id="physician-info-form">
 
@@ -151,15 +156,6 @@
                 </div>
             </fieldset>
 
-            <div class="d-flex justify-content-end">
-
-                <button type="reset" id="physician-info-edit-btn" class="btn btn-primary me-1 m-1">Edit</button>
-                <button type="reset" id="physician-info-cancel-btn" class="btn btn-danger me-1 d-none">Cancel</button>
-                <button type="submit" id="physician-info-save-btn" class="btn btn-primary me-1 d-none">Save</button><br />
-
-            </div>
-
-
         </form>
 
         <form method="post" id="physician-mailing-billing-form">
@@ -224,14 +220,6 @@
                 </div>
 
             </fieldset>
-
-            <div class="d-flex justify-content-end">
-
-                <button type="reset" id="physician-mailing-billing-edit" class="btn btn-primary me-1 m-1">Edit</button>
-                <button type="reset" id="physician-mailing-billing-cancel" class="btn btn-danger me-1 d-none">Cancel</button>
-                <button type="submit" id="physician-mailing-billing-save" class="btn btn-primary me-1 d-none">Save</button><br />
-
-            </div>
 
         </form>
 
@@ -329,13 +317,8 @@
 
             </fieldset>
 
-            <button type="reset" id="physician-profile-edit" class="btn btn-primary float-end m-1">Edit</button>
-            <button type="reset" id="physician-profile-cancel" class="btn btn-danger float-end m-1 d-none">Cancel</button>
-            <button type="submit" id="physician-profile-save" class="btn btn-primary float-end m-1 d-none">Save</button><br /> <br />
-
         </form>
 
-        <hr />
 
         <form method="post" id="phy-onboarding-form">
 
@@ -462,9 +445,7 @@
                     </div>
                 </div>
             </div>
-            <div class="border-bottom border-5"></div>
-            <button type="reset" class="btn btn-danger float-end m-1 ">Delete Account</button>
-            <button type="submit" class="btn btn-primary float-end m-1 ">Save</button>
+
         </form>
 
     </div>
@@ -476,90 +457,22 @@
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
 
 <script>
+    $('#reset-password-btn').click(function(){
 
-    var phyAccountInfoEdit = document.getElementById("account-info-edit-btn");
-    var phyAccountInfoSave = document.getElementById("account-info-save-btn");
-    var phyAccountInfoCancel = document.getElementById("account-info-cancel-btn");
-
-    $('#account-info-edit-btn').click(function () {
-
-        var inputs = document.getElementsByClassName("account-info-input");
-        for (var i = 0; i < inputs.length; i++) {
-            inputs[i].disabled = false;
-        }
-
-        phyAccountInfoEdit.classList.add('d-none');
-        phyAccountInfoSave.classList.remove('d-none');
-        phyAccountInfoCancel.classList.remove('d-none');
+        $.ajax({
+            url: "/Physician/ResetPhysicianPassword",
+            data: { updatePassword: $('#phy-password').val() },
+            type: 'POST',
+            success: function (result) {
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
 
     });
-
-    $('#account-info-cancel-btn').click(function () {
-
-        var inputs = document.getElementsByClassName("account-info-input");
-        for (var i = 0; i < inputs.length; i++) {
-            inputs[i].disabled = true;
-        }
-
-        phyAccountInfoEdit.classList.remove('d-none');
-        phyAccountInfoSave.classList.add('d-none');
-        phyAccountInfoCancel.classList.add('d-none');
-
-    });
-
 </script>
-
-<script>
-
-    function dataURLtoFile(dataurl, filename) {
-        var arr = dataurl.split(','),
-            mime = arr[0].match(/:(.*?);/)[1],
-            bstr = atob(arr[arr.length - 1]),
-            n = bstr.length,
-            u8arr = new Uint8Array(n);
-        while (n--) {
-            u8arr[n] = bstr.charCodeAt(n);
-        }
-        return new File([u8arr], filename, { type: mime });
-    }
-
-    jQuery(document).ready(function ($) {
-
-        var canvas = document.getElementById("signature-pad");
-        var signaturePad = new SignaturePad(canvas);
-
-        $('#clear-signature').on('click', function () {
-            signaturePad.clear();
-        });
-
-        $('#save-signature').on('click', function () {
-            const signatureImage = signaturePad.toDataURL();
-            const fileName = "Digital_Signature.png";
-
-            $('#phy_sign_text_input_id').val(fileName);
-
-            let fileInputElement = document.getElementById('phy_sign_input_id');
-
-            let container = new DataTransfer();
-            let data = new Blob();
-            let file = dataURLtoFile(signatureImage, fileName);
-            container.items.add(file);
-            fileInputElement.files = container.files;
-
-            $('#signature-div').css("display", "none");
-
-        });
-
-        $('#create-signature-btn').click(function () {
-            $('#signature-div').css("display", "flex");
-        });
-
-    });
-
-
-
-</script>
-
 <script>
 
     const phoneInputField = document.getElementById("phy-phone");
@@ -579,264 +492,6 @@
         separateDialCode: true,
         initialCountry: "in"
     });
-
-</script>
-
-<script>
-
-    $('#phy-onboarding-form').submit(function (event) {
-        event.preventDefault();
-
-
-        var formData = new FormData($(this)[0]);
-
-        $.ajax({
-            url: "/Physician/SavePhysicianOnboardingInfo",
-            data: formData,
-            processData: false,
-            contentType: false,
-            type: 'POST',
-            success: function (result) {
-                location.reload();
-            },
-            error: function (error) {
-                console.log(error);
-                alert('Error Cancelling Request')
-            },
-        });
-
-    });
-
-    $('#physician-profile-form').submit(function (event) {
-        event.preventDefault();
-
-
-        var formData = new FormData($(this)[0]);
-
-        $.ajax({
-            url: "/Physician/SavePhysicianProfileInfo",
-            data: formData,
-            processData: false,
-            contentType: false,
-            type: 'POST',
-            success: function (result) {
-                location.reload();
-            },
-            error: function (error) {
-                console.log(error);
-                alert('Error Cancelling Request')
-            },
-        });
-
-    });
-
-    $('#physician-info-form').submit(function (event) {
-        event.preventDefault();
-
-        let countryCode1 = document.getElementById("phy-phone-country");
-        countryCode1.value = patientPhoneInput.getSelectedCountryData().dialCode;
-
-        let selectedRegions = [];
-        let checkboxes = document.querySelectorAll(".check");
-        console.log("regions-selected");
-
-        checkboxes.forEach(function (checkbox) {
-            if (checkbox.checked) {
-                selectedRegions.push(checkbox.value);
-            }
-        });
-
-        var formData = new FormData($(this)[0]);
-
-        selectedRegions.forEach(item => {
-            formData.append('selectedRegions', item);
-        });
-
-        $.ajax({
-            url: "/Physician/SavePhysicianInformation",
-            data: formData,
-            processData: false,
-            contentType: false,
-            type: 'POST',
-            success: function (result) {
-                location.reload();
-            },
-            error: function (error) {
-                console.log(error);
-                alert('Error Cancelling Request')
-            },
-        });
-
-    });
-
-    $('#physician-mailing-billing-form').submit(function (event) {
-        event.preventDefault();
-
-        let countryCode2 = document.getElementById("phy-alt-phone-country");
-        countryCode2.value = patientPhoneInput1.getSelectedCountryData().dialCode;
-
-        var formData = new FormData($(this)[0]);
-
-        $.ajax({
-            url: "/Physician/SavePhysicianBillingInfo",
-            data: formData,
-            processData: false,
-            contentType: false,
-            type: 'POST',
-            success: function (result) {
-                location.reload();
-            },
-            error: function (error) {
-                console.log(error);
-                alert('Error Cancelling Request')
-            },
-        });
-
-    });
-
-</script>
-
-<script>
-
-    var phyInfoEdit = document.getElementById("physician-info-edit-btn");
-    var phyInfoSave = document.getElementById("physician-info-save-btn");
-    var phyInfoCancel = document.getElementById("physician-info-cancel-btn");
-
-    $("#physician-info-edit-btn").click(function () {
-        document.getElementById("physician-information-set").disabled = false;
-
-        phyInfoEdit.classList.add('d-none');
-        phyInfoSave.classList.remove('d-none');
-        phyInfoCancel.classList.remove('d-none');
-    });
-
-    $("#physician-info-cancel-btn").click(function () {
-        document.getElementById("physician-information-set").disabled = true;
-
-        phyInfoEdit.classList.remove('d-none');
-        phyInfoSave.classList.add('d-none');
-        phyInfoCancel.classList.add('d-none');
-
-    });
-
-    var editBtn2 = document.getElementById("physician-mailing-billing-edit");
-    var saveBtn2 = document.getElementById("physician-mailing-billing-save");
-    var cancelBtn2 = document.getElementById("physician-mailing-billing-cancel");
-
-    $("#physician-mailing-billing-edit").click(function () {
-        document.getElementById("physician-mailing-billing-set").disabled = false;
-
-        editBtn2.classList.add('d-none');
-        cancelBtn2.classList.remove('d-none');
-        saveBtn2.classList.remove('d-none');
-
-    });
-
-    $("#physician-mailing-billing-cancel").click(function () {
-        document.getElementById("physician-mailing-billing-set").disabled = true;
-
-        editBtn2.classList.remove('d-none');
-        cancelBtn2.classList.add('d-none');
-        saveBtn2.classList.add('d-none');
-
-    });
-
-
-    var phyProfileEdit = document.getElementById("physician-profile-edit");
-    var phyProfileSave = document.getElementById("physician-profile-save");
-    var phyProfileCancel = document.getElementById("physician-profile-cancel");
-
-    $("#physician-profile-edit").click(function () {
-        document.getElementById("physician-profile-set").disabled = false;
-
-        phyProfileEdit.classList.add('d-none');
-        phyProfileCancel.classList.remove('d-none');
-        phyProfileSave.classList.remove('d-none');
-
-    });
-
-    $("#physician-profile-cancel").click(function () {
-        document.getElementById("physician-profile-set").disabled = true;
-        $('#signature-div').css("display", "none");
-        signaturePad.clear();
-
-        phyProfileEdit.classList.remove('d-none');
-        phyProfileSave.classList.add('d-none');
-        phyProfileCancel.classList.add('d-none');
-
-    });
-
-</script>
-
-<script>
-
-    $('#ica-upload-btn').click(function () {
-        $("#ica-file-input").trigger('click');
-    });
-    $("#ica-file-input").change(function () {
-        $('#ica-file-name-text').text(this.value.replace(/C:\\fakepath\\/i, ''))
-    });
-
-    $('#bg-check-upload-btn').click(function () {
-        $("#bg-check-file-input").trigger('click');
-    });
-    $("#bg-check-file-input").change(function () {
-        $('#bg-check-file-name-text').text(this.value.replace(/C:\\fakepath\\/i, ''))
-    });
-
-    $('#hipaa-upload-btn').click(function () {
-        $("#hipaa-file-input").trigger('click');
-    });
-    $("#hipaa-file-input").change(function () {
-        $('#hipaa-file-name-text').text(this.value.replace(/C:\\fakepath\\/i, ''))
-    });
-
-
-    $('#nda-upload-btn').click(function () {
-        $("#nda-file-input").trigger('click');
-    });
-    $("#nda-file-input").change(function () {
-        $('#nda-file-name-text').text(this.value.replace(/C:\\fakepath\\/i, ''))
-    });
-
-
-    $('#license-upload-btn').click(function () {
-        $("#license-file-input").trigger('click');
-    });
-    $("#license-file-input").change(function () {
-        $('#license-file-name-text').text(this.value.replace(/C:\\fakepath\\/i, ''))
-    });
-
-
-</script>
-
-<script>
-
-    $('#phy_photo_text_input_id').click(function () {
-        $("#phy_photo_input_id").trigger('click');
-    });
-
-    $('#phy_photo_span_input_id').click(function () {
-        $("#phy_photo_input_id").trigger('click');
-    });
-
-    $("#phy_photo_input_id").change(function () {
-        $('#phy_photo_text_input_id').val(this.value.replace(/C:\\fakepath\\/i, ''))
-    })
-
-
-
-    $('#phy_sign_span_input_id').click(function () {
-        $("#phy_sign_input_id").trigger('click');
-    });
-
-    $('#phy_sign_text_input_id').click(function () {
-        $("#phy_sign_input_id").trigger('click');
-    });
-
-    $("#phy_sign_input_id").change(function () {
-        $('#phy_sign_text_input_id').val(this.value.replace(/C:\\fakepath\\/i, ''))
-    })
 
 </script>
 

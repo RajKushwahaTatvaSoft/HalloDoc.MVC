@@ -9,6 +9,7 @@ namespace Data_Layer.ViewModels.Admin
 {
     public class AdminProfileViewModel
     {
+        public string? UserName {  get; set; }
         public IEnumerable<Region>? regions { get; set; }
         public IEnumerable<int>? selectedRegions { get; set; }
         public IEnumerable<City>? adminMailCities { get; set; }
@@ -21,7 +22,7 @@ namespace Data_Layer.ViewModels.Admin
         public string? Password { get; set; }
         public string? CountryCode { get; set; }
         public string? PhoneNumber { get; set; }
-        public string? Username { get; set; }
+        public string? AspUserName { get; set; }
         public int? StatusId { get; set; }
         public int? RoleId { get; set; }
         public string? Address1 { get; set; }

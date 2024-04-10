@@ -15,6 +15,7 @@ namespace Business_Layer.Repository
         public AspNetRoleRepository(ApplicationDbContext context) : base(context)
         {
             _context = context;
-        }
+        }               
+
     }
 }

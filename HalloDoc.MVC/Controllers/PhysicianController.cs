@@ -13,7 +13,8 @@ using System.Net.Mail;
 using System.Net;
 using System.Text.Json.Nodes;
 using Business_Layer.Services.Helper.Interface;
-using DocumentFormat.OpenXml.Bibliography;
+using System.Text;
+using Rotativa.AspNetCore;
 
 namespace HalloDoc.MVC.Controllers
 {
@@ -102,245 +103,123 @@ namespace HalloDoc.MVC.Controllers
             return View("Header/Profile", model);
         }
 
-        [HttpPost]
-        public bool SavePhysicianInformation(int PhysicianId, string FirstName, string LastName, string Email, string Phone, string CountryCode, string MedicalLicenseNumber, string NPINumber, string SyncEmail, List<int> selectedRegions)
+        public bool ResetPhysicianPassword(string? updatePassword)
         {
-            if (PhysicianId == null || PhysicianId == 0)
-            {
-                return false;
-            }
 
             try
             {
-                string phone = "+" + CountryCode + "-" + Phone;
-                Physician phy = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Physicianid == PhysicianId);
-                phy.Firstname = FirstName;
-                phy.Lastname = LastName;
-                phy.Mobile = Phone;
-                phy.Medicallicense = MedicalLicenseNumber;
-                phy.Npinumber = NPINumber;
-                phy.Syncemailaddress = SyncEmail;
-
-
-                List<int> physicianRegions = _unitOfWork.PhysicianRegionRepo.Where(region => region.Physicianid == PhysicianId).ToList().Select(x => (int)x.Regionid).ToList();
-
-                List<int> commonRegions = new List<int>();
-
-                // Finding common regions in both new and old lists
-                foreach (int region in physicianRegions)
+                if (string.IsNullOrEmpty(updatePassword))
                 {
-                    if (selectedRegions.Contains(region))
+                    return false;
+                }
+                string? phyAspId = HttpContext.Request.Headers.Where(x => x.Key == "userAspId").FirstOrDefault().Value;
+
+                Aspnetuser? aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(user => user.Id == phyAspId);
+
+                if(aspUser == null)
+                {
+                    return false;
+                }
+
+                aspUser.Passwordhash = AuthHelper.GenerateSHA256(updatePassword);
+                _unitOfWork.AspNetUserRepository.Update(aspUser);
+                _unitOfWork.Save();
+
+                _notyf.Success("Password Updated Successfully.");
+
+                return true;
+            }
+            catch (Exception e)
+            {
+
+
+                return false;
+            }
+
+        }
+
+        [HttpPost]
+        public bool SendMessageToAdmin(string message)
+        {
+            int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+            string phyName= HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+
+            IEnumerable<Admin> admins = _unitOfWork.AdminRepository.GetAll();
+
+            string subject = "Need To Edit My Profile";
+            string? senderEmail = _config.GetSection("OutlookSMTP")["Sender"];
+            string? senderPassword = _config.GetSection("OutlookSMTP")["Password"];
+
+            string editPhysicianProfileLink = Url.Action("EditPhysicianAccount", "Admin", new { physicianId = phyId }, Request.Scheme);
+
+            string body = "<p>" +
+                "Provider " + phyName + " sent message regarding changing his profile: " + message +
+                "</p>" +
+                "<a href=\"" + editPhysicianProfileLink + "\" >Click here to edit physician profile</a>";
+
+            SmtpClient client = new SmtpClient("smtp.office365.com")
+            {
+                Port = 587,
+                Credentials = new NetworkCredential(senderEmail, senderPassword),
+                EnableSsl = true,
+                DeliveryMethod = SmtpDeliveryMethod.Network,
+                UseDefaultCredentials = false
+            };
+
+            MailMessage mailMessage = new MailMessage
+            {
+                From = new MailAddress(senderEmail, "HalloDoc"),
+                Subject = subject,
+                IsBodyHtml = true,
+                Body = body,
+            };
+
+            foreach (Admin admin in admins)
+            {
+                string email = admin.Email;
+
+                if (!string.IsNullOrEmpty(email))
+                {
+                    mailMessage.To.Add(email);
+
+                    Emaillog emaillog = new()
                     {
-                        commonRegions.Add(region);
-                    }
-                }
-
-                // Removing them from both lists
-                foreach (int region in commonRegions)
-                {
-                    selectedRegions.Remove(region);
-                    physicianRegions.Remove(region);
-                }
-
-                // From difference we will remove regions that were in old list but not in new list
-                foreach (int region in physicianRegions)
-                {
-                    Physicianregion pr = _unitOfWork.PhysicianRegionRepo.GetFirstOrDefault(ar => ar.Regionid == region);
-                    _unitOfWork.PhysicianRegionRepo.Remove(pr);
-                }
-
-                // And Add the regions that were in new list but not in old list
-                foreach (int region in selectedRegions)
-                {
-                    Physicianregion phyRegion = new Physicianregion()
-                    {
-                        Physicianid = PhysicianId,
-                        Regionid = region,
+                        Emailtemplate = "r",
+                        Subjectname = subject,
+                        Emailid = email,
+                        Roleid = admin.Roleid,
+                        Adminid = admin.Adminid,
+                        Createdate = DateTime.Now,
+                        Sentdate = DateTime.Now,
+                        Isemailsent = true,
                     };
-
-                    _unitOfWork.PhysicianRegionRepo.Add(phyRegion);
+                    _unitOfWork.EmailLogRepository.Add(emaillog);
                 }
 
-                _unitOfWork.PhysicianRepository.Update(phy);
-                _unitOfWork.Save();
-
-                TempData["success"] = "Data updated successfully";
-                return true;
-            }
-            catch (Exception e)
-            {
-                TempData["error"] = e.ToString();
-                return false;
             }
 
-        }
+            client.Send(mailMessage);
+            _unitOfWork.Save();
 
-        [HttpPost]
-        public bool SavePhysicianBillingInfo(int PhysicianId, string Address1, string Address2, string City, int RegionId, string Zip, string MailCountryCode, string MailPhone)
-        {
-            if (PhysicianId == null || PhysicianId == 0)
-            {
-                return false;
-            }
-
-            try
-            {
-                string phone = "+" + MailCountryCode + "-" + MailPhone;
-                Physician phy = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Physicianid == PhysicianId);
-                phy.Address1 = Address1;
-                phy.Address2 = Address2;
-                phy.City = City;
-                phy.Zip = Zip;
-                phy.Altphone = phone;
-                phy.Regionid = RegionId;
-
-
-                _unitOfWork.PhysicianRepository.Update(phy);
-                _unitOfWork.Save();
-
-                TempData["success"] = "Data updated successfully";
-                return true;
-            }
-            catch (Exception e)
-            {
-                TempData["error"] = e.ToString();
-                return false;
-            }
-
-        }
-
-        [HttpPost]
-        public bool SavePhysicianProfileInfo(int PhysicianId, IFormFile Signature, IFormFile Photo, string BusinessName, string BusinessWebsite)
-        {
-
-            List<string> validProfileExtensions = new List<string> { ".jpeg", ".png", ".jpg" };
-            List<string> validDocumentExtensions = new List<string> { ".pdf" };
-            if (PhysicianId == null || PhysicianId == 0)
-            {
-                return false;
-            }
-
-            try
-            {
-
-                string path = Path.Combine(_environment.WebRootPath, "document", "physician", PhysicianId.ToString());
-                Physician physician = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Physicianid == PhysicianId);
-
-                physician.Businessname = BusinessName;
-                physician.Businesswebsite = BusinessWebsite;
-
-                if (Signature != null)
-                {
-                    string sigExtension = Path.GetExtension(Signature.FileName);
-
-                    if (!validProfileExtensions.Contains(sigExtension))
-                    {
-                        TempData["error"] = "Invalid Signature Extension";
-                        return false;
-                    }
-                    FileHelper.InsertFileAfterRename(Signature, path, "Signature");
-
-                    physician.Signature = Signature.FileName;
-                }
-
-                if (Photo != null)
-                {
-                    string profileExtension = Path.GetExtension(Photo.FileName);
-
-                    if (!validProfileExtensions.Contains(profileExtension))
-                    {
-                        TempData["error"] = "Invalid Profile Photo Extension";
-                        return false;
-                    }
-                    FileHelper.InsertFileAfterRename(Photo, path, "ProfilePhoto");
-                    physician.Photo = Photo.FileName;
-
-                }
-
-                _unitOfWork.PhysicianRepository.Update(physician);
-                _unitOfWork.Save();
-
-                TempData["success"] = "Data updated successfully.";
-                return true;
-            }
-            catch (Exception e)
-            {
-                TempData["error"] = e.Message;
-                return false;
-            }
-
-        }
-
-        [HttpPost]
-        public bool SavePhysicianOnboardingInfo(int PhysicianId, IFormFile ICA, IFormFile BGCheck, IFormFile HIPAACompliance, IFormFile NDA, IFormFile LicenseDoc)
-        {
-
-            if (PhysicianId == null || PhysicianId == 0)
-            {
-                return false;
-            }
-
-            try
-            {
-                string path = Path.Combine(_environment.WebRootPath, "document", "physician", PhysicianId.ToString());
-                Physician phy = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Physicianid == PhysicianId);
-
-                if (ICA != null)
-                {
-                    FileHelper.InsertFileAfterRename(ICA, path, "ICA");
-                    phy.Isagreementdoc = true;
-                }
-
-
-                if (BGCheck != null)
-                {
-                    FileHelper.InsertFileAfterRename(BGCheck, path, "BackgroundCheck");
-                    phy.Isbackgrounddoc = true;
-                }
-
-
-                if (HIPAACompliance != null)
-                {
-                    FileHelper.InsertFileAfterRename(HIPAACompliance, path, "HipaaCompliance");
-                    phy.Iscredentialdoc = true;
-                }
-
-
-                if (NDA != null)
-                {
-                    FileHelper.InsertFileAfterRename(NDA, path, "NDA");
-                    phy.Isnondisclosuredoc = true;
-                }
-
-
-                if (LicenseDoc != null)
-                {
-                    FileHelper.InsertFileAfterRename(LicenseDoc, path, "LicenseDoc");
-                    phy.Islicensedoc = true;
-                }
-
-
-                _unitOfWork.PhysicianRepository.Update(phy);
-                _unitOfWork.Save();
-
-                TempData["success"] = "Data updated successfully";
-                return true;
-            }
-            catch (Exception e)
-            {
-                TempData["error"] = e.ToString();
-                return false;
-            }
 
             return false;
         }
 
-
-
         #endregion
 
-
         #region Schedule
+
+        public IActionResult ShowDayShiftsModal(DateTime jsDate)
+        {
+            DateTime shiftDate = jsDate.ToLocalTime().Date;
+            DayShiftModel model = new DayShiftModel()
+            {
+                ShiftDate = shiftDate,
+                shiftdetails = _unitOfWork.ShiftDetailRepository.Where(shift => shift.Shiftdate == shiftDate),
+            };
+
+            return PartialView("Schedule/DayShiftModal", model);
+        }
 
         public IActionResult Schedule()
         {
@@ -348,7 +227,7 @@ namespace HalloDoc.MVC.Controllers
             SchedulingViewModel model = new SchedulingViewModel();
             model.regions = _unitOfWork.RegionRepository.GetAll();
 
-            return View("Schedule/MySchedule",model);
+            return View("Schedule/MySchedule", model);
         }
 
         public IActionResult LoadMonthSchedule(int shiftMonth, int shiftYear)
@@ -356,19 +235,18 @@ namespace HalloDoc.MVC.Controllers
             // 0 index'ed month to 1 index'ed month
             shiftMonth++;
             IEnumerable<Shiftdetail> query = _unitOfWork.ShiftDetailRepository.Where(shift => shift.Shiftdate.Month == shiftMonth && shift.Shiftdate.Year == shiftYear);
-            
+
             int days = DateTime.DaysInMonth(shiftYear, shiftMonth);
-            DayOfWeek dayOfWeek = new DateTime(shiftYear,shiftMonth,1).DayOfWeek;
-            
+            DayOfWeek dayOfWeek = new DateTime(shiftYear, shiftMonth, 1).DayOfWeek;
 
             ShiftMonthViewModel model = new ShiftMonthViewModel()
             {
+                StartDate = new DateTime(shiftYear, shiftMonth, 1),
                 shiftDetails = query,
-                StartDayOfWeek = dayOfWeek,
                 DaysInMonth = days,
             };
 
-            return PartialView("Schedule/Partial/_MonthViewPartial",model);
+            return PartialView("Schedule/Partial/_MonthViewPartial", model);
         }
 
         #endregion
@@ -626,6 +504,118 @@ namespace HalloDoc.MVC.Controllers
             }
 
         }
+
+
+        private DateTime GetNextWeekday(DateTime startDate, int targetDayOfWeek)
+        {
+            int currentDayOfWeek = (int)startDate.DayOfWeek;
+            int daysToAdd = targetDayOfWeek - currentDayOfWeek;
+
+            if (daysToAdd <= 0) daysToAdd += 7; // If the target day is earlier in the week, move to next week
+
+            return startDate.AddDays(daysToAdd);
+        }
+
+
+
+        public int GetOffSet(int currentDay, List<int> repeatDays)
+        {
+            int nextVal = repeatDays.SkipWhile(day => day <= currentDay).FirstOrDefault();
+            int index = repeatDays.IndexOf(nextVal);
+            return index;
+        }
+
+
+        [HttpPost]
+        public IActionResult AddShift(SchedulingViewModel model)
+        {
+
+            int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
+            string phyAspId = HttpContext.Request.Headers.Where(x => x.Key == "userAspId").FirstOrDefault().Value;
+
+            if (ModelState.IsValid)
+            {
+                Shift shift = new Shift();
+                shift.Physicianid = (int)model.addShiftPhysician;
+                shift.Startdate = DateOnly.FromDateTime(model.shiftDate.Value.Date);
+                if (model.isRepeat != null)
+                {
+                    shift.Isrepeat = true;
+                }
+                else
+                {
+                    shift.Isrepeat = false;
+                }
+
+                shift.Repeatupto = model.repeatCount;
+                shift.Createddate = DateTime.Now;
+                shift.Createdby = phyAspId;
+                _unitOfWork.ShiftRepository.Add(shift);
+                _unitOfWork.Save();
+
+                Shiftdetail shiftdetail1 = new()
+                {
+                    Shiftid = shift.Shiftid,
+                    Shiftdate = (DateTime)model.shiftDate,
+                    Regionid = model.addShiftRegion,
+                    Starttime = (TimeOnly)model.shiftStartTime,
+                    Endtime = (TimeOnly)model.shiftEndTime,
+                    Status = (short)ShiftStatus.Pending,
+                    Isdeleted = false
+                };
+
+                _unitOfWork.ShiftDetailRepository.Add(shiftdetail1);
+                _unitOfWork.Save();
+
+                if (model.isRepeat != null)
+                {
+
+                    DateTime currentDate = (DateTime)model.shiftDate;
+                    int currentDayOfWeek = (int)model.shiftDate.Value.DayOfWeek;
+
+                    int offset = GetOffSet(currentDayOfWeek, model.repeatDays);
+
+                    for (int i = 0; i < model.repeatCount; i++)
+                    {
+                        int length = model.repeatDays.Count;
+                        for (int j = 0; j < length; j++)
+                        {
+                            int offsetIndex = (j + offset) % length;
+
+                            DateTime nextShiftDate = GetNextWeekday(currentDate, model.repeatDays[offsetIndex]);
+                            Shiftdetail shiftdetail = new()
+                            {
+                                Shiftid = shift.Shiftid,
+                                Shiftdate = nextShiftDate,
+                                Regionid = model.addShiftRegion,
+                                Starttime = (TimeOnly)model.shiftStartTime,
+                                Endtime = (TimeOnly)model.shiftEndTime,
+                                Status = (short)ShiftStatus.Pending,
+                                Isdeleted = false
+                            };
+
+                            _unitOfWork.ShiftDetailRepository.Add(shiftdetail);
+                            _unitOfWork.Save();
+
+                            Shiftdetailregion s = new()
+                            {
+                                Shiftdetailid = shiftdetail.Shiftdetailid,
+                                Regionid = (int)shiftdetail.Regionid
+                            };
+                            _unitOfWork.ShiftDetailRegionRepository.Add(s);
+                            _unitOfWork.Save();
+                        }
+
+                        currentDate = GetNextWeekday(currentDate, 7); // Move to next week
+                    }
+
+                }
+
+            }
+
+            return RedirectToAction("Schedule");
+        }
+
 
 
         [HttpPost]
@@ -960,6 +950,7 @@ namespace HalloDoc.MVC.Controllers
 
                 TempData["success"] = "Agreement Sent Successfully.";
                 return Redirect("/Admin/Dashboard");
+
             }
             catch (Exception ex)
             {
@@ -967,6 +958,81 @@ namespace HalloDoc.MVC.Controllers
                 return Redirect("/Admin/Dashboard");
             }
 
+        }
+
+        [HttpPost]
+        public IActionResult DownloadEncounterPdf(int? requestId)
+        {
+            //string encounterFormHtml = "";
+            //using (MemoryStream stream = new System.IO.MemoryStream())
+            //{
+            //    StringReader sr = new StringReader(encounterFormHtml);
+            //    Document pdfDoc = new Document(PageSize.A4, 10f, 10f, 100f, 0f);
+            //    PdfWriter writer = PdfWriter.GetInstance(pdfDoc, stream);
+            //    pdfDoc.Open();
+            //    XMLWorkerHelper.GetInstance().ParseXHtml(writer, pdfDoc, sr);
+            //    pdfDoc.Close();
+            //    return File(stream.ToArray(), "application/pdf", "Grid.pdf");
+            //}
+
+            Request? request = _unitOfWork.RequestRepository.GetFirstOrDefault(r => r.Requestid == requestId);
+
+            if (request == null)
+            {
+                _notyf.Error("Cannot Find Request");
+                return RedirectToAction("Dashboard");
+            }
+
+            Encounterform? oldEncounterForm = _unitOfWork.EncounterFormRepository.GetFirstOrDefault(e => e.Requestid == requestId);
+            Requestclient requestclient = _unitOfWork.RequestClientRepository.GetFirstOrDefault(e => e.Requestid == requestId);
+            string dobDate = null;
+
+
+            if (requestclient.Intyear != null && requestclient.Strmonth != null && requestclient.Intdate != null)
+            {
+                dobDate = requestclient.Intyear + "-" + requestclient.Strmonth + "-" + requestclient.Intdate;
+            }
+
+            EncounterFormViewModel encounterViewModel = new EncounterFormViewModel()
+            {
+                FirstName = requestclient.Firstname,
+                LastName = requestclient.Lastname,
+                Email = requestclient.Email,
+                PhoneNumber = requestclient.Phonenumber,
+                DOB = dobDate != null ? DateTime.Parse(dobDate) : null,
+                CreatedDate = request.Createddate,
+                Location = requestclient.Street + " " + requestclient.City + " " + requestclient.State,
+                MedicalHistory = oldEncounterForm.Medicalhistory,
+                History = oldEncounterForm.Historyofpresentillnessorinjury,
+                Medications = oldEncounterForm.Medications,
+                Allergies = oldEncounterForm.Allergies,
+                Temp = oldEncounterForm.Temp,
+                HR = oldEncounterForm.Hr,
+                RR = oldEncounterForm.Rr,
+                BpLow = oldEncounterForm.Bloodpressuresystolic,
+                BpHigh = oldEncounterForm.Bloodpressuresystolic,
+                O2 = oldEncounterForm.O2,
+                Pain = oldEncounterForm.Pain,
+                Heent = oldEncounterForm.Heent,
+                CV = oldEncounterForm.Cv,
+                Chest = oldEncounterForm.Chest,
+                ABD = oldEncounterForm.Abd,
+                Extr = oldEncounterForm.Extremities,
+                Skin = oldEncounterForm.Skin,
+                Neuro = oldEncounterForm.Neuro,
+                Other = oldEncounterForm.Other,
+                Diagnosis = oldEncounterForm.Diagnosis,
+                TreatmentPlan = oldEncounterForm.TreatmentPlan,
+                Procedures = oldEncounterForm.Procedures,
+                MedicationDispensed = oldEncounterForm.Medicaldispensed,
+                FollowUps = oldEncounterForm.Followup
+
+            };
+
+            return new ViewAsPdf("Partial/PdfPartial", encounterViewModel)
+            {
+                FileName = "FinalizedEncounterForm.pdf"
+            };
         }
 
         [HttpPost]
@@ -1365,7 +1431,7 @@ namespace HalloDoc.MVC.Controllers
 
                 if (form == null)
                 {
-                    _notyf.Error("Cannot Find Request");
+                    _notyf.Error("No previous form have been saved.");
                     return false;
                 }
 

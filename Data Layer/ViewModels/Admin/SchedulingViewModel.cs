@@ -9,6 +9,7 @@ namespace Data_Layer.ViewModels.Admin
 {
     public class SchedulingViewModel
     {
+        public string? UserName {  get; set; }
         public IEnumerable<Region>? regions { get; set; }
         public List<DataModels.Physician>? physicians { get; set; }
         public int? addShiftRegion { get; set; }
@@ -29,9 +30,9 @@ namespace Data_Layer.ViewModels.Admin
 
     public class ShiftMonthViewModel
     {
+        public DateTime StartDate {  get; set; }
         public string ShiftMonth { get; set; }
         public string ShiftYear { get; set; }
-        public DayOfWeek StartDayOfWeek { get; set; }
         public int DaysInMonth { get; set; }
         public IEnumerable<Shiftdetail> shiftDetails { get; set; }
     }

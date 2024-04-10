@@ -9,6 +9,7 @@ namespace Data_Layer.ViewModels.Admin
 {
     public class EmailLogsViewModel
     {
+        public string? UserName {  get; set; }
         public IEnumerable<Role> roles { get; set; }
         public IEnumerable<Emaillog> emailLogs {  get; set; }
     }

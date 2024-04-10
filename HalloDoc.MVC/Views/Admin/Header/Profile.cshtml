@@ -1,6 +1,7 @@
 ﻿@model AdminProfileViewModel
 @{
     Layout = "_AdminDashboardLayout";
+    ViewData["UserName"] = Model.UserName;
 }
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/1.1.2/js/bootstrap-multiselect.min.js" integrity="sha512-lxQ4VnKKW7foGFV6L9zlSe+6QppP9B2t+tMMaV4s4iqAv4iHIyXED7O+fke1VeLNaRdoVkVt8Hw/jmZ+XocsXQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
@@ -33,7 +34,7 @@
 
                     <div class="col-md-6 mt-4 ">
                         <div class=" floating-label form-floating">
-                            <input asp-for="Username" type="text" class="form-control account-info-input" disabled placeholder="Username" id="account-info-user-name">
+                            <input asp-for="AspUserName" type="text" class="form-control account-info-input" disabled placeholder="Username" id="account-info-user-name">
                             <label for="floatingInput">Username</label>
                         </div>
 

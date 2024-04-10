@@ -9,6 +9,7 @@ namespace Data_Layer.ViewModels.Admin
 {
     public class PatientRecordsViewModel
     {
+        public string? UserName {  get; set; }
         public IEnumerable<Role>? roles { get; set; }
         public IEnumerable<User>? users { get; set; }
         public IEnumerable<Request>? requests { get; set; }

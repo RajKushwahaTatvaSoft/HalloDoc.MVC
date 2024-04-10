@@ -654,7 +654,6 @@ namespace HalloDoc.MVC.Controllers
                         Intyear = friendViewModel.patientDetails.DOB?.Year,
                     };
 
-
                     _unitOfWork.UserRepository.Add(user);
                     _unitOfWork.Save();
 
@@ -753,8 +752,6 @@ namespace HalloDoc.MVC.Controllers
 
                     _unitOfWork.RequestRepository.Add(request);
                     _unitOfWork.Save();
-
-
 
                     Requestclient requestclient = new()
                     {
@@ -878,9 +875,6 @@ namespace HalloDoc.MVC.Controllers
 
                     _unitOfWork.UserRepository.Add(user);
                     _unitOfWork.Save();
-
-
-
 
                     SendMailForCreateAccount(conciergeViewModel.patientDetails.Email);
 
@@ -1599,6 +1593,16 @@ namespace HalloDoc.MVC.Controllers
             return View("Patient/ForgetPassword");
 
         }
+
+        #region HelperFunctions
+
+        [HttpPost]
+        public List<Physician> GetPhyByRegion(int id)
+        {
+            return _unitOfWork.PhysicianRepository.Where(a => a.Regionid == id).ToList();
+        }
+
+        #endregion
 
 
     }

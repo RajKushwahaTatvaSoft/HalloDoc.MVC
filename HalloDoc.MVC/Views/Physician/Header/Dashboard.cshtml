@@ -80,6 +80,32 @@
     </div>
 </div>
 
+
+@* Encouter Finalized Modal *@
+<div class="modal fade" id="encounterFinalizeModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <div class="modal-dark modal-title text-white" id="exampleModalLongTitle">Encounter Form</div>
+                <button type="button" class="btn-close" aria-label="Close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-controller="Physician" asp-action="DownloadEncounterPdf">
+                <input hidden name="requestId" id="encounter-finalize-modal-request-id" />
+                <input hidden name="FormHtml" value="<h1>Hello World</h1>" />
+                <div class="modal-body">
+                    <span class="modal-head">Encounter Form is Already Finalized!</span>
+
+                    <div class="modal-flex d-flex justify-content-center my-3">
+                        <button type="submit" class="btn btn-info text-white">Download Encounter Form</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
 @* Before Encounter Modal *@
 <div class="modal fade" id="beforeEncounterModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
      aria-hidden="true">
@@ -90,7 +116,7 @@
                 <button type="button" class="btn-close" aria-label="Close" data-bs-dismiss="modal"></button>
             </div>
             <form>
-                <input hidden id="encounter-modal-request-id"/>
+                <input hidden id="encounter-modal-request-id" />
                 <div class="modal-body">
                     <div class="modal-flex d-flex justify-content-center my-3">
                         <div class="btn encounter-type-btn border border-1 border-info" data-id="1"> House Call </div>
@@ -699,15 +725,15 @@ C25.163,30.114,24.933,30.163,24.687,30.163z"></path>
 
     });
 
-    function submitEncounterModal(){
+    function submitEncounterModal() {
 
-        if(encounter_type == 1){
+        if (encounter_type == 1) {
             $.ajax({
                 url: "/Physician/EncounterHouseCallBegin",
                 data: { requestId: $('#encounter-modal-request-id').val() },
                 type: 'POST',
                 success: function (result) {
-                    
+
                 },
                 error: function (error) {
                     console.log('Error Updating Location')
@@ -715,7 +741,7 @@ C25.163,30.114,24.933,30.163,24.687,30.163z"></path>
                 },
             });
         }
-        else if(encounter_type == 2){
+        else if (encounter_type == 2) {
             $.ajax({
                 url: "/Physician/EncounterConsult",
                 data: { requestId: $('#encounter-modal-request-id').val() },
@@ -729,7 +755,7 @@ C25.163,30.114,24.933,30.163,24.687,30.163z"></path>
                 },
             });
         }
-        else{
+        else {
             console.log("error");
         }
     }
