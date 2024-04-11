@@ -11,6 +11,14 @@
         border-color: #ff3632;
     }
 
+    .dark-mode .form-floating.valid-field input, .dark-mode .form-floating.valid-field select{
+        border-color: lightgreen;
+    }
+
+    .dark-mode .form-floating.invalid-field input, .dark-mode .form-floating.invalid-field select {
+        border-color: #ff3632;
+    }
+
     .dark-mode .iti__country-list {
         color: white;
         background-color: #282828 !important;

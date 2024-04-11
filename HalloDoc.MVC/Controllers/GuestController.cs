@@ -14,6 +14,8 @@ using AspNetCoreHero.ToastNotification.Abstractions;
 using Business_Layer.Repository.IRepository;
 using Business_Layer.Services.Helper.Interface;
 using Microsoft.AspNetCore.Authorization;
+using Business_Layer.Services.Guest.Interface;
+using System.Text.Json.Nodes;
 
 
 namespace HalloDoc.MVC.Controllers
@@ -26,8 +28,9 @@ namespace HalloDoc.MVC.Controllers
         private readonly IConfiguration _config;
         private readonly IUtilityService _utilityService;
         private readonly INotyfService _notyf;
+        private readonly IRequestService _requestService;
 
-        public GuestController(IUnitOfWork unitOfWork, IJwtService jwt, IWebHostEnvironment environment, IConfiguration config, IUtilityService utilityService, INotyfService notyf)
+        public GuestController(IUnitOfWork unitOfWork, IJwtService jwt, IWebHostEnvironment environment, IConfiguration config, IUtilityService utilityService, INotyfService notyf, IRequestService requestService)
         {
             _jwtService = jwt;
             _unitOfWork = unitOfWork;
@@ -35,8 +38,8 @@ namespace HalloDoc.MVC.Controllers
             _config = config;
             _utilityService = utilityService;
             _notyf = notyf;
+            _requestService = requestService;
         }
-
 
         public IActionResult Index()
         {
@@ -141,8 +144,6 @@ namespace HalloDoc.MVC.Controllers
             return View();
         }
 
-
-
         public void SendMailForCreateAccount(string email)
         {
             try
@@ -196,7 +197,6 @@ namespace HalloDoc.MVC.Controllers
                 TempData["error"] = ex.Message;
             }
         }
-
 
         public IActionResult SubmitRequest()
         {
@@ -358,204 +358,21 @@ namespace HalloDoc.MVC.Controllers
         {
             if (ModelState.IsValid)
             {
-                string requestIpAddress = GetRequestIP();
-                string phoneNumber = "+" + userViewModel.Countrycode + '-' + userViewModel.Phone;
-                string patientState = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == userViewModel.RegionId).Name;
-                string patientCity = _unitOfWork.CityRepository.GetFirstOrDefault(city => city.Id == userViewModel.CityId).Name;
+                Dictionary<string, object> result = _requestService.SubmitPatientRequest(userViewModel);
 
-                bool isUserExists = _unitOfWork.UserRepository.IsUserWithEmailExists(userViewModel.Email);
-
-                if (!isUserExists)
+                if ((bool)result["success"])
                 {
-                    if (userViewModel.Password != null)
-                    {
-                        User user;
+                    _notyf.Success("Request Created Successfully.");
 
-                        Guid generatedId = Guid.NewGuid();
-
-                        // Creating Patient in Aspnetusers Table
-                        Aspnetuser aspnetuser = new()
-                        {
-                            Id = generatedId.ToString(),
-                            Username = userViewModel.Email,
-                            Passwordhash = AuthHelper.GenerateSHA256(userViewModel.Password),
-                            Email = userViewModel.Email,
-                            Phonenumber = phoneNumber,
-                            Createddate = DateTime.Now,
-                            Ip = requestIpAddress,
-                        };
-
-                        _unitOfWork.AspNetUserRepository.Add(aspnetuser);
-                        _unitOfWork.Save();
-
-                        // Creating Patient in User Table
-                        user = new()
-                        {
-                            Aspnetuserid = generatedId.ToString(),
-                            Firstname = userViewModel.FirstName,
-                            Lastname = userViewModel.LastName,
-                            Email = userViewModel.Email,
-                            Mobile = phoneNumber,
-                            Street = userViewModel.Street,
-                            State = patientState,
-                            Regionid = userViewModel.RegionId,
-                            City = patientCity,
-                            Zipcode = userViewModel.ZipCode,
-                            Createddate = DateTime.Now,
-                            Createdby = generatedId.ToString(),
-                            Ip = requestIpAddress,
-                            Intdate = userViewModel.DOB?.Day,
-                            Strmonth = userViewModel.DOB?.Month.ToString(),
-                            Intyear = userViewModel.DOB?.Year,
-                        };
-
-                        _unitOfWork.UserRepository.Add(user);
-                        _unitOfWork.Save();
-
-                        // Adding request in Request Table
-                        Request request = new()
-                        {
-                            Requesttypeid = (int)RequestType.Patient,
-                            Userid = user.Userid,
-                            Confirmationnumber = GenerateConfirmationNumber(user),
-                            Firstname = userViewModel.FirstName,
-                            Lastname = userViewModel.LastName,
-                            Phonenumber = phoneNumber,
-                            Email = userViewModel.Email,
-                            Status = (short)RequestStatus.Unassigned,
-                            Createddate = DateTime.Now,
-                            Patientaccountid = generatedId.ToString(),
-                            Createduserid = user.Userid,
-                            Ip = requestIpAddress,
-                        };
-
-                        _unitOfWork.RequestRepository.Add(request);
-                        _unitOfWork.Save();
-
-                        //Adding request in RequestClient Table
-                        Requestclient requestclient = new()
-                        {
-                            Requestid = request.Requestid,
-                            Firstname = userViewModel.FirstName,
-                            Lastname = userViewModel.LastName,
-                            Phonenumber = phoneNumber,
-                            Email = userViewModel.Email,
-                            Address = userViewModel.Street + " " + patientCity + " " + patientState + ", " + userViewModel.ZipCode,
-                            Street = userViewModel.Street,
-                            Regionid = userViewModel.RegionId,
-                            City = patientCity,
-                            State = patientState,
-                            Zipcode = userViewModel.ZipCode,
-                            Notes = userViewModel.Symptom,
-                            Ip = requestIpAddress,
-                            Intdate = userViewModel.DOB?.Day,
-                            Strmonth = userViewModel.DOB?.Month.ToString(),
-                            Intyear = userViewModel.DOB?.Year,
-                        };
-
-                        _unitOfWork.RequestClientRepository.Add(requestclient);
-                        _unitOfWork.Save();
-
-                        //Adding File Data in RequestWiseFile Table
-                        if (userViewModel.File != null)
-                        {
-                            InsertRequestWiseFile(userViewModel.File);
-
-                            Requestwisefile requestwisefile = new()
-                            {
-                                Requestid = request.Requestid,
-                                Createddate = DateTime.Now,
-                                Ip = requestIpAddress,
-                                Filename = userViewModel.File.FileName,
-                            };
-
-                            _unitOfWork.RequestWiseFileRepository.Add(requestwisefile);
-                            _unitOfWork.Save();
-                        }
-
-                        TempData["success"] = "Request Created Successfully.";
-                        return RedirectToAction("Login");
-
-                    }
-                    else
-                    {
-                        TempData["error"] = "Password cannot be empty.";
-                    }
+                    return RedirectToAction("Login");
                 }
                 else
                 {
-                    User user;
-
-                    // Fetching Registered User
-                    user = _unitOfWork.UserRepository.GetUserWithEmail(userViewModel.Email);
-
-                    // Adding request in Request Table
-                    Request request = new()
-                    {
-                        Requesttypeid = (int)RequestType.Patient,
-                        Userid = user.Userid,
-                        Confirmationnumber = GenerateConfirmationNumber(user),
-                        Firstname = userViewModel.FirstName,
-                        Lastname = userViewModel.LastName,
-                        Phonenumber = phoneNumber,
-                        Email = userViewModel.Email,
-                        Status = (short)RequestStatus.Unassigned,
-                        Createddate = DateTime.Now,
-                        Patientaccountid = user.Aspnetuserid,
-                        Createduserid = user.Userid,
-                        Ip = requestIpAddress,
-                    };
-
-                    _unitOfWork.RequestRepository.Add(request);
-                    _unitOfWork.Save();
-
-                    //Adding request in RequestClient Table
-                    Requestclient requestclient = new()
-                    {
-                        Requestid = request.Requestid,
-                        Firstname = userViewModel.FirstName,
-                        Lastname = userViewModel.LastName,
-                        Phonenumber = phoneNumber,
-                        Email = userViewModel.Email,
-                        Address = userViewModel.Street + " " + patientCity + " " + patientState + ", " + userViewModel.ZipCode,
-                        Street = userViewModel.Street,
-                        City = patientCity,
-                        Regionid = userViewModel.RegionId,
-                        State = patientState,
-                        Zipcode = userViewModel.ZipCode,
-                        Notes = userViewModel.Symptom,
-                        Ip = requestIpAddress,
-                        Intdate = userViewModel.DOB?.Day,
-                        Strmonth = userViewModel.DOB?.Month.ToString(),
-                        Intyear = userViewModel.DOB?.Year,
-                    };
-
-                    _unitOfWork.RequestClientRepository.Add(requestclient);
-                    _unitOfWork.Save();
-
-                    //Adding File Data in RequestWiseFile Table
-                    if (userViewModel.File != null)
-                    {
-                        InsertRequestWiseFile(userViewModel.File);
-
-                        Requestwisefile requestwisefile = new()
-                        {
-                            Requestid = request.Requestid,
-                            Createddate = DateTime.Now,
-                            Ip = requestIpAddress,
-                            Filename = userViewModel.File.FileName,
-                        };
-
-                        _unitOfWork.RequestWiseFileRepository.Add(requestwisefile);
-                        _unitOfWork.Save();
-                    }
-
-                    TempData["success"] = "Request Created Successfully.";
-                    return RedirectToAction("Login");
+                    _notyf.Error(result["errorMessage"] as string);
                 }
-
             }
 
+            userViewModel.Phone = "+" + userViewModel.Countrycode + '-' + userViewModel.Phone;
             userViewModel.regions = _unitOfWork.RegionRepository.GetAll();
             userViewModel.IsValidated = true;
             return View("Request/PatientRequest", userViewModel);
@@ -603,9 +420,10 @@ namespace HalloDoc.MVC.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult FamilyFriendRequest(FamilyFriendRequestViewModel friendViewModel)
         {
+
             if (ModelState.IsValid)
             {
-                User user = null;
+                User user;
                 bool isUserExists = _unitOfWork.UserRepository.IsUserWithEmailExists(friendViewModel.patientDetails.Email);
                 string requestIpAddress = GetRequestIP();
                 string familyNumber = "+" + friendViewModel.Countrycode + '-' + friendViewModel.Phone;

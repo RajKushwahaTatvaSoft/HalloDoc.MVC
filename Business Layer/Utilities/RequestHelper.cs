@@ -9,6 +9,11 @@ namespace Business_Layer.Utilities
 {
     public static class RequestHelper
     {
+        public static string GetRequestIP()
+        {
+            string ip = "127.0.0.1";
+            return ip;
+        }
 
         public static int GetDashboardStatus(int requestStatus)
         {

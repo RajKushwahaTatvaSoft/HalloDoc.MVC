@@ -14,6 +14,8 @@ using Business_Layer.Services.Helper;
 using Business_Layer.Services.Patient.Interface;
 using Business_Layer.Services.Patient;
 using Rotativa.AspNetCore;
+using Business_Layer.Services.Guest.Interface;
+using Business_Layer.Services.Guest;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,8 +31,9 @@ builder.Services.AddScoped<IPatientAuthRepository, PatientAuthRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
 builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IRequestService, RequestService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddScoped<IUtilityService, Utilities>();
+builder.Services.AddScoped<IUtilityService, UtilityService>();
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
 builder.Services.AddSession(options =>

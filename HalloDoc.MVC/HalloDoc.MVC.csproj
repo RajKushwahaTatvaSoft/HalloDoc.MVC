@@ -34,4 +34,8 @@
     <ProjectReference Include="..\Data Layer\HalloDoc.MVC.DAL.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\js\guest\" />
+  </ItemGroup>
+
 </Project>

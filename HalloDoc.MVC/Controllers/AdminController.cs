@@ -1278,6 +1278,7 @@ namespace HalloDoc.MVC.Controllers
             }
         }
 
+        [RoleAuthorize((int)AllowMenu.AdminDashboard)]
         public IActionResult RequestDTY(string message)
         {
             string? adminName = HttpContext.Request.Headers.Where(a => a.Key == "userName").FirstOrDefault().Value;
@@ -4248,7 +4249,6 @@ namespace HalloDoc.MVC.Controllers
 
             return business;
         }
-
 
         #endregion
 

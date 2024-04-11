@@ -84,10 +84,7 @@
             </button>
         </div>
 
-        @{
-            string isValidated = Model.IsValidated == true ? "was-validated" : "";
-        }
-        <form method="post" class="needs-validation @isValidated" enctype="multipart/form-data" novalidate>
+        <form method="post" enctype="multipart/form-data" novalidate id="family-friend-request-form">
 
             <div class="container-fluid form-card shadow-sm rounded mx-1 my-3 py-3">
 
@@ -99,17 +96,19 @@
                     <div class="col-lg-4 col-md-6 col-12">
                         <div class="form-floating mt-3">
                             <input asp-for="FirstName" class="form-control" placeholder="Leave a comment here"
-                                   id="floatingTextarea2" required>
+                                   id="family-friend-first-name" required>
                             <label for="floatingTextarea2">Your First Name</label>
                             <span asp-validation-for="FirstName" class="text-danger"></span>
+                            <span class="error-msg text-danger" style="display:none;"></span>
                         </div>
                     </div>
 
                     <div class="col-lg-4 col-md-6 col-12">
                         <div class="form-floating mt-3">
                             <input asp-for="LastName" class="form-control" placeholder="Leave a comment here"
-                                   id="floatingTextarea2" />
+                                   id="family-friend-last-name" />
                             <label for="floatingTextarea2">Your Last Name</label>
+                            <span class="error-msg text-danger" style="display:none;"></span>
                         </div>
                     </div>
 
@@ -121,6 +120,7 @@
                             <input asp-for="Phone" id="other-phone" class="form-control" type="tel" name="phone" />
                             <span asp-validation-for="Phone" class="text-danger"></span>
 
+                            <span class="error-msg text-danger" style="display:none;"></span>
                         </div>
 
                     </div>
@@ -128,18 +128,20 @@
                     <div class="col-lg-4 col-md-6 col-12">
                         <div class="form-floating mt-3">
                             <input asp-for="Email" class="form-control" placeholder="Leave a comment here"
-                                   id="floatingTextarea2"></input>
+                                   id="family-friend-email"></input>
                             <label for="floatingTextarea2">Your Email</label>
                             <span asp-validation-for="Email" class="text-danger"></span>
+                            <span class="error-msg text-danger" style="display:none;"></span>
                         </div>
                     </div>
 
                     <div class="col-lg-4 col-md-6 col-12">
                         <div class="form-floating mt-3">
                             <input asp-for="Relation" class="form-control" placeholder="Leave a comment here"
-                                   id="floatingTextarea2" />
+                                   id="family-friend-relation" />
                             <label for="floatingTextarea2">Relation With Patient</label>
                             <span asp-validation-for="Relation" class="text-danger"></span>
+                            <span class="error-msg text-danger" style="display:none;"></span>
 
                         </div>
                     </div>
@@ -154,9 +156,10 @@
                 <div class="row">
 
                     <div class="form-floating mt-2">
-                        <textarea asp-for="patientDetails.Symptom" class="form-control" placeholder="Leave a comment here" id="floatingTextarea2"
+                        <textarea asp-for="patientDetails.Symptom" class="form-control" placeholder="Leave a comment here" id="family-friend-symptoms"
                                   style="height: 100px;"></textarea>
                         <label class="ms-2" for="floatingTextarea2">Enter brief details of Symptoms (Optional)</label>
+                        <span class="error-msg text-danger" style="display:none;"></span>
                     </div>
 
                 </div>
@@ -166,9 +169,10 @@
                     <div class="col-lg-4 col-md-6 col-12">
                         <div class="form-floating mt-3">
                             <input asp-for="patientDetails.FirstName" class="form-control" placeholder="Leave a comment here"
-                                   id="floatingTextarea2" required>
+                                   id="family-friend-patient-first-name" required>
                             <label for="floatingTextarea2">First Name</label>
                             <span asp-validation-for="patientDetails.FirstName" class="text-danger"></span>
+                            <span class="error-msg text-danger" style="display:none;"></span>
 
                         </div>
                     </div>
@@ -176,8 +180,9 @@
                     <div class="col-lg-4 col-md-6 col-12">
                         <div class="form-floating mt-3">
                             <input asp-for="patientDetails.LastName" class="form-control" placeholder="Leave a comment here"
-                                   id="floatingTextarea2" />
+                                   id="family-friend-patient-last-name" />
                             <label for="floatingTextarea2">Last Name</label>
+                            <span class="error-msg text-danger" style="display:none;"></span>
                         </div>
                     </div>
 
@@ -186,9 +191,10 @@
                         <div class="form-floating mt-3">
 
                             <input asp-for="patientDetails.DOB" class="form-control" placeholder="Leave a comment here" type="date"
-                                   id="floatingTextarea2">
+                                   id="family-friend-patient-dob">
                             <label for="floatingTextarea2">Date of Birth:</label>
 
+                            <span class="error-msg text-danger" style="display:none;"></span>
                         </div>
 
                     </div>
@@ -204,8 +210,9 @@
                     <div class="col-md-6 col-12">
                         <div class="form-floating mt-3">
                             <input asp-for="patientDetails.Email" class="form-control" placeholder="Leave a comment here"
-                                   id="floatingTextarea2" required />
+                                   id="family-friend-patient-email" required />
                             <label for="floatingTextarea2">Email</label>
+                            <span class="error-msg text-danger" style="display:none;"></span>
                         </div>
                     </div>
 
@@ -214,6 +221,7 @@
                         <div class="form-floating mt-3">
                             <input id="patient-phone-country" asp-for="patientDetails.Countrycode" hidden />
                             <input asp-for="patientDetails.Phone" id="patient-phone" class="form-control" type="tel" />
+                            <span class="error-msg text-danger" style="display:none;"></span>
                         </div>
 
                     </div>
@@ -229,19 +237,21 @@
                     <div class="col-12 col-md-6 col-lg-4">
                         <div class="form-floating mt-3">
                             <input asp-for="patientDetails.Street" class="form-control" placeholder="Leave a comment here"
-                                   id="floatingTextarea2" />
+                                   id="family-friend-patient-street" />
                             <label for="floatingTextarea2">Street</label>
+                            <span class="error-msg text-danger" style="display:none;"></span>
                         </div>
 
                     </div>
                     <div class="col-12 col-md-6 col-lg-4">
 
                         <div class="form-floating mt-3">
-                            <select asp-for="patientDetails.CityId" class="form-select" id="patient-city" required>
+                            <select asp-for="patientDetails.CityId" class="form-select" id="family-friend-patient-city" required>
                                 <option disabled selected value=""> -- Select City -- </option>
                             </select>
                             <label for="patient-city">City</label>
                             <span asp-validation-for="patientDetails.CityId" class="text-danger"></span>
+                            <span class="error-msg text-danger" style="display:none;"></span>
 
                         </div>
 
@@ -251,7 +261,7 @@
 
                         <div class="form-floating mt-3">
 
-                            <select asp-for="patientDetails.RegionId" class="form-select" id="patient-state">
+                            <select asp-for="patientDetails.RegionId" class="form-select" id="family-friend-patient-state">
                                 <option disabled selected value=""> -- Select State -- </option>
 
                                 @if (Model.regions != null && Model.regions.Any())
@@ -268,14 +278,16 @@
 
                             <span asp-validation-for="patientDetails.RegionId" class="text-danger"></span>
 
+                            <span class="error-msg text-danger" style="display:none;"></span>
                         </div>
 
                     </div>
                     <div class="col-12 col-md-6 col-lg-4">
                         <div class="form-floating mt-3">
                             <input asp-for="patientDetails.ZipCode" class="form-control" placeholder="Leave a comment here"
-                                   id="floatingTextarea2"></input>
+                                   id="floatingTextarea2">
                             <label for="floatingTextarea2">Zip Code</label>
+                            <span class="error-msg text-danger" style="display:none;"></span>
                         </div>
                     </div>
 
@@ -284,6 +296,7 @@
                             <input asp-for="patientDetails.RoomSuite" class="form-control" placeholder="Leave a comment here"
                                    id="floatingTextarea2"></input>
                             <label for="floatingTextarea2">Room # / Suite (Optional)</label>
+                            <span class="error-msg text-danger" style="display:none;"></span>
                         </div>
                     </div>
 
@@ -299,6 +312,7 @@
 
                         <input asp-for="patientDetails.File" class="form-control" type="file" id="file_input_id" style="opacity:0;height:0;">
 
+                        <span class="error-msg text-danger" style="display:none;"></span>
                         <div class="input-group mb-3">
                             <input type="text" id='text_input_id' class="form-control" placeholder="Select File"
                                    style="caret-color: transparent" autocomplete="off">
@@ -331,7 +345,6 @@
 
         </form>
 
-
         <div class="row align-items-end justify-content-center">
 
             <footer class="py-3" style="background-color: #282828;">
@@ -348,7 +361,7 @@
 
 
     </div>
-
+    
     <script src="~/js/guest-requests.js"></script>
 
     <script>

@@ -1,6 +1,60 @@
 $(document).ready(function () {
 
-    $('#floatingInputemail').on('blur', function () {
+    let patientRequestForm = document.getElementById('patient-request-form');
+    let familyFriendRequestForm = document.getElementById('family-friend-request-form');
+    let conciergeRequestForm = document.getElementById('concierge-request-form');
+    let businessRequestForm = document.getElementById('business-request-form');
+
+    if (patientRequestForm != null) {
+
+        patientRequestForm.addEventListener('submit', event => {
+            if (!validatePatientForm()) {
+                event.preventDefault()
+                event.stopPropagation()
+            }
+
+        }, false);
+
+    }
+
+
+    if (familyFriendRequestForm != null) {
+
+        familyFriendRequestForm.addEventListener('submit', event => {
+            if (!validateFamilyFriendForm()) {
+                event.preventDefault()
+                event.stopPropagation()
+            }
+
+        }, false);
+
+    }
+
+
+    if (conciergeRequestForm != null) {
+
+        conciergeRequestForm.addEventListener('submit', event => {
+            if (!conciergeRequestForm()) {
+                event.preventDefault()
+                event.stopPropagation()
+            }
+
+        }, false);
+
+    }
+
+    if (businessRequestForm != null) {
+
+        businessRequestForm.addEventListener('submit', event => {
+            if (!businessRequestForm()) {
+                event.preventDefault()
+                event.stopPropagation()
+            }
+
+        }, false);
+
+    }
+    $('#patient-form-email').on('blur', function () {
         var email = $(this).val();
         $.ajax({
             url: '/Guest/PatientCheckEmail',
@@ -22,25 +76,6 @@ $(document).ready(function () {
     });
 });
 
-
-(() => {
-    'use strict'
-
-    // Fetch all the forms we want to apply custom Bootstrap validation styles to
-    const forms = document.querySelectorAll('.needs-validation')
-
-    // Loop over them and prevent submission
-    Array.from(forms).forEach(form => {
-        form.addEventListener('submit', event => {
-            if (!form.checkValidity()) {
-                event.preventDefault()
-                event.stopPropagation()
-            }
-
-            form.classList.add('was-validated')
-        }, false)
-    })
-})()
 
 $("#patient-state").change(function () {
 
@@ -93,7 +128,7 @@ $("#file_input_id").change(function () {
 
 
 const phoneInputField = document.getElementById("patient-phone");
-var patientPhoneInput = window.intlTelInput(phoneInputField, {
+let patientPhoneInput = window.intlTelInput(phoneInputField, {
     utilsScript:
         "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
     preferredCountries: ["in"],
@@ -103,9 +138,10 @@ var patientPhoneInput = window.intlTelInput(phoneInputField, {
 
 
 const otherInputField = document.getElementById("other-phone");
+let otherPhoneInput;
 
 if (otherInputField != null) {
-    var otherPhoneInput = window.intlTelInput(otherInputField, {
+    otherPhoneInput = window.intlTelInput(otherInputField, {
         utilsScript:
             "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
         preferredCountries: ["in"],
@@ -123,8 +159,66 @@ function changeCountryCode() {
     countryCodePatient.value = patientPhoneInput.getSelectedCountryData().dialCode;
 
     if (otherInputField != null) {
-    countryCodeOther.value = otherPhoneInput.getSelectedCountryData().dialCode;
-
+        countryCodeOther.value = otherPhoneInput.getSelectedCountryData().dialCode;
     }
 
+}
+
+// ------------------- VALIDATION SECTION -----------------------
+
+function validatePatientForm() {
+    let firstNameElement = document.getElementById('patient-form-first-name');
+    let lastNameElement = document.getElementById('patient-form-last-name');
+    let emailElement = document.getElementById('patient-form-email');
+    let passElement = document.getElementById('patient-password');
+    let confirmPassElement = document.getElementById('patient-confirm-password');
+    let stateSelectElement = document.getElementById('patient-state');
+    let citySelectElement = document.getElementById('patient-city');
+
+    let firstNameResult = validateFirstName(firstNameElement);
+    let lastNameResult = validateLastName(lastNameElement);
+    let emailResult = validateEmail(emailElement);
+    let passResult = true;
+    let confirmPassResult = true;
+    let stateResult = validateState(stateSelectElement);
+    let cityResult = validateCity(citySelectElement);
+    let phoneResult = validatePhoneNumber(phoneInputField, patientPhoneInput);
+
+    if ($('#hiddendiv').is(":visible")) {
+        passResult = validatePassword(passElement);
+        confirmPassResult = validateConfirmPassword(confirmPassElement);
+    }
+
+    if (firstNameResult && lastNameResult && emailResult && phoneResult && passResult && confirmPassResult && stateResult && cityResult) {
+        return true;
+    }
+
+    return false;
+}
+
+function validateFamilyFriendForm() {
+
+    let familyFirstNameElement = document.getElementById('family-friend-first-name');
+    let familyLastNameElement = document.getElementById('family-friend-last-name');
+    let familyEmailElement = document.getElementById('family-friend-email');
+
+
+    let firstNameResult = validateFirstName(familyFirstNameElement);
+    let lastNameResult = validateLastName(familyLastNameElement);
+    let emailResult = validateEmail(familyEmailElement);
+
+    if (firstNameResult && lastNameResult && emailResult) {
+        return false;
+    }
+
+    return false;
+
+}
+
+function validateConciergeForm() {
+    return false;
+}
+
+function validateBusinessForm() {
+    return false;
 }
