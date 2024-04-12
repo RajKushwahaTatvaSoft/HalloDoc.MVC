@@ -9,6 +9,7 @@ namespace Business_Layer.Services.Helper.Interface
     public interface IEmailService
     {
         public void SendMail(string toEmail, string body, string subject, out int sentTries, out bool isSent);
+        public void SendMailForCreateAccount(string email, string aspNetUserId,string link);
 
     }
 }

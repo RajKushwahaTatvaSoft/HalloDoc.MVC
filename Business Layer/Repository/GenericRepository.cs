@@ -30,8 +30,6 @@ namespace Business_Layer.Repository
         public IQueryable<T> GetAll()
         {
             IQueryable<T> query = dbSet;
-
-            //.Where(x => Convert.ToBoolean(x.GetType().GetProperty("isdeleted").GetValue(x).ToString())); 
             return query;
         }
 

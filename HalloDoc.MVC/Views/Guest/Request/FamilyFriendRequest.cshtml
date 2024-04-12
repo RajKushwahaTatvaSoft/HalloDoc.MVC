@@ -117,7 +117,7 @@
                         <div class="form-floating mt-3">
 
                             <input id="other-phone-country" asp-for="Countrycode" hidden />
-                            <input asp-for="Phone" id="other-phone" class="form-control" type="tel" name="phone" />
+                            <input asp-for="Phone" id="other-phone" class="form-control" type="number" name="phone" />
                             <span asp-validation-for="Phone" class="text-danger"></span>
 
                             <span class="error-msg text-danger" style="display:none;"></span>
@@ -128,7 +128,7 @@
                     <div class="col-lg-4 col-md-6 col-12">
                         <div class="form-floating mt-3">
                             <input asp-for="Email" class="form-control" placeholder="Leave a comment here"
-                                   id="family-friend-email"></input>
+                                   id="family-friend-email">
                             <label for="floatingTextarea2">Your Email</label>
                             <span asp-validation-for="Email" class="text-danger"></span>
                             <span class="error-msg text-danger" style="display:none;"></span>
@@ -220,7 +220,7 @@
 
                         <div class="form-floating mt-3">
                             <input id="patient-phone-country" asp-for="patientDetails.Countrycode" hidden />
-                            <input asp-for="patientDetails.Phone" id="patient-phone" class="form-control" type="tel" />
+                            <input asp-for="patientDetails.Phone" id="patient-phone" class="form-control" type="number" />
                             <span class="error-msg text-danger" style="display:none;"></span>
                         </div>
 
@@ -246,7 +246,7 @@
                     <div class="col-12 col-md-6 col-lg-4">
 
                         <div class="form-floating mt-3">
-                            <select asp-for="patientDetails.CityId" class="form-select" id="family-friend-patient-city" required>
+                            <select asp-for="patientDetails.CityId" class="form-select" id="patient-city" required>
                                 <option disabled selected value=""> -- Select City -- </option>
                             </select>
                             <label for="patient-city">City</label>
@@ -261,7 +261,7 @@
 
                         <div class="form-floating mt-3">
 
-                            <select asp-for="patientDetails.RegionId" class="form-select" id="family-friend-patient-state">
+                            <select asp-for="patientDetails.RegionId" class="form-select" id="patient-state">
                                 <option disabled selected value=""> -- Select State -- </option>
 
                                 @if (Model.regions != null && Model.regions.Any())
@@ -294,7 +294,7 @@
                     <div class="col-12 col-md-6 col-lg-4">
                         <div class="form-floating mt-3">
                             <input asp-for="patientDetails.RoomSuite" class="form-control" placeholder="Leave a comment here"
-                                   id="floatingTextarea2"></input>
+                                   id="floatingTextarea2">
                             <label for="floatingTextarea2">Room # / Suite (Optional)</label>
                             <span class="error-msg text-danger" style="display:none;"></span>
                         </div>
@@ -344,7 +344,7 @@
             </div>
 
         </form>
-
+        
         <div class="row align-items-end justify-content-center">
 
             <footer class="py-3" style="background-color: #282828;">

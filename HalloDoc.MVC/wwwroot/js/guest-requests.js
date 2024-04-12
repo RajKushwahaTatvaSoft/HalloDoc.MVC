@@ -34,7 +34,7 @@ $(document).ready(function () {
     if (conciergeRequestForm != null) {
 
         conciergeRequestForm.addEventListener('submit', event => {
-            if (!conciergeRequestForm()) {
+            if (!validateConciergeForm()) {
                 event.preventDefault()
                 event.stopPropagation()
             }
@@ -46,7 +46,7 @@ $(document).ready(function () {
     if (businessRequestForm != null) {
 
         businessRequestForm.addEventListener('submit', event => {
-            if (!businessRequestForm()) {
+            if (!validateBusinessForm()) {
                 event.preventDefault()
                 event.stopPropagation()
             }
@@ -111,7 +111,6 @@ $("#patient-state").change(function () {
     });
 });
 
-
 // bind file-input-form click action to text-input-span
 $('#text_input_span_id').click(function () {
     $("#file_input_id").trigger('click');
@@ -127,8 +126,8 @@ $("#file_input_id").change(function () {
 
 
 
-const phoneInputField = document.getElementById("patient-phone");
-let patientPhoneInput = window.intlTelInput(phoneInputField, {
+const patientPhoneInputElement = document.getElementById("patient-phone");
+let patientIntlInput = window.intlTelInput(patientPhoneInputElement, {
     utilsScript:
         "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
     preferredCountries: ["in"],
@@ -137,11 +136,11 @@ let patientPhoneInput = window.intlTelInput(phoneInputField, {
 });
 
 
-const otherInputField = document.getElementById("other-phone");
-let otherPhoneInput;
+const otherPhoneInputElement = document.getElementById("other-phone");
+let otherIntlInput;
 
-if (otherInputField != null) {
-    otherPhoneInput = window.intlTelInput(otherInputField, {
+if (otherPhoneInputElement != null) {
+    otherIntlInput = window.intlTelInput(otherPhoneInputElement, {
         utilsScript:
             "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
         preferredCountries: ["in"],
@@ -156,10 +155,10 @@ function changeCountryCode() {
     var countryCodePatient = document.getElementById("patient-phone-country");
     var countryCodeOther = document.getElementById("other-phone-country");
 
-    countryCodePatient.value = patientPhoneInput.getSelectedCountryData().dialCode;
+    countryCodePatient.value = patientIntlInput.getSelectedCountryData().dialCode;
 
-    if (otherInputField != null) {
-        countryCodeOther.value = otherPhoneInput.getSelectedCountryData().dialCode;
+    if (otherPhoneInputElement != null) {
+        countryCodeOther.value = otherIntlInput.getSelectedCountryData().dialCode;
     }
 
 }
@@ -171,6 +170,7 @@ function validatePatientForm() {
     let lastNameElement = document.getElementById('patient-form-last-name');
     let emailElement = document.getElementById('patient-form-email');
     let passElement = document.getElementById('patient-password');
+    let dobElement = document.getElementById('patient-dob');
     let confirmPassElement = document.getElementById('patient-confirm-password');
     let stateSelectElement = document.getElementById('patient-state');
     let citySelectElement = document.getElementById('patient-city');
@@ -181,15 +181,17 @@ function validatePatientForm() {
     let passResult = true;
     let confirmPassResult = true;
     let stateResult = validateState(stateSelectElement);
-    let cityResult = validateCity(citySelectElement);
-    let phoneResult = validatePhoneNumber(phoneInputField, patientPhoneInput);
+    //let cityResult = validateCity(citySelectElement);
+    let cityResult = true;
+    let phoneResult = validatePhoneNumber(patientPhoneInputElement, patientIntlInput);
+    let dobResult = validateDOB(dobElement);
 
     if ($('#hiddendiv').is(":visible")) {
         passResult = validatePassword(passElement);
         confirmPassResult = validateConfirmPassword(confirmPassElement);
     }
 
-    if (firstNameResult && lastNameResult && emailResult && phoneResult && passResult && confirmPassResult && stateResult && cityResult) {
+    if (firstNameResult && lastNameResult && emailResult && phoneResult && passResult && confirmPassResult && stateResult && cityResult && dobResult) {
         return true;
     }
 
@@ -201,14 +203,31 @@ function validateFamilyFriendForm() {
     let familyFirstNameElement = document.getElementById('family-friend-first-name');
     let familyLastNameElement = document.getElementById('family-friend-last-name');
     let familyEmailElement = document.getElementById('family-friend-email');
+    let familyRelationElement = document.getElementById('family-friend-relation');
+    let patientFirstNameElement = document.getElementById('family-friend-patient-first-name');
+    let patientLastNameElement = document.getElementById('family-friend-patient-last-name');
+    let patientEmailElement = document.getElementById('family-friend-patient-email');
+    let patientStateElement = document.getElementById('patient-state');
+    let patientCityElement = document.getElementById('patient-city');
+    let patientDobElement = document.getElementById('family-friend-patient-dob');
 
+    let familyFirstNameResult = validateFirstName(familyFirstNameElement);
+    let familyLastNameResult = validateLastName(familyLastNameElement);
+    let familyEmailResult = validateEmail(familyEmailElement);
+    let familyRelationResult = validateRequired(familyRelationElement);
+    let familyPhoneResult = validatePhoneNumber(otherPhoneInputElement, otherIntlInput);
 
-    let firstNameResult = validateFirstName(familyFirstNameElement);
-    let lastNameResult = validateLastName(familyLastNameElement);
-    let emailResult = validateEmail(familyEmailElement);
+    let patientFirstNameResult = validateFirstName(patientFirstNameElement);
+    let patientLastNameResult = validateLastName(patientLastNameElement);
+    let patientEmailResult = validateEmail(patientEmailElement);
+    let patientPhoneResult = validatePhoneNumber(patientPhoneInputElement, patientIntlInput);
+    let patientStateResult = validateState(patientStateElement);
+    let patientCityResult = validateCity(patientCityElement);
+    let patientDobResult = validateDOB(patientDobElement);
 
-    if (firstNameResult && lastNameResult && emailResult) {
-        return false;
+    if (familyFirstNameResult && familyLastNameResult && familyEmailResult && familyPhoneResult && familyRelationResult
+        && patientFirstNameResult && patientLastNameResult && patientEmailResult && patientPhoneResult && patientStateResult && patientCityResult && patientDobResult) {
+        return true;
     }
 
     return false;
@@ -216,9 +235,75 @@ function validateFamilyFriendForm() {
 }
 
 function validateConciergeForm() {
+
+    let conciergeFirstNameElement = document.getElementById('concierge-first-name');
+    let conciergeLastNameElement = document.getElementById('concierge-last-name');
+    let conciergeEmailElement = document.getElementById('concierge-email');
+    let conciergeHotelOrProperty = document.getElementById('concierge-hotel-or-property-name');
+
+    let patientFirstNameElement = document.getElementById('concierge-patient-first-name');
+    let patientLastNameElement = document.getElementById('concierge-patient-last-name');
+    let patientEmailElement = document.getElementById('concierge-patient-email');
+    let patientStateElement = document.getElementById('patient-state');
+    let patientCityElement = document.getElementById('patient-city');
+    let patientDobElement = document.getElementById('concierge-patient-dob');
+
+    let conciergeFirstNameResult = validateFirstName(conciergeFirstNameElement);
+    let conciergeLastNameResult = validateLastName(conciergeLastNameElement);
+    let conciergeEmailResult = validateEmail(conciergeEmailElement);
+    let conciergeHotelResult = validateRequired(conciergeHotelOrProperty);
+    let conciergePhoneResult = validatePhoneNumber(otherPhoneInputElement, otherIntlInput);
+
+    let patientFirstNameResult = validateFirstName(patientFirstNameElement);
+    let patientLastNameResult = validateLastName(patientLastNameElement);
+    let patientEmailResult = validateEmail(patientEmailElement);
+    let patientPhoneResult = validatePhoneNumber(patientPhoneInputElement, patientIntlInput);
+    let patientStateResult = validateState(patientStateElement);
+    let patientCityResult = validateCity(patientCityElement);
+    let patientDobResult = validateDOB(patientDobElement);
+
+    if (conciergeFirstNameResult && conciergeLastNameResult && conciergeEmailResult && conciergePhoneResult && conciergeHotelResult
+        && patientFirstNameResult && patientLastNameResult && patientEmailResult && patientPhoneResult && patientStateResult && patientCityResult && patientDobResult) {
+        return true;
+    }
+
     return false;
 }
 
 function validateBusinessForm() {
+
+    let businessFirstNameElement = document.getElementById('business-first-name');
+    let businessLastNameElement = document.getElementById('business-last-name');
+    let businessEmailElement = document.getElementById('business-email');
+    let businessPropertyElement = document.getElementById('business-property-name');
+    let businessCaseNumberElement = document.getElementById('business-case-number');
+
+    let patientFirstNameElement = document.getElementById('business-patient-first-name');
+    let patientLastNameElement = document.getElementById('business-patient-last-name');
+    let patientEmailElement = document.getElementById('business-patient-email');
+    let patientStateElement = document.getElementById('patient-state');
+    let patientCityElement = document.getElementById('patient-city');
+    let patientDobElement = document.getElementById('business-patient-dob');
+
+    let businessFirstNameResult = validateFirstName(businessFirstNameElement);
+    let businessLastNameResult = validateLastName(businessLastNameElement);
+    let businessEmailResult = validateEmail(businessEmailElement);
+    let businessPropertyResult = validateRequired(businessPropertyElement);
+    let businessCaseNumberResult = validateRequired(businessCaseNumberElement);
+    let businessPhoneResult = validatePhoneNumber(otherPhoneInputElement, otherIntlInput);
+
+    let patientFirstNameResult = validateFirstName(patientFirstNameElement);
+    let patientLastNameResult = validateLastName(patientLastNameElement);
+    let patientEmailResult = validateEmail(patientEmailElement);
+    let patientPhoneResult = validatePhoneNumber(patientPhoneInputElement, patientIntlInput);
+    let patientStateResult = validateState(patientStateElement);
+    let patientCityResult = validateCity(patientCityElement);
+    let patientDobResult = validateDOB(patientDobElement);
+
+    if (businessFirstNameResult && businessLastNameResult && businessEmailResult && businessPhoneResult && businessPropertyResult && businessCaseNumberResult
+        && patientFirstNameResult && patientLastNameResult && patientEmailResult && patientPhoneResult && patientStateResult && patientCityResult && patientDobResult) {
+        return true;
+    }
+
     return false;
 }

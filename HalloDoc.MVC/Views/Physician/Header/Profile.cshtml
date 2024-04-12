@@ -120,7 +120,7 @@
                     <div class="col-md-6">
                         <div class="form-floating phone-div w-100 h-100 ">
                             <input id="phy-phone-country" asp-for="CountryCode" hidden />
-                            <input id="phy-phone" class="py-4 form-control" type="tel" asp-for="Phone" />
+                            <input id="phy-phone" class="py-4 form-control" type="number" asp-for="Phone" />
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -214,7 +214,7 @@
                     <div class="col-md-6">
                         <div class="form-floating phone-div w-100 h-100 ">
                             <input asp-for="MailCountryCode" hidden id="phy-alt-phone-country" />
-                            <input asp-for="MailPhone" type="tel" id="phy-alt-phone" class="form-control w-100 h-100" placeholder="Phone">
+                            <input asp-for="MailPhone" type="number" id="phy-alt-phone" class="form-control w-100 h-100" placeholder="Phone">
                         </div>
                     </div>
                 </div>

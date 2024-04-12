@@ -16,7 +16,7 @@
 
 
 <div class="tab-content px-4" id="myTabContent">
-   
+
     <div class="tab-pane fade active show" id="profile" role="tabpanel" aria-labelledby="profile-tab">
 
         <div class="mt-5 row justify-content-center container-fluid">
@@ -35,127 +35,143 @@
 
                     <div class="shadow dashboard-card mt-3 p-3">
 
-                        <h4>General Information</h4>
+                        <fieldset id="patient-profile-fieldset" disabled>
 
-                        <div class="row">
-                            <div class="col-lg-4 col-md-6 col-12">
-                                <div class="form-floating mt-3">
-                                    <input asp-for="UserId" hidden />
-                                    <input asp-for="FirstName" class="form-control" placeholder="Leave a comment here" disabled
-                                           id="floatingTextarea2">
-                                    <label for="floatingTextarea2">First Name</label>
-                                </div>
-                            </div>
+                            <h4>General Information</h4>
 
-                            <div class="col-lg-4 col-md-6 col-12">
-                                <div class="form-floating mt-3">
-                                    <input asp-for="LastName" class="form-control" placeholder="Leave a comment here" disabled
-                                           id="floatingTextarea2">
-                                    <label for="floatingTextarea2">Last Name</label>
-                                </div>
-                            </div>
-
-                            <div class="col-lg-4 col-md-6 col-12">
-
-                                <div class="form-floating mt-3">
-                                    <input class="form-control" asp-for="Date" type="date" disabled
-                                           id="date-of-birth">
-                                    <label for="floatingTextarea2">Date of Birth:</label>
-
+                            <div class="row">
+                                <div class="col-lg-4 col-md-6 col-12">
+                                    <div class="form-floating mt-3">
+                                        <input asp-for="FirstName" class="form-control" placeholder="First Name"
+                                               id="floatingTextarea2">
+                                        <label for="floatingTextarea2">First Name</label>
+                                    </div>
                                 </div>
 
-                            </div>
-
-                        </div>
-
-                        <h4 class="mt-3">Contact Information</h4>
-
-                        <div class="row">
-                            <div class="col-lg-4 col-md-2 col-12">
-                                <div class="form-floating mt-3">
-                                    <select disabled asp-for="Type" class="form-select" id="floatingSelectGrid" aria-label="Floating label select example">
-                                        <option value="Mobile" selected>Mobile</option>
-                                        <option value="Telephone">Telephone</option>
-                                    </select>
-                                    <label for="floatingSelectGrid">Works with selects</label>
-                                </div>
-                            </div>
-
-                            <div class="col-lg-4 col-md-4 col-12">
-                                <div class="form-floating mt-3">
-                                    <input id="patient-phone-country" asp-for="CountryCode" hidden />
-                                    <input id="patient-phone" asp-for="Phone" class="form-control" type="tel" placeholder="Leave a comment here" disabled></input>
-                                </div>
-                            </div>
-
-                            <div class="col-lg-4 col-md-6 col-12">
-
-                                <div class="form-floating mt-3">
-
-                                    <input asp-for="Email" class="form-control" placeholder="Leave a comment here" disabled
-                                           id="email">
-                                    <label for="email">Email</label>
-
+                                <div class="col-lg-4 col-md-6 col-12">
+                                    <div class="form-floating mt-3">
+                                        <input asp-for="LastName" class="form-control" placeholder="Last Name"
+                                               id="floatingTextarea2">
+                                        <label for="floatingTextarea2">Last Name</label>
+                                    </div>
                                 </div>
 
-                            </div>
+                                <div class="col-lg-4 col-md-6 col-12">
 
-                        </div>
+                                    <div class="form-floating mt-3">
+                                        <input class="form-control" asp-for="DateOfBirth" type="date"
+                                               id="date-of-birth">
+                                        <label for="floatingTextarea2">Date of Birth:</label>
 
-                        <h4 class="mt-3">Location Information</h4>
-
-                        <div class="row">
-                            <div class="col-lg-4 col-md-6 col-12">
-                                <div class="form-floating mt-3">
-                                    <input asp-for="Street" class="form-control" placeholder="Leave a comment here" disabled
-                                           id="floatingTextarea2"></input>
-                                    <label for="floatingTextarea2">Street</label>
-                                </div>
-                            </div>
-
-
-                            <div class="col-lg-4 col-md-6 col-12">
-                                <div class="form-floating mt-3">
-                                    <input asp-for="City" class="form-control" placeholder="Leave a comment here" disabled></input>
-                                    <label for="floatingTextarea2">City</label>
-                                </div>
-                            </div>
-
-                            <div class="col-lg-4 col-md-6 col-12">
-
-                                <div class="form-floating mt-3">
-
-                                    <input asp-for="State" class="form-control" placeholder="Leave a comment here" disabled
-                                           id="floatingTextarea2">
-                                    <label for="floatingTextarea2">State</label>
-
-                                </div>
-
-                            </div>
-
-                            <div class="col-lg-4 col-md-4 col-12">
-
-                                <div class="form-floating mt-3">
-
-                                    <input asp-for="ZipCode" class="form-control" placeholder="Leave a comment here" disabled
-                                           id="floatingTextarea2">
-                                    <label for="floatingTextarea2">Zip Code</label>
-
-                                </div>
-
-                            </div>
-
-                            <div class="col-lg-4 col-md-2 col-12 mt-3">
-                                <button type="button" class="btn btn-outline-info shadow-none night-mode-btn h-100">
-                                    <div class="d-flex">
-                                        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M480-480q33 0 56.5-23.5T560-560q0-33-23.5-56.5T480-640q-33 0-56.5 23.5T400-560q0 33 23.5 56.5T480-480Zm0 294q122-112 181-203.5T720-552q0-109-69.5-178.5T480-800q-101 0-170.5 69.5T240-552q0 71 59 162.5T480-186Zm0 106Q319-217 239.5-334.5T160-552q0-150 96.5-239T480-880q127 0 223.5 89T800-552q0 100-79.5 217.5T480-80Zm0-480Z" /></svg>
-                                        <span>Map</span>
                                     </div>
 
-                                </button>
+                                </div>
+
                             </div>
 
-                        </div>
+                            <h4 class="mt-3">Contact Information</h4>
+
+                            <div class="row">
+                                <div class="col-lg-4 col-md-2 col-12">
+                                    <div class="form-floating mt-3">
+                                        <select asp-for="Type" class="form-select" id="floatingSelectGrid">
+                                            <option value="Mobile" selected>Mobile</option>
+                                            <option value="Telephone">Telephone</option>
+                                        </select>
+                                        <label for="floatingSelectGrid">Works with selects</label>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-4 col-md-4 col-12">
+                                    <div class="form-floating mt-3">
+                                        <input id="patient-phone-country" asp-for="CountryCode" hidden />
+                                        <input id="patient-phone" asp-for="Phone" class="form-control" type="tel">
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-4 col-md-6 col-12">
+
+                                    <div class="form-floating mt-3">
+
+                                        <input asp-for="Email" class="form-control" placeholder="Email"
+                                               id="email">
+                                        <label for="email">Email</label>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                            <h4 class="mt-3">Location Information</h4>
+
+                            <div class="row">
+                                <div class="col-lg-4 col-md-6 col-12">
+                                    <div class="form-floating mt-3">
+                                        <input asp-for="Street" class="form-control" placeholder="Street"
+                                               id="floatingTextarea2">
+                                        <label for="floatingTextarea2">Street</label>
+                                    </div>
+                                </div>
+
+
+                                <div class="col-lg-4 col-md-6 col-12">
+                                    <div class="form-floating mt-3">
+
+                                        <select asp-for="CityId" class="form-select" id="patient-city" required>
+                                            <option disabled selected value=""> -- Select City -- </option>
+                                        </select>
+                                        <label for="patient-city">City</label>
+
+
+                                        <span asp-validation-for="CityId" class="text-danger"></span>
+                                        <span class="error-msg text-danger" style="display:none;"></span>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-4 col-md-6 col-12">
+
+                                    <div class="form-floating mt-3">
+                                        <select asp-for="RegionId" class="form-select" id="patient-state">
+                                            <option disabled selected value=""> -- Select State -- </option>
+                                            @foreach (var region in Model.regions)
+                                            {
+                                                <option value="@region.Regionid">@region.Name</option>
+                                            }
+                                        </select>
+                                        <label for="patient-state">State</label>
+                                        <span asp-validation-for="RegionId" class="text-danger"></span>
+                                        <span class="error-msg text-danger" style="display:none;"></span>
+                                    </div>
+
+                                </div>
+
+                                <div class="col-lg-4 col-md-4 col-12">
+
+                                    <div class="form-floating mt-3">
+
+                                        <input asp-for="ZipCode" class="form-control" placeholder="Zip Code"
+                                               id="floatingTextarea2">
+                                        <label for="floatingTextarea2">Zip Code</label>
+
+                                    </div>
+
+                                </div>
+
+                                <div class="col-lg-4 col-md-2 col-12 mt-3">
+                                    <button type="button" class="btn btn-outline-info shadow-none night-mode-btn h-100">
+                                        <div class="d-flex">
+                                            <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M480-480q33 0 56.5-23.5T560-560q0-33-23.5-56.5T480-640q-33 0-56.5 23.5T400-560q0 33 23.5 56.5T480-480Zm0 294q122-112 181-203.5T720-552q0-109-69.5-178.5T480-800q-101 0-170.5 69.5T240-552q0 71 59 162.5T480-186Zm0 106Q319-217 239.5-334.5T160-552q0-150 96.5-239T480-880q127 0 223.5 89T800-552q0 100-79.5 217.5T480-80Zm0-480Z" /></svg>
+                                            <span>Map</span>
+                                        </div>
+
+                                    </button>
+                                </div>
+
+                            </div>
+
+
+                        </fieldset>
 
                         <div class="d-flex justify-content-end">
 
@@ -194,6 +210,44 @@
 
 <script>
 
+    $("#patient-state").change(function () {
+
+        var regId = $('option:selected', this).val();
+
+        $.ajax({
+            url: '/Guest/GetCitiesByRegion',
+            type: 'POST',
+            data: {
+                regionId: regId,
+            },
+            success: function (result) {
+                console.log(result);
+                $('#patient-city').empty();
+                $('#patient-city').append($('<option>', {
+                    value: "",
+                    text: '-- Select City --',
+                    selected: true,
+                    disabled: true
+                }));
+                $.each(result, function (index, object) {
+
+                    $('#patient-city').append($('<option>', {
+                        value: object["id"],
+                        text: object["name"]
+                    }));
+
+                });
+            },
+            error: function (err) {
+                console.error(err);
+            }
+        });
+    });
+
+</script>
+
+<script>
+
     const phoneInputField = document.getElementById("patient-phone");
     var patientPhoneInput = window.intlTelInput(phoneInputField, {
         utilsScript:
@@ -216,15 +270,7 @@
 
     function editDetails() {
 
-        var inputs = document.getElementsByTagName("input");
-        for (var i = 0; i < inputs.length; i++) {
-            inputs[i].disabled = false;
-        }
-
-        var selects = document.getElementsByTagName("select");
-        for (var i = 0; i < selects.length; i++) {
-            selects[i].disabled = false;
-        }
+        document.getElementById("patient-profile-fieldset").disabled = false;
 
         var editBtn = document.getElementById("editBtn");
         editBtn.style.display = "none";
@@ -234,24 +280,4 @@
 
     }
 
-    function saveDetails() {
-
-        var inputs = document.getElementsByTagName("input");
-        for (var i = 0; i < inputs.length; i++) {
-            inputs[i].disabled = true;
-        }
-
-        var selects = document.getElementsByTagName("select");
-        for (var i = 0; i < selects.length; i++) {
-            selects[i].disabled = true;
-        }
-
-
-        var editBtn = document.getElementById("editBtn");
-        editBtn.style.display = "block";
-
-        var saveBtn = document.getElementById("saveBtn");
-        saveBtn.style.display = "none";
-
-    }
 </script>

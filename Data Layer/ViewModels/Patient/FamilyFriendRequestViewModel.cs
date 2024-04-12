@@ -16,7 +16,7 @@ namespace Data_Layer.ViewModels
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
         public string? Countrycode { get; set; }
-        [Required(ErrorMessage = "Phonecannot be empty")]
+        [Required(ErrorMessage = "Phone cannot be empty")]
         public string? Phone { get; set; }
         [Required(ErrorMessage = "Email cannot be empty")]
         public string? Email { get; set; }

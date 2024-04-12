@@ -16,6 +16,8 @@ using Business_Layer.Services.Patient;
 using Rotativa.AspNetCore;
 using Business_Layer.Services.Guest.Interface;
 using Business_Layer.Services.Guest;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Routing;
 
 var builder = WebApplication.CreateBuilder(args);
 

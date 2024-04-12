@@ -76,14 +76,43 @@ input[type="checkbox"]:checked {
         border-radius: 5px;
     }
 
+
+/* HTML: <div class="loader"></div> */
 .loading-animation {
-    border: 16px solid #f3f3f3;
-    border-radius: 50%;
-    border-top: 16px solid #10bce9;
-    width: 120px;
-    height: 120px;
-    -webkit-animation: spin 2s linear infinite; /* Safari */
-    animation: spin 2s linear infinite;
+    display: inline-flex;
+    gap: 10px;
+}
+
+    .loading-animation:before,
+    .loading-animation:after {
+        content: "";
+        height: 20px;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background: radial-gradient(farthest-side,#000 95%,#0000) 35% 35%/6px 6px no-repeat #fff;
+        animation: l5 3s infinite;
+    }
+
+@keyframes l5 {
+    0%,11% {
+        background-position: 35% 35%
+    }
+
+    14%,36% {
+        background-position: 65% 35%
+    }
+
+    38%,61% {
+        background-position: 65% 65%
+    }
+
+    64%,86% {
+        background-position: 35% 65%
+    }
+
+    88%,100% {
+        background-position: 35% 35%
+    }
 }
 
 /* Safari */

@@ -12,6 +12,7 @@ using HalloDoc.MVC.Services;
 using Business_Layer.Utilities;
 using Business_Layer.Repository.IRepository;
 using Business_Layer.Services.Patient.Interface;
+using AspNetCoreHero.ToastNotification.Abstractions;
 
 namespace HalloDoc.MVC.Controllers
 {
@@ -23,13 +24,15 @@ namespace HalloDoc.MVC.Controllers
         private readonly IConfiguration _config;
         private readonly IPatientDashboardRepository _dashboardRepo;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly INotyfService _notyf;
 
-        public PatientController(IWebHostEnvironment environment, IConfiguration config, IPatientDashboardRepository patientDashboardRepository, IUnitOfWork unitwork)
+        public PatientController(IWebHostEnvironment environment, IConfiguration config, IPatientDashboardRepository patientDashboardRepository, IUnitOfWork unitwork,INotyfService notyfService)
         {
             _environment = environment;
             _config = config;
             _dashboardRepo = patientDashboardRepository;
             _unitOfWork = unitwork;
+            _notyf = notyfService;
         }
 
         public IActionResult Index()
@@ -264,6 +267,7 @@ namespace HalloDoc.MVC.Controllers
                         Phonenumber = phoneNumber,
                         Createddate = DateTime.Now,
                         Ip = requestIpAddress,
+                        Accounttypeid = (int)AccountType.Patient,
                     };
 
                     _unitOfWork.AspNetUserRepository.Add(aspnetuser);
@@ -548,7 +552,6 @@ namespace HalloDoc.MVC.Controllers
 
         public IActionResult Profile()
         {
-
             int userId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
             User? user = _unitOfWork.UserRepository.GetFirstOrDefault(u => u.Userid == userId);
 
@@ -558,10 +561,9 @@ namespace HalloDoc.MVC.Controllers
 
                 PatientProfileViewModel model = new()
                 {
-                    UserId = user.Userid,
                     FirstName = user.Firstname,
                     LastName = user.Lastname,
-                    Date = DateTime.Parse(dobDate),
+                    DateOfBirth = DateTime.Parse(dobDate),
                     Type = "Mobile",
                     Phone = user.Mobile,
                     Email = user.Email,
@@ -569,30 +571,45 @@ namespace HalloDoc.MVC.Controllers
                     City = user.City,
                     State = user.State,
                     ZipCode = user.Zipcode,
+                    regions = _unitOfWork.RegionRepository.GetAll(),
                 };
 
                 return View("Dashboard/Profile", model);
             }
+
             return RedirectToAction("Error");
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Profile(PatientProfileViewModel pm)
+        public IActionResult Profile(PatientProfileViewModel model)
         {
-            string phoneNumber = "+" + pm.CountryCode + '-' + pm.Phone;
 
-            User dbUser = _unitOfWork.UserRepository.GetFirstOrDefault(u => u.Userid == pm.UserId);
-            dbUser.Firstname = pm.FirstName;
-            dbUser.Lastname = pm.LastName;
-            dbUser.Intdate = pm.Date.Value.Day;
-            dbUser.Strmonth = pm.Date.Value.Month.ToString();
-            dbUser.Intyear = pm.Date.Value.Year;
+            int userId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+            User? dbUser = _unitOfWork.UserRepository.GetFirstOrDefault(u => u.Userid == userId);
+
+            if(dbUser == null)
+            {
+                _notyf.Error("User not found");
+                return RedirectToAction("Dashboard");
+            }
+
+            string phoneNumber = "+" + model.CountryCode + '-' + model.Phone;
+
+            string? patientState = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == model.RegionId)?.Name;
+            string? patientCity = _unitOfWork.CityRepository.GetFirstOrDefault(city => city.Id == model.CityId)?.Name;
+
+            dbUser.Firstname = model.FirstName;
+            dbUser.Lastname = model.LastName;
+            dbUser.Intdate = model.DateOfBirth.Value.Day;
+            dbUser.Strmonth = model.DateOfBirth.Value.Month.ToString();
+            dbUser.Intyear = model.DateOfBirth.Value.Year;
             dbUser.Mobile = phoneNumber;
-            dbUser.Street = pm.Street;
-            dbUser.City = pm.City;
-            dbUser.State = pm.State;
-            dbUser.Zipcode = pm.ZipCode;
+            dbUser.Street = model.Street;
+            dbUser.Regionid = model.RegionId;
+            dbUser.City = patientCity;
+            dbUser.State = patientState;
+            dbUser.Zipcode = model.ZipCode;
 
             _unitOfWork.UserRepository.Update(dbUser);
             _unitOfWork.Save();

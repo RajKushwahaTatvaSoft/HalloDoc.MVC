@@ -1,8 +1,30 @@
 const validNameRegex = /^[A-Za-z\s]{1,}[\.]{0,1}[A-Za-z\s]{0,}$/;
 const validEmailRegex = /^([\w\.\-]+)@([\w\-]+)((\.(\w){2,3})+)$/;
 const validPasswordRegex = /(?=^.{8,}$)((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/;
+const validNumberRegex = /^\d+$/; // Only digits are allowed
 const intlPhoneErrorMapping = ["Invalid number", "Invalid country code", "Too short", "Too long", "Invalid number"];
 
+function validateRequired(element) {
+
+    let parentElementClasses = element.parentElement.classList;
+    let errorElement = $('#' + element.id).siblings('.error-msg')[0];
+
+    if (!element.value.trim()) {
+        parentElementClasses.remove('valid-field');
+        parentElementClasses.add("invalid-field");
+
+        errorElement.innerHTML = "This field is required";
+        errorElement.style.display = "block";
+        return false;
+    }
+
+    parentElementClasses.add('valid-field');
+    parentElementClasses.remove("invalid-field");
+
+    errorElement.style.display = "none";
+
+    return true;
+}
 
 function validateCity(element) {
 
@@ -126,6 +148,14 @@ function validatePhoneNumber(phoneInputElement, phoneIntlField) {
         return false;
 
     }
+    else if (!validNumberRegex.test(phoneInputElement.value)) {
+        phoneInputParentClasses.remove('valid-field');
+        phoneInputParentClasses.add("invalid-field");
+
+        errorElement.innerHTML = "Phone number should only contain numbers.";
+        errorElement.style.display = "block";
+        return false;
+    }
     else if (!phoneIntlField.isValidNumber()) {
 
         const errorCode = phoneIntlField.getValidationError();
@@ -157,7 +187,7 @@ function validateEmail(element) {
         parentElementClasses.remove('valid-field');
         parentElementClasses.add("invalid-field");
 
-        errorElement.innerHTML = "Please enter value";
+        errorElement.innerHTML = "Please enter email";
         errorElement.style.display = "block";
         return false;
     }
@@ -216,8 +246,11 @@ function validateLastName(element) {
 
     if (!element.value.trim()) {
         errorElement.style.display = "none";
+        parentElementClasses.remove("invalid-field");
+        parentElementClasses.remove('valid-field');
         return true;
     }
+
 
     if (!validNameRegex.test(element.value)) {
         parentElementClasses.remove('valid-field');
@@ -236,4 +269,39 @@ function validateLastName(element) {
 
     return true;
 
+}
+
+function validateDOB(element) {
+
+    let parentElementClasses = element.parentElement.classList;
+    let errorElement = $('#' + element.id).siblings('.error-msg')[0];
+
+    if (!element.value.trim()) {
+        parentElementClasses.remove('valid-field');
+        parentElementClasses.add("invalid-field");
+
+        errorElement.innerHTML = "Please enter date of birth.";
+        errorElement.style.display = "block";
+        return false;
+    }
+
+    var selectedDate = new Date(element.value);
+    var currentDate = new Date();
+    if (selectedDate > currentDate) {
+
+        parentElementClasses.remove('valid-field');
+        parentElementClasses.add("invalid-field");
+
+        errorElement.innerHTML = "Future citizens are not allowed yet.";
+        errorElement.style.display = "block";
+
+        return false;
+    }
+
+    parentElementClasses.remove('invalid-field');
+    parentElementClasses.add('valid-field');
+
+    errorElement.style.display = "none";
+
+    return true;
 }
