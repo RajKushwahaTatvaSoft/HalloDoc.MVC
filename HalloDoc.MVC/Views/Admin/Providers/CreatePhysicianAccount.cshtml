@@ -4,13 +4,13 @@
     ViewData["Title"] = "Physician Account";
 }
 
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/1.1.2/js/bootstrap-multiselect.min.js" integrity="sha512-lxQ4VnKKW7foGFV6L9zlSe+6QppP9B2t+tMMaV4s4iqAv4iHIyXED7O+fke1VeLNaRdoVkVt8Hw/jmZ+XocsXQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/1.1.2/css/bootstrap-multiselect.css" integrity="sha512-tlP4yGOtHdxdeW9/VptIsVMLtgnObNNr07KlHzK4B5zVUuzJ+9KrF86B/a7PJnzxEggPAMzoV/eOipZd8wWpag==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/css/bootstrap-select.css" />
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/js/bootstrap-select.min.js"></script>
 
+<partial name="_ValidationScriptsPartial" />
 
 <div class="EditPhysicianAccount">
     <div class="container-fluid d-flex justify-content-between mt-4" style="max-width:1000px">
@@ -38,6 +38,7 @@
                     <div class="form-floating">
                         <input type="text" asp-for="UserName" class="form-control" placeholder="User Name" disabled>
                         <label for="">User Name</label>
+                        <span class="text-danger" asp-validation-for="UserName"></span>
                     </div>
                 </div>
 
@@ -45,6 +46,7 @@
                     <div class="form-floating">
                         <input type="text" asp-for="Password" class="form-control" placeholder="Password">
                         <label for="floatingSelectGrid">Password</label>
+                        <span class="text-danger" asp-validation-for="Password"></span>
                     </div>
                 </div>
 
@@ -71,39 +73,47 @@
                     <div class="form-floating">
                         <input asp-for="FirstName" type="text" class="form-control" placeholder="First Name">
                         <label for="">First Name</label>
+                        <span class="text-danger" asp-validation-for="FirstName"></span>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-floating">
-                        <input asp-for="LastName" type="text" class="form-control">
+                        <input asp-for="LastName" type="text" class="form-control" placeholder="Last Name">
                         <label for="floatingSelectGrid">Last Name</label>
+                        <span class="text-danger" asp-validation-for="LastName"></span>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-floating">
-                        <input asp-for="Email" type="email" class="form-control">
+                        <input asp-for="Email" type="email" class="form-control" placeholder="Email">
                         <label for="">Email</label>
+                        <span class="text-danger" asp-validation-for="Email"></span>
                     </div>
                 </div>
+
                 <div class="col-md-6">
 
-                    <div class="form-floating d-flex " style="height:58px;">
+                    <div class="form-floating">
                         <input id="phy-phone-country" asp-for="CountryCode" hidden />
 
-                        <input id="phy-phone" class="py-4 form-control" type="tel" asp-for="Phone" />
+                        <input id="phy-phone" class="py-4 form-control" type="tel" asp-for="Phone" placeholder="Phone">
+                        <span class="text-danger" asp-validation-for="Phone"></span>
                     </div>
 
                 </div>
+
                 <div class="col-md-6">
                     <div class="form-floating">
-                        <input asp-for="MedicalLicenseNumber" class="form-control">
+                        <input asp-for="MedicalLicenseNumber" class="form-control" placeholder="Medical License Number">
                         <label for="">Medical License Number</label>
+                        <span class="text-danger" asp-validation-for="MedicalLicenseNumber"></span>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-floating">
-                        <input asp-for="NPINumber" class="form-control">
+                        <input asp-for="NPINumber" class="form-control" placeholder="NPI Number">
                         <label for="">NPI Number</label>
+                        <span class="text-danger" asp-validation-for="NPINumber"></span>
                     </div>
                 </div>
                 <div class="col-md-6 col-12">
@@ -121,26 +131,27 @@
 
             </div>
 
-
             <h5 class="fw-bold">Mailing & Billing Information</h5>
 
             <div class="row g-2 m-1">
                 <div class="col-md-6">
                     <div class="form-floating">
-                        <input asp-for="Address1" type="text" class="form-control" placeholder="">
+                        <input asp-for="Address1" type="text" class="form-control" placeholder="Address 1">
                         <label for="">Address1</label>
+                        <span class="text-danger" asp-validation-for="Address1"></span>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-floating">
-                        <input asp-for="Address2" type="text" class="form-control" placeholder="">
+                        <input asp-for="Address2" type="text" class="form-control" placeholder="Address 2">
                         <label for="floatingSelectGrid">Address2</label>
+                        <span class="text-danger" asp-validation-for="Address2"></span>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-floating">
 
-                        <select asp-for="CityId" class="form-select billingChange" id="create-phy-city">
+                        <select asp-for="CityId" class="form-select billingChange" id="create-phy-city" placeholder="City">
                             <option disabled value=""> -- Select City -- </option>
 
                         </select>
@@ -151,25 +162,28 @@
                 </div>
                 <div class="col-md-6">
                     <div class="form-floating phone-div w-100 h-100 ">
-                        <select asp-for="RegionId" class="form-select border-0"  id="create-phy-state">
+                        <select asp-for="RegionId" class="form-select border-0" id="create-phy-state" placeholder="State">
                             @foreach (var region in Model.regions)
                             {
                                 <option value="@region.Regionid">@region.Name</option>
                             }
                         </select>
                         <label for="">Select A Region</label>
+                        <span class="text-danger" asp-validation-for="RegionId"></span>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-floating">
-                        <input asp-for="Zip" type="text" class="form-control" placeholder="">
+                        <input asp-for="Zip" type="text" class="form-control" placeholder="Zip">
                         <label for="">Zip</label>
+                        <span class="text-danger" asp-validation-for="Zip"></span>
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="form-floating d-flex " style="height:58px;">
+                    <div class="form-floating">
                         <input asp-for="MailCountryCode" hidden id="phy-alt-phone-country" />
-                        <input asp-for="MailPhone" type="tel" id="phy-alt-phone" class="form-control w-100 h-100" placeholder="Phone">
+                        <input asp-for="MailPhone" type="tel" id="phy-alt-phone" class="form-control w-100 h-100" placeholder="Mail Phone">
+                        <span class="text-danger" asp-validation-for="MailPhone"></span>
                     </div>
                 </div>
             </div>
@@ -180,14 +194,16 @@
             <div class="row g-2 m-1">
                 <div class="col-md-6">
                     <div class="form-floating">
-                        <input asp-for="BusinessName" type="text" class="form-control" placeholder="">
+                        <input asp-for="BusinessName" type="text" class="form-control" placeholder="Business Name">
                         <label for="">Business name</label>
+                        <span class="text-danger" asp-validation-for="BusinessName"></span>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-floating">
-                        <input asp-for="BusinessWebsite" type="text" class="form-control" placeholder="">
+                        <input asp-for="BusinessWebsite" type="text" class="form-control" placeholder="Business Website">
                         <label for="floatingSelectGrid">Business Website</label>
+                        <span class="text-danger" asp-validation-for="BusinessWebsite"></span>
                     </div>
                 </div>
 
@@ -260,10 +276,10 @@
                     <textarea class="form-control" placeholder="Admin Notes" id="floatingTextarea2"
                               style="height: 100px" asp-for="AdminNotes"></textarea>
                     <label for="floatingTextarea2">Admin Notes</label>
+                    <span class="text-danger" asp-validation-for="AdminNotes"></span>
 
                 </div>
             </div>
-
 
             <div class="my-4"></div>
 
@@ -282,7 +298,6 @@
                     <div class="col-4">
                         <input asp-for="ICAFile" type="file" class="btn" placeholder="">
                     </div>
-
                 </div>
             </div>
             <div class="row my-1">
@@ -342,6 +357,7 @@
                 </div>
 
             </div>
+
             <div class="border-bottom border-5"></div>
 
             <button onclick="changeCountryCode()" type="submit" class="btn float-end m-1" style="background-color: #2e7d32; color:white;">Create Account</button>

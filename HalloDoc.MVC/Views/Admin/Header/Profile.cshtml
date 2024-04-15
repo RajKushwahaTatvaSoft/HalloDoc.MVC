@@ -34,7 +34,7 @@
 
                     <div class="col-md-6 mt-4 ">
                         <div class=" floating-label form-floating">
-                            <input asp-for="AspUserName" type="text" class="form-control account-info-input" disabled placeholder="Username" id="account-info-user-name">
+                            <input asp-for="AspUserName" type="text" class="form-control" disabled placeholder="Username" id="account-info-user-name">
                             <label for="floatingInput">Username</label>
                         </div>
 
@@ -53,21 +53,19 @@
                             <option selected value="0">-- Select Status --</option>
                             <option value="1">Active</option>
                             <option value="2">Pending</option>
-                            <option value="3">F</option>
-                            <option value="4">Sleepy</option>
+                            <option value="3">Heaven</option>
                         </select>
                     </div>
 
                     <div class="col-md-6 col-12 mt-4">
                         <select asp-for="RoleId" class="form-select account-info-input" id="account-info-role" disabled style="height:60px;">
-                            <option selected value="">-- Select Status --</option>
+                            <option selected value="">-- Select Role --</option>
                             @foreach (var role in Model.roles)
                             {
                                 <option value="@role.Roleid">@role.Name</option>
                             }
                         </select>
                     </div>
-
 
                     <div class="d-flex justify-content-end mt-3">
 
@@ -269,7 +267,6 @@
         phyAccountInfoEdit.classList.add('d-none');
         phyAccountInfoSave.classList.remove('d-none');
         phyAccountInfoCancel.classList.remove('d-none');
-
     });
 
     $('#account-info-reset-pass-btn').click(function () {
@@ -281,7 +278,7 @@
                 password: $('#account-info-password').val(),
             },
             success: function (result) {
-                location.reload();
+                $('#account-info-password').val("");
             },
             error: function (err) {
                 console.error(err);
@@ -297,11 +294,15 @@
             url: '/Admin/SaveAdminAccountInfo',
             type: 'POST',
             data: {
-                userName: $('#account-info-user-name').val(),
                 roleId: $('#account-info-role').val(),
             },
             success: function (result) {
-                location.reload();
+                if (result) {
+                    $('#account-info-cancel-btn').click();
+                    setTimeout(function () {
+                        location.reload();
+                    }, 1000);
+                }
             },
             error: function (err) {
                 console.error(err);
@@ -436,7 +437,21 @@
             data: { regions: $('#adminSelectedRegions').val(), firstName: $('#firstNameInput').val(), lastName: $('#lastNameInput').val(), email: $('#emailInput').val(), phone: adminPhone },
             type: 'POST',
             success: function (result) {
-                location.reload();
+                if (result) {
+                    // $('#account-info-cancel-btn').click();
+
+                    document.getElementById("administrator-info-set").disabled = true;
+
+                    var editBtn = document.getElementById("editBtn");
+                    editBtn.style.display = "block";
+
+                    var saveBtn = document.getElementById("administratorSaveBtn");
+                    saveBtn.style.display = "none";
+
+                    setTimeout(function () {
+                        location.reload();
+                    }, 1000);
+                }
             },
             error: function (error) {
                 console.log(error);

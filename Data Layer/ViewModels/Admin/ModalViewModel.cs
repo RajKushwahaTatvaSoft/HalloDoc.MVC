@@ -1,5 +1,6 @@
 ﻿
 using Data_Layer.DataModels;
+using System.ComponentModel.DataAnnotations;
 
 namespace Data_Layer.ViewModels.Admin
 {
@@ -51,10 +52,21 @@ namespace Data_Layer.ViewModels.Admin
 
     public class SendLinkModel
     {
+        [Required(ErrorMessage = "First Name cannot be empty")]
+        [RegularExpression("^[A-Za-z\\s]{1,}[\\.]{0,1}[A-Za-z\\s]{0,}$", ErrorMessage = "Enter Valid Name")]
         public string FirstName { get; set; }
+
+        [Required(ErrorMessage = "Last Name cannot be empty")]
+        [RegularExpression("^[A-Za-z\\s]{1,}[\\.]{0,1}[A-Za-z\\s]{0,}$", ErrorMessage = "Enter Valid Name")]
         public string LastName { get; set; }
         public string CountryCode { get; set; }
+
+        [Required(ErrorMessage = "Phone cannot be empty")]
+        [RegularExpression("^\\d+$", ErrorMessage = "Only numbers are allowed")]
         public string Phone { get; set; }
+
+        [Required(ErrorMessage = "Email cannot be empty")]
+        [RegularExpression("^([\\w\\.\\-]+)@([\\w\\-]+)((\\.(\\w){2,3})+)$", ErrorMessage = "Enter Valid Email")]
         public string Email { get; set; }
     }
 

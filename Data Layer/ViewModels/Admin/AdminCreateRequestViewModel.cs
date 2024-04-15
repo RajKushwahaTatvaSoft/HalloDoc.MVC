@@ -1,6 +1,7 @@
 ﻿using Data_Layer.DataModels;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,19 +10,34 @@ namespace Data_Layer.ViewModels.Admin
 {
     public class AdminCreateRequestViewModel
     {
+        public string? UserName { get; set; }
+        public bool IsAdmin { get; set; } = false;
+
+        [Required(ErrorMessage = "First Name cannot be empty")]
+        [RegularExpression("^[A-Za-z\\s]{1,}[\\.]{0,1}[A-Za-z\\s]{0,}$", ErrorMessage = "Enter Valid Name")]
         public string FirstName { get; set; }
+
+        [RegularExpression("^[A-Za-z\\s]{1,}[\\.]{0,1}[A-Za-z\\s]{0,}$", ErrorMessage = "Enter Valid Name")]
         public string LastName { get; set; }
-        public string? countryCode { get; set; }
-        public string? phoneNumber { get; set; }
-        public string? email { get; set; }
-        public DateTime? dob { get; set; }
-        public string? street { get; set; }
-        public string? city { get; set; }
-        public int? state { get; set; }
-        public string? stateName { get; set; }
-        public string? zipCode { get; set; }
-        public string? room { get; set; }
-        public string? notes { get; set; }
+        public string? CountryCode { get; set; }
+
+        [Required(ErrorMessage = "Phone cannot be empty")]
+        [RegularExpression("^\\d+$",ErrorMessage = "Only numbers are allowed")]
+        public string? PhoneNumber { get; set; }
+
+        [Required(ErrorMessage = "Email cannot be empty")]
+        [RegularExpression("^([\\w\\.\\-]+)@([\\w\\-]+)((\\.(\\w){2,3})+)$", ErrorMessage = "Enter Valid Email")]
+        public string? Email { get; set; }
+
+        [Required(ErrorMessage = "DOB cannot be empty")]
+        [DateNotInFuture(ErrorMessage = "Date Of Birth should be in past.")]
+        public DateTime? DOB { get; set; }
+        public string? Street { get; set; }
+        public int RegionId { get; set; }
+        public int CityId {  get; set; }
+        public string? ZipCode { get; set; }
+        public string? Room { get; set; }
+        public string? Notes { get; set; }
         public IEnumerable<Region>? regions { get; set; }
 
     }

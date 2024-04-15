@@ -1,5 +1,7 @@
 ﻿using Business_Layer.Repository.IRepository;
 using Business_Layer.Services.Helper.Interface;
+using Business_Layer.Utilities;
+using Data_Layer.CustomModels;
 using Data_Layer.DataContext;
 using Data_Layer.DataModels;
 using Microsoft.AspNetCore.Mvc;
@@ -30,6 +32,28 @@ namespace Business_Layer.Services.Helper
 
             string confirmationNumber = regionAbbr + user.Createddate.Day.ToString("D2") + user.Createddate.Month.ToString("D2") + (user.Lastname?.Substring(0, 2).ToUpper() ?? "NA") + user.Firstname.Substring(0, 2).ToUpper() + (count + 1).ToString("D4");
             return confirmationNumber;
+        }
+
+        public SessionUser? GetSessionUserFromAdminId(int adminId,string adminAspId)
+        {
+            Admin? adminUser = _unitOfWork.AdminRepository.GetFirstOrDefault(admin => admin.Adminid == adminId);
+
+            if(adminUser == null)
+            {
+                return null;
+            }
+
+            SessionUser sessionUser = new SessionUser()
+            {
+                UserId = adminUser.Adminid,
+                UserAspId = adminAspId,
+                Email = adminUser.Email,
+                AccountTypeId = (int)AccountType.Admin,
+                RoleId = adminUser.Roleid ?? 0,
+                UserName = adminUser.Firstname + (String.IsNullOrEmpty(adminUser.Lastname) ? "" : " " + adminUser.Lastname),
+            };
+
+            return sessionUser;
         }
 
     }

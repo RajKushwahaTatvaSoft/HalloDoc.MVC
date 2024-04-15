@@ -6,9 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Business_Layer.Services.Admin.Interface
+namespace Business_Layer.Services.AdminServices.Interface
 {
-    public interface IDashboardRepository
+    public interface IAdminDashboardService
     {
         public Task<PagedList<AdminRequest>> GetAdminRequestsAsync(DashboardFilter dashboardParams);
 

@@ -1,6 +1,6 @@
 ﻿using AspNetCoreHero.ToastNotification.Abstractions;
 using Business_Layer.Repository.IRepository;
-using Business_Layer.Services.Admin.Interface;
+using Business_Layer.Services.AdminServices.Interface;
 using Business_Layer.Services.Helper.Interface;
 using Business_Layer.Utilities;
 using ClosedXML.Excel;
@@ -8,22 +8,20 @@ using CsvHelper;
 using Data_Layer.CustomModels;
 using Data_Layer.CustomModels.TableRow;
 using Data_Layer.CustomModels.TableRow.Admin;
-using Data_Layer.DataContext;
 using Data_Layer.DataModels;
 using Data_Layer.ViewModels;
 using Data_Layer.ViewModels.Admin;
+using DocumentFormat.OpenXml.Drawing.Spreadsheet;
 using HalloDoc.MVC.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis;
 using System.Data;
-using System.Drawing.Printing;
 using System.Globalization;
 using System.IO.Compression;
 using System.Net;
 using System.Net.Mail;
 using System.Text;
 using System.Text.Json.Nodes;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace HalloDoc.MVC.Controllers
 {
@@ -32,22 +30,24 @@ namespace HalloDoc.MVC.Controllers
     public class AdminController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IDashboardRepository _dashboardRepository;
         private readonly IWebHostEnvironment _environment;
         private readonly IConfiguration _config;
         private readonly IEmailService _emailService;
         private readonly IUtilityService _utilityService;
         private readonly INotyfService _notyf;
+        private readonly IAdminService _adminService;
+        private readonly IJwtService _jwtService;
 
-        public AdminController(IUnitOfWork unitOfWork, IDashboardRepository dashboard, IWebHostEnvironment environment, IConfiguration config, IEmailService emailService, IUtilityService utilityService, INotyfService notyf)
+        public AdminController(IUnitOfWork unitOfWork, IJwtService jwtService, IAdminService adminService, IWebHostEnvironment environment, IConfiguration config, IEmailService emailService, IUtilityService utilityService, INotyfService notyf)
         {
             _unitOfWork = unitOfWork;
-            _dashboardRepository = dashboard;
             _environment = environment;
             _config = config;
             _emailService = emailService;
             _utilityService = utilityService;
             _notyf = notyf;
+            _adminService = adminService;
+            _jwtService = jwtService;
         }
 
 
@@ -59,128 +59,31 @@ namespace HalloDoc.MVC.Controllers
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
             string? adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
 
-            Admin? admin = _unitOfWork.AdminRepository.GetFirstOrDefault(a => a.Adminid == adminId);
-
-            if (admin == null)
+            AdminProfileViewModel? model = _adminService.AdminProfileService.GetAdminProfileModel(adminId);
+            if (model == null)
             {
-                _notyf.Error("Admin Not Found");
-                return RedirectToAction("Index");
+                _notyf.Error("Cannot fetch data.");
+                return RedirectToAction("Dashboard");
             }
 
-            Aspnetuser? aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(user => user.Id == admin.Aspnetuserid);
-            if (aspUser == null)
-            {
-                _notyf.Error("AspUser Not Found");
-                return RedirectToAction("Index");
-            }
-
-            string? state = _unitOfWork.RegionRepository.GetFirstOrDefault(r => r.Regionid == admin.Regionid)?.Name;
-
-            IEnumerable<Region> regions = _unitOfWork.RegionRepository.GetAll();
-            IEnumerable<int> adminRegions = _unitOfWork.AdminRegionRepo.Where(region => region.Adminid == adminId).ToList().Select(x => (int)x.Regionid);
-            IEnumerable<City> adminMailCityList = _unitOfWork.CityRepository.Where(city => city.Regionid == admin.Regionid);
-            int cityId = _unitOfWork.CityRepository.GetFirstOrDefault(city => city.Name == admin.City)?.Id ?? 0;
-
-            AdminProfileViewModel model = new()
-            {
-                UserName = adminName,
-                AspUserName = aspUser.Username,
-                StatusId = admin.Status,
-                RoleId = admin.Roleid,
-                FirstName = admin.Firstname,
-                Email = admin.Email,
-                ConfirmEmail = admin.Email,
-                PhoneNumber = admin.Mobile,
-                AltPhoneNumber = admin.Altphone,
-                LastName = admin.Lastname,
-                regions = regions,
-                adminMailCities = adminMailCityList,
-                Address1 = admin.Address1,
-                Address2 = admin.Address2,
-                City = admin.City,
-                State = state,
-                Zip = admin.Zip,
-                RegionId = admin.Regionid ?? 0,
-                selectedRegions = adminRegions,
-                CityId = cityId,
-                roles = _unitOfWork.RoleRepo.Where(role => role.Accounttype == (int)AccountType.Admin),
-            };
-
+            model.UserName = adminName;
             return View("Header/Profile", model);
-
         }
-
-        [HttpPost]
-        public bool SaveAdminAccountInfo(string userName, int roleId)
-        {
-
-            try
-            {
-
-                int? adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-
-                if (adminId == null)
-                {
-                    _notyf.Error("Cannot find admin Id.");
-                    return false;
-                }
-
-                Admin? admin = _unitOfWork.AdminRepository.GetFirstOrDefault(admin => admin.Adminid == adminId);
-                if (admin == null)
-                {
-                    _notyf.Error("Cannot find admin .");
-
-                    return false;
-                }
-
-                Aspnetuser? aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(user => user.Id == admin.Aspnetuserid);
-
-                if (aspUser == null)
-                {
-                    _notyf.Error("Cannot find AspUser.");
-
-                    return false;
-                }
-
-                aspUser.Username = userName;
-                _unitOfWork.AspNetUserRepository.Update(aspUser);
-                _unitOfWork.Save();
-
-                admin.Roleid = roleId;
-                _unitOfWork.AdminRepository.Update(admin);
-                _unitOfWork.Save();
-
-                _notyf.Success("Successfully Updated Account Info");
-                return true;
-            }
-            catch (Exception e)
-            {
-                _notyf.Error(e.Message);
-                return false;
-            }
-        }
-
 
         [RoleAuthorize((int)AllowMenu.ProviderLocation)]
         public IActionResult ProviderLocation()
         {
             string? adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
 
-            IEnumerable<PhyLocationRow> list = (from pl in _unitOfWork.PhysicianLocationRepo.GetAll()
-                                                select new PhyLocationRow
-                                                {
-                                                    PhysicianName = pl.Physicianname,
-                                                    Latitude = pl.Latitude ?? 0,
-                                                    Longitude = pl.Longitude ?? 0,
-                                                });
+            ProviderLocationViewModel? model = _adminService.ProviderLocationService.GetProviderLocationModel();
 
-            string? apiKey = _config.GetSection("TomTom")["ApiKey"];
-            ProviderLocationViewModel model = new ProviderLocationViewModel()
+            if (model == null)
             {
-                locationList = list,
-                ApiKey = apiKey,
-                UserName = adminName,                
-            };
+                return RedirectToAction("Dashboard");
+            }
+
+            model.UserName = adminName;
+
             return View("Header/ProviderLocation", model);
         }
 
@@ -222,7 +125,7 @@ namespace HalloDoc.MVC.Controllers
                 status = status,
             };
 
-            PagedList<AdminRequest> pagedList = await _dashboardRepository.GetAdminRequestsAsync(filter);
+            PagedList<AdminRequest> pagedList = await _adminService.AdminDashboardService.GetAdminRequestsAsync(filter);
 
             AdminDashboardViewModel model = new AdminDashboardViewModel();
             model.pagedList = pagedList;
@@ -701,7 +604,7 @@ namespace HalloDoc.MVC.Controllers
         }
 
         [HttpPost]
-        public IActionResult SendLinkForCreateRequest(SendLinkModel model)
+        public IActionResult SendLinkForSubmitRequest(SendLinkModel model)
         {
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
 
@@ -764,6 +667,7 @@ namespace HalloDoc.MVC.Controllers
                     _unitOfWork.SMSLogRepository.Add(smsLog);
                     _unitOfWork.Save();
 
+                    _notyf.Success("Link Send successfully.");
                     return Redirect("/Admin/Dashboard");
                 }
                 catch (Exception e)
@@ -804,7 +708,7 @@ namespace HalloDoc.MVC.Controllers
                 status = status,
             };
 
-            PagedList<AdminRequest> pagedList = await _dashboardRepository.GetAdminRequestsAsync(filter);
+            PagedList<AdminRequest> pagedList = await _adminService.AdminDashboardService.GetAdminRequestsAsync(filter);
 
 
             DataTable dt = GetDataTableFromList(pagedList, status);
@@ -1010,7 +914,7 @@ namespace HalloDoc.MVC.Controllers
 
         public byte[] ExportAllExcel(int status)
         {
-            IEnumerable<AdminRequest> allRequest = _dashboardRepository.GetAllRequestByStatus(status);
+            IEnumerable<AdminRequest> allRequest = _adminService.AdminDashboardService.GetAllRequestByStatus(status);
 
             DataTable dt = GetDataTableFromList(allRequest.ToList(), status);
             //Name of File
@@ -1032,7 +936,7 @@ namespace HalloDoc.MVC.Controllers
         [HttpPost]
         public string ExportAll(int status)
         {
-            IEnumerable<AdminRequest> allRequest = _dashboardRepository.GetAllRequestByStatus(status);
+            IEnumerable<AdminRequest> allRequest = _adminService.AdminDashboardService.GetAllRequestByStatus(status);
 
             string path = Path.Combine(_environment.WebRootPath, "export", "sample.csv");
 
@@ -1055,7 +959,7 @@ namespace HalloDoc.MVC.Controllers
             IEnumerable<Region> regions = _unitOfWork.RegionRepository.GetAll();
             AdminCreateRequestViewModel model = new AdminCreateRequestViewModel();
             model.regions = regions;
-            return View("Dashboard/CreateRequest", model);
+            return View("AdminProvider/CreateRequest", model);
         }
 
         [HttpPost]
@@ -1063,124 +967,42 @@ namespace HalloDoc.MVC.Controllers
         public IActionResult CreateRequest(AdminCreateRequestViewModel model)
         {
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
-            Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(a => a.Adminid == adminId);
-            if (adminId != 0)
+            string? adminAspId = HttpContext.Request.Headers.Where(a => a.Key == "userAspId").FirstOrDefault().Value;
+
+            if(adminId == 0 || string.IsNullOrEmpty(adminAspId))
             {
+                _notyf.Error("Couldn't get admin data.");
+                return RedirectToAction("Dashboard");
+            }
+
+            try
+            {
+
                 if (ModelState.IsValid)
                 {
-                    var phoneNumber = "+" + model.countryCode + "-" + model.phoneNumber;
-                    string state = _unitOfWork.RegionRepository.GetFirstOrDefault(reg => reg.Regionid == model.state).Name;
+                    string? createLink = Url.Action("CreateAccount", "Guest", null, Request.Scheme);
 
-                    // Creating Patient in Aspnetusers Table
+                    ServiceResponse response = _adminService.AdminProviderService.SubmitCreateRequest(model, adminAspId, createLink ?? "",true);
 
-                    bool isUserExists = _unitOfWork.UserRepository.IsUserWithEmailExists(model.email);
-
-                    if (!isUserExists)
+                    if(response.StatusCode == ResponseCode.Success)
                     {
-
-                        Guid generatedId = Guid.NewGuid();
-
-                        Aspnetuser aspnetuser = new()
-                        {
-                            Id = generatedId.ToString(),
-                            Username = model.FirstName,
-                            Passwordhash = null,
-                            Email = model.email,
-                            Phonenumber = phoneNumber,
-                            Createddate = DateTime.Now,
-                            Accounttypeid = (int)AccountType.Patient,
-                        };
-
-                        _unitOfWork.AspNetUserRepository.Add(aspnetuser);
-                        _unitOfWork.Save();
-
-                        User user1 = new()
-                        {
-                            Aspnetuserid = generatedId.ToString(),
-                            Firstname = model.FirstName,
-                            Lastname = model.LastName,
-                            Email = model.email,
-                            Mobile = phoneNumber,
-                            Street = model.street,
-                            City = model.city,
-                            State = state,
-                            Regionid = model.state,
-                            Zipcode = model.zipCode,
-                            Createddate = DateTime.Now,
-                            Createdby = admin.Aspnetuserid,
-                            Strmonth = model.dob?.Month.ToString(),
-                            Intdate = model.dob?.Day,
-                            Intyear = model.dob?.Year
-                        };
-
-
-                        _unitOfWork.UserRepository.Add(user1);
-                        _unitOfWork.Save();
-
-                        SendMailForCreateAccount(model.email);
+                        _notyf.Success("Request Created Successfully");
+                        return RedirectToAction("Dashboard");
                     }
 
-                    User user = _unitOfWork.UserRepository.GetFirstOrDefault(u => u.Email == model.email);
-
-                    // Adding request in Request Table
-                    Request request = new()
-                    {
-                        Requesttypeid = 2,
-                        Userid = user.Userid,
-                        Firstname = model.FirstName,
-                        Lastname = model.LastName,
-                        Phonenumber = phoneNumber,
-                        Email = model.email,
-                        Status = (short)RequestStatus.Unassigned,
-                        Createddate = DateTime.Now,
-                        Confirmationnumber = GenerateConfirmationNumber(user),
-                        Patientaccountid = user.Aspnetuserid,
-                    };
-
-                    _unitOfWork.RequestRepository.Add(request);
-                    _unitOfWork.Save();
-
-                    //Adding request in RequestClient Table
-                    Requestclient requestclient = new()
-                    {
-                        Requestid = request.Requestid,
-                        Firstname = model.FirstName,
-                        Lastname = model.LastName,
-                        Phonenumber = phoneNumber,
-                        Email = model.email,
-                        Address = model.street,
-                        City = model.city,
-                        State = state,
-                        Regionid = model.state,
-                        Zipcode = model.zipCode,
-                        Strmonth = model.dob?.Month.ToString(),
-                        Intdate = model.dob?.Day,
-                        Intyear = model.dob?.Year
-                    };
-
-                    _unitOfWork.RequestClientRepository.Add(requestclient);
-                    _unitOfWork.Save();
-                    if (model.notes != null)
-                    {
-                        Requestnote rn = new()
-                        {
-                            Requestid = request.Requestid,
-                            Physiciannotes = null,
-                            Adminnotes = model.notes,
-                            Createdby = admin.Aspnetuserid,
-                            Createddate = DateTime.Now
-                        };
-                        _unitOfWork.RequestNoteRepository.Add(rn);
-                        _unitOfWork.Save();
-                    }
-
-                    model.regions = _unitOfWork.RegionRepository.GetAll();
-                    return View("Dashboard/CreateRequest", model);
-
+                    _notyf.Error(response.Message);
+                    return View("AdminProvider/CreateRequest", model);
                 }
-                return View("error");
+
+                _notyf.Error("Please enter all the requried fields");
+                return View("AdminProvider/CreateRequest", model);
+
             }
-            return View("error");
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return View("AdminProvider/CreateRequest", model);
+            }
 
         }
 
@@ -1361,172 +1183,161 @@ namespace HalloDoc.MVC.Controllers
         public IActionResult ViewCase(int? Requestid)
         {
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-            string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
-
+            string? adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
             if (Requestid == null)
             {
                 return View("Error");
             }
 
-            Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == Requestid);
-            Requestclient client = _unitOfWork.RequestClientRepository.GetFirstOrDefault(reqCli => reqCli.Requestid == Requestid);
+            ViewCaseViewModel? model = _adminService.AdminProviderService.GetViewCaseModel(Requestid ?? 0);
 
-            ViewCaseViewModel model = new();
+            if (model == null)
+            {
+                _notyf.Error("Cannot get data. Please try again later.");
+                return RedirectToAction("Dashboard");
+            }
 
             model.UserName = adminName;
-            model.RequestId = Requestid ?? 0;
+            model.IsAdmin = true;
 
-            string dobDate = client.Intyear + "-" + client.Strmonth + "-" + client.Intdate;
-            model.Confirmation = req.Confirmationnumber;
-            model.DashboardStatus = RequestHelper.GetDashboardStatus(req.Status);
-            model.RequestType = req.Requesttypeid;
-            model.PatientName = client.Firstname + " " + client.Lastname;
-            model.PatientFirstName = client.Firstname;
-            model.PatientLastName = client.Lastname;
-            model.Dob = dobDate == "--" ? null : DateTime.Parse(dobDate);
-            model.PatientEmail = client.Email;
-            model.Region = client.Regionid;
-            model.Notes = client.Notes;
-            model.Address = client.Street;
-            model.regions = _unitOfWork.RegionRepository.GetAll();
-            model.physicians = _unitOfWork.PhysicianRepository.GetAll();
-            model.casetags = _unitOfWork.CaseTagRepository.GetAll();
+            return View("AdminProvider/ViewCase", model);
 
-            return View("Dashboard/ViewCase", model);
+
+            //int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+            //string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+
+            //if (Requestid == null)
+            //{
+            //    return View("Error");
+            //}
+
+            //Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == Requestid);
+            //Requestclient client = _unitOfWork.RequestClientRepository.GetFirstOrDefault(reqCli => reqCli.Requestid == Requestid);
+
+            //ViewCaseViewModel model = new();
+
+            //model.UserName = adminName;
+            //model.RequestId = Requestid ?? 0;
+
+            //string dobDate = client.Intyear + "-" + client.Strmonth + "-" + client.Intdate;
+            //model.Confirmation = req.Confirmationnumber;
+            //model.DashboardStatus = RequestHelper.GetDashboardStatus(req.Status);
+            //model.RequestType = req.Requesttypeid;
+            //model.PatientName = client.Firstname + " " + client.Lastname;
+            //model.PatientFirstName = client.Firstname;
+            //model.PatientLastName = client.Lastname;
+            //model.Dob = dobDate == "--" ? null : DateTime.Parse(dobDate);
+            //model.PatientEmail = client.Email;
+            //model.Region = client.Regionid;
+            //model.Notes = client.Notes;
+            //model.Address = client.Street;
+            //model.regions = _unitOfWork.RegionRepository.GetAll();
+            //model.physicians = _unitOfWork.PhysicianRepository.GetAll();
+            //model.casetags = _unitOfWork.CaseTagRepository.GetAll();
+
+            //return View("Dashboard/ViewCase", model);
         }
 
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult ViewCase(ViewCaseViewModel viewCase)
+        [RoleAuthorize((int)AllowMenu.AdminDashboard)]
+        public IActionResult ViewNotes(int requestId)
         {
 
-            if (viewCase != null)
+            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+            string? adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+
+            ViewNotesViewModel? model = _adminService.AdminProviderService.GetViewNotesModel(requestId);
+
+            if (model == null)
             {
-
-                string phoneNumber = "+" + viewCase.CountryCode + '-' + viewCase.PatientPhone;
-
-                Requestclient reqcli = _unitOfWork.RequestClientRepository.GetFirstOrDefault(req => req.Requestid == viewCase.RequestId);
-                reqcli.Notes = viewCase.Notes;
-
-                _unitOfWork.RequestClientRepository.Update(reqcli);
-                _unitOfWork.Save();
-
-                return ViewCase(viewCase.RequestId);
-
+                _notyf.Error("Cannot get data. Please try again later.");
+                return RedirectToAction("Dashboard");
             }
-            return View("Error");
 
+            model.UserName = adminName;
+            model.IsAdmin = true;
+
+            return View("AdminProvider/ViewNotes", model);
         }
 
         [RoleAuthorize((int)AllowMenu.AdminDashboard)]
-        public IActionResult ViewNotes(int Requestid)
+        [HttpPost]
+        public IActionResult ViewNotes(ViewNotesViewModel model)
         {
-
-            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-            string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
-
-            IEnumerable<Requeststatuslog> statusLogs = (from log in _unitOfWork.RequestStatusLogRepository.GetAll()
-                                                        where log.Requestid == Requestid
-                                                        && log.Status != (int)RequestStatus.Cancelled
-                                                        && log.Status != (int)RequestStatus.CancelledByPatient
-                                                        select log
-                                                        ).OrderByDescending(_ => _.Createddate);
-
-            Requestnote notes = _unitOfWork.RequestNoteRepository.GetFirstOrDefault(notes => notes.Requestid == Requestid);
-
-            string? cancelledByAdmin = _unitOfWork.RequestStatusLogRepository.GetFirstOrDefault(log => log.Status == (int)RequestStatus.Cancelled)?.Notes;
-            string? cancelledByPatient = _unitOfWork.RequestStatusLogRepository.GetFirstOrDefault(log => log.Status == (int)RequestStatus.CancelledByPatient)?.Notes;
-
-            ViewNotesViewModel model = new ViewNotesViewModel();
-
-            model.UserName = adminName;
-            model.requeststatuslogs = statusLogs;
-
-            if (notes != null)
+            try
             {
-                model.AdminNotes = notes.Adminnotes;
-                model.PhysicianNotes = notes.Physiciannotes;
-                model.AdminCancellationNotes = cancelledByAdmin;
-                model.PatientCancellationNotes = cancelledByPatient;
+                string? adminAspId = HttpContext.Request.Headers.Where(x => x.Key == "userAspId").FirstOrDefault().Value;
+
+                if (string.IsNullOrEmpty(adminAspId))
+                {
+                    _notyf.Error("Cannot get user id. Please try again later.");
+                    return RedirectToAction("Dashboard");
+                }
+
+                ServiceResponse response = _adminService.AdminProviderService.SubmitViewNotes(model, adminAspId, true);
+
+                if (response.StatusCode == ResponseCode.Success)
+                {
+                    _notyf.Success("Notes Updated Successfully.");
+                    return RedirectToAction("ViewNotes", new { requestId = model.RequestId });
+                }
+
+                _notyf.Error(response.Message);
+                return View("AdminProvider/ViewNotes", model);
+
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return RedirectToAction("Dashboard");
             }
 
-            return View("Dashboard/ViewNotes", model);
+        }
+
+        public IActionResult ViewUploads(int requestId)
+        {
+            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+            string? adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+
+            ViewUploadsViewModel? model = _adminService.AdminProviderService.GetViewUploadsModel(requestId);
+
+            if (model == null)
+            {
+                _notyf.Error("Cannot get data. Please try again later.");
+                return RedirectToAction("Dashboard");
+            }
+
+            model.UserName = adminName;
+
+            return View("Dashboard/ViewUploads", model);
         }
 
         [HttpPost]
-        public IActionResult ViewNotes(ViewNotesViewModel vnvm)
+        public IActionResult ViewUploads(ViewUploadsViewModel uploadsVM)
         {
-
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-            string adminAspId = HttpContext.Request.Headers.Where(x => x.Key == "userAspId").FirstOrDefault().Value;
 
-            Requestnote oldnote = _unitOfWork.RequestNoteRepository.GetFirstOrDefault(rn => rn.Requestid == vnvm.RequestId);
-
-            if (oldnote != null)
+            if (uploadsVM.File != null)
             {
-                oldnote.Adminnotes = vnvm.AdminNotes;
-                oldnote.Modifieddate = DateTime.Now;
-                oldnote.Modifiedby = adminAspId;
+                InsertRequestWiseFile(uploadsVM.File);
 
-                _unitOfWork.RequestNoteRepository.Update(oldnote);
-                _unitOfWork.Save();
-
-            }
-            else
-            {
-                Requestnote curReqNote = new Requestnote()
+                Requestwisefile requestwisefile = new()
                 {
-                    Requestid = vnvm.RequestId,
-                    Adminnotes = vnvm.AdminNotes,
-                    Createdby = adminAspId,
+                    Requestid = uploadsVM.RequestId,
+                    Filename = uploadsVM.File.FileName,
                     Createddate = DateTime.Now,
+                    Adminid = adminId,
+                    Ip = "127.0.0.1",
                 };
 
-                _unitOfWork.RequestNoteRepository.Add(curReqNote);
+                _unitOfWork.RequestWiseFileRepository.Add(requestwisefile);
                 _unitOfWork.Save();
 
+                uploadsVM.File = null;
+
             }
 
-            return ViewNotes(vnvm.RequestId);
-        }
-
-        public IActionResult ViewUploads(int Requestid)
-        {
-            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-            string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
-
-            Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == Requestid);
-            if (req == null)
-            {
-                return View("Error");
-            }
-
-            Requestclient reqCli = _unitOfWork.RequestClientRepository.GetFirstOrDefault(reqcli => reqcli.Requestid == req.Requestid);
-            if (reqCli == null)
-            {
-                return View("Error");
-            }
-
-            List<Requestwisefile> files = _unitOfWork.RequestWiseFileRepository.Where(file => file.Requestid == Requestid && file.Isdeleted != true).ToList();
-
-            List<string> ext = new List<string>();
-            for (int i = 0; i < files.Count; i++)
-            {
-                ext.Add(Path.GetExtension(files[i].Filename));
-            }
-
-            ViewUploadsViewModel model = new ViewUploadsViewModel()
-            {
-                PatientName = reqCli.Firstname + " " + reqCli.Lastname,
-                requestwisefiles = files,
-                ConfirmationNumber = req.Confirmationnumber,
-                RequestId = req.Requestid,
-                extensions = ext,
-                UserName = adminName
-            };
-
-            return View("Dashboard/ViewUploads", model);
+            return RedirectToAction("ViewUploads", new { requestId = uploadsVM.RequestId });
         }
 
         [HttpPost]
@@ -1574,34 +1385,6 @@ namespace HalloDoc.MVC.Controllers
                 return false;
             }
 
-        }
-
-        [HttpPost]
-        public IActionResult ViewUploads(ViewUploadsViewModel uploadsVM)
-        {
-            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-
-            if (uploadsVM.File != null)
-            {
-                InsertRequestWiseFile(uploadsVM.File);
-
-                Requestwisefile requestwisefile = new()
-                {
-                    Requestid = uploadsVM.RequestId,
-                    Filename = uploadsVM.File.FileName,
-                    Createddate = DateTime.Now,
-                    Adminid = adminId,
-                    Ip = "127.0.0.1",
-                };
-
-                _unitOfWork.RequestWiseFileRepository.Add(requestwisefile);
-                _unitOfWork.Save();
-
-                uploadsVM.File = null;
-
-            }
-
-            return RedirectToAction("ViewUploads", new { Requestid = uploadsVM.RequestId });
         }
 
         [HttpPost]
@@ -2744,14 +2527,15 @@ namespace HalloDoc.MVC.Controllers
                     }
                 }
 
+
+                return "sucess";
             }
             catch (Exception e)
             {
                 var error = e.Message;
+                return e.Message;
             }
 
-
-            return "bye";
         }
 
         [HttpPost]
@@ -3175,7 +2959,7 @@ namespace HalloDoc.MVC.Controllers
         {
             string? adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
 
-            return View("Providers/Invoicing",adminName);
+            return View("Providers/Invoicing", adminName);
         }
 
         #endregion
@@ -3188,36 +2972,24 @@ namespace HalloDoc.MVC.Controllers
         {
 
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
-            Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(a => a.Adminid == adminId);
-
-            if (admin == null)
-            {
-                TempData["error"] = "Admin not found";
-                return false;
-            }
-
-            Aspnetuser aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(asp => asp.Id == admin.Aspnetuserid);
-            if (aspUser == null)
-            {
-                TempData["error"] = "Asp User not found";
-                return false;
-            }
 
             try
             {
+                ServiceResponse response = _adminService.AdminProfileService.UpdateAdminPassword(adminId, password);
 
-                string passHash = AuthHelper.GenerateSHA256(password);
+                if (response.StatusCode == ResponseCode.Success)
+                {
+                    _notyf.Success("Password Reset Successfully");
+                    return true;
+                }
 
-                aspUser.Passwordhash = passHash;
-                _unitOfWork.AspNetUserRepository.Update(aspUser);
-                _unitOfWork.Save();
+                _notyf.Error(response.Message);
+                return false;
 
-                TempData["success"] = "Password Reset Successfully";
-                return true;
             }
             catch (Exception ex)
             {
-                TempData["error"] = ex.Message;
+                _notyf.Error(ex.Message);
                 return false;
             }
 
@@ -3230,73 +3002,90 @@ namespace HalloDoc.MVC.Controllers
         }
 
         [HttpPost]
-        public bool SaveAdministratorInfo(List<int> regions, string firstName, string lastName, string email, string phone)
+        public bool SaveAdminAccountInfo(int roleId)
         {
-            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
-            Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(a => a.Adminid == adminId);
-
-            if (admin == null)
-            {
-                TempData["error"] = "Admin not found";
-                return false;
-            }
 
             try
             {
-                admin.Firstname = firstName;
-                admin.Lastname = lastName;
-                admin.Mobile = phone;
 
-                _unitOfWork.AdminRepository.Update(admin);
+                int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+                string? adminAspId = HttpContext.Request.Headers.Where(x => x.Key == "userAspId").FirstOrDefault().Value;
 
-                _unitOfWork.Save();
+                ServiceResponse response = _adminService.AdminProfileService.UpdateAdminRole(roleId, adminId, adminAspId);
 
-                List<int> adminRegions = _unitOfWork.AdminRegionRepo.Where(region => region.Adminid == adminId).ToList().Select(x => (int)x.Regionid).ToList();
-
-                List<int> commonRegions = new List<int>();
-
-                // Finding common regions in both new and old lists
-                foreach (int region in adminRegions)
+                if (response.StatusCode == ResponseCode.Success)
                 {
-                    if (regions.Contains(region))
+                    Response.Cookies.Delete("hallodoc");
+
+                    SessionUser? sessionUser = _utilityService.GetSessionUserFromAdminId(adminId, adminAspId);
+
+                    if (sessionUser == null)
                     {
-                        commonRegions.Add(region);
+                        _notyf.Error("Cannot re-create session. Please login again.");
+                        return false;
                     }
+
+                    string jwtToken = _jwtService.GenerateJwtToken(sessionUser);
+
+                    Response.Cookies.Append("hallodoc", jwtToken);
+
+                    _notyf.Success("Profile updated Successfully.");
+                    return true;
                 }
 
-                // Removing them from both lists
-                foreach (int region in commonRegions)
-                {
-                    adminRegions.Remove(region);
-                    regions.Remove(region);
-                }
+                _notyf.Error(response.Message);
+                return false;
+            }
+            catch (Exception e)
+            {
+                _notyf.Error(e.Message);
+                return false;
+            }
+        }
 
-                // From difference we will remove regions that were in old list but not in new list
-                foreach (int region in adminRegions)
-                {
-                    Adminregion ar = _unitOfWork.AdminRegionRepo.GetFirstOrDefault(ar => ar.Regionid == region);
-                    _unitOfWork.AdminRegionRepo.Remove(ar);
-                }
 
-                // And Add the regions that were in new list but not in old list
-                foreach (int region in regions)
+        [HttpPost]
+        public bool SaveAdministratorInfo(List<int> regions, string firstName, string lastName, string email, string phone)
+        {
+            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
+            string? adminAspId = HttpContext.Request.Headers.Where(x => x.Key == "userAspId").FirstOrDefault().Value;
+
+            if (adminId == 0 || string.IsNullOrEmpty(adminAspId))
+            {
+                _notyf.Error("Admin not found");
+                return false;
+            }
+            try
+            {
+                ServiceResponse response = _adminService.AdminProfileService.UpdateAdminPersonalDetails(adminId, regions, firstName, lastName, email, phone);
+
+                if (response.StatusCode == ResponseCode.Success)
                 {
-                    Adminregion adminregion = new Adminregion()
+                    Response.Cookies.Delete("hallodoc");
+
+                    SessionUser? sessionUser = _utilityService.GetSessionUserFromAdminId(adminId, adminAspId);
+
+                    if (sessionUser == null)
                     {
-                        Adminid = adminId,
-                        Regionid = region,
-                    };
+                        _notyf.Error("Cannot re-create session. Please login again.");
+                        return false;
+                    }
 
-                    _unitOfWork.AdminRegionRepo.Add(adminregion);
+                    string jwtToken = _jwtService.GenerateJwtToken(sessionUser);
+
+                    Response.Cookies.Append("hallodoc", jwtToken);
+
+                    _notyf.Success("Profile updated Successfully.");
+                    return true;
                 }
 
-                _unitOfWork.Save();
-
-                return true;
+                _notyf.Error(response.Message);
+                return false;
 
             }
             catch (Exception ex)
             {
+                _notyf.Error(ex.Message);
                 return false;
             }
 
@@ -3654,7 +3443,7 @@ namespace HalloDoc.MVC.Controllers
                 return RedirectToAction("CreateAccess");
             }
 
-        }
+        }   
 
         public async Task<IActionResult> UserAccessPartialTable(int pageNo, int accountType)
         {
@@ -3686,7 +3475,7 @@ namespace HalloDoc.MVC.Controllers
         {
             string? adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
 
-            return View("Access/UserAccess",adminName);
+            return View("Access/UserAccess", adminName);
         }
         #endregion
 
@@ -3880,7 +3669,7 @@ namespace HalloDoc.MVC.Controllers
         {
             string? adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
 
-            return View("Records/BlockedHistory",adminName);
+            return View("Records/BlockedHistory", adminName);
         }
 
         [HttpPost]

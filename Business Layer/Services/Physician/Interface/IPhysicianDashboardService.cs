@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Business_Layer.Services.Admin.Interface
+namespace Business_Layer.Services.Physician.Interface
 {
     public interface IPhysicianDashboardService
     {

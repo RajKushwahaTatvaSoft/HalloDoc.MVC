@@ -7,8 +7,6 @@ using System.Text;
 using Business_Layer.Repository.IRepository;
 using AspNetCoreHero.ToastNotification;
 using AspNetCoreHero.ToastNotification.Extensions;
-using Business_Layer.Services.Admin.Interface;
-using Business_Layer.Services.Admin;
 using Business_Layer.Services.Helper.Interface;
 using Business_Layer.Services.Helper;
 using Business_Layer.Services.Patient.Interface;
@@ -18,6 +16,10 @@ using Business_Layer.Services.Guest.Interface;
 using Business_Layer.Services.Guest;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
+using Business_Layer.Services.Physician.Interface;
+using Business_Layer.Services.Physician;
+using Business_Layer.Services.AdminServices;
+using Business_Layer.Services.AdminServices.Interface;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,9 +33,11 @@ builder.Services.AddScoped<IPatientDashboardRepository, PatientDashboardReposito
 builder.Services.AddScoped<IPhysicianDashboardService, PhysicianDashboardService>();
 builder.Services.AddScoped<IPatientAuthRepository, PatientAuthRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
+builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IRequestService, RequestService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<IPhysicianService, PhysicianService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IUtilityService, UtilityService>();
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();

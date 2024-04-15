@@ -33,7 +33,7 @@ namespace Business_Layer.Repository
             return query;
         }
 
-        public IEnumerable<T> Where(Expression<Func<T, bool>> filter)
+        public IQueryable<T> Where(Expression<Func<T, bool>> filter)
         {
             IQueryable<T> query = dbSet;
             return query.Where(filter);

@@ -1,20 +1,6 @@
 ﻿@model ViewUploadsViewModel
 @{
-    string layoutName = "";
-    string controller = "";
-    if (Model.IsAdmin)
-    {
-        layoutName = "_AdminDashboardLayout";
-        controller = "Admin";
-    }
-    else
-    {
-        layoutName = "_PhysicianDashboardLayout";
-        controller = "Physician";
-    }
-}
-@{
-    Layout = layoutName;
+    Layout = "_AdminDashboardLayout";
     ViewData["UserName"] = Model.UserName;
 }
 

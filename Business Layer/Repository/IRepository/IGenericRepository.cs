@@ -15,7 +15,7 @@ namespace Business_Layer.Repository.IRepository
         void Remove(T entity);
         void Update(T entity);
         IQueryable<T> GetAll();
-        public IEnumerable<T> Where(Expression<Func<T, bool>> filter);
+        public IQueryable<T> Where(Expression<Func<T, bool>> filter);
         public int Count();
         public int Count(Expression<Func<T, bool>> filter);
 

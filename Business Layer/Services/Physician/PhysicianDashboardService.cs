@@ -1,4 +1,5 @@
-﻿using Business_Layer.Services.Admin.Interface;
+﻿using Business_Layer.Repository.IRepository;
+using Business_Layer.Services.Physician.Interface;
 using Business_Layer.Utilities;
 using Data_Layer.CustomModels;
 using Data_Layer.CustomModels.TableRow.Physician;
@@ -6,14 +7,14 @@ using Data_Layer.DataContext;
 using Data_Layer.DataModels;
 using Data_Layer.ViewModels.Admin;
 
-namespace Business_Layer.Services.Admin
+namespace Business_Layer.Services.Physician
 {
     public class PhysicianDashboardService : IPhysicianDashboardService
     {
-        private readonly ApplicationDbContext _context;
-        public PhysicianDashboardService(ApplicationDbContext context)
+        private readonly IUnitOfWork _unitOfWork;
+        public PhysicianDashboardService(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<PagedList<PhyDashboardTRow>> GetPhysicianRequestAsync(DashboardFilter dashboardParams, int physicianId)
@@ -52,14 +53,14 @@ namespace Business_Layer.Services.Admin
                     break;
             }
 
-            var query = (from r in _context.Requests
+            var query = (from r in _unitOfWork.RequestRepository.GetAll()
                          where (r.Physicianid == physicianId)
                          && validRequestTypes.Contains(r.Status)
-                         join rc in _context.Requestclients on r.Requestid equals rc.Requestid
+                         join rc in _unitOfWork.RequestClientRepository.GetAll() on r.Requestid equals rc.Requestid
                          where (dashboardParams.RequestTypeFilter == 0 || r.Requesttypeid == dashboardParams.RequestTypeFilter)
                          && (dashboardParams.RegionFilter == 0 || rc.Regionid == dashboardParams.RegionFilter)
                          && (string.IsNullOrEmpty(dashboardParams.PatientSearchText) || (rc.Firstname + " " + rc.Lastname).ToLower().Contains(dashboardParams.PatientSearchText.ToLower()))
-                         join form in _context.Encounterforms on r.Requestid equals form.Requestid into formGroup
+                         join form in _unitOfWork.EncounterFormRepository.GetAll() on r.Requestid equals form.Requestid into formGroup
                          from formItem in formGroup.DefaultIfEmpty()
                          select new PhyDashboardTRow
                          {
@@ -119,9 +120,9 @@ namespace Business_Layer.Services.Admin
 
             List<AdminRequest> adminRequests = new List<AdminRequest>();
 
-            adminRequests = (from r in _context.Requests
-                             join rc in _context.Requestclients on r.Requestid equals rc.Requestid
-                             join p in _context.Physicians on r.Physicianid equals p.Physicianid into subgroup
+            adminRequests = (from r in _unitOfWork.RequestRepository.GetAll()
+                             join rc in _unitOfWork.RequestClientRepository.GetAll() on r.Requestid equals rc.Requestid
+                             join p in _unitOfWork.PhysicianRepository.GetAll() on r.Physicianid equals p.Physicianid into subgroup
                              from subitem in subgroup.DefaultIfEmpty()
                              where validRequestTypes.Contains(r.Status)
                              select new AdminRequest
@@ -186,9 +187,9 @@ namespace Business_Layer.Services.Admin
 
             List<AdminRequest> adminRequests = new List<AdminRequest>();
 
-            adminRequests = (from r in _context.Requests
-                             join rc in _context.Requestclients on r.Requestid equals rc.Requestid
-                             join p in _context.Physicians on r.Physicianid equals p.Physicianid into subgroup
+            adminRequests = (from r in _unitOfWork.RequestRepository.GetAll()
+                             join rc in _unitOfWork.RequestClientRepository.GetAll() on r.Requestid equals rc.Requestid
+                             join p in _unitOfWork.PhysicianRepository.GetAll() on r.Physicianid equals p.Physicianid into subgroup
                              from subitem in subgroup.DefaultIfEmpty()
                              where validRequestTypes.Contains(r.Status)
                              && (filters.RequestTypeFilter == 0 || r.Requesttypeid == filters.RequestTypeFilter)

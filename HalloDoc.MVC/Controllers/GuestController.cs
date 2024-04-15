@@ -255,10 +255,10 @@ namespace HalloDoc.MVC.Controllers
                 if (aspUser.Accounttypeid == (int)AccountType.Patient)
                 {
 
-                    User patientUser = _unitOfWork.UserRepository.GetFirstOrDefault(u => u.Aspnetuserid == aspUser.Id);
+                    User? patientUser = _unitOfWork.UserRepository.GetFirstOrDefault(u => u.Aspnetuserid == aspUser.Id);
                     if (patientUser == null)
                     {
-                        TempData["error"] = "Physician doesn't exists";
+                        TempData["error"] = "Patient doesn't exists";
                         return View();
                     }
 
@@ -279,7 +279,7 @@ namespace HalloDoc.MVC.Controllers
                 else if (aspUser.Accounttypeid == (int)AccountType.Physician)
                 {
 
-                    Physician physicianUser = _unitOfWork.PhysicianRepository.GetFirstOrDefault(u => u.Aspnetuserid == aspUser.Id);
+                    Physician? physicianUser = _unitOfWork.PhysicianRepository.GetFirstOrDefault(u => u.Aspnetuserid == aspUser.Id);
                     if (physicianUser == null)
                     {
                         TempData["error"] = "Physician doesn't exists";
@@ -303,7 +303,7 @@ namespace HalloDoc.MVC.Controllers
                 else if (aspUser.Accounttypeid == (int)AccountType.Admin)
                 {
 
-                    Admin adminUser = _unitOfWork.AdminRepository.GetFirstOrDefault(u => u.Aspnetuserid == aspUser.Id);
+                    Admin? adminUser = _unitOfWork.AdminRepository.GetFirstOrDefault(u => u.Aspnetuserid == aspUser.Id);
                     if (adminUser == null)
                     {
                         TempData["error"] = "Admin doesn't exists";
@@ -328,7 +328,7 @@ namespace HalloDoc.MVC.Controllers
                 }
 
 
-                var jwtToken = _jwtService.GenerateJwtToken(sessionUser);
+                string jwtToken = _jwtService.GenerateJwtToken(sessionUser);
                 Response.Cookies.Append("hallodoc", jwtToken);
 
                 return RedirectToAction("Dashboard", controller);

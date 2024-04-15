@@ -28,6 +28,7 @@ namespace Data_Layer.ViewModels.Admin
         public int DashboardStatus {  get; set; }
         public int RequestId { get; set; }
         public string? Notes { get; set; }
+        public bool IsAdmin { get; set; } = false;
         public IEnumerable<Casetag> casetags { get; set; }
         public IEnumerable<Region> regions { get; set; }
         public IEnumerable<DataModels.Physician> physicians { get; set; }

@@ -11,7 +11,7 @@ namespace Data_Layer.CustomModels
         Success = 200,
         Error = 500,
     }
-    public class ServiceResponse 
+    public class ServiceResponse
     {
         public ResponseCode StatusCode {  get; set; }
         public string? Message { get; set; }

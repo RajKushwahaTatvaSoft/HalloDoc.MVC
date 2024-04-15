@@ -56,21 +56,14 @@ namespace Business_Layer.Services.Helper
 
             mailMessage.To.Add(toEmail);
 
-            while (sentTries < 3)
+            try
             {
-                sentTries++;
-                try
-                {
-                    client.Send(mailMessage);
-                    isSent = true;
-                    break;
-                }
-                catch (Exception e)
-                {
-                    isSent = false;
-                    continue;
-                }
-
+                client.Send(mailMessage);
+                isSent = true;
+            }
+            catch (Exception e)
+            {
+                isSent = false;
             }
 
         }

@@ -1,6 +1,5 @@
 ﻿using AspNetCoreHero.ToastNotification.Abstractions;
 using Business_Layer.Repository.IRepository;
-using Business_Layer.Services.Admin.Interface;
 using Business_Layer.Utilities;
 using Data_Layer.CustomModels;
 using Data_Layer.CustomModels.TableRow.Physician;
@@ -15,6 +14,9 @@ using System.Text.Json.Nodes;
 using Business_Layer.Services.Helper.Interface;
 using System.Text;
 using Rotativa.AspNetCore;
+using Business_Layer.Services.Physician.Interface;
+using Business_Layer.Services.AdminServices.Interface;
+using Business_Layer.Services.AdminServices;
 
 namespace HalloDoc.MVC.Controllers
 {
@@ -22,24 +24,21 @@ namespace HalloDoc.MVC.Controllers
     public class PhysicianController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IDashboardRepository _dashboardRepository;
         private readonly IConfiguration _config;
-        private readonly IPhysicianDashboardService _physicalDashboardService;
         private readonly INotyfService _notyf;
         private readonly IWebHostEnvironment _environment;
         private readonly IEmailService _emailService;
+        private readonly IPhysicianService _physicianService;
         private readonly string REQUEST_FILE_PATH = Path.Combine("document", "request");
 
-
-        public PhysicianController(IUnitOfWork unit, IDashboardRepository dashboardRepository, IConfiguration config, IPhysicianDashboardService physicalDashboardService, INotyfService notyf, IWebHostEnvironment webHostEnvironment, IEmailService emailService)
+        public PhysicianController(IUnitOfWork unit, IPhysicianService physicianService, IAdminDashboardService dashboardRepository, IConfiguration config, IPhysicianDashboardService physicalDashboardService, INotyfService notyf, IWebHostEnvironment webHostEnvironment, IEmailService emailService)
         {
             _unitOfWork = unit;
-            _dashboardRepository = dashboardRepository;
             _config = config;
-            _physicalDashboardService = physicalDashboardService;
             _notyf = notyf;
             _environment = webHostEnvironment;
             _emailService = emailService;
+            _physicianService = physicianService;
         }
 
         #region Profile
@@ -270,112 +269,84 @@ namespace HalloDoc.MVC.Controllers
         [RoleAuthorize((int)AllowMenu.ProviderDashboard)]
         public IActionResult ViewNotes(int requestId)
         {
-
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-            string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+            string? phyName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
 
-            IEnumerable<Requeststatuslog> statusLogs = (from log in _unitOfWork.RequestStatusLogRepository.GetAll()
-                                                        where log.Requestid == requestId
-                                                        && log.Status != (int)RequestStatus.Cancelled
-                                                        && log.Status != (int)RequestStatus.CancelledByPatient
-                                                        select log
-                                                        ).OrderByDescending(_ => _.Createddate);
+            ViewNotesViewModel? model = _physicianService.AdminProviderService.GetViewNotesModel(requestId);
 
-            Requestnote notes = _unitOfWork.RequestNoteRepository.GetFirstOrDefault(notes => notes.Requestid == requestId);
-
-            string? cancelledByAdmin = _unitOfWork.RequestStatusLogRepository.GetFirstOrDefault(log => log.Status == (int)RequestStatus.Cancelled)?.Notes;
-            string? cancelledByPatient = _unitOfWork.RequestStatusLogRepository.GetFirstOrDefault(log => log.Status == (int)RequestStatus.CancelledByPatient)?.Notes;
-
-            ViewNotesViewModel model = new ViewNotesViewModel();
-
-            model.UserName = adminName;
-            model.requeststatuslogs = statusLogs;
-
-            if (notes != null)
+            if (model == null)
             {
-                model.AdminNotes = notes.Adminnotes;
-                model.PhysicianNotes = notes.Physiciannotes;
-                model.AdminCancellationNotes = cancelledByAdmin;
-                model.PatientCancellationNotes = cancelledByPatient;
+                _notyf.Error("Cannot get data. Please try again later.");
+                return RedirectToAction("Dashboard");
             }
 
-            return View("Dashboard/ViewNotes", model);
+            model.UserName = phyName;
+            model.IsAdmin = false;
+
+
+            return View("AdminProvider/ViewNotes", model);
         }
 
+        [RoleAuthorize((int)AllowMenu.ProviderDashboard)]
         [HttpPost]
-        public IActionResult ViewNotes(ViewNotesViewModel vnvm)
+        public IActionResult ViewNotes(ViewNotesViewModel model)
         {
 
-            int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-            string phyAspId = HttpContext.Request.Headers.Where(x => x.Key == "userAspId").FirstOrDefault().Value;
-
-            Requestnote oldnote = _unitOfWork.RequestNoteRepository.GetFirstOrDefault(rn => rn.Requestid == vnvm.RequestId);
-
-            if (oldnote != null)
+            try
             {
-                oldnote.Physiciannotes = vnvm.PhysicianNotes;
-                oldnote.Modifieddate = DateTime.Now;
-                oldnote.Modifiedby = phyAspId;
+                string? phyAspId = HttpContext.Request.Headers.Where(x => x.Key == "userAspId").FirstOrDefault().Value;
 
-                _unitOfWork.RequestNoteRepository.Update(oldnote);
-                _unitOfWork.Save();
-
-            }
-            else
-            {
-                Requestnote curReqNote = new Requestnote()
+                if (phyAspId == null)
                 {
-                    Requestid = vnvm.RequestId,
-                    Physiciannotes = vnvm.PhysicianNotes,
-                    Createdby = phyAspId,
-                    Createddate = DateTime.Now,
-                };
+                    _notyf.Error("Cannot get user id. Please try again later.");
+                    return RedirectToAction("Dashboard");
+                }
 
-                _unitOfWork.RequestNoteRepository.Add(curReqNote);
-                _unitOfWork.Save();
+                ServiceResponse response = _physicianService.AdminProviderService.SubmitViewNotes(model, phyAspId, false);
+
+                if (response.StatusCode == ResponseCode.Success)
+                {
+                    _notyf.Success("Notes Updated Successfully.");
+                    return RedirectToAction("ViewNotes", new { requestId = model.RequestId });
+                }
+
+                _notyf.Error(response.Message);
+                return View("AdminProvider/ViewNotes", model);
 
             }
-
-            return ViewNotes(vnvm.RequestId);
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return RedirectToAction("Dashboard");
+            }
         }
 
 
         [RoleAuthorize((int)AllowMenu.ProviderDashboard)]
         public IActionResult ViewCase(int? requestId)
         {
+
             int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-            string phyName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+            string? phyName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
 
             if (requestId == null)
             {
                 return View("Error");
             }
 
-            Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestId);
-            Requestclient client = _unitOfWork.RequestClientRepository.GetFirstOrDefault(reqCli => reqCli.Requestid == requestId);
+            ViewCaseViewModel? model = _physicianService.AdminProviderService.GetViewCaseModel(requestId ?? 0);
 
-            ViewCaseViewModel model = new();
+            if (model == null)
+            {
+                _notyf.Error("Cannot get data. Please try again later.");
+                return RedirectToAction("Dashboard");
+            }
 
             model.UserName = phyName;
-            model.RequestId = requestId ?? 0;
+            model.IsAdmin = false;
 
-            string dobDate = client.Intyear + "-" + client.Strmonth + "-" + client.Intdate;
-            model.Confirmation = req.Confirmationnumber;
-            model.DashboardStatus = RequestHelper.GetDashboardStatus(req.Status);
-            model.RequestType = req.Requesttypeid;
-            model.PatientName = client.Firstname + " " + client.Lastname;
-            model.PatientFirstName = client.Firstname;
-            model.PatientLastName = client.Lastname;
-            model.Dob = dobDate == "--" ? null : DateTime.Parse(dobDate);
-            model.PatientEmail = client.Email;
-            model.Region = client.Regionid;
-            model.Notes = client.Notes;
-            model.Address = client.Street;
-            model.regions = _unitOfWork.RegionRepository.GetAll();
-            model.physicians = _unitOfWork.PhysicianRepository.GetAll();
-            model.casetags = _unitOfWork.CaseTagRepository.GetAll();
+            return View("AdminProvider/ViewCase", model);
 
-            return View("Dashboard/ViewCase", model);
         }
 
         [RoleAuthorize((int)AllowMenu.ProviderDashboard)]
@@ -407,7 +378,7 @@ namespace HalloDoc.MVC.Controllers
                 status = status,
             };
 
-            PagedList<PhyDashboardTRow> pagedList = await _physicalDashboardService.GetPhysicianRequestAsync(filter, phyId);
+            PagedList<PhyDashboardTRow> pagedList = await _physicianService.PhysicianDashboardService.GetPhysicianRequestAsync(filter, phyId);
 
             PhysicianDashboardViewModel model = new PhysicianDashboardViewModel();
             model.pagedList = pagedList;
@@ -422,15 +393,15 @@ namespace HalloDoc.MVC.Controllers
         public IActionResult ViewUploads(int requestId)
         {
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-            string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+            string? adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
 
-            Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestId);
+            Request? req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestId);
             if (req == null)
             {
                 return View("Error");
             }
 
-            Requestclient reqCli = _unitOfWork.RequestClientRepository.GetFirstOrDefault(reqcli => reqcli.Requestid == req.Requestid);
+            Requestclient? reqCli = _unitOfWork.RequestClientRepository.GetFirstOrDefault(reqcli => reqcli.Requestid == req.Requestid);
             if (reqCli == null)
             {
                 return View("Error");
@@ -454,7 +425,7 @@ namespace HalloDoc.MVC.Controllers
                 UserName = adminName,
                 RequestFilesPath = REQUEST_FILE_PATH,
             };
-
+            
             return View("Dashboard/ViewUploads", model);
         }
 
@@ -1450,143 +1421,55 @@ namespace HalloDoc.MVC.Controllers
             }
         }
 
-
         public IActionResult CreateRequest()
         {
             IEnumerable<Region> regions = _unitOfWork.RegionRepository.GetAll();
             AdminCreateRequestViewModel model = new AdminCreateRequestViewModel();
             model.regions = regions;
-            return View("Dashboard/CreateRequest", model);
+            return View("AdminProvider/CreateRequest", model);
         }
 
-
-
-
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public IActionResult CreateRequest(AdminCreateRequestViewModel model)
         {
+
             int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
-            Physician physician = _unitOfWork.PhysicianRepository.GetFirstOrDefault(a => a.Physicianid == phyId);
-            if (phyId != 0)
+            string? phyAspId = HttpContext.Request.Headers.Where(a => a.Key == "userAspId").FirstOrDefault().Value;
+
+            if (phyId == 0 || string.IsNullOrEmpty(phyAspId))
             {
+                _notyf.Error("Couldn't get admin data.");
+                return RedirectToAction("Dashboard");
+            }
+
+            try
+            {
+
                 if (ModelState.IsValid)
                 {
-                    var phoneNumber = "+" + model.countryCode + "-" + model.phoneNumber;
-                    string state = _unitOfWork.RegionRepository.GetFirstOrDefault(reg => reg.Regionid == model.state).Name;
+                    string? createLink = Url.Action("CreateAccount", "Guest", null, Request.Scheme);
 
-                    // Creating Patient in Aspnetusers Table
+                    ServiceResponse response = _physicianService.AdminProviderService.SubmitCreateRequest(model, phyAspId, createLink ?? "",false);
 
-                    bool isUserExists = _unitOfWork.UserRepository.IsUserWithEmailExists(model.email);
-
-                    if (!isUserExists)
+                    if (response.StatusCode == ResponseCode.Success)
                     {
-
-                        Guid generatedId = Guid.NewGuid();
-
-                        Aspnetuser aspnetuser = new()
-                        {
-                            Id = generatedId.ToString(),
-                            Username = model.FirstName,
-                            Passwordhash = null,
-                            Email = model.email,
-                            Phonenumber = phoneNumber,
-                            Createddate = DateTime.Now,
-                            Accounttypeid = (int)AccountType.Patient,
-                        };
-
-                        _unitOfWork.AspNetUserRepository.Add(aspnetuser);
-                        _unitOfWork.Save();
-
-                        User user1 = new()
-                        {
-                            Aspnetuserid = generatedId.ToString(),
-                            Firstname = model.FirstName,
-                            Lastname = model.LastName,
-                            Email = model.email,
-                            Mobile = phoneNumber,
-                            Street = model.street,
-                            City = model.city,
-                            State = state,
-                            Regionid = model.state,
-                            Zipcode = model.zipCode,
-                            Createddate = DateTime.Now,
-                            Createdby = physician.Aspnetuserid,
-                            Strmonth = model.dob?.Month.ToString(),
-                            Intdate = model.dob?.Day,
-                            Intyear = model.dob?.Year
-                        };
-
-
-                        _unitOfWork.UserRepository.Add(user1);
-                        _unitOfWork.Save();
-
-                        SendMailForCreateAccount(model.email);
+                        _notyf.Success("Request Created Successfully");
+                        return RedirectToAction("Dashboard");
                     }
 
-                    User user = _unitOfWork.UserRepository.GetFirstOrDefault(u => u.Email == model.email);
-
-                    // Adding request in Request Table
-                    Request request = new()
-                    {
-                        Requesttypeid = 2,
-                        Userid = user.Userid,
-                        Firstname = model.FirstName,
-                        Lastname = model.LastName,
-                        Phonenumber = phoneNumber,
-                        Email = model.email,
-                        Status = (short)RequestStatus.Accepted,
-                        Physicianid = phyId,
-                        Accepteddate = DateTime.Now,
-                        Createddate = DateTime.Now,
-                        Confirmationnumber = GenerateConfirmationNumber(user),
-                        Patientaccountid = user.Aspnetuserid,
-                    };
-
-                    _unitOfWork.RequestRepository.Add(request);
-                    _unitOfWork.Save();
-
-                    //Adding request in RequestClient Table
-                    Requestclient requestclient = new()
-                    {
-                        Requestid = request.Requestid,
-                        Firstname = model.FirstName,
-                        Lastname = model.LastName,
-                        Phonenumber = phoneNumber,
-                        Email = model.email,
-                        Address = model.street,
-                        City = model.city,
-                        State = state,
-                        Regionid = model.state,
-                        Zipcode = model.zipCode,
-                        Strmonth = model.dob?.Month.ToString(),
-                        Intdate = model.dob?.Day,
-                        Intyear = model.dob?.Year
-                    };
-
-                    _unitOfWork.RequestClientRepository.Add(requestclient);
-                    _unitOfWork.Save();
-                    if (model.notes != null)
-                    {
-                        Requestnote rn = new()
-                        {
-                            Requestid = request.Requestid,
-                            Physiciannotes = model.notes,
-                            Createdby = physician.Aspnetuserid,
-                            Createddate = DateTime.Now,
-                        };
-                        _unitOfWork.RequestNoteRepository.Add(rn);
-                        _unitOfWork.Save();
-                    }
-
-                    model.regions = _unitOfWork.RegionRepository.GetAll();
-
-                    return RedirectToAction("Dashboard");
-
+                    _notyf.Error(response.Message);
+                    return View("AdminProvider/CreateRequest", model);
                 }
-                return View("error");
+
+                _notyf.Error("Please enter all the requried fields");
+                return View("AdminProvider/CreateRequest", model);
+
             }
-            return View("error");
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return View("AdminProvider/CreateRequest", model);
+            }
 
         }
 
@@ -1696,7 +1579,7 @@ namespace HalloDoc.MVC.Controllers
 
 
         [HttpPost]
-        public IActionResult SendLinkForCreateRequest(SendLinkModel model)
+        public IActionResult SendLinkForSubmitRequest(SendLinkModel model)
         {
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
 

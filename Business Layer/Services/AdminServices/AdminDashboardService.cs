@@ -1,18 +1,20 @@
-﻿using Business_Layer.Services.Admin.Interface;
+﻿using Business_Layer.Repository.IRepository;
+using Business_Layer.Services.AdminServices.Interface;
 using Business_Layer.Utilities;
 using Data_Layer.CustomModels;
 using Data_Layer.DataContext;
 using Data_Layer.DataModels;
 using Data_Layer.ViewModels.Admin;
+using DocumentFormat.OpenXml.Drawing.Charts;
 
-namespace Business_Layer.Services.Admin
+namespace Business_Layer.Services.AdminServices
 {
-    public class DashboardRepository : IDashboardRepository
+    public class AdminDashboardService : IAdminDashboardService
     {
-        private readonly ApplicationDbContext _context;
-        public DashboardRepository(ApplicationDbContext context)
+        private readonly IUnitOfWork _unitOfWork;
+        public AdminDashboardService(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<PagedList<AdminRequest>> GetAdminRequestsAsync(DashboardFilter dashboardParams)
@@ -51,16 +53,17 @@ namespace Business_Layer.Services.Admin
                     break;
             }
 
-            var query = (from r in _context.Requests
+            var query = (from r in _unitOfWork.RequestRepository.GetAll()
                          where validRequestTypes.Contains(r.Status)
                          && (dashboardParams.RequestTypeFilter == 0 || r.Requesttypeid == dashboardParams.RequestTypeFilter)
-                         join rc in _context.Requestclients on r.Requestid equals rc.Requestid
+                         join rc in _unitOfWork.RequestClientRepository.GetAll() on r.Requestid equals rc.Requestid
                          where (dashboardParams.RegionFilter == 0 || rc.Regionid == dashboardParams.RegionFilter)
                          && (string.IsNullOrEmpty(dashboardParams.PatientSearchText) || (rc.Firstname + " " + rc.Lastname).ToLower().Contains(dashboardParams.PatientSearchText.ToLower()))
-                         join phy in _context.Physicians on r.Physicianid equals phy.Physicianid into phyGroup
+                         join phy in _unitOfWork.PhysicianRepository.GetAll() on r.Physicianid equals phy.Physicianid into phyGroup
                          from phyItem in phyGroup.DefaultIfEmpty()
-                         join region in _context.Regions on rc.Regionid equals region.Regionid into regionGroup
+                         join region in _unitOfWork.RegionRepository.GetAll() on rc.Regionid equals region.Regionid into regionGroup
                          from regionItem in regionGroup.DefaultIfEmpty()
+                         
                          select new AdminRequest
                          {
                              PhysicianId = r.Physicianid,
@@ -77,7 +80,8 @@ namespace Business_Layer.Services.Admin
                              PhysicianName = phyItem.Firstname + " " + phyItem.Lastname,
                              Phone = r.Phonenumber,
                              Address = rc.Address,
-                             Notes = _context.Requeststatuslogs.Where(log => log.Requestid == r.Requestid).OrderByDescending(_ => _.Createddate).First().Notes,
+                             //Notes = rc.Notes,
+                             Notes = _unitOfWork.RequestStatusLogRepository.GetAll().Where(log => log.Requestid == r.Requestid).OrderByDescending(_ => _.Createddate).First().Notes,
                          }).AsQueryable();
 
             return await PagedList<AdminRequest>.CreateAsync(
@@ -125,14 +129,13 @@ namespace Business_Layer.Services.Admin
 
             List<AdminRequest> adminRequests = new List<AdminRequest>();
 
-            adminRequests = (from r in _context.Requests
-                             join rc in _context.Requestclients on r.Requestid equals rc.Requestid
-                             join p in _context.Physicians on r.Physicianid equals p.Physicianid into subgroup
+            adminRequests = (from r in _unitOfWork.RequestRepository.GetAll()
+                             join rc in _unitOfWork.RequestClientRepository.GetAll() on r.Requestid equals rc.Requestid
+                             join p in _unitOfWork.PhysicianRepository.GetAll() on r.Physicianid equals p.Physicianid into subgroup
                              from subitem in subgroup.DefaultIfEmpty()
                              where validRequestTypes.Contains(r.Status)
                              select new AdminRequest
                              {
-
                                  PhysicianId = r.Physicianid,
                                  DateOfService = r.Accepteddate,
                                  RegionName = rc.Regionid.ToString(),
@@ -192,9 +195,9 @@ namespace Business_Layer.Services.Admin
 
             List<AdminRequest> adminRequests = new List<AdminRequest>();
 
-            adminRequests = (from r in _context.Requests
-                             join rc in _context.Requestclients on r.Requestid equals rc.Requestid
-                             join p in _context.Physicians on r.Physicianid equals p.Physicianid into subgroup
+            adminRequests = (from r in _unitOfWork.RequestRepository.GetAll()
+                             join rc in _unitOfWork.RequestClientRepository.GetAll() on r.Requestid equals rc.Requestid
+                             join p in _unitOfWork.PhysicianRepository.GetAll() on r.Physicianid equals p.Physicianid into subgroup
                              from subitem in subgroup.DefaultIfEmpty()
                              where validRequestTypes.Contains(r.Status)
                              && (filters.RequestTypeFilter == 0 || r.Requesttypeid == filters.RequestTypeFilter)
@@ -227,11 +230,11 @@ namespace Business_Layer.Services.Admin
         public static string GetPatientDOB(Requestclient u)
         {
 
-            string udb = u.Intyear + "-" + u.Strmonth + "-" + u.Intdate;
-            if (u.Intyear == null || u.Strmonth == null || u.Intdate == null)
+            if (u.Intyear == null || u.Intyear == 0 || string.IsNullOrEmpty(u.Strmonth) || u.Intdate == null || u.Intdate == 0)
             {
                 return "";
             }
+            string udb = u.Intyear?.ToString("D4") + "-" + u.Strmonth + "-" + u.Intdate?.ToString("D2");
 
             DateTime dobDate = DateTime.Parse(udb);
             string dob = dobDate.ToString("MMM dd, yyyy");

@@ -10,10 +10,12 @@ namespace Data_Layer.ViewModels.Admin
 {
     public class ViewNotesViewModel
     {
-        public string UserName { get; set; }
+        public string? UserName { get; set; }
+        public bool IsAdmin { get; set; }
         public int RequestId { get; set; }
-        public string AdminNotes { get; set; }
-        public string PhysicianNotes { get; set; }
+        public string? InputNotes {  get; set; }
+        public string? PhysicianNotes {  get; set; }
+        public string? AdminNotes {  get; set; }
         public IEnumerable<Requeststatuslog> requeststatuslogs { get; set; }
         public string? AdminCancellationNotes {  get; set; }
         public string? PatientCancellationNotes {  get; set; }
