@@ -9,6 +9,7 @@
 <div id="modal-div"></div>
 
 <div class="container mt-4 scheduling-body">
+
     <div class="container-fluid  mt-4" style="max-width:1000px">
         <div class="mt-4 row d-flex justify-content-between">
             <h4 class="fw-bold col-xl-11  col-9 col-xs-8">
@@ -51,7 +52,7 @@
                     Shifts for Review
                 </a>
 
-                <button type="button" id="" data-bs-toggle="modal" data-bs-target="#CreateShiftModal" class="btn btn-info mx-1 d-flex flex-wrap justify-content-md-end  mt-md-0 mt-2 text-white" onclick="">
+                <button type="button" id="add-new-shift-btn" class="btn btn-info mx-1 d-flex flex-wrap justify-content-md-end  mt-md-0 mt-2 text-white" onclick="">
                     Add new shift
                 </button>
 
@@ -104,149 +105,7 @@
         <div id="providerSchedulingPartial">
         </div>
     </div>
-</div>
 
-<div class="modal fade" id="CreateShiftModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
-     aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-info">
-                <div class="modal-dark modal-title text-white" id="exampleModalLongTitle">
-                    Send mail to patient for submitting request
-                </div>
-                <button type="button" class="btn" aria-label="Close" data-bs-dismiss="modal">
-                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
-                         fill="#FFFFFF">
-                        <path d="M0 0h24v24H0V0z" fill="none" />
-                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
-                    </svg>
-                </button>
-            </div>
-
-            <form method="post" asp-controller="Admin" asp-action="AddShift">
-                <div class="modal-body">
-                    <div class="modal-flex my-3">
-
-                        <input hidden />
-                        <div class="col-12 form-floating">
-                            <select id="regionList" asp-for="addShiftRegion" class=" w-100 align-items-left " style="height:50px">
-                                <option>select any profession type</option>
-                                @foreach (var region in Model.regions)
-                                {
-                                    <option class="" value="@region.Regionid">@region.Name </option>
-                                }
-
-                            </select>
-                        </div>
-
-                        <div class="col-12 mt-3">
-                            <div class="form-floating">
-                                <select id="physicianList" asp-for="addShiftPhysician" class=" w-100 align-items-left " style="height:50px">
-
-                                    <option>select any physician</option>
-
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="col-12 mt-3">
-                            <div class="form-floating d-flex  w-100">
-
-                                <input asp-for="shiftDate" id="floatingInput" class="py-1 mt-1 form-control" type="date" style="height:60px;" />
-                                <label for="floatingInput" class="">Shift Date</label>
-                            </div>
-                        </div>
-
-                        <div class="d-flex justify-content-between col-12 mt-3">
-                            <div class=" col-5 mx-1">
-                                <div class="form-floating">
-                                    <input asp-for="shiftStartTime" id="floatingInput" type="time" class="form-control" placeholder="">
-                                    <label for="floatingInput">Start</label>
-                                </div>
-                            </div>
-                            <div class=" col-5 mx-1">
-                                <div class="form-floating">
-                                    <input asp-for="shiftEndTime" id="floatingInput" type="time" class="form-control" placeholder="Email">
-                                    <label for="floatingInput">End</label>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-12 mt-3 d-flex justify-content-start">
-                            <span class="me-2">Repeat</span>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" role="switch" id="" name="isRepeat" value="1">
-
-                            </div>
-                        </div>
-                        <div class="col-12 p-0 mt-3">
-                            <span>Repeat Days</span>
-                            <div class="p-0 d-flex flex-wrap mt-3">
-                                <div class="form-check">
-                                    <input class="form-check-input me-1" name="repeatDays" type="checkbox" value="1" id="flexCheckDefault">
-                                    <label class="form-check-label" for="flexCheckDefault">
-                                        Monday
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="mx-1 form-check-input" name="repeatDays" type="checkbox" value="2" id="flexCheckChecked">
-                                    <label class="form-check-label" for="flexCheckChecked">
-                                        Tuesday
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="mx-1 form-check-input" name="repeatDays" type="checkbox" value="3" id="flexCheckDefault">
-                                    <label class="form-check-label" for="flexCheckDefault">
-                                        Wednesday
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="mx-1 form-check-input" name="repeatDays" type="checkbox" value="4" id="flexCheckChecked">
-                                    <label class="form-check-label" for="flexCheckChecked">
-                                        Thurseday
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="me-1 form-check-input" name="repeatDays" type="checkbox" value="5" id="flexCheckDefault">
-                                    <label class="form-check-label" for="flexCheckDefault">
-                                        Friday
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="mx-1 form-check-input" name="repeatDays" type="checkbox" value="6" id="flexCheckChecked">
-                                    <label class="form-check-label" for="flexCheckChecked">
-                                        Saturday
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="mx-1 form-check-input" name="repeatDays" type="checkbox" value="7" id="flexCheckDefault">
-                                    <label class="form-check-label" for="flexCheckDefault">
-                                        Sunday
-                                    </label>
-                                </div>
-
-                            </div>
-                        </div>
-                        <div class="col-12 form-floating">
-                            <select id="" asp-for="repeatCount" class=" w-100 align-items-left " style="height:50px">
-                                <option>select repeat days</option>
-                                @for (int i = 0; i < 7; i++)
-                                {
-                                    <option class="" value="@i">@i </option>
-                                }
-
-                            </select>
-                        </div>
-
-
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="submit" id="addShift-submit-btn" class="btn btn-info text-white" data-bs-dismiss="modal">Save</button>
-                    <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
-                </div>
-            </form>
-        </div>
-    </div>
 </div>
 
 <style>
@@ -281,6 +140,22 @@
 
 <script>
 
+    $('#add-new-shift-btn').click(function () {
+        $.ajax({
+            url: "/Admin/AddShiftModal",
+            data: {  },
+            type: 'GET',
+            success: function (result) {
+                $('#modal-div').html(result);
+                $('#addShiftModal').modal('show');
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
+    });
+
     $('.calender-filter').click(function () {
 
         $(this).addClass("cal-filter-active");
@@ -288,39 +163,44 @@
 
     });
 
-    $("#regionList2").change(function () {
-        var type = $('option:selected', this).val();
-        console.log(type);
+
+
+    function FetchPhyListByRegion(regionType, phyListId) {
+
+        let listId = '#' + phyListId;
 
         $.ajax({
             url: '/Admin/GetPhyByRegion',
             type: 'POST',
             data: {
-                id: type,
+                id: regionType,
             },
             success: function (result) {
                 //console.log(result);
-                $('#physicianList2').empty();
-                $('#physicianList2').append($('<option>', {
-                    value: null,
-                    text: "Select any option",
+                $(listId).empty();
+                $(listId).append($('<option>', {
+                    text: "-- Select Physician --",
+                    value: "",
+                    disabled: true,
+                    selected: true,
                 }));
 
                 $.each(result, function (index, object) {
 
-                    $('#physicianList2').append($('<option>', {
+                    $(listId).append($('<option>', {
                         value: object["physicianid"],
                         text: object["firstname"] + " " + object["lastname"]
                     }));
 
                 });
             },
-
             error: function (err) {
                 console.error(err);
             }
         });
-    });
+
+    }
+
 
 </script>
 
@@ -507,7 +387,15 @@
 
     });
 
-    $('#day-wise-schedule-btn').click();
+    @if (Model.IsViewMonth)
+    {
+        @:$('#month-wise-schedule-btn').click();
+    }
+    else
+    {
+        @:$('#day-wise-schedule-btn').click();        
+    }
+
 
 </script>
 

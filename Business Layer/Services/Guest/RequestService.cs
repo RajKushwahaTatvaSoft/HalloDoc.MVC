@@ -5,7 +5,7 @@ using Business_Layer.Services.Helper.Interface;
 using Business_Layer.Utilities;
 using Data_Layer.CustomModels;
 using Data_Layer.DataModels;
-using Data_Layer.ViewModels;
+using Data_Layer.ViewModels.Guest;
 using Microsoft.AspNetCore.Hosting;
 
 namespace Business_Layer.Services.Guest

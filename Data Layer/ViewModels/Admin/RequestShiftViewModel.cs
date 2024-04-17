@@ -9,6 +9,7 @@ namespace Data_Layer.ViewModels.Admin
 {
     public class RequestShiftViewModel
     {
+        public string? LoggedInUserName {  get; set; }
         public IEnumerable<Region> regions {  get; set; }
     }
 }

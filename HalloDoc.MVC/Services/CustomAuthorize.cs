@@ -29,6 +29,7 @@ namespace HalloDoc.MVC.Services
             if (jwtService == null)
             {
                 context.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Guest", action = "Index" }));
+                context.HttpContext.Response.Cookies.Delete("hallodoc");
                 return;
             }
 
@@ -36,22 +37,8 @@ namespace HalloDoc.MVC.Services
          
             if (token == null || !jwtService.ValidateToken(token, out JwtSecurityToken jwtToken))
             {
-
-                //if (IsAjaxRequest(context.HttpContext.Request))
-                //{
-                //    context.Result = new JsonResult(new { error = "Access denied", redirectToLogin = true })
-                //    {
-                //        StatusCode = StatusCodes.Status403Forbidden
-                //    };
-                //}
-                //else
-                //{
-                //    context.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Login", action = "Index" }));
-                //}
-
-                //return;
-
                 context.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Guest", action = "Index" }));
+                context.HttpContext.Response.Cookies.Delete("hallodoc");
                 return;
             }
 
@@ -59,13 +46,16 @@ namespace HalloDoc.MVC.Services
             var userIdClaim = jwtToken.Claims.FirstOrDefault(claims => claims.Type == "userId");
             var userNameClaim = jwtToken.Claims.FirstOrDefault(claims => claims.Type == "userName");
             var userAspIdClaim = jwtToken.Claims.FirstOrDefault(claims => claims.Type == "userAspId");
-            context.HttpContext.Request.Headers.Add("userId",userIdClaim.Value);
-            context.HttpContext.Request.Headers.Add("userName",userNameClaim.Value);
-            context.HttpContext.Request.Headers.Add("userAspId", userAspIdClaim.Value);
+
+            context.HttpContext.Session.SetString("userName",userNameClaim?.Value ?? "");
+            context.HttpContext.Request.Headers.Add("userId",userIdClaim?.Value);
+            context.HttpContext.Request.Headers.Add("userName", userNameClaim?.Value);
+            context.HttpContext.Request.Headers.Add("userAspId", userAspIdClaim?.Value);
 
             if (roleClaim == null)
             {                
                 context.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Guest", action = "Index" }));
+                context.HttpContext.Response.Cookies.Delete("hallodoc");
                 return;
             }
 

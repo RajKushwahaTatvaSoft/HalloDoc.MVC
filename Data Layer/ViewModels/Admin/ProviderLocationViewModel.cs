@@ -1,7 +1,6 @@
-﻿
-using Data_Layer.CustomModels;
+﻿using Data_Layer.CustomModels;
 
-namespace Data_Layer.ViewModels
+namespace Data_Layer.ViewModels.Admin
 {
     public class ProviderLocationViewModel
     {

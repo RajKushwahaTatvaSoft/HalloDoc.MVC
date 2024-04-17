@@ -27,8 +27,8 @@
                             <input id="shift-detail-id" hidden asp-for="ShiftDetailId" />
                             <div class="col-12">
 
-                                <div class="form-floating w-100 h-100">
-                                    <select asp-for="RegionId" id="regionList2" class="form-select">
+                                <div class="form-floating">
+                                    <select asp-for="RegionId" id="view-shift-region-list" class="form-select">
                                         <option>select any profession type</option>
                                         @foreach (var region in Model.regions)
                                         {
@@ -36,21 +36,25 @@
                                         }
 
                                     </select>
+                                    <label for="view-shift-region-list">Select Region</label>
+
                                 </div>
 
                             </div>
 
                             <div class="col-12 mt-3">
-                                <div class="form-floating w-100 h-100">
-                                    <select asp-for="PhysicianId" id="physicianList2" class="form-select">
+                                <div class="form-floating">
+                                    <select asp-for="PhysicianId" id="view-shift-physician-list" class="form-select">
 
-                                        <option>select any physician</option>
                                         @foreach (var physician in Model.selectedPhysicians)
                                         {
                                             <option value="@physician.Physicianid">@physician.Firstname @physician.Lastname </option>
                                         }
 
                                     </select>
+
+                                    <label for="view-shift-physician-list">Select Physician</label>
+
                                 </div>
                             </div>
 
@@ -95,7 +99,14 @@
     </div>
 </div>
 
-<script>    
+<script>   
+    
+    $("#view-shift-region-list").change(function () {
+        var type = $('option:selected', this).val();
+        console.log(type);
+
+        FetchPhyListByRegion(type, "view-shift-physician-list");
+    });
 
     $('#view-shift-delete-btn').click(function () {
         $.ajax({

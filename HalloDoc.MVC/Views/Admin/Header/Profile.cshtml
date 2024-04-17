@@ -120,7 +120,7 @@
                         <div class="col-md-6  mt-4">
                             <div class="form-floating d-flex  w-100">
                                 <input asp-for="CountryCode" id="admin-phone-country" class="" hidden style="height:60px;" />
-                                <input asp-for="PhoneNumber" id="admin-phone" class=" py-4 form-control" type="number" style="height:60px;" />
+                                <input asp-for="PhoneNumber" id="admin-phone" class=" py-4 form-control" type="tel" style="height:60px;" />
                             </div>
                         </div>
 
@@ -215,7 +215,7 @@
 
                     <div class="col-md-6  mt-4">
                         <div class=" floating-label form-floating">
-                            <input asp-for="Zip" type="number" class="billingChange form-control" placeholder="Zip" id="floatingInput" disabled>
+                            <input asp-for="Zip" type="tel" class="billingChange form-control" placeholder="Zip" id="floatingInput" disabled>
                             <label for="floatingInput">Zip</label>
                         </div>
                     </div>
@@ -223,7 +223,7 @@
                     <div class="col-md-6 d-flex justify-content-evenly flex-wrap mt-4">
                         <div class="form-floating d-flex  w-100">
                             <input asp-for="AltCountryCode" id="alt-phone-country" class="billingChange" hidden style="height:60px;" disabled />
-                            <input asp-for="AltPhoneNumber" id="alt-phone" class="billingChange py-4 form-control" type="number" style="height:60px;" disabled />
+                            <input asp-for="AltPhoneNumber" id="alt-phone" class="billingChange py-4 form-control" type="tel" style="height:60px;" disabled />
                         </div>
                     </div>
                     <div class="row">
@@ -460,6 +460,7 @@
         });
 
     });
+
 </script>
 
 <script>
@@ -490,6 +491,7 @@
         saveBtn.style.display = "none";
 
     }
+
     function billingeditDetails() {
 
         var inputs = document.getElementsByClassName("billingChange");
@@ -522,7 +524,6 @@
         countryCode1.value = patientPhoneInput1.getSelectedCountryData().dialCode;
 
     }
-
 
 </script>
 

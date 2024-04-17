@@ -1,7 +1,4 @@
-﻿@using Business_Layer.Repository.IRepository
-@using Business_Layer.Utilities
-@using Microsoft.AspNetCore.Http
-@inject IUnitOfWork IUnitOfWork
+﻿@using Business_Layer.Utilities
 @inject Microsoft.AspNetCore.Http.IHttpContextAccessor Accessor
 
 <style>
@@ -35,7 +32,7 @@
     <div class="d-flex mx-3 align-items-center justify-content-between">
         <img src="/images/hallo_doc_logo.png" alt="logo_icon" height="100px">
         <div>
-            <span class="mx-1">Welcome <b>@ViewData["UserName"]</b></span>
+            <span class="mx-1">Welcome <b>@Accessor.HttpContext?.Session.GetString("userName")</b></span>
             <a asp-controller="Admin" asp-action="Logout" class="btn btn-outline-info shadow-none night-mode-btn">
                 <svg class="d-flex d-md-none" fill="#00ffff" height="24px" width="24px" version="1.1" id="Capa_1"
                      xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -59,6 +56,7 @@
                             </g>
                         </g>
                     </svg>
+
                 <span class="d-none d-md-flex">Logout</span>
             </a>
             <button onclick="myFunction()" class="btn btn-outline-info shadow-none night-mode-btn mx-2">

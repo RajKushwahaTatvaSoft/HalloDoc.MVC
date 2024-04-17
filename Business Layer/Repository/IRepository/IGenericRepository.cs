@@ -16,8 +16,6 @@ namespace Business_Layer.Repository.IRepository
         void Update(T entity);
         IQueryable<T> GetAll();
         public IQueryable<T> Where(Expression<Func<T, bool>> filter);
-        public int Count();
-        public int Count(Expression<Func<T, bool>> filter);
 
     }
 }

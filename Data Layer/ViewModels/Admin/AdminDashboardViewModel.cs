@@ -11,7 +11,6 @@ namespace Data_Layer.ViewModels.Admin
         public IEnumerable<Region> regions { get; set; }
         public IEnumerable<DataModels.Physician> physicians { get; set; }
         public DashboardFilter filterOptions { get; set; }
-        public string UserName { get; set; }
         public int DashboardStatus {  get; set; }
         public int NewReqCount { get; set; }
         public int PendingReqCount { get; set; }

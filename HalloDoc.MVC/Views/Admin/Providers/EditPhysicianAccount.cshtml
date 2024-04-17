@@ -2,6 +2,7 @@
 @{
     Layout = "_AdminDashboardLayout";
     ViewData["Title"] = "Physician Account";
+    ViewData["UserName"] = Model.LoggedInUserName;
 }
 
 
@@ -35,7 +36,7 @@
             <div class="row g-2 m-1">
                 <div class="col-md">
                     <div class="form-floating">
-                        <input asp-for="UserName" type="text" class="form-control" id="userName" placeholder="User Name" disabled>
+                        <input asp-for="PhyUserName" type="text" class="form-control" id="userName" placeholder="User Name" disabled>
                         <label for="userName">User Name</label>
                     </div>
                 </div>

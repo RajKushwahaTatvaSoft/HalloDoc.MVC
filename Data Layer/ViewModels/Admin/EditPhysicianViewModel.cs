@@ -6,12 +6,13 @@ namespace Data_Layer.ViewModels.Admin
 {
     public class EditPhysicianViewModel
     {
+        public string? LoggedInUserName { get; set; }
         public IEnumerable<Region>? regions { get; set; }
         public IEnumerable<Role>? roles { get; set; }
         public IEnumerable<int>? physicianRegions { get; set; }
         public IEnumerable<int>? selectedRegions { get; set; }
         public int? PhysicianId { get; set; }
-        public string? UserName { get; set; }
+        public string? PhyUserName { get; set; }
 
         [Required(ErrorMessage = "Password Cannot be empty")]
         [RegularExpression("(?=^.{8,}$)((?=.*\\d)|(?=.*\\W+))(?![.\\n])(?=.*[A-Z])(?=.*[a-z]).*$", ErrorMessage = "Password must contain 1 capital, 1 small, 1 Special symbol and at least 8 characters")]

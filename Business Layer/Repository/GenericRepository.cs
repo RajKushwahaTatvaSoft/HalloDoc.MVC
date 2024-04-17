@@ -27,36 +27,6 @@ namespace Business_Layer.Repository
             dbSet.Add(entity);
         }
 
-        public IQueryable<T> GetAll()
-        {
-            IQueryable<T> query = dbSet;
-            return query;
-        }
-
-        public IQueryable<T> Where(Expression<Func<T, bool>> filter)
-        {
-            IQueryable<T> query = dbSet;
-            return query.Where(filter);
-        }
-
-        public int Count()
-        {
-            IQueryable<T> query = dbSet;
-            return query.Count();
-        }
-
-        public int Count(Expression<Func<T, bool>> filter)
-        {
-            IQueryable<T> query = dbSet;
-            return query.Count(filter);
-        }
-
-        public T? GetFirstOrDefault(Expression<Func<T, bool>> filter)
-        {
-            IQueryable<T> query = dbSet;
-            return query.FirstOrDefault(filter);
-        }
-
         public void Remove(T entity)
         {
             dbSet.Remove(entity);
@@ -65,6 +35,23 @@ namespace Business_Layer.Repository
         public void Update(T entity)
         {
             dbSet.Update(entity);
+        }
+        public virtual IQueryable<T> GetAll()
+        {
+            IQueryable<T> query = dbSet;
+            return query;
+        }
+
+        public virtual IQueryable<T> Where(Expression<Func<T, bool>> filter)
+        {
+            IQueryable<T> query = dbSet;
+            return query.Where(filter);
+        }
+
+        public virtual T? GetFirstOrDefault(Expression<Func<T, bool>> filter)
+        {
+            IQueryable<T> query = dbSet;
+            return query.FirstOrDefault(filter);
         }
 
     }

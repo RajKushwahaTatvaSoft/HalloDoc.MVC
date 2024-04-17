@@ -33,7 +33,11 @@ namespace Data_Layer.ViewModels.Admin
         [DateNotInFuture(ErrorMessage = "Date Of Birth should be in past.")]
         public DateTime? DOB { get; set; }
         public string? Street { get; set; }
+
+        [Required(ErrorMessage = "State cannot be empty")]
         public int RegionId { get; set; }
+
+        [Required(ErrorMessage = "City cannot be empty")]
         public int CityId {  get; set; }
         public string? ZipCode { get; set; }
         public string? Room { get; set; }

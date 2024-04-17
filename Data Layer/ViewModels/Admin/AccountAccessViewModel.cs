@@ -9,7 +9,6 @@ namespace Data_Layer.ViewModels.Admin
 {
     public class AccountAccessViewModel
     {
-        public string? UserName { get; set; }
         public IEnumerable<AccountAccessTRow> roles { get; set; }
     }
 }

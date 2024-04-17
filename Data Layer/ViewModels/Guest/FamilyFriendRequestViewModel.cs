@@ -1,7 +1,7 @@
 ﻿using Data_Layer.DataModels;
 using System.ComponentModel.DataAnnotations;
 
-namespace Data_Layer.ViewModels
+namespace Data_Layer.ViewModels.Guest
 {
     public class FamilyFriendRequestViewModel
     {
@@ -10,7 +10,9 @@ namespace Data_Layer.ViewModels
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
         public string? Countrycode { get; set; }
+
         [Required(ErrorMessage = "Phone cannot be empty")]
+        [RegularExpression("^[0-9\\+\\-]+$", ErrorMessage = "Enter valid Phone")]
         public string? Phone { get; set; }
         [Required(ErrorMessage = "Email cannot be empty")]
         public string? Email { get; set; }

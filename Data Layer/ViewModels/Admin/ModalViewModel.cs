@@ -4,6 +4,18 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Data_Layer.ViewModels.Admin
 {
+    public class AddShiftModel
+    {
+        public int RegionId { get; set; }
+        public int PhysicianId { get; set; }
+        public IEnumerable<Region>? regions { get; set; }
+        public DateTime? ShiftDate {  get; set; }
+        public TimeOnly? StartTime {  get; set; }
+        public TimeOnly? EndTime { get; set; }
+        public int? IsRepeat { get; set; }
+        public List<int> RepeatDays {  get; set; }
+        public int? RepeatCount {  get; set; }
+    }
 
     public class AssignCaseModel
     {

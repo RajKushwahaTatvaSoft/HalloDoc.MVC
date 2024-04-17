@@ -9,6 +9,7 @@ namespace Data_Layer.ViewModels.Admin
 {
     public class ProviderOnCallViewModel
     {
+        public string? LoggedInUserName { get; set; }
         public List<DataModels.Physician>? physiciansOffDuty { get; set; }
         public List<DataModels.Physician>? physiciansOnCall { get; set; }
         public IEnumerable<Region> regions { get; set; }

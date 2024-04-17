@@ -24,7 +24,7 @@
                     </path>
                 </svg>
                 <select class="form-select border-0" id="request-shift-region-filter" aria-label="Default select example">
-                    <option selected value="null">All Regions</option>
+                    <option selected value="0">All Regions</option>
                     @foreach (var item in Model.regions)
                     {
                         <option value="@item.Regionid">@item.Name</option>
@@ -33,13 +33,13 @@
             </div>
         </form>
         <div class="d-flex justify-content-end">
-            <a id="CreateShiftBtn" class="btn m-2 mt-sm-0 " style="background-color: #1b5e20; color:white;">
+            <a asp-controller="Admin" asp-action="Scheduling" asp-route-isViewCurrentMonth="true" id="CreateShiftBtn" class="btn m-2 mt-sm-0 " style="background-color: #1b5e20; color:white;">
                 View Current Month Shift
             </a>
-            <button type="button" id="ApproveBtn" class="btn m-2 mt-sm-0" style="background-color: #2e7d32; color:white;">
+            <button type="button" onclick="approveShifts()" class="btn m-2 mt-sm-0" style="background-color: #2e7d32; color:white;">
                 Approved Selected
             </button>
-            <button type="button" id="DeleteBtn" class="btn m-2 mt-sm-0" style="background-color: #d32f2f; color:white;">
+            <button type="button" onclick="deleteShifts()" class="btn m-2 mt-sm-0" style="background-color: #d32f2f; color:white;">
                 Delete Seleted
             </button>
 
@@ -52,12 +52,63 @@
 </div>
 
 <script>
+
+    function deleteShifts ()
+    {
+        let selectedFiles = [];
+
+        $("input:checkbox:checked").each(function () {
+            selectedFiles.push($(this).val());
+        });
+
+        $.ajax({
+            url: '/Admin/DeleteShifts',
+            method: 'POST',
+            data: { shiftids: selectedFiles },
+            success: function () {
+                location.reload();
+            },
+            error: function () {
+                alert('error fetching details');
+            }
+        });
+
+    }
+
+    function approveShifts()
+    {
+        let selectedFiles = [];
+
+        $("input:checkbox:checked").each(function () {
+            selectedFiles.push($(this).val());
+        });
+
+        $.ajax({
+            url: '/Admin/ApproveShifts',
+            method: 'POST',
+            data: { shiftids: selectedFiles },
+            success: function () {
+                location.reload();
+            },
+            error: function () {
+                alert('error fetching details');
+            }
+        });
+    }
+</script>
+
+<script>
+
     var region_filter = 0;
+    var current_month_filter = true;
     function loadRequestShiftTable(pageNo) {
         $.ajax({
             url: "/Admin/RequestShiftPartialTable",
             type: 'POST',
-            data: { pageNo : pageNo },
+            data: {
+                pageNo: pageNo,
+                regionFilter: region_filter,
+            },
             success: function (result) {
                 $('#request-shift-table').html(result);
             },
@@ -67,6 +118,12 @@
             },
         });
     }
+
+    $('#request-shift-region-filter').change(function () {
+        let region = $('option:selected', this).val();
+        region_filter = region;
+        loadRequestShiftTable(1);
+    });
 
     $(document).ready(function () {
         loadRequestShiftTable(1);

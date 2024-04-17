@@ -1,4 +1,4 @@
-﻿using Data_Layer.ViewModels;
+﻿using Data_Layer.ViewModels.Guest;
 using System;
 using System.Collections.Generic;
 using System.Linq;

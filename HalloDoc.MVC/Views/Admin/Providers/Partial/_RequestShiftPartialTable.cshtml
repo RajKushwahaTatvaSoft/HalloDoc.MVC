@@ -14,7 +14,7 @@
         {
             <tr>
                 <td>
-                    <input class="checkBox" type="checkbox" name="checkBox" data-id="@item.ShiftDetailId" />
+                    <input class="check" value="@item.ShiftDetailId" type="checkbox" />
                 </td>
                 <td>@item.Staff</td>
                 <td>@item.ShiftDate.ToString("MMM dd, yyyy")</td>
@@ -52,41 +52,3 @@
     }
 
 </div>
-
-<script>
-
-    $("#RegionFilter2").change(function () {
-        var RegionFilter = $("#RegionFilter2").val();
-        $.ajax({
-            url: '/ProvidersMenu/RequestedShiftTable',
-            type: 'POST',
-            data: {
-                RegionFilter: RegionFilter
-            },
-            success: function (result) {
-                $('#ShiftTable').html(result);
-            },
-            error: function (error) {
-                console.log(error);
-                alert('error fetching details')
-            },
-        })
-    })
-
-    $("#DeleteBtn").click(function () {
-        $(".checkBox").each(function () {
-            if ($(this).prop('checked')) {
-                $.ajax({
-                    url: '/ProvidersMenu/DeleteShift',
-                    type: 'POST',
-                    data: {
-                        shiftDetailId: $(this).data('id')
-                    },
-                    success: function () {
-                        location.reload();
-                    }
-                })
-            }
-        })
-    })
-</script>

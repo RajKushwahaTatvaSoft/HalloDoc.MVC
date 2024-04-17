@@ -39,16 +39,6 @@
                         </div>
 
                         <div class="col-12 mt-3">
-                            <div class="form-floating">
-                                <select id="physicianList" asp-for="addShiftPhysician" class=" w-100 align-items-left " style="height:50px">
-
-                                    <option>select any physician</option>
-
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="col-12 mt-3">
                             <div class="form-floating d-flex  w-100">
 
                                 <input asp-for="shiftDate" id="floatingInput" class="py-1 mt-1 form-control" type="date" style="height:60px;" />
@@ -222,6 +212,7 @@
 </style>
 
 <script>
+
     $('#is-repeat-switch').change(function () {
         if (this.checked) {
             $('#is-repeat-div').show();
@@ -230,41 +221,6 @@
             $('#is-repeat-div').hide();
         }
     });
-
-    $("#regionList").change(function () {
-        var type = $('option:selected', this).val();
-        console.log(type);
-
-        $.ajax({
-            url: '/Guest/GetPhyByRegion',
-            type: 'POST',
-            data: {
-                id: type,
-            },
-            success: function (result) {
-                //console.log(result);
-                $('#physicianList').empty();
-                $('#physicianList').append($('<option>', {
-                    value: null,
-                    text: "Select any option",
-                }));
-
-                $.each(result, function (index, object) {
-
-                    $('#physicianList').append($('<option>', {
-                        value: object["physicianid"],
-                        text: object["firstname"] + " " + object["lastname"]
-                    }));
-
-                });
-            },
-
-            error: function (err) {
-                console.error(err);
-            }
-        });
-    });
-
 
 </script>
 

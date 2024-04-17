@@ -43,6 +43,8 @@ namespace HalloDoc.MVC.Controllers
 
         #region Profile
 
+
+        [RoleAuthorize((int)AllowMenu.ProviderProfile)]
         public IActionResult Profile()
         {
 
@@ -70,7 +72,7 @@ namespace HalloDoc.MVC.Controllers
 
             EditPhysicianViewModel model = new EditPhysicianViewModel()
             {
-                UserName = aspUser.Username,
+                PhyUserName = aspUser.Username,
                 PhysicianId = physician.Physicianid,
                 FirstName = physician.Firstname,
                 LastName = physician.Lastname,
@@ -208,6 +210,7 @@ namespace HalloDoc.MVC.Controllers
 
         #region Schedule
 
+        [RoleAuthorize((int)AllowMenu.ProviderSchedule)]
         public IActionResult ShowDayShiftsModal(DateTime jsDate)
         {
             DateTime shiftDate = jsDate.ToLocalTime().Date;
@@ -220,6 +223,8 @@ namespace HalloDoc.MVC.Controllers
             return PartialView("Schedule/DayShiftModal", model);
         }
 
+
+        [RoleAuthorize((int)AllowMenu.ProviderSchedule)]
         public IActionResult Schedule()
         {
 
@@ -229,11 +234,27 @@ namespace HalloDoc.MVC.Controllers
             return View("Schedule/MySchedule", model);
         }
 
+        [RoleAuthorize((int)AllowMenu.ProviderSchedule)]
         public IActionResult LoadMonthSchedule(int shiftMonth, int shiftYear)
         {
-            // 0 index'ed month to 1 index'ed month
+
+            int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+
+            if(phyId == 0)
+            {
+                return View("ErrorPartial");
+            }
+
+            // 0 index'ed month of js to 1 index'ed month of c#
             shiftMonth++;
-            IEnumerable<Shiftdetail> query = _unitOfWork.ShiftDetailRepository.Where(shift => shift.Shiftdate.Month == shiftMonth && shift.Shiftdate.Year == shiftYear);
+            
+            IEnumerable<Shiftdetail> query = (from shift in _unitOfWork.ShiftRepository.GetAll()
+                                              where (shift.Physicianid == phyId)
+                                              join shiftDetail in _unitOfWork.ShiftDetailRepository.GetAll()
+                                              on shift.Shiftid equals shiftDetail.Shiftid
+                                              where(shiftDetail.Shiftdate.Month == shiftMonth && shiftDetail.Shiftdate.Year == shiftYear)
+                                              select shiftDetail
+                                              );
 
             int days = DateTime.DaysInMonth(shiftYear, shiftMonth);
             DayOfWeek dayOfWeek = new DateTime(shiftYear, shiftMonth, 1).DayOfWeek;
@@ -250,6 +271,8 @@ namespace HalloDoc.MVC.Controllers
 
         #endregion
 
+
+        [RoleAuthorize((int)AllowMenu.ProviderInvoicing)]
         public IActionResult Invoicing()
         {
             return View("Header/Invoicing");
@@ -390,6 +413,7 @@ namespace HalloDoc.MVC.Controllers
         }
 
 
+        [RoleAuthorize((int)AllowMenu.ProviderDashboard)]
         public IActionResult ViewUploads(int requestId)
         {
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
@@ -588,7 +612,6 @@ namespace HalloDoc.MVC.Controllers
         }
 
 
-
         [HttpPost]
         public IActionResult ViewUploads(ViewUploadsViewModel uploadsVM)
         {
@@ -620,7 +643,7 @@ namespace HalloDoc.MVC.Controllers
         }
 
 
-
+        [RoleAuthorize((int) AllowMenu.ProviderDashboard)]
         public IActionResult Dashboard()
         {
             string? phyName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
@@ -675,10 +698,10 @@ namespace HalloDoc.MVC.Controllers
             model.UserName = phyName;
             model.physicians = _unitOfWork.PhysicianRepository.GetAll();
             model.regions = _unitOfWork.RegionRepository.GetAll();
-            model.NewReqCount = _unitOfWork.RequestRepository.Count(r => r.Physicianid == phyId && r.Status == (short)RequestStatus.Unassigned);
-            model.PendingReqCount = _unitOfWork.RequestRepository.Count(r => r.Physicianid == phyId && r.Status == (short)RequestStatus.Accepted);
-            model.ActiveReqCount = _unitOfWork.RequestRepository.Count(r => r.Physicianid == phyId && ((r.Status == (short)RequestStatus.MDEnRoute) || (r.Status == (short)RequestStatus.MDOnSite)));
-            model.ConcludeReqCount = _unitOfWork.RequestRepository.Count(r => r.Physicianid == phyId && r.Status == (short)RequestStatus.Conclude);
+            model.NewReqCount = _unitOfWork.RequestRepository.Where(r => r.Physicianid == phyId && r.Status == (short)RequestStatus.Unassigned).Count();
+            model.PendingReqCount = _unitOfWork.RequestRepository.Where(r => r.Physicianid == phyId && r.Status == (short)RequestStatus.Accepted).Count();
+            model.ActiveReqCount = _unitOfWork.RequestRepository.Where(r => r.Physicianid == phyId && ((r.Status == (short)RequestStatus.MDEnRoute) || (r.Status == (short)RequestStatus.MDOnSite))).Count();
+            model.ConcludeReqCount = _unitOfWork.RequestRepository.Where(r => r.Physicianid == phyId && r.Status == (short)RequestStatus.Conclude).Count();
             model.casetags = _unitOfWork.CaseTagRepository.GetAll();
             model.filterOptions = initialFilter;
 
@@ -881,7 +904,6 @@ namespace HalloDoc.MVC.Controllers
                 return false;
             }
         }
-
 
 
         [HttpPost]
@@ -1156,6 +1178,7 @@ namespace HalloDoc.MVC.Controllers
             }
         }
 
+        [RoleAuthorize((int)AllowMenu.ProviderDashboard)]
         public IActionResult ConcludeCare(int requestId)
         {
             string? phyName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
@@ -1172,6 +1195,7 @@ namespace HalloDoc.MVC.Controllers
             return View("Dashboard/ConcludeCare", model);
         }
 
+        [HttpPost]
         public IActionResult ConcludeCasePhysician(int requestId, string phyNotes)
         {
 
@@ -1223,6 +1247,7 @@ namespace HalloDoc.MVC.Controllers
 
         }
 
+        [RoleAuthorize((int)AllowMenu.ProviderDashboard)]
         public IActionResult EncounterForm(int requestid)
         {
             Request? request = _unitOfWork.RequestRepository.GetFirstOrDefault(r => r.Requestid == requestid);
@@ -1394,6 +1419,9 @@ namespace HalloDoc.MVC.Controllers
             return View("error");
         }
 
+
+        [RoleAuthorize((int)AllowMenu.ProviderDashboard)]
+        [HttpPost]
         public bool FinalizeEncounterForm(int requestId)
         {
             try
@@ -1421,11 +1449,14 @@ namespace HalloDoc.MVC.Controllers
             }
         }
 
+
+        [RoleAuthorize((int)AllowMenu.ProviderDashboard)]
         public IActionResult CreateRequest()
         {
             IEnumerable<Region> regions = _unitOfWork.RegionRepository.GetAll();
             AdminCreateRequestViewModel model = new AdminCreateRequestViewModel();
             model.regions = regions;
+            model.IsAdmin = false;
             return View("AdminProvider/CreateRequest", model);
         }
 
@@ -1528,6 +1559,8 @@ namespace HalloDoc.MVC.Controllers
             }
         }
 
+
+        [RoleAuthorize((int)AllowMenu.ProviderDashboard)]
         public IActionResult Orders(int requestId)
         {
 
@@ -1666,7 +1699,7 @@ namespace HalloDoc.MVC.Controllers
             string regionAbbr = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == user.Regionid).Abbreviation;
 
             DateTime todayStart = DateTime.Now.Date;
-            int count = _unitOfWork.RequestRepository.Count(req => req.Createddate > todayStart);
+            int count = _unitOfWork.RequestRepository.Where(req => req.Createddate > todayStart).Count();
 
             string confirmationNumber = regionAbbr + user.Createddate.Date.ToString("D2") + user.Createddate.Month.ToString("D2") + user.Lastname.Substring(0, 2).ToUpper() + user.Firstname.Substring(0, 2).ToUpper() + (count + 1).ToString("D4");
             return confirmationNumber;

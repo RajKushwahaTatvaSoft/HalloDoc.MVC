@@ -11,9 +11,10 @@ namespace Data_Layer.ViewModels.Admin
     {
         public string? UserName {  get; set; }
         public IEnumerable<Region>? regions { get; set; }
+        public bool IsViewMonth { get; set; } = false;
         public List<DataModels.Physician>? physicians { get; set; }
         public int? addShiftRegion { get; set; }
-        public int? addShiftPhysician { get; set; }
+        public int addShiftPhysician { get; set; }
         public DateTime? shiftDate { get; set; }
         public TimeOnly? shiftStartTime { get; set; }
         public TimeOnly? shiftEndTime { get; set; }

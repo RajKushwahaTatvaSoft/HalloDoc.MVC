@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using System.ComponentModel.DataAnnotations;
 
-namespace Data_Layer.ViewModels
+namespace Data_Layer.ViewModels.Guest
 {
     public class PatientRequestViewModel
     {
@@ -16,7 +16,7 @@ namespace Data_Layer.ViewModels
         public string? LastName { get; set; }
 
         [Required(ErrorMessage = "DOB cannot be empty")]
-        [DateNotInFuture(ErrorMessage ="Date Of Birth should be in past.")]
+        [DateNotInFuture(ErrorMessage = "Date Of Birth should be in past.")]
         public DateTime? DOB { get; set; }
 
         [Required(ErrorMessage = "Email cannot be empty")]
@@ -26,6 +26,7 @@ namespace Data_Layer.ViewModels
         public string? Countrycode { get; set; }
 
         [Required(ErrorMessage = "Phone cannot be empty")]
+        [RegularExpression("^[0-9\\+\\-]+$", ErrorMessage = "Enter valid Phone")]
         public string? Phone { get; set; }
         public string? Street { get; set; }
 
@@ -42,22 +43,10 @@ namespace Data_Layer.ViewModels
         [Compare("Password", ErrorMessage = "Password and Confirm Password should be same.")]
         public string? ConfirmPassword { get; set; }
 
-        public IFormFile? File {  get; set; }
+        public IFormFile? File { get; set; }
         public IEnumerable<Region>? regions { get; set; }
         public IEnumerable<City>? selectedRegionCities { get; set; }
-        public bool? IsValidated {  get; set; }
+        public bool? IsValidated { get; set; }
     }
 
-    public class DateNotInFuture: ValidationAttribute
-    {
-        protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
-        {
-            DateTime? date = (DateTime?) value;
-            if (date > DateTime.Now)
-            {
-                return new ValidationResult(ErrorMessage);
-            }
-            return ValidationResult.Success;
-        }
-    }
 }

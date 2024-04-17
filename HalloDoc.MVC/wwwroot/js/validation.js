@@ -1,7 +1,7 @@
 const validNameRegex = /^[A-Za-z\s]{1,}[\.]{0,1}[A-Za-z\s]{0,}$/;
 const validEmailRegex = /^([\w\.\-]+)@([\w\-]+)((\.(\w){2,3})+)$/;
 const validPasswordRegex = /(?=^.{8,}$)((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/;
-const validNumberRegex = /^\d+$/; // Only digits are allowed
+const validNumberRegex = /^[0-9\+\-]+$/; // Only digits are allowed
 const intlPhoneErrorMapping = ["Invalid number", "Invalid country code", "Too short", "Too long", "Invalid number"];
 
 function validateRequired(element) {

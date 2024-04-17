@@ -1,5 +1,4 @@
 ﻿@model EditBusinessViewModel;
-
 @{
     Layout = "_AdminDashboardLayout";
     ViewData["Title"] = "Add Business";
@@ -25,6 +24,8 @@
         <div class="mt-4">
             <div class="viewCaseForm form-floating shadow patient-request-form p-3">
 
+                <partial name="_ValidationScriptsPartial" />
+
                 <form method="post">
                     <input asp-for="VendorId" hidden />
                     <div class="row g-2 m-1">
@@ -32,6 +33,7 @@
                             <div class="form-floating">
                                 <input type="text" asp-for="BusinessName" class="form-control" id="businessName" />
                                 <label for="userName">Business Name</label>
+                                <span class="text-danger" asp-validation-for="BusinessName"></span>
                             </div>
                         </div>
                         <div class="col-md">
@@ -44,6 +46,7 @@
                                     }
                                 </select>
                                 <label for="role">Select A Profession</label>
+                                <span class="text-danger" asp-validation-for="ProfessionId"></span>
                             </div>
                         </div>
                     </div>
@@ -52,12 +55,14 @@
                             <div class="form-floating">
                                 <input type="text" asp-for="FaxNumber" class="form-control" id="faxNumber" />
                                 <label for="userName">Fax Number</label>
+                                <span class="text-danger" asp-validation-for="FaxNumber"></span>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-floating">
                                 <input type="tel" asp-for="PhoneNumber" class="form-control">
                                 <label for="">Phone Number</label>
+                                <span class="text-danger" asp-validation-for="PhoneNumber"></span>
                             </div>
                         </div>
                     </div>
@@ -66,12 +71,14 @@
                             <div class="form-floating">
                                 <input type="email" class="form-control" asp-for="Email">
                                 <label for="">Email</label>
+                                <span class="text-danger" asp-validation-for="Email"></span>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-floating phone-div w-100 h-100">
                                 <input type="tel" class="patientPhone form-control w-100 h-100" asp-for="BusinessContact">
                                 <label for="">Business Contact</label>
+                                <span class="text-danger" asp-validation-for="BusinessContact"></span>
                             </div>
                         </div>
                     </div>
@@ -80,6 +87,7 @@
                             <div class="form-floating">
                                 <input type="text" class="form-control" asp-for="Street">
                                 <label for="">Street</label>
+                                <span class="text-danger" asp-validation-for="Street"></span>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -103,12 +111,14 @@
                                     }
                                 </select>
                                 <label for="">Select A Region</label>
+                                <span class="text-danger" asp-validation-for="RegionId"></span>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-floating">
                                 <input type="text" asp-for="Zip" class="form-control">
                                 <label for="">Zip/Postal</label>
+                                <span class="text-danger" asp-validation-for="Zip"></span>
                             </div>
                         </div>
                     </div>

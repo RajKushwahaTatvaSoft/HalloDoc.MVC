@@ -13,6 +13,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
 
+
 <div class="">
 
     <div class="d-flex justify-content-center mt-3">
@@ -32,6 +33,8 @@
 
     </div>
 
+    <partial name="_ValidationScriptsPartial" />
+
     <form method="post" enctype="multipart/form-data" class="d-flex justify-content-center">
         <div class="col-11 col-md-8 form-card shadow rounded my-3 px-4 py-3">
             <h4 class="mb-4">Patient Information</h4>
@@ -42,6 +45,7 @@
                     <textarea asp-for="patientDetails.Symptom" class="form-control" placeholder="Leave a comment here" id="floatingTextarea2"
                               style="height: 100px;"></textarea>
                     <label class="ms-2" for="floatingTextarea2">Enter brief details of Symptoms (Optional)</label>
+                    <span class="text-danger" asp-validation-for="patientDetails.Symptom"></span>
                 </div>
 
             </div>
@@ -50,34 +54,41 @@
                 <div class="col-lg-4 col-md-6 col-12 form-floating mb-3 ">
                     <input asp-for="patientDetails.FirstName" type="text" class="form-control " id="floatingInputFirst" placeholder="First Name" aria-label="First Name">
                     <label class="ms-2 " for="floatingInputFirst">First Name</label>
+                    <span class="text-danger" asp-validation-for="patientDetails.FirstName"></span>
                 </div>
                 <div class="col-lg-4 col-md-6 col-12  form-floating mb-3 ">
                     <input asp-for="patientDetails.LastName" type="text" class="form-control " id="floatingInputLast" placeholder="Last Name" aria-label="Last Name">
                     <label class="ms-2  " for="floatingInputLast">Last Name</label>
+                    <span class="text-danger" asp-validation-for="patientDetails.LastName"></span>
                 </div>
                 <div class="col-lg-4 col-md-6 col-12  form-floating  ">
                     <input asp-for="patientDetails.DOB" type="date" class="form-control " id="floatingInputdate" placeholder="Date Of Birth" aria-label="First Name">
                     <label class="ms-2 " for="floatingInputdate">Date Of Birth</label>
+                    <span class="text-danger" asp-validation-for="patientDetails.DOB"></span>
                 </div>
             </div>
 
-            <h4 class="mb-4">Patient Contact Information</h4>
-            <div class="row mb-3">
-                <div class="col-md-6 col-12 form-floating mb-3">
+            <h4 class="mt-4">Patient Contact Information</h4>
+            <div class="row">
+                <div class="col-md-6 col-12 form-floating mt-3">
                     <input asp-for="patientDetails.Email" type="email" class="form-control " id="floatingInputemail" placeholder="Email" aria-label="Email">
                     <label class="ms-2 " for="floatingInputemail">Email</label>
+                    <span class="text-danger" asp-validation-for="patientDetails.Email"></span>
                 </div>
-                <div class="col-md-6 col-12 form-floating mb-3">
+                <div class="col-md-6 col-12 form-floating mt-3">
                     <input id="patient-phone-country" asp-for="patientDetails.Countrycode" hidden />
-                    <input asp-for="patientDetails.Phone" type="number" class="phone form-control " id="patient-phone" placeholder="99XXXXXXXX" aria-label="Contact Number">
+                    <input asp-for="patientDetails.Phone" type="tel" class="phone form-control " id="patient-phone" placeholder="99XXXXXXXX" aria-label="Contact Number">
+
+                    <span class="text-danger" asp-validation-for="patientDetails.Phone"></span>
                 </div>
             </div>
 
-            <h4 class="mb-4">Patient Location</h4>
+            <h4 class="mt-4">Patient Location</h4>
             <div class="row mb-3">
                 <div class="col-lg-4 col-md-6 col-12 form-floating mb-3">
                     <input asp-for="patientDetails.Street" type="text" class="form-control " id="floatingInputStreet" placeholder="Street" aria-label="Street">
                     <label class="ms-2 " for="floatingInputStreet">Street</label>
+                    <span class="text-danger" asp-validation-for="patientDetails.Street"></span>
                 </div>
 
                 <div class="col-12 col-md-6 col-lg-4">
@@ -109,10 +120,12 @@
                 <div class="col-lg-4 col-md-6 col-12 form-floating mb-3">
                     <input asp-for="patientDetails.ZipCode" type="text" class="form-control " id="floatingInputZipCode" placeholder="Zip Code" aria-label="Zip Code">
                     <label class="ms-2  " for="floatingInputZipCode">Zip Code</label>
+                    <span class="text-danger" asp-validation-for="patientDetails.ZipCode"></span>
                 </div>
                 <div class="col-lg-4 col-md-6 col-12 form-floating mb-3">
                     <input asp-for="patientDetails.RoomSuite" type="text" class="form-control " id="floatingInputroom" placeholder="Room # / Suite (Optional)" aria-label="room">
                     <label class="ms-2" for="floatingInputroom">Room # / Suite (Optional)</label>
+                    <span class="text-danger" asp-validation-for="patientDetails.RoomSuite"></span>
                 </div>
                 <div class="col-lg-4 col-md-6 col-12 form-floating mb-3">
                     <button type="button" class="btn btn-outline-dark border-info p-3 text-info">
@@ -128,6 +141,7 @@
                 <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 form-floating mb-3">
                     <input asp-for="Relation" type="text" class="form-control " id="floatingInputrelation" placeholder="Relation With Patient" aria-label="Relation With Patient">
                     <label class="ms-2" for="floatingInputrelation">Relation With Patient(Optional)</label>
+                    <span class="text-danger" asp-validation-for="Relation"></span>
                 </div>
             </div>
 

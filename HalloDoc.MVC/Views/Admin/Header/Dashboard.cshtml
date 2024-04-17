@@ -1,7 +1,6 @@
 ﻿@model AdminDashboardViewModel
 @{
     Layout = "_AdminDashboardLayout";
-    ViewData["UserName"] = Model.UserName;
 }
 
 @* MODALS DIV*@
@@ -431,7 +430,8 @@ C25.163,30.114,24.933,30.163,24.687,30.163z"></path>
 
     $('#export-filtered-btn').click(function () {
 
-        $.ajax({
+        @* location.href = "https://localhost:7161/Admin/ExportFilteredData"; *@
+         $.ajax({
             url: "/Admin/ExportFilteredData",
             type: 'POST',
             data: { status: dashboardStatus, typeFilter: type_filter, searchFilter: search_filter, regionFilter: region_filter },
@@ -451,7 +451,9 @@ C25.163,30.114,24.933,30.163,24.687,30.163z"></path>
                 console.log(error);
                 alert('error fetching details')
             },
-        });
+        }); 
+
+
     });
 
     function base64ToArrayBuffer(base64) {
@@ -476,9 +478,11 @@ C25.163,30.114,24.933,30.163,24.687,30.163z"></path>
     };
 
 
-
     $('#export-all-btn').click(function () {
-        console.log('export all');
+
+        location.href = "https://localhost:7161/Admin/ExportAllExcel?status=" + dashboardStatus;
+
+        @* console.log('export all');
         $.ajax({
             url: "/Admin/ExportAllExcel",
             data: { status: dashboardStatus },
@@ -497,7 +501,7 @@ C25.163,30.114,24.933,30.163,24.687,30.163z"></path>
                 console.log(error);
                 alert('Error Cancelling Request')
             },
-        });
+        }); *@
     });
 
     $('#send-link-btn').click(function () {

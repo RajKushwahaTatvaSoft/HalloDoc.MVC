@@ -1,43 +1,52 @@
-﻿@model ProviderOnCallViewModel
+﻿@model ProviderOnCallViewModel?
 
-<h4 class="my-4">Md's On Call</h4>
+@if(Model == null)
+{
+    <h3>Cannot Get Data</h3>
+}
+else
+{
 
-<div class="container-fluid">
-    <div class="row">
+    <h4 class="my-4">Md's On Call</h4>
 
-        @foreach (var item in Model.physiciansOnCall)
-        {
+    <div class="container-fluid">
+        <div class="row">
 
-            <div class="col-4">
-                <div class="mx-2 p-2 ">
-                    <img src="~/document/physician/@item.Physicianid/ProfilePhoto.jpg" class="mx-2" style="height: 40px !important; width: 40px !important" />
-                    <span class="fs-5">@item.Firstname</span>
+            @foreach (var item in Model.physiciansOnCall)
+            {
+
+                <div class="col-4">
+                    <div class="mx-2 p-2 ">
+                        <img src="~/document/physician/@item.Physicianid/ProfilePhoto.jpg" class="mx-2" style="height: 40px !important; width: 40px !important" />
+                        <span class="fs-5">@item.Firstname</span>
+                    </div>
                 </div>
-            </div>
 
 
-        }
+            }
+        </div>
+
     </div>
 
-</div>
+    <h4 class="my-4">Physicians Off Duty</h4>
 
-<h4 class="my-4">Physicians Off Duty</h4>
+    <div class="container-fluid">
+        <div class="row">
 
-<div class="container-fluid">
-    <div class="row">
+            @foreach (var item in Model.physiciansOffDuty)
+            {
 
-        @foreach (var item in Model.physiciansOffDuty)
-        {
-
-            <div class="col-4">
-                <div class="mx-2 p-2 ">
-                    <img src="~/document/physician/@item.Physicianid/ProfilePhoto.jpg" class="mx-2" style="height: 40px !important; width: 40px !important" />
-                    <span class="fs-5">@item.Firstname</span>
+                <div class="col-4">
+                    <div class="mx-2 p-2 ">
+                        <img src="~/document/physician/@item.Physicianid/ProfilePhoto.jpg" class="mx-2" style="height: 40px !important; width: 40px !important" />
+                        <span class="fs-5">@item.Firstname</span>
+                    </div>
                 </div>
-            </div>
 
 
-        }
+            }
+        </div>
+
     </div>
 
-</div>
+}

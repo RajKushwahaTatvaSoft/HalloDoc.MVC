@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Business_Layer.Services.Helper.Interface;
+using AspNetCore;
+using Business_Layer.Repository.IRepository;
 
 namespace HalloDoc.MVC.Services
 {
@@ -26,26 +28,37 @@ namespace HalloDoc.MVC.Services
                 return;
             }
 
-            var jwtService = context.HttpContext.RequestServices.GetService<IJwtService>();
-            var dbService = context.HttpContext.RequestServices.GetService<ApplicationDbContext>();
+            IJwtService? _jwtService = context.HttpContext.RequestServices.GetService<IJwtService>();
+            IUnitOfWork? _unitOfWork = context.HttpContext.RequestServices.GetService<IUnitOfWork>();
 
-            if (jwtService == null || dbService == null)
+            if (_jwtService == null || _unitOfWork == null)
             {
                 context.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Guest", action = "Index" }));
+                context.HttpContext.Response.Cookies.Delete("hallodoc");
                 return;
             }
 
             var token = context.HttpContext.Request.Cookies["hallodoc"];
 
-            if (token == null || !jwtService.ValidateToken(token, out JwtSecurityToken jwtToken))
+            if (token == null || !_jwtService.ValidateToken(token, out JwtSecurityToken jwtToken))
             {
                 context.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Guest", action = "Index" }));
+                context.HttpContext.Response.Cookies.Delete("hallodoc");
                 return;
             }
 
-            var roleId = Convert.ToInt32(jwtToken.Claims.FirstOrDefault(c => c.Type == "roleId")?.Value);
+            int roleId = Convert.ToInt32(jwtToken.Claims.FirstOrDefault(c => c.Type == "roleId")?.Value);
 
-            IEnumerable<Rolemenu> roleMenus = dbService.Rolemenus.Where(rm => rm.Roleid == roleId);
+            Role? role = _unitOfWork.RoleRepo.GetFirstOrDefault(role => role.Roleid == roleId);
+
+            if (role == null)
+            {
+                context.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Guest", action = "Index" }));
+                context.HttpContext.Response.Cookies.Delete("hallodoc");
+                return;
+            }
+
+            IEnumerable<Rolemenu> roleMenus = _unitOfWork.RoleMenuRepository.Where(rm => rm.Roleid == roleId);
 
             var sessionRef = context.HttpContext.Session;
 
@@ -58,7 +71,6 @@ namespace HalloDoc.MVC.Services
             stringBuilder.Length--;
 
             sessionRef.SetString("roleMenu", stringBuilder.ToString());
-
 
             if (!roleMenus.Any(rm => rm.Menuid == _menuId))
             {

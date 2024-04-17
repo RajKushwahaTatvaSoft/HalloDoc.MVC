@@ -2,13 +2,7 @@
 using Business_Layer.Utilities;
 using Data_Layer.DataContext;
 using Data_Layer.DataModels;
-using Data_Layer.ViewModels;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Data_Layer.ViewModels.Guest;
 
 namespace Business_Layer.Services.Patient
 {

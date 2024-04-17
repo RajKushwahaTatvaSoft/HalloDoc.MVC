@@ -13,6 +13,7 @@ using Business_Layer.Utilities;
 using Business_Layer.Repository.IRepository;
 using Business_Layer.Services.Patient.Interface;
 using AspNetCoreHero.ToastNotification.Abstractions;
+using Data_Layer.ViewModels.Guest;
 
 namespace HalloDoc.MVC.Controllers
 {
@@ -909,7 +910,7 @@ namespace HalloDoc.MVC.Controllers
             string regionAbbr = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == user.Regionid).Abbreviation;
 
             DateTime todayStart = DateTime.Now.Date;
-            int count = _unitOfWork.RequestRepository.Count(req => req.Createddate > todayStart);
+            int count = _unitOfWork.RequestRepository.Where(req => req.Createddate > todayStart).Count();
 
             string confirmationNumber = regionAbbr + user.Createddate.Date.ToString("D2") + user.Createddate.Month.ToString("D2") + user.Lastname.Substring(0, 2).ToUpper() + user.Firstname.Substring(0, 2).ToUpper() + (count + 1).ToString("D4");
             return confirmationNumber;

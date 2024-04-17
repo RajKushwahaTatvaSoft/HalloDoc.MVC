@@ -1,13 +1,8 @@
 ﻿using Business_Layer.Repository.IRepository;
 using Business_Layer.Services.AdminServices.Interface;
 using Data_Layer.CustomModels;
-using Data_Layer.ViewModels;
+using Data_Layer.ViewModels.Admin;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Business_Layer.Services.AdminServices
 {

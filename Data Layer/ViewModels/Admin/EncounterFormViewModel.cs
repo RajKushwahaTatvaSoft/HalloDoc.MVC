@@ -1,13 +1,30 @@
-﻿namespace Data_Layer.ViewModels.Admin
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Data_Layer.ViewModels.Admin
 {
     public class EncounterFormViewModel
     {
+        public string? UserName { get; set; }
+
+        [Required(ErrorMessage = "First Name cannot be empty")]
+        [RegularExpression("^[A-Za-z\\s]{1,}[\\.]{0,1}[A-Za-z\\s]{0,}$", ErrorMessage = "Enter Valid Name")]
         public string? FirstName { get; set; }
+
+        [RegularExpression("^[A-Za-z\\s]{1,}[\\.]{0,1}[A-Za-z\\s]{0,}$", ErrorMessage = "Enter Valid Name")]
         public string? LastName { get; set; }
         public string? Location { get; set; }
+
+        [Required(ErrorMessage = "Email cannot be empty")]
+        [RegularExpression("^([\\w\\.\\-]+)@([\\w\\-]+)((\\.(\\w){2,3})+)$", ErrorMessage = "Enter Valid Email")]
         public string? Email { get; set; }
+
+        [Required(ErrorMessage = "DOB cannot be empty")]
+        [DateNotInFuture(ErrorMessage = "Date Of Birth should be in past.")]
         public DateTime? DOB { get; set; }
         public DateTime? CreatedDate { get; set; }
+
+        [Required(ErrorMessage = "Phone cannot be empty")]
+        [RegularExpression("^[0-9\\+\\-]+$", ErrorMessage = "Enter valid Phone")]
         public string? PhoneNumber { get; set; }
         public string? History { get; set; }
         public string? MedicalHistory { get; set; }
@@ -34,7 +51,6 @@
         public string? Procedures { get; set; }
         public string? FollowUps { get; set; }
         public int RequestId { get; set; }
-
 
     }
 }

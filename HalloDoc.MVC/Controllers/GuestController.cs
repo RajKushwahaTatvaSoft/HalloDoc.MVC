@@ -1,6 +1,5 @@
 ﻿using Data_Layer.CustomModels;
 using Data_Layer.DataModels;
-using Data_Layer.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Mail;
 using System.Net;
@@ -17,6 +16,7 @@ using Microsoft.AspNetCore.Authorization;
 using Business_Layer.Services.Guest.Interface;
 using System.Text.Json.Nodes;
 using System.Transactions;
+using Data_Layer.ViewModels.Guest;
 
 
 namespace HalloDoc.MVC.Controllers
@@ -236,12 +236,12 @@ namespace HalloDoc.MVC.Controllers
         // POST
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Login(Aspnetuser loginUser)
+        public IActionResult Login(LoginViewModel loginUser)
         {
             if (ModelState.IsValid)
             {
-                var passHash = GenerateSHA256(loginUser.Passwordhash);
-                Aspnetuser aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(aspnetuser => aspnetuser.Email == loginUser.Username && aspnetuser.Passwordhash == passHash);
+                var passHash = GenerateSHA256(loginUser.Password);
+                Aspnetuser? aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(aspnetuser => aspnetuser.Email == loginUser.UserName && aspnetuser.Passwordhash == passHash);
 
                 if (aspUser == null)
                 {
@@ -689,7 +689,7 @@ namespace HalloDoc.MVC.Controllers
             string regionAbbr = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == user.Regionid).Abbreviation;
 
             DateTime todayStart = DateTime.Now.Date;
-            int count = _unitOfWork.RequestRepository.Count(req => req.Createddate > todayStart);
+            int count = _unitOfWork.RequestRepository.Where(req => req.Createddate > todayStart).Count();
 
             string confirmationNumber = regionAbbr + user.Createddate.Day.ToString("D2") + user.Createddate.Month.ToString("D2") + (user.Lastname?.Substring(0, 2).ToUpper() ?? "NA") + user.Firstname.Substring(0, 2).ToUpper() + (count + 1).ToString("D4");
             return confirmationNumber;

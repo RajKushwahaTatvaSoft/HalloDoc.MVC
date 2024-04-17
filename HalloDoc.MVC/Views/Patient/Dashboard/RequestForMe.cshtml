@@ -34,6 +34,8 @@
 
     </div>
 
+    <partial name="_ValidationScriptsPartial" />
+
     <form method="post" enctype="multipart/form-data" class="d-flex justify-content-center">
         <div class="col-11 col-md-8 form-card shadow rounded my-3 px-4 py-3">
             <h4 class="mb-4">Patient Information</h4>
@@ -44,6 +46,7 @@
                     <textarea asp-for="Symptom" class="form-control" placeholder="Leave a comment here" id="floatingTextarea2"
                               style="height: 100px;"></textarea>
                     <label class="ms-2" for="floatingTextarea2">Enter brief details of Symptoms (Optional)</label>
+                    <span class="text-danger" asp-validation-for="Symptom"></span>
                 </div>
 
             </div>
@@ -52,14 +55,17 @@
                 <div class="col-lg-4 col-md-6 col-12 form-floating mb-3 ">
                     <input asp-for="FirstName" type="text" class="form-control " id="floatingInputFirst" placeholder="First Name" aria-label="First Name">
                     <label class="ms-2 " for="floatingInputFirst">First Name</label>
+                    <span class="text-danger" asp-validation-for="FirstName"></span>
                 </div>
                 <div class="col-lg-4 col-md-6 col-12  form-floating mb-3 ">
                     <input asp-for="LastName" type="text" class="form-control " id="floatingInputLast" placeholder="Last Name" aria-label="Last Name">
                     <label class="ms-2  " for="floatingInputLast">Last Name</label>
+                    <span class="text-danger" asp-validation-for="LastName"></span>
                 </div>
                 <div class="col-lg-4 col-md-6 col-12  form-floating  ">
                     <input asp-for="DOB" type="date" class="form-control " id="floatingInputdate" placeholder="Date Of Birth" aria-label="First Name">
                     <label class="ms-2 " for="floatingInputdate">Date Of Birth</label>
+                    <span class="text-danger" asp-validation-for="DOB"></span>
                 </div>
             </div>
 
@@ -68,12 +74,14 @@
                 <div class="col-md-6 col-12 form-floating mb-3">
                     <input asp-for="Email" type="email" class="form-control " id="floatingInputemail" placeholder="Email" aria-label="Email">
                     <label class="ms-2 " for="floatingInputemail">Email</label>
+                    <span class="text-danger" asp-validation-for="Email"></span>
                 </div>
                 <div class="col-md-6 col-12 form-floating mb-3">
-
                     <input id="patient-phone-country" asp-for="Countrycode" hidden />
-                    <input asp-for="Phone" type="number" class="phone form-control " id="patient-phone" placeholder="99XXXXXXXX" aria-label="Contact Number">
+                    <input asp-for="Phone" type="tel" class="form-control " id="patient-phone">
+                    <span class="text-danger" asp-validation-for="Phone"></span>
                 </div>
+
             </div>
 
             <h4 class="mb-4">Patient Location</h4>
@@ -81,6 +89,7 @@
                 <div class="col-lg-4 col-md-6 col-12 form-floating mb-3">
                     <input asp-for="Street" type="text" class="form-control " id="floatingInputStreet" placeholder="Street" aria-label="Street">
                     <label class="ms-2 " for="floatingInputStreet">Street</label>
+                    <span class="text-danger" asp-validation-for="Street"></span>
                 </div>
 
                 <div class="col-12 col-md-6 col-lg-4">
@@ -121,6 +130,7 @@
                 <div class="col-lg-4 col-md-6 col-12 form-floating mb-3">
                     <input asp-for="ZipCode" type="text" class="form-control " id="floatingInputZipCode" placeholder="Zip Code" aria-label="Zip Code">
                     <label class="ms-2  " for="floatingInputZipCode">Zip Code</label>
+                    <span class="text-danger" asp-validation-for="ZipCode"></span>
                 </div>
                 <div class="col-lg-4 col-md-6 col-12 form-floating mb-3">
                     <input asp-for="RoomSuite" type="text" class="form-control " id="floatingInputroom" placeholder="Room # / Suite (Optional)" aria-label="room">
@@ -163,6 +173,7 @@
             </div>
 
             <div class="row">
+
                 <div class=" d-flex justify-content-center justify-content-md-end">
 
                     <button type="submit" onclick="changeCountryCode()" class="btn" style="background-color: #10bce9;">

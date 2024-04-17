@@ -1,5 +1,5 @@
 ﻿using Data_Layer.CustomModels;
-using Data_Layer.ViewModels;
+using Data_Layer.ViewModels.Guest;
 
 namespace Business_Layer.Services.Guest.Interface
 {

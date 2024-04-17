@@ -77,9 +77,10 @@ namespace Business_Layer.Utilities
 
     public enum ShiftStatus
     {
+        Approved = 1,
         Pending = 2,
-        Approved = 1
     }
+
     public enum ShiftWeekDays
     {
         Sunday = 1,

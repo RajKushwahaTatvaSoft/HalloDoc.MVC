@@ -89,7 +89,7 @@
                         <div class="form-floating mt-3">
 
                             <input id="other-phone-country" asp-for="Countrycode" hidden />
-                            <input asp-for="Phone" id="other-phone" class="form-control" type="number">
+                            <input asp-for="Phone" id="other-phone" class="form-control" type="tel">
 
                             <span asp-validation-for="Phone" class="text-danger"></span>
                             <span class="error-msg text-danger" style="display:none;"></span>
@@ -214,7 +214,7 @@
                         <div class="form-floating mt-3">
 
                             <input id="patient-phone-country" asp-for="patientDetails.Countrycode" hidden />
-                            <input asp-for="patientDetails.Phone" id="patient-phone" class="form-control" type="number">
+                            <input asp-for="patientDetails.Phone" id="patient-phone" class="form-control" type="tel">
 
                             <span asp-validation-for="patientDetails.Phone" class="text-danger"></span>
                             <span class="error-msg text-danger" style="display:none;"></span>

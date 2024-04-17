@@ -67,6 +67,11 @@ namespace Business_Layer.Services.AdminProvider
 
         public ViewNotesViewModel? GetViewNotesModel(int requestId)
         {
+            Request? request = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestId);
+            if (request == null)
+            {
+                return null;
+            }
 
             IEnumerable<Requeststatuslog> statusLogs = (from log in _unitOfWork.RequestStatusLogRepository.GetAll()
                                                         where log.Requestid == requestId
