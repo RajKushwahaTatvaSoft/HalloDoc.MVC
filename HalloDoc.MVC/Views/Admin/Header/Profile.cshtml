@@ -417,15 +417,15 @@
 
     $('#administratorSaveBtn').click(function () {
 
-        let selectedRegions = [];
-        let checkboxes = document.querySelectorAll(".check");
-        console.log("regions-selected");
+        // let selectedRegions = [];
+        // let checkboxes = document.querySelectorAll(".check");
+        // console.log("regions-selected");
 
-        checkboxes.forEach(function (checkbox) {
-            if (checkbox.checked) {
-                selectedRegions.push(checkbox.value);
-            }
-        });
+        // checkboxes.forEach(function (checkbox) {
+        //     if (checkbox.checked) {
+        //         selectedRegions.push(checkbox.value);
+        //     }
+        // });
 
         var countryCode = document.getElementById("admin-phone-country");
         countryCode.value = patientPhoneInput.getSelectedCountryData().dialCode;

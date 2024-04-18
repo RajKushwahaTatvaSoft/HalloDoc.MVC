@@ -79,6 +79,7 @@
             type: 'POST',
             data: {
                 regionId: region,
+                physicianId : @Model.PhysicianId,
             },
             success: function (result) {
                 $('#transferCasePhysician').empty();

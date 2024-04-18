@@ -1,4 +1,10 @@
 ﻿@model AddShiftModel
+
+<partial name="_ValidationScriptsPartial" />
+@{
+    string repeatDaysList = "repeatDays";
+}
+
 <div class="modal fade" id="addShiftModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
      aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
@@ -16,7 +22,7 @@
                 </button>
             </div>
 
-            <form method="post" asp-controller="Admin" asp-action="AddShift">
+            <form method="post" id="add-shift-modal-form">
                 <div class="modal-body">
                     <div class="modal-flex my-3">
 
@@ -34,6 +40,8 @@
                             </select>
 
                             <label for="add-shift-region-list">Select Region</label>
+                            <span asp-validation-for="RegionId" class="text-danger"></span>
+                            <span class="text-danger error-msg"></span>
                         </div>
 
                         <div class="col-12 mt-3">
@@ -42,7 +50,8 @@
                                     <option disabled selected value="">-- Select Physician --</option>
                                 </select>
                                 <label for="add-shift-physician-list">Select Physician</label>
-
+                                <span asp-validation-for="PhysicianId" class="text-danger"></span>
+                                <span class="text-danger error-msg"></span>
                             </div>
                         </div>
 
@@ -51,7 +60,7 @@
                                 <input asp-for="ShiftDate" min="@DateTime.Now.ToString("yyyy-MM-dd")" onchange="validateShiftDate()" id="add-shift-date-input" class="form-control" type="date" style="height:60px;" />
                                 <label for="floatingInput" class="">Shift Date</label>
                                 <span asp-validation-for="ShiftDate" class="text-danger"></span>
-                                <span class="text-danger" id="shift-date-error"></span>
+                                <span class="text-danger error-msg" id="shift-date-error"></span>
                             </div>
                         </div>
 
@@ -61,7 +70,6 @@
                                     <input asp-for="StartTime" onchange="validateStartTime()" id="add-shift-start-time" type="time" class="form-control" placeholder="">
                                     <label for="floatingInput">Start</label>
                                     <span asp-validation-for="StartTime" class="text-danger"></span>
-                                    <span class="text-danger" id="start-time-error"></span>
                                 </div>
                             </div>
                             <div class=" col-5 mx-1">
@@ -69,15 +77,19 @@
                                     <input asp-for="EndTime" onchange="validateEndTime()" id="add-shift-end-time" type="time" class="form-control" placeholder="Email">
                                     <label for="floatingInput">End</label>
                                     <span asp-validation-for="EndTime" class="text-danger"></span>
-                                    <span class="text-danger" id="end-time-error"></span>
                                 </div>
                             </div>
                         </div>
+                        <span class="text-danger error-msg" id="start-time-error"></span>
+                        <span class="text-danger error-msg" id="end-time-error"></span>
                         <div class="col-12 mt-3 d-flex justify-content-start">
 
                             <div class="form-check form-switch">
                                 <label class="form-check-label" for="is-repeat-switch">Repeat</label>
                                 <input class="form-check-input" type="checkbox" role="switch" name="IsRepeat" value="1" id="is-repeat-switch">
+                                <span asp-validation-for="IsRepeat" class="text-danger"></span>
+                                <span class="text-danger error-msg"></span>
+
                             </div>
 
                         </div>
@@ -86,56 +98,60 @@
 
                             <div class="col-12 p-0 mt-3">
                                 <span>Repeat Days</span>
+
                                 <div class="p-0 d-flex flex-wrap mt-3">
                                     <div class="form-check">
-                                        <input class="form-check-input me-1" name="RepeatDays" type="checkbox" value="1" id="flexCheckDefault">
+                                        <input class="form-check-input me-1" name="@repeatDaysList" type="checkbox" value="1" id="flexCheckDefault">
                                         <label class="form-check-label" for="flexCheckDefault">
                                             Monday
                                         </label>
                                     </div>
                                     <div class="form-check">
-                                        <input class="mx-1 form-check-input" name="RepeatDays" type="checkbox" value="2" id="flexCheckChecked">
+                                        <input class="mx-1 form-check-input" name="@repeatDaysList" type="checkbox" value="2" id="flexCheckChecked">
                                         <label class="form-check-label" for="flexCheckChecked">
                                             Tuesday
                                         </label>
                                     </div>
                                     <div class="form-check">
-                                        <input class="mx-1 form-check-input" name="RepeatDays" type="checkbox" value="3" id="flexCheckDefault">
+                                        <input class="mx-1 form-check-input" name="@repeatDaysList" type="checkbox" value="3" id="flexCheckDefault">
                                         <label class="form-check-label" for="flexCheckDefault">
                                             Wednesday
                                         </label>
                                     </div>
                                     <div class="form-check">
-                                        <input class="mx-1 form-check-input" name="RepeatDays" type="checkbox" value="4" id="flexCheckChecked">
+                                        <input class="mx-1 form-check-input" name="@repeatDaysList" type="checkbox" value="4" id="flexCheckChecked">
                                         <label class="form-check-label" for="flexCheckChecked">
                                             Thurseday
                                         </label>
                                     </div>
                                     <div class="form-check">
-                                        <input class="me-1 form-check-input" name="RepeatDays" type="checkbox" value="5" id="flexCheckDefault">
+                                        <input class="me-1 form-check-input" name="@repeatDaysList" type="checkbox" value="5" id="flexCheckDefault">
                                         <label class="form-check-label" for="flexCheckDefault">
                                             Friday
                                         </label>
                                     </div>
                                     <div class="form-check">
-                                        <input class="mx-1 form-check-input" name="RepeatDays" type="checkbox" value="6" id="flexCheckChecked">
+                                        <input class="mx-1 form-check-input" name="@repeatDaysList" type="checkbox" value="6" id="flexCheckChecked">
                                         <label class="form-check-label" for="flexCheckChecked">
                                             Saturday
                                         </label>
                                     </div>
                                     <div class="form-check">
-                                        <input class="mx-1 form-check-input" name="RepeatDays" type="checkbox" value="0" id="flexCheckDefault">
+                                        <input class="mx-1 form-check-input" name="@repeatDaysList" type="checkbox" value="0" id="flexCheckDefault">
                                         <label class="form-check-label" for="flexCheckDefault">
                                             Sunday
                                         </label>
                                     </div>
 
                                 </div>
+
                             </div>
 
                             <div class="col-12 form-floating">
                                 <input asp-for="RepeatCount" class="form-control" placeholder="Repeat Count">
                                 <label for="floatingInputemail">Repeat Count</label>
+                                <span asp-validation-for="RepeatCount" class="text-danger"></span>
+
                                 <span class="error-msg text-danger" style="display:none;"></span>
                             </div>
 
@@ -152,99 +168,4 @@
     </div>
 </div>
 
-<script>
-
-    $('#is-repeat-switch').change(function () {
-        if (this.checked) {
-            $('#is-repeat-div').show();
-        }
-        else {
-            $('#is-repeat-div').hide();
-        }
-    });
-
-    $("#add-shift-region-list").change(function () {
-        var type = $('option:selected', this).val();
-        console.log(type);
-
-        FetchPhyListByRegion(type, "add-shift-physician-list");
-    });
-
-</script>
-
-<script>
-
-    let todayDate = new Date().setHours(0, 0, 0, 0);
-
-    function validateShiftDate() {
-
-        const selectedDate = new Date(document.getElementById("add-shift-date-input").value);
-        if (selectedDate < todayDate) {
-
-            $('#shift-date-error').show();
-            $('#shift-date-error').text("Shift date invalid");
-
-            return false;
-        }
-
-        $('#shift-date-error').hide();
-        return true;
-    }
-
-    function validateStartTime() {
-        const selectedDate = new Date(document.getElementById("add-shift-date-input").value);
-        let currentTime = new Date();
-        const startTime = document.getElementById("add-shift-start-time").value;
-
-        if (selectedDate.setHours(0, 0, 0, 0) == todayDate) {
-
-            // Parse the user input time (adjust based on your input format)
-            const userInputHours = parseInt(startTime.split(":")[0]);
-            const userInputMinutes = parseInt(startTime.split(":")[1]);
-
-            // Create a Date object for the user input time (assuming HH:MM format)
-            const userInputTimeObject = new Date(currentTime.getFullYear(), currentTime.getMonth(), currentTime.getDate(), userInputHours, userInputMinutes);
-
-            if (userInputTimeObject.getTime() < currentTime.getTime()) {
-                $('#start-time-error').show();
-                $('#start-time-error').text("Start time invalid");
-                return false;
-            }
-        }
-
-        console.log("valid");
-        $('#start-time-error').hide();
-        return true;
-    }
-
-    function validateEndTime() {
-        // const selectedDate = new Date(document.getElementById("Editshiftdate").value);
-        const startTime = document.getElementById("add-shift-start-time").value;
-        const endTime = document.getElementById("add-shift-end-time").value;
-
-        let timefrom = new Date();
-        let timeFromHour = parseInt(startTime.split(":")[0]);
-        let timeFromMinute = parseInt(startTime.split(":")[1]);
-        timefrom.setHours((timeFromHour - 1 + 24) % 24);
-        timefrom.setMinutes(timeFromMinute);
-
-        let timeto = new Date();
-        let timeToHour = parseInt(endTime.split(":")[0]);
-        let timeToMinute = parseInt(endTime.split(":")[1]);
-        timeto.setHours((timeToHour - 1 + 24) % 24);
-        timeto.setMinutes(timeToMinute);
-
-        console.log(startTime);
-        console.log(endTime);
-
-        if (timeto < timefrom) {
-            $('#end-time-error').show();
-            $('#end-time-error').text("End time should be more than start time");
-            return false;
-        }
-
-        $('#end-time-error').hide();
-        return true;
-    }
-
-</script>
+<script src="/js/admin/modal/add-shift-modal.js"></script>

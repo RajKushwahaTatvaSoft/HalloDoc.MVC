@@ -267,7 +267,7 @@ namespace HalloDoc.MVC.Controllers
                         UserId = patientUser.Userid,
                         UserAspId = aspUser.Id,
                         Email = patientUser.Email,
-                        AccountTypeId = aspUser.Accounttypeid ?? 0,
+                        AccountTypeId = aspUser.Accounttypeid,
                         RoleId = 0,
                         UserName = patientUser.Firstname + (String.IsNullOrEmpty(patientUser.Lastname) ? "" : " " + patientUser.Lastname),
                     };
@@ -291,7 +291,7 @@ namespace HalloDoc.MVC.Controllers
                         UserId = physicianUser.Physicianid,
                         UserAspId = aspUser.Id,
                         Email = physicianUser.Email,
-                        AccountTypeId = aspUser.Accounttypeid ?? 0,
+                        AccountTypeId = aspUser.Accounttypeid ,
                         RoleId = physicianUser.Roleid ?? 0,
                         UserName = physicianUser.Firstname + (String.IsNullOrEmpty(physicianUser.Lastname) ? "" : " " + physicianUser.Lastname),
                     };
@@ -315,7 +315,7 @@ namespace HalloDoc.MVC.Controllers
                         UserId = adminUser.Adminid,
                         UserAspId = aspUser.Id,
                         Email = adminUser.Email,
-                        AccountTypeId = aspUser.Accounttypeid ?? 0,
+                        AccountTypeId = aspUser.Accounttypeid ,
                         RoleId = adminUser.Roleid ?? 0,
                         UserName = adminUser.Firstname + (String.IsNullOrEmpty(adminUser.Lastname) ? "" : " " + adminUser.Lastname),
                     };
@@ -861,6 +861,35 @@ namespace HalloDoc.MVC.Controllers
         }
 
         #region HelperFunctions
+
+
+        [HttpPost]
+        public JsonArray GetBusinessByType(int professionType)
+        {
+            JsonArray result = new JsonArray();
+            IEnumerable<Healthprofessional> businesses = _unitOfWork.HealthProfessionalRepo.Where(prof => prof.Profession == professionType);
+
+            foreach (Healthprofessional business in businesses)
+            {
+                result.Add(new { businessId = business.Vendorid, businessName = business.Vendorname });
+            }
+
+            return result;
+        }
+
+
+        [HttpPost]
+        public Healthprofessional? GetBusinessDetailsById(int vendorId)
+        {
+            if (vendorId <= 0)
+            {
+                return null;
+            }
+            Healthprofessional? business = _unitOfWork.HealthProfessionalRepo.GetFirstOrDefault(prof => prof.Vendorid == vendorId);
+
+            return business;
+        }
+
 
         [HttpPost]
         public List<Physician> GetPhyByRegion(int id)

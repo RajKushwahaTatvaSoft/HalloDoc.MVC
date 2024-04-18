@@ -1,7 +1,17 @@
 ﻿@model SendOrderViewModel
 @{
-    Layout = "_PhysicianDashboardLayout";
-    ViewData["UserName"] = Model.UserName;
+    string layoutName = "";
+    if (Model.IsAdmin)
+    {
+        layoutName = "_AdminDashboardLayout";
+    }
+    else
+    {
+        layoutName = "_PhysicianDashboardLayout";
+    }
+}
+@{
+    Layout = layoutName;
 }
 
 <div class="container-fluid d-flex justify-content-center row ">
@@ -32,7 +42,7 @@
                         <div class="form-floating mt-3">
                             <select class="form-select" id="professionTypeList" aria-label="Floating label select example">
                                 <option selected disabled value="0">-- Select Profession --</option>
-                                @foreach(Healthprofessionaltype profession in Model.professionalTypeList)
+                                @foreach (Healthprofessionaltype profession in Model.professionalTypeList)
                                 {
                                     <option value="@profession.Healthprofessionalid">@profession.Professionname</option>
                                 }
@@ -58,7 +68,7 @@
 
                         <div class="form-floating mt-3">
 
-                            <input asp-for="BusinessContact" class="form-control" placeholder="Leave a comment here"
+                            <input asp-for="BusinessContact" class="form-control" placeholder="Business Contact"
                                    id="businessContact">
                             <label for="businessContact">Business Contact</label>
 
@@ -69,8 +79,8 @@
                     <div class="col-md-6 col-12">
 
                         <div class="form-floating mt-3">
-                            <input asp-for="Email" type="text" class="form-control" id="businessEmail" />
-                            <label for="businessEmail">Email address</label>
+                            <input asp-for="Email" type="text" class="form-control" id="businessEmail" placeholder="Email Address" />
+                            <label for="businessEmail">Email Address</label>
                         </div>
 
                     </div>
@@ -82,7 +92,7 @@
                     <div class="col-md-6 col-12">
 
                         <div class="form-floating mt-3">
-                            <input asp-for="FaxNumber" type="text" class="form-control" id="businessFaxNumber" />
+                            <input asp-for="FaxNumber" type="text" class="form-control" id="businessFaxNumber" placeholder="Fax Number" />
                             <label for="businessFaxNumber">Fax Number</label>
                         </div>
 
@@ -95,7 +105,7 @@
                     <div class="col-12">
 
                         <div class="form-floating mt-3">
-                            <textarea asp-for="Prescription" style="height:100px" class="form-control" placeholder="Leave a comment here"
+                            <textarea asp-for="Prescription" style="height:100px" class="form-control" placeholder="Presciption or Order details"
                                       id="floatingTextarea2"></textarea>
                             <label for="floatingTextarea2">Presciption or Order details</label>
                         </div>
@@ -107,13 +117,10 @@
                 <div class="row">
                     <div class="col-md-6 col-12">
                         <div class="form-floating mt-3">
-                            <select asp-for="NoOfRefills" class="form-select" id="floatingSelectGrid" aria-label="Floating label select example">
-                                <option value="0" selected>Not required</option>
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3">3</option>
-                            </select>
-                            <label for="floatingSelectGrid">Number Of Refill</label>
+                            <div class="form-floating mt-3">
+                                <input asp-for="NoOfRefills" type="text" class="form-control" id="noOfRefills" placeholder="No. of refills" />
+                                <label for="noOfRefills">No. of refills</label>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -139,63 +146,9 @@
     <div style="height: 20px;"></div>
 
 </div>
-<script>
 
-    $("#professionTypeList").change(function () {
+<script src="~/js/admin/admin-send-order.js"></script>
 
-        var type = $('option:selected', this).val();
-
-        $.ajax({
-            url: '/Physician/GetBusinessByType',
-            type: 'POST',
-            data: {
-                professionType: type,
-            },
-            success: function (result) {
-                $('#businessList').empty();
-                $('#businessList').append($('<option>', {
-                    value: 0,
-                    text: '-- Select Business --',
-                    selected: true,
-                    disabled: true
-                }));
-                $.each(result, function (index, object) {
-
-                    $('#businessList').append($('<option>', {
-                        value: object["businessId"],
-                        text: object["businessName"]
-                    }));
-
-                });
-            },
-            error: function (err) {
-                console.error(err);
-            }
-        });
-    });
-
-    $('#businessList').change(function () {
-        var vendorId = $('option:selected', this).val();
-
-        console.log("business: " + vendorId);
-        $.ajax({
-            url: '/Physician/GetBusinessDetailsById',
-            type: 'POST',
-            data: {
-                vendorId: vendorId,
-            },
-            success: function (result) {
-                $('#businessFaxNumber').val(result["faxnumber"]);
-                $('#businessContact').val(result["phonenumber"]);
-                $('#businessEmail').val(result["email"]);
-            },
-            error: function (err) {
-                console.error(err);
-            }
-        });
-    });
-
-</script>
 <script>
 
     $('.admin-tab').removeClass("active");

@@ -14,7 +14,7 @@ public partial class Emaillog
     public int Emaillogid { get; set; }
 
     [Column("emailtemplate")]
-    [StringLength(1)]
+    [StringLength(200)]
     public string Emailtemplate { get; set; } = null!;
 
     [Column("subjectname")]
@@ -58,6 +58,10 @@ public partial class Emaillog
 
     [Column("action")]
     public int? Action { get; set; }
+
+    [Column("recipientname")]
+    [StringLength(50)]
+    public string? Recipientname { get; set; }
 
     [ForeignKey("Adminid")]
     [InverseProperty("Emaillogs")]

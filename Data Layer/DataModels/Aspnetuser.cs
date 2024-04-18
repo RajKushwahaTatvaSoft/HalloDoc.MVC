@@ -39,7 +39,7 @@ public partial class Aspnetuser
     public DateTime? Modifieddate { get; set; }
 
     [Column("accounttypeid")]
-    public int? Accounttypeid { get; set; } = null;
+    public int Accounttypeid { get; set; }
 
     [InverseProperty("Aspnetuser")]
     public virtual ICollection<Admin> AdminAspnetusers { get; set; } = new List<Admin>();

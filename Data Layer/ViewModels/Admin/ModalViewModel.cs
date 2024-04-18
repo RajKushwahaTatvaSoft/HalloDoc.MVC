@@ -9,11 +9,18 @@ namespace Data_Layer.ViewModels.Admin
         public int RegionId { get; set; }
         public int PhysicianId { get; set; }
         public IEnumerable<Region>? regions { get; set; }
+
+        [Required (ErrorMessage = "Shift Date is required")]
+        [DateNotInPast(ErrorMessage = "Date cannot be in past")]
         public DateTime? ShiftDate {  get; set; }
+
+        [Required(ErrorMessage = "Shift Start Time is required")]
         public TimeOnly? StartTime {  get; set; }
+
+        [Required(ErrorMessage = "Shift End Time is required")]
         public TimeOnly? EndTime { get; set; }
         public int? IsRepeat { get; set; }
-        public List<int> RepeatDays {  get; set; }
+        public List<int>? repeatDays {  get; set; }
         public int? RepeatCount {  get; set; }
     }
 

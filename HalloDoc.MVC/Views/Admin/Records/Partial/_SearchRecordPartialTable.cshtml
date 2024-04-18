@@ -45,7 +45,7 @@
                     <td>@record.PatientNote</td>
                     <td>
 
-                        <button type="button" class="btn btn-outline-info align-middle">
+                        <button type="button" data-requestid="@record.RequestId" class="btn btn-outline-info delete-request align-middle">
                             <span class="text-info">Delete</span>
                         </button>
 
@@ -84,3 +84,26 @@
     }
 
 </div>
+
+<script>
+
+    $('.delete-request').click(function () {
+        let rId = $(this).data("requestid");        
+
+        $.ajax({
+            url: "/Admin/DeleteRequest",
+            data: { requestId: rId },
+            type: 'POST',
+            success: function (result) {
+                if (result) {
+                    loadSearchRecordTable(@Model.CurrentPage);
+                }
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
+
+    });
+</script>

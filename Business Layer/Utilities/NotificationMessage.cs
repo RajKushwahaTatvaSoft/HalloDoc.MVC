@@ -11,6 +11,7 @@ namespace Business_Layer.Utilities
         public const string REQUEST_NOT_FOUND = "Request not found";
         public const string REQUEST_ALREADY_BLOCKED = "Request is already blocked";
         public const string REQUEST_CREATED_SUCCESSFULLY = "Request Created Successfully";
+        public const string REQUEST_DELETED_SUCCESSFULLY = "Request Deleted Successfully";
         public const string REQUEST_UNBLOCKED_SUCCESSFULLY = "Request Unblocked Successfully";
         
     }

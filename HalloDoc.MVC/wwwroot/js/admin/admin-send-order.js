@@ -2,13 +2,18 @@ $("#professionTypeList").change(function () {
 
     var type = $('option:selected', this).val();
 
+    $('#businessFaxNumber').val("");
+    $('#businessContact').val("");
+    $('#businessEmail').val("");
+
     $.ajax({
-        url: '/Admin/GetBusinessByType',
+        url: '/Guest/GetBusinessByType',
         type: 'POST',
         data: {
             professionType: type,
         },
         success: function (result) {
+
             $('#businessList').empty();
             $('#businessList').append($('<option>', {
                 value: 0,
@@ -36,7 +41,7 @@ $('#businessList').change(function () {
 
     console.log("business: " + vendorId);
     $.ajax({
-        url: '/Admin/GetBusinessDetailsById',
+        url: '/Guest/GetBusinessDetailsById',
         type: 'POST',
         data: {
             vendorId: vendorId,

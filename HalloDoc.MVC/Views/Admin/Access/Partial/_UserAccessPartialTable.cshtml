@@ -1,85 +1,65 @@
-﻿@model PagedList<UserAccessTRow>
+﻿@model IEnumerable<UserAccessTRow>?
 
-<div class="w-100 d-none d-md-block my-3 table-responsive">
-    <table class="table table-hover " style="height:75px; text-align:match-parent">
-        <thead class="">
-            <tr class="table-secondary">
-                <th class="text-dark">Account Type</th>
-                <th class="text-dark">Account POC</th>
-                <th class="text-dark">Phone</th>
-                <th class="text-dark">Status</th>
-                <th class="text-dark">Open Requests</th>
-                <th class="text-dark">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var role in Model)
-            {
-                <tr>
+@if (Model != null)
+{
 
-                    <td>
-                        @role.AccountType
-                    </td>
-                    <td>
-                        @role.AccountPOC
-                    </td>
-                    <td>
-                        @role.Phone
-                    </td>
-                    <td>
-                        @role.Status
-                    </td>
-                    <td>
-                        @role.OpenRequests
-                    </td>
-                    @if (role.AccountTypeId == 1)
-                    {
-                        <td>
-                            <a class="btn btn-outline-info " asp-controller="Admin" asp-action="EditAdminAccount" asp-route-adminAspId="@role.AspnetUserId">Edit</a>
-                        </td>
-                    }
-                    else if (role.AccountTypeId == 2)
-                    {
-                        <td>
-                            <a class="btn btn-outline-info " asp-controller="Admin" asp-action="EditPhysicianAccount" asp-route-phyAspId="@role.AspnetUserId">Edit</a>
-                        </td>
-                    }
-                    else
-                    {
-                        <td></td>
-                    }
-
+    <div class="w-100 d-none d-md-block my-3 table-responsive">
+        <table class="table table-hover " style="height:75px; text-align:match-parent">
+            <thead class="">
+                <tr class="table-secondary">
+                    <th class="text-dark">Account Type</th>
+                    <th class="text-dark">Account POC</th>
+                    <th class="text-dark">Phone</th>
+                    <th class="text-dark">Status</th>
+                    <th class="text-dark">Open Requests</th>
+                    <th class="text-dark">Actions</th>
                 </tr>
-            }
-        </tbody>
-    </table>
-</div>
+            </thead>
+            <tbody>
+                @foreach (var role in Model)
+                {
+                    <tr>
 
+                        <td>
+                            @role.AccountType
+                        </td>
+                        <td>
+                            @role.AccountPOC
+                        </td>
+                        <td>
+                            @role.Phone
+                        </td>
+                        <td>
+                            @role.Status
+                        </td>
+                        <td>
+                            @role.OpenRequests
+                        </td>
+                        @if (role.AccountTypeId == 1)
+                        {
+                            <td>
+                                <a class="btn btn-outline-info " asp-controller="Admin" asp-action="EditAdminAccount" asp-route-adminAspId="@role.AspnetUserId">Edit</a>
+                            </td>
+                        }
+                        else if (role.AccountTypeId == 2)
+                        {
+                            <td>
+                                <a class="btn btn-outline-info " asp-controller="Admin" asp-action="EditPhysicianAccount" asp-route-phyAspId="@role.AspnetUserId">Edit</a>
+                            </td>
+                        }
+                        else
+                        {
+                            <td></td>
+                        }
 
-<div class="pagination d-flex justify-content-center align-content-center mt-3">
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 
-    @if (Model.hasPrevious)
-    {
-        <button class="border-0 mx-1 page-item" onclick="loadUserAccessPartialTable(1)">❮❮</button>
-        <button class="page-item mx-1 border-0" onclick="loadUserAccessPartialTable(@(Model.CurrentPage-1))">❮</button>
-    }
-    else
-    {
-        <button disabled class="disabled border-0 mx-1 page-item">❮❮</button>
-        <button disabled class="disabled page-item mx-1 border-0">❮</button>
-    }
-
-    <button class="page-item mx-1 active border-0">@Model.CurrentPage</button>
-
-    @if (Model.hasNext)
-    {
-        <button class="page-item mx-1 border-0" onclick="loadUserAccessPartialTable(@(Model.CurrentPage+1))">❯</button>
-        <button class="page-item mx-1 border-0" onclick="loadUserAccessPartialTable(@Model.TotalPages)">❯❯</button>
-    }
-    else
-    {
-        <button disabled class="page-item disabled mx-1 border-0">❯</button>
-        <button disabled class="page-item disabled mx-1 border-0">❯❯</button>
-    }
-
-</div>
+}
+else
+{
+    <h3>No user data</h3>
+}

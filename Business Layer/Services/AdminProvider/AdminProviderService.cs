@@ -20,7 +20,7 @@ namespace Business_Layer.Services.AdminProvider
         private readonly IUnitOfWork _unitOfWork;
         private readonly IUtilityService _utilityService;
         private readonly IEmailService _emailService;
-        public AdminProviderService(IUnitOfWork unitOfWork, IUtilityService utilityService,IEmailService emailService)
+        public AdminProviderService(IUnitOfWork unitOfWork, IUtilityService utilityService, IEmailService emailService)
         {
             _unitOfWork = unitOfWork;
             _utilityService = utilityService;
@@ -199,7 +199,7 @@ namespace Business_Layer.Services.AdminProvider
             return model;
         }
 
-        public ServiceResponse SubmitCreateRequest(AdminCreateRequestViewModel model,string aspNetUserId,string createAccLink,bool isAdmin)
+        public ServiceResponse SubmitCreateRequest(AdminCreateRequestViewModel model, string aspNetUserId, string createAccLink, bool isAdmin)
         {
             ServiceResponse response = new ServiceResponse();
             Data_Layer.DataModels.Physician? phy = new Data_Layer.DataModels.Physician();
@@ -365,6 +365,185 @@ namespace Business_Layer.Services.AdminProvider
                 response.Message = ex.Message;
                 return response;
             }
+
+        }
+
+        public ServiceResponse SubmitOrderDetails(SendOrderViewModel model, string aspUserId)
+        {
+
+            Orderdetail order = new Orderdetail()
+            {
+                Vendorid = model.SelectedVendor,
+                Requestid = model.RequestId,
+                Faxnumber = model.FaxNumber,
+                Email = model.Email,
+                Businesscontact = model.BusinessContact,
+                Prescription = model.Prescription,
+                Noofrefill = model.NoOfRefills,
+                Createddate = DateTime.Now,
+                Createdby = aspUserId,
+            };
+
+            _unitOfWork.OrderDetailRepo.Add(order);
+            _unitOfWork.Save();
+            return new ServiceResponse
+            {
+                StatusCode = ResponseCode.Success,
+            };
+
+        }
+
+        public EncounterFormViewModel? GetEncounterFormModel(int requestId)
+        {
+            Requestclient? requestclient = _unitOfWork.RequestClientRepository.GetFirstOrDefault(e => e.Requestid == requestId);
+            Request? request = _unitOfWork.RequestRepository.GetFirstOrDefault(r => r.Requestid == requestId);
+            string? dobDate = null;
+
+            if (request == null || requestclient == null)
+            {
+                return null;
+            }
+
+            if (requestclient.Intyear != null && requestclient.Strmonth != null && requestclient.Intdate != null)
+            {
+                dobDate = requestclient.Intyear + "-" + requestclient.Strmonth + "-" + requestclient.Intdate;
+            }
+
+            Encounterform? encounterform = _unitOfWork.EncounterFormRepository.GetFirstOrDefault(e => e.Requestid == requestId);
+            EncounterFormViewModel model;
+
+            model = new()
+            {
+                FirstName = requestclient.Firstname,
+                LastName = requestclient.Lastname,
+                Email = requestclient.Email,
+                PhoneNumber = requestclient.Phonenumber,
+                DOB = dobDate != null ? DateTime.Parse(dobDate) : null,
+                CreatedDate = request.Createddate,
+                Location = requestclient.Street + " " + requestclient.City + " " + requestclient.State,
+                MedicalHistory = encounterform?.Medicalhistory,
+                History = encounterform?.Historyofpresentillnessorinjury,
+                Medications = encounterform?.Medications,
+                Allergies = encounterform?.Allergies,
+                Temp = encounterform?.Temp,
+                HR = encounterform?.Hr,
+                RR = encounterform?.Rr,
+                BpLow = encounterform?.Bloodpressuresystolic,
+                BpHigh = encounterform?.Bloodpressuresystolic,
+                O2 = encounterform?.O2,
+                Pain = encounterform?.Pain,
+                Heent = encounterform?.Heent,
+                CV = encounterform?.Cv,
+                Chest = encounterform?.Chest,
+                ABD = encounterform?.Abd,
+                Extr = encounterform?.Extremities,
+                Skin = encounterform?.Skin,
+                Neuro = encounterform?.Neuro,
+                Other = encounterform?.Other,
+                Diagnosis = encounterform?.Diagnosis,
+                TreatmentPlan = encounterform?.TreatmentPlan,
+                Procedures = encounterform?.Procedures,
+                MedicationDispensed = encounterform?.Medicaldispensed,
+                FollowUps = encounterform?.Followup
+
+            };
+
+            return model;
+        }
+        public ServiceResponse SubmitEncounterForm(EncounterFormViewModel model, bool isAdmin, int userId)
+        {
+            ServiceResponse response;
+
+            Admin? admin = _unitOfWork.AdminRepository.GetFirstOrDefault(admin => admin.Adminid == userId);
+            Request? request = _unitOfWork.RequestRepository.GetFirstOrDefault(rs => rs.Requestid == model.RequestId);
+
+            if (admin == null || request == null)
+            {
+                response = new ServiceResponse
+                {
+                    StatusCode = ResponseCode.Error,
+                    Message = "Invalid Request",
+                };
+                
+                return response;
+
+            }
+
+            Encounterform? encounterform = _unitOfWork.EncounterFormRepository.GetFirstOrDefault(e => e.Requestid == model.RequestId);
+
+            if (encounterform == null)
+            {
+                Encounterform encf = new()
+                {
+                    Requestid = model.RequestId,
+                    Historyofpresentillnessorinjury = model.History,
+                    Medicalhistory = model.MedicalHistory,
+                    Medications = model.Medications,
+                    Allergies = model.Allergies,
+                    Temp = model.Temp,
+                    Hr = model.HR,
+                    Rr = model.RR,
+                    Bloodpressuresystolic = model.BpLow,
+                    Bloodpressurediastolic = model.BpHigh,
+                    O2 = model.O2,
+                    Pain = model.Pain,
+                    Skin = model.Skin,
+                    Heent = model.Heent,
+                    Neuro = model.Neuro,
+                    Other = model.Other,
+                    Cv = model.CV,
+                    Chest = model.Chest,
+                    Abd = model.ABD,
+                    Extremities = model.Extr,
+                    Diagnosis = model.Diagnosis,
+                    TreatmentPlan = model.TreatmentPlan,
+                    Procedures = model.Procedures,
+                    Adminid = admin.Adminid,
+                    Physicianid = request.Physicianid,
+                    Isfinalize = false
+                };
+                _unitOfWork.EncounterFormRepository.Add(encf);
+                _unitOfWork.Save();
+            }
+            else
+            {
+                encounterform.Requestid = model.RequestId;
+                encounterform.Historyofpresentillnessorinjury = model.History;
+                encounterform.Medicalhistory = model.MedicalHistory;
+                encounterform.Medications = model.Medications;
+                encounterform.Allergies = model.Allergies;
+                encounterform.Temp = model.Temp;
+                encounterform.Hr = model.HR;
+                encounterform.Rr = model.RR;
+                encounterform.Bloodpressuresystolic = model.BpLow;
+                encounterform.Bloodpressurediastolic = model.BpHigh;
+                encounterform.O2 = model.O2;
+                encounterform.Pain = model.Pain;
+                encounterform.Skin = model.Skin;
+                encounterform.Heent = model.Heent;
+                encounterform.Neuro = model.Neuro;
+                encounterform.Other = model.Other;
+                encounterform.Cv = model.CV;
+                encounterform.Chest = model.Chest;
+                encounterform.Abd = model.ABD;
+                encounterform.Extremities = model.Extr;
+                encounterform.Diagnosis = model.Diagnosis;
+                encounterform.TreatmentPlan = model.TreatmentPlan;
+                encounterform.Procedures = model.Procedures;
+                encounterform.Adminid = admin.Adminid;
+                encounterform.Physicianid = request.Physicianid;
+                encounterform.Isfinalize = false;
+
+                _unitOfWork.EncounterFormRepository.Update(encounterform);
+                _unitOfWork.Save();
+            }
+
+            response = new ServiceResponse
+            {
+                StatusCode = ResponseCode.Success,
+            };
+
+            return response;
 
         }
     }

@@ -17,6 +17,7 @@ namespace Data_Layer.ViewModels.Admin
         public IEnumerable<Role> roles {  get; set; }
         public int? AdminId { get; set; }
 
+        public ProfileAdministratorInfo AdministratorInfo { get; set; }
 
         [Required(ErrorMessage = "First Name cannot be empty")]
         [RegularExpression("^[A-Za-z\\s]{1,}[\\.]{0,1}[A-Za-z\\s]{0,}$", ErrorMessage = "Enter Valid Name")]
@@ -53,4 +54,28 @@ namespace Data_Layer.ViewModels.Admin
 
     }
 
+    public class ProfileAdministratorInfo
+    {
+        [Required(ErrorMessage = "First Name cannot be empty")]
+        [RegularExpression("^[A-Za-z\\s]{1,}[\\.]{0,1}[A-Za-z\\s]{0,}$", ErrorMessage = "Enter Valid Name")]
+        public string? FirstName { get; set; }
+
+        [Required(ErrorMessage = "Last Name cannot be empty")]
+        [RegularExpression("^[A-Za-z\\s]{1,}[\\.]{0,1}[A-Za-z\\s]{0,}$", ErrorMessage = "Enter Valid Name")]
+        public string? LastName { get; set; }
+
+        [Required(ErrorMessage = "Email cannot be empty")]
+        [RegularExpression("^([\\w\\.\\-]+)@([\\w\\-]+)((\\.(\\w){2,3})+)$", ErrorMessage = "Enter Valid Email")]
+        public string? Email { get; set; }
+
+        [Required(ErrorMessage = "Confirm Email cannot be empty")]
+        [RegularExpression("^([\\w\\.\\-]+)@([\\w\\-]+)((\\.(\\w){2,3})+)$", ErrorMessage = "Enter Valid Email")]
+        [Compare(nameof(Email), ErrorMessage ="Email and Confirm Email should be same")]
+        public string? ConfirmEmail { get; set; }
+
+        public string? PhoneNumber { get; set; }
+
+        public IEnumerable<int>? selectedRegions { get; set; }
+
+    }
 }

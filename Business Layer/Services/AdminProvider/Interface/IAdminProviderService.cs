@@ -15,6 +15,9 @@ namespace Business_Layer.Services.AdminProvider.Interface
         public ServiceResponse SubmitViewNotes(ViewNotesViewModel model, string aspNetUserId, bool isAdmin);
         public ViewUploadsViewModel? GetViewUploadsModel(int requestId);
         public ServiceResponse SubmitCreateRequest(AdminCreateRequestViewModel model, string adminAspId, string createAccLink, bool isAdmin);
+        public ServiceResponse SubmitOrderDetails(SendOrderViewModel model, string aspUserId);
+        public EncounterFormViewModel? GetEncounterFormModel(int requestId);
+        public ServiceResponse SubmitEncounterForm(EncounterFormViewModel model, bool isAdmin, int userId);
 
     }
 }

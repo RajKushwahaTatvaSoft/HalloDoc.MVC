@@ -8,6 +8,8 @@ html, body {
     height: 100%;
 }
 
+
+
 input[type="checkbox"]:disabled {
     background-color: #AAAAAA;
 }
@@ -39,7 +41,7 @@ input[type="checkbox"]:checked {
 }
 
 .btn:focus {
-    box-shadow: none;
+    box-shadow: none !important;
 }
 
 .btn:active {
@@ -393,6 +395,9 @@ x::-webkit-file-upload-button, input[type=file]:after {
 
 .admin-dashboard select:focus {
     box-shadow: none;
+}
+.form-floating input:focus, .form-floating select:focus, .form-floating textarea:focus {
+    box-shadow: none !important
 }
 
 .normal-input {

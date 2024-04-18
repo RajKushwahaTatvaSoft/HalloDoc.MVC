@@ -49,7 +49,7 @@ namespace HalloDoc.MVC.Controllers
         {
 
             int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-            string phyAspId = HttpContext.Request.Headers.Where(x => x.Key == "userAspId").FirstOrDefault().Value;
+            string? phyAspId = HttpContext.Request.Headers.Where(x => x.Key == "userAspId").FirstOrDefault().Value;
 
             Physician physician = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Aspnetuserid == phyAspId);
 
@@ -117,7 +117,7 @@ namespace HalloDoc.MVC.Controllers
 
                 Aspnetuser? aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(user => user.Id == phyAspId);
 
-                if(aspUser == null)
+                if (aspUser == null)
                 {
                     return false;
                 }
@@ -143,7 +143,7 @@ namespace HalloDoc.MVC.Controllers
         public bool SendMessageToAdmin(string message)
         {
             int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-            string phyName= HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+            string phyName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
 
             IEnumerable<Admin> admins = _unitOfWork.AdminRepository.GetAll();
 
@@ -240,19 +240,19 @@ namespace HalloDoc.MVC.Controllers
 
             int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
 
-            if(phyId == 0)
+            if (phyId == 0)
             {
                 return View("ErrorPartial");
             }
 
             // 0 index'ed month of js to 1 index'ed month of c#
             shiftMonth++;
-            
+
             IEnumerable<Shiftdetail> query = (from shift in _unitOfWork.ShiftRepository.GetAll()
                                               where (shift.Physicianid == phyId)
                                               join shiftDetail in _unitOfWork.ShiftDetailRepository.GetAll()
                                               on shift.Shiftid equals shiftDetail.Shiftid
-                                              where(shiftDetail.Shiftdate.Month == shiftMonth && shiftDetail.Shiftdate.Year == shiftYear)
+                                              where (shiftDetail.Shiftdate.Month == shiftMonth && shiftDetail.Shiftdate.Year == shiftYear)
                                               select shiftDetail
                                               );
 
@@ -449,7 +449,7 @@ namespace HalloDoc.MVC.Controllers
                 UserName = adminName,
                 RequestFilesPath = REQUEST_FILE_PATH,
             };
-            
+
             return View("Dashboard/ViewUploads", model);
         }
 
@@ -512,76 +512,106 @@ namespace HalloDoc.MVC.Controllers
         }
 
 
-
         public int GetOffSet(int currentDay, List<int> repeatDays)
         {
             int nextVal = repeatDays.SkipWhile(day => day <= currentDay).FirstOrDefault();
             int index = repeatDays.IndexOf(nextVal);
+
+            if (index < 0) index = 0;
             return index;
         }
-
 
         [HttpPost]
         public IActionResult AddShift(SchedulingViewModel model)
         {
-
-            int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
-            string phyAspId = HttpContext.Request.Headers.Where(x => x.Key == "userAspId").FirstOrDefault().Value;
-
-            if (ModelState.IsValid)
+            try
             {
-                Shift shift = new Shift();
-                shift.Physicianid = (int)model.addShiftPhysician;
-                shift.Startdate = DateOnly.FromDateTime(model.shiftDate.Value.Date);
-                if (model.isRepeat != null)
-                {
-                    shift.Isrepeat = true;
-                }
-                else
-                {
-                    shift.Isrepeat = false;
-                }
+                int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
+                string phyAspId = HttpContext.Request.Headers.Where(x => x.Key == "userAspId").FirstOrDefault().Value;
 
-                shift.Repeatupto = model.repeatCount;
-                shift.Createddate = DateTime.Now;
-                shift.Createdby = phyAspId;
-                _unitOfWork.ShiftRepository.Add(shift);
-                _unitOfWork.Save();
-
-                Shiftdetail shiftdetail1 = new()
-                {
-                    Shiftid = shift.Shiftid,
-                    Shiftdate = (DateTime)model.shiftDate,
-                    Regionid = model.addShiftRegion,
-                    Starttime = (TimeOnly)model.shiftStartTime,
-                    Endtime = (TimeOnly)model.shiftEndTime,
-                    Status = (short)ShiftStatus.Pending,
-                    Isdeleted = false
-                };
-
-                _unitOfWork.ShiftDetailRepository.Add(shiftdetail1);
-                _unitOfWork.Save();
-
-                if (model.isRepeat != null)
+                if (ModelState.IsValid)
                 {
 
-                    DateTime currentDate = (DateTime)model.shiftDate;
-                    int currentDayOfWeek = (int)model.shiftDate.Value.DayOfWeek;
+                    List<DateTime> totalShiftDates = new List<DateTime>();
+                    List<DateTime> clashingShifts = new List<DateTime>();
+                    bool isAnotherShiftExists = false;
 
-                    int offset = GetOffSet(currentDayOfWeek, model.repeatDays);
+                    totalShiftDates.Add(model.shiftDate.Value.Date);
 
-                    for (int i = 0; i < model.repeatCount; i++)
+                    bool isExistsInit = _unitOfWork.ShiftDetailRepository.GetAll().Any(
+                        sd => sd.Isdeleted != true
+                        && sd.Shift.Physicianid == phyId
+                        && sd.Shiftdate.Date == model.shiftDate.Value.Date
+                    && ((model.shiftStartTime <= sd.Endtime && model.shiftStartTime >= sd.Starttime) // checks if new start time falls between exisiting
+                    || (model.shiftEndTime >= sd.Starttime && model.shiftEndTime <= sd.Endtime))); // checks if new end time falls between existing);
+
+                    if (isExistsInit)
                     {
-                        int length = model.repeatDays.Count;
-                        for (int j = 0; j < length; j++)
-                        {
-                            int offsetIndex = (j + offset) % length;
+                        isAnotherShiftExists = true;
+                        clashingShifts.Add(model.shiftDate.Value.Date);
+                    }
 
-                            DateTime nextShiftDate = GetNextWeekday(currentDate, model.repeatDays[offsetIndex]);
+                    if (model.isRepeat != null && model.repeatDays != null)
+                    {
+                        DateTime nextShiftDate = model.shiftDate ?? DateTime.Now;
+                        int currentDayOfWeek = (int)nextShiftDate.DayOfWeek;
+                        List<int> sorted = model.repeatDays.OrderBy(_ => _).ToList();
+
+                        int offset = GetOffSet(currentDayOfWeek, sorted);
+
+                        for (int i = 0; i < model.repeatCount; i++)
+                        {
+                            int length = sorted.Count;
+
+                            for (int j = 0; j < length; j++)
+                            {
+                                int offsetIndex = (j + offset) % length;
+
+                                nextShiftDate = GetNextWeekday(nextShiftDate, sorted[offsetIndex]);
+                                totalShiftDates.Add(nextShiftDate);
+
+                                bool isExists = _unitOfWork.ShiftDetailRepository.GetAll().Any(
+                                    sd => sd.Isdeleted != true
+                                    && sd.Shift.Physicianid == phyId
+                                    && sd.Shiftdate.Date == model.shiftDate.Value.Date
+                                && ((model.shiftStartTime <= sd.Endtime && model.shiftStartTime >= sd.Starttime) // checks if new start time falls between exisiting
+                                || (model.shiftEndTime >= sd.Starttime && model.shiftEndTime <= sd.Endtime))); // checks if new end time falls between existing
+
+                                if (isExists)
+                                {
+                                    isAnotherShiftExists = true;
+                                    clashingShifts.Add(nextShiftDate);
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+                    if (!isAnotherShiftExists)
+                    {
+                        Shift shift = new()
+                        {
+                            Physicianid = phyId,
+                            Startdate = DateOnly.FromDateTime(model.shiftDate.Value.Date),
+                            Repeatupto = model.repeatCount,
+                            Createddate = DateTime.Now,
+                            Createdby = phyAspId,
+                            Isrepeat = model.isRepeat != null,
+                        };
+
+                        _unitOfWork.ShiftRepository.Add(shift);
+                        _unitOfWork.Save();
+
+
+                        foreach (DateTime date in totalShiftDates)
+                        {
+
                             Shiftdetail shiftdetail = new()
                             {
                                 Shiftid = shift.Shiftid,
-                                Shiftdate = nextShiftDate,
+                                Shiftdate = date,
                                 Regionid = model.addShiftRegion,
                                 Starttime = (TimeOnly)model.shiftStartTime,
                                 Endtime = (TimeOnly)model.shiftEndTime,
@@ -599,16 +629,34 @@ namespace HalloDoc.MVC.Controllers
                             };
                             _unitOfWork.ShiftDetailRegionRepository.Add(s);
                             _unitOfWork.Save();
+
                         }
 
-                        currentDate = GetNextWeekday(currentDate, 7); // Move to next week
+                        _notyf.Success("Successfully Added shifts");
+                        return RedirectToAction("Schedule");
+
                     }
+
+                    StringBuilder stringBuilder = new StringBuilder();
+                    foreach (DateTime date in clashingShifts)
+                    {
+                        stringBuilder.Append(date.ToString("ddd, dd MMM yyyy"));
+                    }
+
+
+                    _notyf.Error("Your shifts are clashing with shifts on: \n" + stringBuilder.ToString());
+
 
                 }
 
-            }
+                return RedirectToAction("Schedule");
 
-            return RedirectToAction("Schedule");
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return RedirectToAction("Schedule");
+            }
         }
 
 
@@ -643,7 +691,7 @@ namespace HalloDoc.MVC.Controllers
         }
 
 
-        [RoleAuthorize((int) AllowMenu.ProviderDashboard)]
+        [RoleAuthorize((int)AllowMenu.ProviderDashboard)]
         public IActionResult Dashboard()
         {
             string? phyName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
@@ -869,6 +917,7 @@ namespace HalloDoc.MVC.Controllers
                     _notyf.Error("Cannot find request. Please try again later.");
                     return false;
                 }
+
                 DateTime currentTime = DateTime.Now;
 
                 req.Accepteddate = null;
@@ -877,7 +926,6 @@ namespace HalloDoc.MVC.Controllers
                 req.Modifieddate = currentTime;
 
                 _unitOfWork.RequestRepository.Update(req);
-
 
                 string logNotes = phyName + " transferred request to Admin on " + currentTime.ToString("MM/dd/yyyy") + " at " + currentTime.ToString("HH:mm:ss") + " : " + description;
 
@@ -1480,7 +1528,7 @@ namespace HalloDoc.MVC.Controllers
                 {
                     string? createLink = Url.Action("CreateAccount", "Guest", null, Request.Scheme);
 
-                    ServiceResponse response = _physicianService.AdminProviderService.SubmitCreateRequest(model, phyAspId, createLink ?? "",false);
+                    ServiceResponse response = _physicianService.AdminProviderService.SubmitCreateRequest(model, phyAspId, createLink ?? "", false);
 
                     if (response.StatusCode == ResponseCode.Success)
                     {
@@ -1564,52 +1612,50 @@ namespace HalloDoc.MVC.Controllers
         public IActionResult Orders(int requestId)
         {
 
-            string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
-
             SendOrderViewModel model = new SendOrderViewModel();
             model.professionalTypeList = _unitOfWork.HealthProfessionalTypeRepo.GetAll();
             model.RequestId = requestId;
-            model.UserName = adminName;
+            model.IsAdmin = false;
 
-            return View("Dashboard/Orders", model);
+            return View("AdminProvider/Orders", model);
         }
 
         [HttpPost]
         public IActionResult Orders(SendOrderViewModel orderViewModel)
         {
             int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-            Physician phy = _unitOfWork.PhysicianRepository.GetFirstOrDefault(ad => ad.Physicianid == phyId);
+            string? phyAspId = HttpContext.Request.Headers.Where(x => x.Key == "userAspId").FirstOrDefault().Value;
 
-            if (ModelState.IsValid)
+            try
             {
-
-                Orderdetail order = new Orderdetail()
+                if (ModelState.IsValid)
                 {
-                    Vendorid = orderViewModel.SelectedVendor,
-                    Requestid = orderViewModel.RequestId,
-                    Faxnumber = orderViewModel.FaxNumber,
-                    Email = orderViewModel.Email,
-                    Businesscontact = orderViewModel.BusinessContact,
-                    Prescription = orderViewModel.Prescription,
-                    Noofrefill = orderViewModel.NoOfRefills,
-                    Createddate = DateTime.Now,
-                    Createdby = phy.Aspnetuserid,
-                };
 
-                _unitOfWork.OrderDetailRepo.Add(order);
-                _unitOfWork.Save();
+                    ServiceResponse response = _physicianService.AdminProviderService.SubmitOrderDetails(orderViewModel, phyAspId);
 
-                TempData["success"] = "Order Successfully Sent";
+                    if (response.StatusCode == ResponseCode.Success)
+                    {
+
+                        _notyf.Success("Order Details saved successfully.");
+
+                        return RedirectToAction("Dashboard");
+                    }
+
+                    _notyf.Error(response.Message);
+                    return View("AdminProvider/Orders", orderViewModel);
+                }
+
+                _notyf.Error("Please enter all values correctly.");
+                return View("AdminProvider/Orders", orderViewModel);
 
             }
-            else
+            catch (Exception ex)
             {
-                TempData["error"] = "Error occured whlie ordering.";
+                _notyf.Error(ex.Message);
+                return View("AdminProvider/Orders", orderViewModel);
             }
 
-            return RedirectToAction("Dashboard");
         }
-
 
         [HttpPost]
         public IActionResult SendLinkForSubmitRequest(SendLinkModel model)

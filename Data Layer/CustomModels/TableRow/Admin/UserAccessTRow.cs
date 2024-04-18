@@ -13,7 +13,7 @@ namespace Data_Layer.CustomModels.TableRow.Admin
         public string AccountPOC { get; set; }
         public string Phone { get; set; }
         public string Status { get; set; }
-        public string OpenRequests { get; set; }
+        public int OpenRequests { get; set; }
         public string AspnetUserId { get; set; }
     }
 }

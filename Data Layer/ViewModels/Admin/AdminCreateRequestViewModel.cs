@@ -10,7 +10,6 @@ namespace Data_Layer.ViewModels.Admin
 {
     public class AdminCreateRequestViewModel
     {
-        public string? UserName { get; set; }
         public bool IsAdmin { get; set; } = false;
 
         [Required(ErrorMessage = "First Name cannot be empty")]
