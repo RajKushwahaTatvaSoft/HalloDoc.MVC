@@ -10,10 +10,9 @@ namespace Data_Layer.ViewModels.Admin
 {
     public class CreateAccessViewModel
     {
-        public int RoleId { get; set; }
-        public string? MenuName { get; set; }
-        public string? MenuId { get; set; }
+        [Required]
         public string? RoleName { get; set; }
+        [Required]
         public int? AccountType { get; set; }
         public IEnumerable<Aspnetrole>? netRoles { get; set; }
         [Required(ErrorMessage = "Please select menu")]

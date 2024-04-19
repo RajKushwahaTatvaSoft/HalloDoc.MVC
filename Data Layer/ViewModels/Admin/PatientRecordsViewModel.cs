@@ -13,10 +13,10 @@ namespace Data_Layer.ViewModels.Admin
         public IEnumerable<Role>? roles { get; set; }
         public IEnumerable<User>? users { get; set; }
         public IEnumerable<Request>? requests { get; set; }
-        public IEnumerable<exploreViewModel>? explores { get; set; }
+        public IEnumerable<ExploreViewTRow>? explores { get; set; }
     }
 
-    public class exploreViewModel
+    public class ExploreViewTRow
     {
         public int? id { get; set; }
         public string? Name { get; set; }

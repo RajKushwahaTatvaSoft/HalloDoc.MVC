@@ -5,6 +5,7 @@ using Business_Layer.Utilities;
 using Data_Layer.CustomModels;
 using Data_Layer.DataModels;
 using Data_Layer.ViewModels.Admin;
+using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
@@ -393,8 +394,14 @@ namespace Business_Layer.Services.AdminProvider
 
         }
 
-        public EncounterFormViewModel? GetEncounterFormModel(int requestId)
+        public EncounterFormViewModel? GetEncounterFormModel(int requestId, bool isAdmin)
         {
+            Encounterform? encounterform = _unitOfWork.EncounterFormRepository.GetFirstOrDefault(e => e.Requestid == requestId);
+            if (!isAdmin && encounterform != null && encounterform.Isfinalize)
+            {
+                return null;
+            }
+
             Requestclient? requestclient = _unitOfWork.RequestClientRepository.GetFirstOrDefault(e => e.Requestid == requestId);
             Request? request = _unitOfWork.RequestRepository.GetFirstOrDefault(r => r.Requestid == requestId);
             string? dobDate = null;
@@ -409,11 +416,9 @@ namespace Business_Layer.Services.AdminProvider
                 dobDate = requestclient.Intyear + "-" + requestclient.Strmonth + "-" + requestclient.Intdate;
             }
 
-            Encounterform? encounterform = _unitOfWork.EncounterFormRepository.GetFirstOrDefault(e => e.Requestid == requestId);
-            EncounterFormViewModel model;
-
-            model = new()
+            EncounterFormViewModel model = new()
             {
+                IsAdmin = isAdmin,
                 FirstName = requestclient.Firstname,
                 LastName = requestclient.Lastname,
                 Email = requestclient.Email,
@@ -444,8 +449,7 @@ namespace Business_Layer.Services.AdminProvider
                 TreatmentPlan = encounterform?.TreatmentPlan,
                 Procedures = encounterform?.Procedures,
                 MedicationDispensed = encounterform?.Medicaldispensed,
-                FollowUps = encounterform?.Followup
-
+                FollowUps = encounterform?.Followup,
             };
 
             return model;
@@ -454,23 +458,22 @@ namespace Business_Layer.Services.AdminProvider
         {
             ServiceResponse response;
 
-            Admin? admin = _unitOfWork.AdminRepository.GetFirstOrDefault(admin => admin.Adminid == userId);
             Request? request = _unitOfWork.RequestRepository.GetFirstOrDefault(rs => rs.Requestid == model.RequestId);
 
-            if (admin == null || request == null)
+            if (request == null)
             {
                 response = new ServiceResponse
                 {
                     StatusCode = ResponseCode.Error,
                     Message = "Invalid Request",
                 };
-                
-                return response;
 
+                return response;
             }
 
-            Encounterform? encounterform = _unitOfWork.EncounterFormRepository.GetFirstOrDefault(e => e.Requestid == model.RequestId);
 
+            Encounterform? encounterform = _unitOfWork.EncounterFormRepository.GetFirstOrDefault(e => e.Requestid == model.RequestId);
+            string phoneNumber ="+" + model.CountryCode +  "-" + model.PhoneNumber;
             if (encounterform == null)
             {
                 Encounterform encf = new()
@@ -498,8 +501,8 @@ namespace Business_Layer.Services.AdminProvider
                     Diagnosis = model.Diagnosis,
                     TreatmentPlan = model.TreatmentPlan,
                     Procedures = model.Procedures,
-                    Adminid = admin.Adminid,
-                    Physicianid = request.Physicianid,
+                    Adminid = isAdmin ? userId : null,
+                    Physicianid = isAdmin ? null : userId,
                     Isfinalize = false
                 };
                 _unitOfWork.EncounterFormRepository.Add(encf);
@@ -530,9 +533,8 @@ namespace Business_Layer.Services.AdminProvider
                 encounterform.Diagnosis = model.Diagnosis;
                 encounterform.TreatmentPlan = model.TreatmentPlan;
                 encounterform.Procedures = model.Procedures;
-                encounterform.Adminid = admin.Adminid;
-                encounterform.Physicianid = request.Physicianid;
-                encounterform.Isfinalize = false;
+                encounterform.Adminid = isAdmin ? userId : null;
+                encounterform.Physicianid = isAdmin ? null : userId;
 
                 _unitOfWork.EncounterFormRepository.Update(encounterform);
                 _unitOfWork.Save();

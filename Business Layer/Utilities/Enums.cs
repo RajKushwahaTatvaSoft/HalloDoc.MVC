@@ -6,6 +6,11 @@ using System.Threading.Tasks;
 
 namespace Business_Layer.Utilities
 {
+    public enum AccountStatus
+    {
+        Active = 1,
+        Disabled = 2,
+    }
 
     public enum RequestCallType
     {

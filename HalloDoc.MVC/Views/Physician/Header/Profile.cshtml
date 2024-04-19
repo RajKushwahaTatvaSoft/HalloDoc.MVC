@@ -320,129 +320,69 @@
         </form>
 
 
-        <form method="post" id="phy-onboarding-form">
+        <form method="post" id="phy-onboarding-form" class="mb-5">
 
             <h5>Onboarding</h5>
 
             <input asp-for="PhysicianId" hidden />
 
             <div class="row my-1">
-                <div class="wrapper d-flex">
-                    <div class="col-1 m-1">
-                        <input type="checkbox" @(Model.IsICA ? "checked" : "") style="height:20px;width:20px" class="btn-outline-info" />
-                    </div>
-                    <div class="col-4">
-                        <span>Independent Contract Agreement</span>
-                    </div>
-                    <div class="col-2">
-                        <button id="ica-upload-btn" type="button" class="btn btn-primary">Upload</button>
-                    </div>
-                    <div class="col-2">
-                        @if (Model.IsICA)
-                        {
-                            <button type="button" class="btn btn-primary">View</button>
-                        }
-                    </div>
-                    <div class="col">
-                        <input asp-for="ICAFile" type="file" accept="application/pdf" id="ica-file-input" hidden />
-                        <span id="ica-file-name-text" class="fw-bole"></span>
-                    </div>
+                <div class="col d-flex justify-content-center">
+                    <span>Independent Contract Agreement</span>
+                </div>
+                <div class="col">
+                    @if (Model.IsICA)
+                    {
+                        <a href="/document/physician/@Model.PhysicianId/ICA.pdf" target="_blank" class="btn btn-primary">View</a>
+                    }
                 </div>
             </div>
 
             <div class="row my-1">
-                <div class="wrapper d-flex">
-                    <div class="col-1 m-1">
-                        <input type="checkbox" @(Model.IsBGCheck ? "checked" : "") style="height:20px;width:20px" class="btn-outline-info" />
-                    </div>
-                    <div class="col-4">
-                        <span>Background Check</span>
-                    </div>
-                    <div class="col-2">
-                        <button id="bg-check-upload-btn" type="button" class="btn btn-primary">Upload</button>
-                    </div>
-                    <div class="col-2">
-                        @if (Model.IsBGCheck)
-                        {
-                            <button type="button" class="btn btn-primary">View</button>
-                        }
-                    </div>
-                    <div class="col">
-                        <input asp-for="BGCheckFile" type="file" accept="application/pdf" id="bg-check-file-input" hidden />
-                        <span id="bg-check-file-name-text" class="fw-bole"></span>
-                    </div>
+                <div class="col d-flex justify-content-center">
+                    <span>Background Check</span>
+                </div>
+                <div class="col">
+                    @if (Model.IsBGCheck)
+                    {
+                        <a href="/document/physician/@Model.PhysicianId/BackgroundCheck.pdf" target="_blank" class="btn btn-primary">View</a>
+                    }
                 </div>
             </div>
 
             <div class="row my-1">
-                <div class="wrapper d-flex">
-                    <div class="col-1 m-1">
-                        <input type="checkbox" @(Model.IsHIPAA ? "checked" : "") style="height:20px;width:20px" class="btn-outline-info" />
-                    </div>
-                    <div class="col-4">
-                        <span>HIPAA Compliance</span>
-                    </div>
-                    <div class="col-2">
-                        <button id="hipaa-upload-btn" type="button" class="btn btn-primary">Upload</button>
-                    </div>
-                    <div class="col-2">
-                        @if (Model.IsHIPAA)
-                        {
-                            <button type="button" class="btn btn-primary">View</button>
-                        }
-                    </div>
-                    <div class="col">
-                        <input asp-for="HIPAAComplianceFile" accept="application/pdf" type="file" id="hipaa-file-input" hidden />
-                        <span id="hipaa-file-name-text" class="fw-bole"></span>
-                    </div>
+                <div class="col d-flex justify-content-center">
+                    <span>HIPAA Compliance</span>
+                </div>
+                <div class="col">
+                    @if (Model.IsHIPAA)
+                    {
+                        <a href="/document/physician/@Model.PhysicianId/HipaaCompliance.pdf" target="_blank" class="btn btn-primary">View</a>
+                    }
                 </div>
             </div>
 
             <div class="row my-1">
-                <div class="wrapper d-flex">
-                    <div class="col-1 m-1">
-                        <input type="checkbox" @(Model.IsNDA ? "checked" : "") style="height:20px;width:20px" class="btn-outline-info" />
-                    </div>
-                    <div class="col-4">
-                        <span>Non-Disclosure Agreement</span>
-                    </div>
-                    <div class="col-2">
-                        <button id="nda-upload-btn" type="button" class="btn btn-primary">Upload</button>
-                    </div>
-                    <div class="col-2">
-                        @if (Model.IsNDA)
-                        {
-                            <button type="button" class="btn btn-primary">View</button>
-                        }
-                    </div>
-                    <div class="col">
-                        <input asp-for="NDAFile" type="file" accept="application/pdf" id="nda-file-input" hidden />
-                        <span id="nda-file-name-text" class="fw-bole"></span>
-                    </div>
+                <div class="col d-flex justify-content-center">
+                    <span>Non Disclosure Agreement</span>
+                </div>
+                <div class="col">
+                    @if (Model.IsNDA)
+                    {
+                        <a href="/document/physician/@Model.PhysicianId/NDA.pdf" target="_blank" class="btn btn-primary">View</a>
+                    }
                 </div>
             </div>
 
             <div class="row my-1">
-                <div class="wrapper d-flex">
-                    <div class="col-1 m-1">
-                        <input type="checkbox" @(Model.IsLicenseDoc ? "checked" : "") style="height:20px;width:20px" class="btn-outline-info" />
-                    </div>
-                    <div class="col-4">
-                        <span>License Document</span>
-                    </div>
-                    <div class="col-2">
-                        <button id="license-upload-btn" type="button" class="btn btn-primary">Upload</button>
-                    </div>
-                    <div class="col-2">
-                        @if (Model.IsLicenseDoc)
-                        {
-                            <button type="button" class="btn btn-primary">View</button>
-                        }
-                    </div>
-                    <div class="col">
-                        <input asp-for="LicenseDocFile" type="file" accept="application/pdf" id="license-file-input" hidden />
-                        <span id="license-file-name-text" class="fw-bole"></span>
-                    </div>
+                <div class="col d-flex justify-content-center">
+                    <span>License Document</span>
+                </div>
+                <div class="col">
+                    @if (Model.IsLicenseDoc)
+                    {
+                        <a href="/document/physician/@Model.PhysicianId/LicenseDoc.pdf" target="_blank" class="btn btn-primary">View</a>
+                    }
                 </div>
             </div>
 
@@ -451,7 +391,6 @@
     </div>
 
 </div>
-
 
 <script src="https://code.jquery.com/jquery-3.6.1.min.js"
         integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous">
@@ -475,6 +414,7 @@
 
     });
 </script>
+
 <script>
 
     const phoneInputField = document.getElementById("phy-phone");

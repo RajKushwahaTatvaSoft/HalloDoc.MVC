@@ -95,7 +95,7 @@
             success: function (response) {
                 $('#checkboxContainer').empty();
                 $.each(response, function (index, item) {
-                    $('#checkboxContainer').append('<input type="checkbox" name="selectedRoles" class="border changeable check form-check-input mx-3" value="' + item.menuid + '">' + item.name + '<br>');
+                    $('#checkboxContainer').append('<input type="checkbox" name="selectedMenus" class="border changeable check form-check-input mx-3" value="' + item.menuid + '">' + item.name + '<br>');
                 });
             },
             error: function (xhr, status, error) {
@@ -104,30 +104,6 @@
         });
 
     });
-
-    function createRole() {
-        let selectedFiles = [];
-        let checkboxes = document.querySelectorAll(".check");
-
-        $("input:checkbox:checked").each(function () {
-            selectedFiles.push($(this).val());
-        });
-
-        var rolename = $('#roleName').val();
-        var accounttype = $('#accountType').val();
-        $.ajax({
-            url: "/Admin/CreateAccess",
-            data: { name: rolename, accountType: accounttype, selectedroles: selectedFiles },
-            type: 'POST',
-            success: function (result) {
-                location.reload();
-            },
-            error: function (error) {
-                console.log(error);
-                alert('Error creating role')
-            },
-        });
-    }
 
 </script>
 

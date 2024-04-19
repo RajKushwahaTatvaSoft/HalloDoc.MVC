@@ -32,7 +32,7 @@
                     <tr class="table-secondary ">
                         <td class="text-dark">Name</td>
                         <td class="text-dark">Account Type</td>
-                        <td class="text-dark">Actions</td>
+                        <td class="text-dark text-center">Actions</td>
                     </tr>
                 </thead>
                 <tbody>
@@ -47,7 +47,7 @@
                                 @role.AccounttypeName
                             </td>
 
-                            <td class="d-flex justify-content-end">
+                            <td class="text-center">
                                 <a class="btn mx-1 btn-outline-info " asp-controller="Admin" asp-action="EditRole" asp-route-roleid="@role.Id" asp-route-accounttype="@role.AccountType">Edit</a>
                                 <a asp-controller="Admin" asp-action="DeleteRole" asp-route-roleid="@role.Id" class="btn mx-1 btn-outline-info">Delete</a>
                             </td>

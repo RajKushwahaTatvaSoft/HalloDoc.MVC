@@ -16,8 +16,8 @@ namespace Business_Layer.Services.AdminProvider.Interface
         public ViewUploadsViewModel? GetViewUploadsModel(int requestId);
         public ServiceResponse SubmitCreateRequest(AdminCreateRequestViewModel model, string adminAspId, string createAccLink, bool isAdmin);
         public ServiceResponse SubmitOrderDetails(SendOrderViewModel model, string aspUserId);
-        public EncounterFormViewModel? GetEncounterFormModel(int requestId);
-        public ServiceResponse SubmitEncounterForm(EncounterFormViewModel model, bool isAdmin, int userId);
+        public EncounterFormViewModel? GetEncounterFormModel(int requestId,bool isAdmin);
+        public ServiceResponse SubmitEncounterForm(EncounterFormViewModel model,bool isAdmin, int userId);
 
     }
 }

@@ -16,10 +16,10 @@ using Business_Layer.Services.Guest.Interface;
 using Business_Layer.Services.Guest;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
-using Business_Layer.Services.Physician.Interface;
-using Business_Layer.Services.Physician;
 using Business_Layer.Services.AdminServices;
 using Business_Layer.Services.AdminServices.Interface;
+using Business_Layer.Services.PhysicianServices;
+using Business_Layer.Services.PhysicianServices.Interface;
 
 var builder = WebApplication.CreateBuilder(args);
 

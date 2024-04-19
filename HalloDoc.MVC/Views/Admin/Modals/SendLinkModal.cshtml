@@ -19,8 +19,13 @@
                 </button>
             </div>
 
-            <form method="post" asp-controller="Admin" asp-action="SendLinkForSubmitRequest">
+            <form method="post" asp-controller="Admin" asp-action="SendLinkForSubmitRequest" id="send-link-modal-form">
+                <div class="d-flex justify-content-center my-5" id="loading-div">
+                    <div class="loading-animation"></div>
+                </div>
+
                 <div class="modal-body">
+
                     <div class="modal-flex my-3">
 
                         <input hidden />
@@ -63,11 +68,15 @@
                     <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
                 </div>
             </form>
+
         </div>
     </div>
 </div>
 
 <script>
+
+    let loading_div = document.getElementById('loading-div');
+    loading_div.setAttribute('style', 'display:none !important;');
 
     sendLinkInputField = document.getElementById("send-link-phone");
     sendLinkField = window.intlTelInput(sendLinkInputField, {
@@ -84,5 +93,10 @@
         countryCode.value = sendLinkField.getSelectedCountryData().dialCode;
 
     }
+
+    $('#send-link-modal-form').submit(function (event) {
+        loading_div.setAttribute('style', 'display:flex !important;');
+        $('.modal-body').hide();
+    });
 
 </script>

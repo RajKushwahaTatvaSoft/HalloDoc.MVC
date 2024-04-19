@@ -18,7 +18,7 @@ namespace Data_Layer.ViewModels.Admin
         public int? AdminId { get; set; }
 
         public ProfileAdministratorInfo AdministratorInfo { get; set; }
-
+        
         [Required(ErrorMessage = "First Name cannot be empty")]
         [RegularExpression("^[A-Za-z\\s]{1,}[\\.]{0,1}[A-Za-z\\s]{0,}$", ErrorMessage = "Enter Valid Name")]
         public string? FirstName { get; set; }
@@ -57,7 +57,7 @@ namespace Data_Layer.ViewModels.Admin
     public class ProfileAdministratorInfo
     {
         [Required(ErrorMessage = "First Name cannot be empty")]
-        [RegularExpression("^[A-Za-z\\s]{1,}[\\.]{0,1}[A-Za-z\\s]{0,}$", ErrorMessage = "Enter Valid Name")]
+        [RegularExpression("^[A-Za-s]{}[\\.],1}[A-z\\s]{0,}$", ErrorMessage = "Enter Valid Name")]
         public string? FirstName { get; set; }
 
         [Required(ErrorMessage = "Last Name cannot be empty")]

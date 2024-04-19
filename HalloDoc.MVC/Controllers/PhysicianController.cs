@@ -14,9 +14,9 @@ using System.Text.Json.Nodes;
 using Business_Layer.Services.Helper.Interface;
 using System.Text;
 using Rotativa.AspNetCore;
-using Business_Layer.Services.Physician.Interface;
 using Business_Layer.Services.AdminServices.Interface;
 using Business_Layer.Services.AdminServices;
+using Business_Layer.Services.PhysicianServices.Interface;
 
 namespace HalloDoc.MVC.Controllers
 {
@@ -1252,6 +1252,15 @@ namespace HalloDoc.MVC.Controllers
 
             try
             {
+
+                Encounterform? encounterform = _unitOfWork.EncounterFormRepository.GetFirstOrDefault(form => form.Requestid == requestId);
+                if (encounterform == null || !encounterform.Isfinalize)
+                {
+                    TempData["error"] = "Please finalize encounter";
+                    _notyf.Error("Please finalize encounter form before concluding the case.");
+                    return RedirectToAction("ConcludeCare", new { requestId = requestId });
+                }
+
                 Request? request = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestId);
 
                 if (request == null)
@@ -1296,91 +1305,27 @@ namespace HalloDoc.MVC.Controllers
         }
 
         [RoleAuthorize((int)AllowMenu.ProviderDashboard)]
-        public IActionResult EncounterForm(int requestid)
+        public IActionResult EncounterForm(int requestId)
         {
-            Request? request = _unitOfWork.RequestRepository.GetFirstOrDefault(r => r.Requestid == requestid);
-
-            if (request == null)
-            {
-                _notyf.Error("Cannot Find Request");
-                return RedirectToAction("Dashboard");
-            }
-
-            Encounterform? oldEncounterForm = _unitOfWork.EncounterFormRepository.GetFirstOrDefault(e => e.Requestid == requestid);
-            Requestclient requestclient = _unitOfWork.RequestClientRepository.GetFirstOrDefault(e => e.Requestid == requestid);
-            string dobDate = null;
-
-
-            if (requestclient.Intyear != null && requestclient.Strmonth != null && requestclient.Intdate != null)
-            {
-                dobDate = requestclient.Intyear + "-" + requestclient.Strmonth + "-" + requestclient.Intdate;
-            }
-
-            EncounterFormViewModel encounterViewModel;
-
-            if (oldEncounterForm != null)
+            try
             {
 
-                if (oldEncounterForm.Isfinalize)
+                EncounterFormViewModel? model = _physicianService.AdminProviderService.GetEncounterFormModel(requestId,false);
+
+                if (model == null)
                 {
-                    _notyf.Error("Form is Already Finalized");
+                    _notyf.Error("Coundn't fetch data");
                     return RedirectToAction("Dashboard");
                 }
 
-                encounterViewModel = new()
-                {
-                    RequestId = requestid,
-                    FirstName = requestclient.Firstname,
-                    LastName = requestclient.Lastname,
-                    Email = requestclient.Email,
-                    PhoneNumber = requestclient.Phonenumber,
-                    DOB = dobDate != null ? DateTime.Parse(dobDate) : null,
-                    CreatedDate = request.Createddate,
-                    Location = requestclient.Street + " " + requestclient.City + " " + requestclient.State,
-                    MedicalHistory = oldEncounterForm.Medicalhistory,
-                    History = oldEncounterForm.Historyofpresentillnessorinjury,
-                    Medications = oldEncounterForm.Medications,
-                    Allergies = oldEncounterForm.Allergies,
-                    Temp = oldEncounterForm.Temp,
-                    HR = oldEncounterForm.Hr,
-                    RR = oldEncounterForm.Rr,
-                    BpLow = oldEncounterForm.Bloodpressuresystolic,
-                    BpHigh = oldEncounterForm.Bloodpressuresystolic,
-                    O2 = oldEncounterForm.O2,
-                    Pain = oldEncounterForm.Pain,
-                    Heent = oldEncounterForm.Heent,
-                    CV = oldEncounterForm.Cv,
-                    Chest = oldEncounterForm.Chest,
-                    ABD = oldEncounterForm.Abd,
-                    Extr = oldEncounterForm.Extremities,
-                    Skin = oldEncounterForm.Skin,
-                    Neuro = oldEncounterForm.Neuro,
-                    Other = oldEncounterForm.Other,
-                    Diagnosis = oldEncounterForm.Diagnosis,
-                    TreatmentPlan = oldEncounterForm.TreatmentPlan,
-                    Procedures = oldEncounterForm.Procedures,
-                    MedicationDispensed = oldEncounterForm.Medicaldispensed,
-                    FollowUps = oldEncounterForm.Followup
-
-                };
-
-                return View("Dashboard/EncounterForm", encounterViewModel);
+                return View("AdminProvider/EncounterForm", model);
 
             }
-
-            encounterViewModel = new()
+            catch (Exception ex)
             {
-                RequestId = requestid,
-                FirstName = requestclient.Firstname,
-                LastName = requestclient.Lastname,
-                Email = requestclient.Email,
-                PhoneNumber = requestclient.Phonenumber,
-                DOB = dobDate != null ? DateTime.Parse(dobDate) : null,
-                CreatedDate = request.Createddate,
-                Location = requestclient.Street + " " + requestclient.City + " " + requestclient.State,
-            };
-
-            return View("Dashboard/EncounterForm", encounterViewModel);
+                _notyf.Error(ex.Message);
+                return RedirectToAction("Dashboard");
+            }
 
         }
 
@@ -1390,81 +1335,34 @@ namespace HalloDoc.MVC.Controllers
         {
             int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
 
-            Request? r = _unitOfWork.RequestRepository.GetFirstOrDefault(rs => rs.Requestid == model.RequestId);
-            if (ModelState.IsValid)
+            try
             {
-                Encounterform? oldEncounterForm = _unitOfWork.EncounterFormRepository.GetFirstOrDefault(e => e.Requestid == model.RequestId);
 
-                if (oldEncounterForm == null)
+                if (ModelState.IsValid)
                 {
-                    Encounterform newEncounterForm = new()
+                    ServiceResponse response = _physicianService.AdminProviderService.SubmitEncounterForm(model, false, phyId);
+
+                    if (response.StatusCode == ResponseCode.Success)
                     {
-                        Requestid = model.RequestId,
-                        Historyofpresentillnessorinjury = model.History,
-                        Medicalhistory = model.MedicalHistory,
-                        Medications = model.Medications,
-                        Allergies = model.Allergies,
-                        Temp = model.Temp,
-                        Hr = model.HR,
-                        Rr = model.RR,
-                        Bloodpressuresystolic = model.BpLow,
-                        Bloodpressurediastolic = model.BpHigh,
-                        O2 = model.O2,
-                        Pain = model.Pain,
-                        Skin = model.Skin,
-                        Heent = model.Heent,
-                        Neuro = model.Neuro,
-                        Other = model.Other,
-                        Cv = model.CV,
-                        Chest = model.Chest,
-                        Abd = model.ABD,
-                        Extremities = model.Extr,
-                        Diagnosis = model.Diagnosis,
-                        TreatmentPlan = model.TreatmentPlan,
-                        Procedures = model.Procedures,
-                        Physicianid = phyId,
-                        Isfinalize = false,
-                    };
+                        _notyf.Success("Encounter form updated successfully.");
+                        return RedirectToAction("EncounterForm", new { requestId = model.RequestId });
+                    }
 
-                    _unitOfWork.EncounterFormRepository.Add(newEncounterForm);
-                    _unitOfWork.Save();
+                    _notyf.Error(response.Message);
+                    return View("AdminProvider/EncounterForm", model);
 
                 }
-                else
-                {
-                    oldEncounterForm.Requestid = model.RequestId;
-                    oldEncounterForm.Historyofpresentillnessorinjury = model.History;
-                    oldEncounterForm.Medicalhistory = model.MedicalHistory;
-                    oldEncounterForm.Medications = model.Medications;
-                    oldEncounterForm.Allergies = model.Allergies;
-                    oldEncounterForm.Temp = model.Temp;
-                    oldEncounterForm.Hr = model.HR;
-                    oldEncounterForm.Rr = model.RR;
-                    oldEncounterForm.Bloodpressuresystolic = model.BpLow;
-                    oldEncounterForm.Bloodpressurediastolic = model.BpHigh;
-                    oldEncounterForm.O2 = model.O2;
-                    oldEncounterForm.Pain = model.Pain;
-                    oldEncounterForm.Skin = model.Skin;
-                    oldEncounterForm.Heent = model.Heent;
-                    oldEncounterForm.Neuro = model.Neuro;
-                    oldEncounterForm.Other = model.Other;
-                    oldEncounterForm.Cv = model.CV;
-                    oldEncounterForm.Chest = model.Chest;
-                    oldEncounterForm.Abd = model.ABD;
-                    oldEncounterForm.Extremities = model.Extr;
-                    oldEncounterForm.Diagnosis = model.Diagnosis;
-                    oldEncounterForm.TreatmentPlan = model.TreatmentPlan;
-                    oldEncounterForm.Procedures = model.Procedures;
-                    oldEncounterForm.Physicianid = phyId;
-                    oldEncounterForm.Isfinalize = false;
 
-                    _unitOfWork.EncounterFormRepository.Update(oldEncounterForm);
-                    _unitOfWork.Save();
-                }
-                return RedirectToAction("EncounterForm", new { requestid = model.RequestId });
+                _notyf.Error("Please ensure all details are valid.");
+                return View("AdminProvider/EncounterForm", model);
+
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return RedirectToAction("Dashboard");
             }
 
-            return View("error");
         }
 
 

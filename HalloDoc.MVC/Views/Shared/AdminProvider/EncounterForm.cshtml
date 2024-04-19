@@ -1,7 +1,17 @@
 ﻿@model EncounterFormViewModel
 @{
-    Layout = "_AdminDashboardLayout";
-    ViewData["UserName"] = Model.UserName;
+    string layoutName = "";
+    if (Model.IsAdmin)
+    {
+        layoutName = "_AdminDashboardLayout";
+    }
+    else
+    {
+        layoutName = "_PhysicianDashboardLayout";
+    }
+}
+@{
+    Layout = layoutName;
 }
 
 <div class="container mt-4">
@@ -62,11 +72,12 @@
             </div>
 
             <div class="row mb-3">
-                <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 form-floating mb-3">
-                    <input asp-for="PhoneNumber" type="tel" class="phone form-control " id="floatingInputcontact"
-                           placeholder="99XXXXXXXX" aria-label="Contact Number">
 
+                <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 form-floating mb-3">
+                    <input asp-for="CountryCode" id="encounter-form-phone-country" hidden />
+                    <input asp-for="PhoneNumber" type="tel" class="form-control" id="encounter-form-phone">
                 </div>
+
                 <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 form-floating mb-3">
                     <input asp-for="Email" type="email" class="form-control " id="floatingInputemail"
                            placeholder="Email" aria-label="Email">
@@ -187,13 +198,62 @@
             </div>
 
             <div class="d-grid gap-2 d-flex justify-content-center  justify-content-md-end mt-4 pt-4 mb-3">
-                <button class="btn btn-info me-md-2 text-white fw-bold mb-3" type="submit">Submit</button>
+                <button class="btn btn-info me-md-2 text-white fw-bold mb-3" onclick="changeCountryCode()" type="submit">Submit</button>
+                @if (!Model.IsAdmin)
+                {
+                    <button id="finalize-encouter-form-btn" class="btn btn-success me-md-2 text-white fw-bold mb-3" type="button">Finalize</button>
+                }
                 <button class="btn btn-outline-info fw-bold mb-3" type="reset">Cancel</button>
             </div>
         </div>
     </form>
 </div>
 
+@if (!Model.IsAdmin)
+{
+    <script>
+        $('#finalize-encouter-form-btn').click(function () {
+
+            $.ajax({
+                url: "/Physician/FinalizeEncounterForm",
+                data: { requestId: @Model.RequestId },
+                type: 'POST',
+                success: function (result) {
+                    if (result) {
+                        location.href = "/Physician/Dashboard";
+                    }
+                },
+                error: function (error) {
+                    console.log(error);
+                    alert('Error Cancelling Request')
+                },
+            });
+
+        });
+    </script>
+}
+
+<script>
+    const encounterFormPhoneInputElement = document.getElementById("encounter-form-phone");
+    let encounterFormIntlInput = window.intlTelInput(encounterFormPhoneInputElement, {
+        utilsScript:
+            "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+        preferredCountries: ["in"],
+        separateDialCode: true,
+        initialCountry: "in"
+    });
+
+
+    function changeCountryCode() {
+
+        var countryCodePatient = document.getElementById("encounter-form-phone-country");
+
+        countryCodePatient.value = encounterFormIntlInput.getSelectedCountryData().dialCode;
+
+
+    }
+
+</script>
 
 <script>
 

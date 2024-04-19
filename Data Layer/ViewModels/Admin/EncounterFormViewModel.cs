@@ -4,7 +4,7 @@ namespace Data_Layer.ViewModels.Admin
 {
     public class EncounterFormViewModel
     {
-        public string? UserName { get; set; }
+        public bool IsAdmin = false;
 
         [Required(ErrorMessage = "First Name cannot be empty")]
         [RegularExpression("^[A-Za-z\\s]{1,}[\\.]{0,1}[A-Za-z\\s]{0,}$", ErrorMessage = "Enter Valid Name")]
@@ -22,6 +22,7 @@ namespace Data_Layer.ViewModels.Admin
         [DateNotInFuture(ErrorMessage = "Date Of Birth should be in past.")]
         public DateTime? DOB { get; set; }
         public DateTime? CreatedDate { get; set; }
+        public string? CountryCode{ get; set; }
 
         [Required(ErrorMessage = "Phone cannot be empty")]
         [RegularExpression("^[0-9\\+\\-]+$", ErrorMessage = "Enter valid Phone")]

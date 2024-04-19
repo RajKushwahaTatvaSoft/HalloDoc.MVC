@@ -181,8 +181,7 @@ function validatePatientForm() {
     let passResult = true;
     let confirmPassResult = true;
     let stateResult = validateState(stateSelectElement);
-    //let cityResult = validateCity(citySelectElement);
-    let cityResult = true;
+    let cityResult = validateCity(citySelectElement);
     let phoneResult = validatePhoneNumber(patientPhoneInputElement, patientIntlInput);
     let dobResult = validateDOB(dobElement);
 

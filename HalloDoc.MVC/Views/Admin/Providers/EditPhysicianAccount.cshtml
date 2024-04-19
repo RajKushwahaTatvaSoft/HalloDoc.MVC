@@ -34,6 +34,7 @@
 
             <h5>Account Information</h5>
             <div class="row g-2 m-1">
+
                 <div class="col-md">
                     <div class="form-floating">
                         <input asp-for="PhyUserName" type="text" class="form-control" id="userName" placeholder="User Name" disabled>
@@ -50,23 +51,26 @@
             </div>
 
             <div class="row g-2 m-1">
+
                 <div class="col-md-6">
                     <div class="form-floating">
-                        <select asp-for="StatusId" class="form-select mb-3 account-info-input" id="status" placeholder="Status" disabled>
-                            <option>Active</option>
-                            <option>Out</option>
-                            <option>Died</option>
+                        <select asp-for="StatusId" class="form-select mb-3 account-info-input" id="phy-status-list" placeholder="Status" disabled>
+                            <option value="1">Active</option>
+                            <option value="2">Disabled</option>
                         </select>
                         <label for="">Status</label>
                     </div>
                 </div>
 
                 <div class="col-md-6">
-                    <div class="form-floating phone-div w-100 h-100 ">
-                        <select asp-for="RoleId" class="form-select mb-3 account-info-input" placeholder="Role" disabled>
-                            @foreach (var role in Model.roles)
+                    <div class="form-floating">
+                        <select asp-for="RoleId" id="phy-role-list" class="form-select mb-3 account-info-input" placeholder="Role" disabled>
+                            @if (Model.roles != null && Model.roles.Any())
                             {
-                                <option value="@role.Roleid">@role.Name</option>
+                                foreach (var role in Model.roles)
+                                {
+                                    <option value="@role.Roleid">@role.Name</option>
+                                }
                             }
                         </select>
                         <label for="">Role</label>
@@ -358,7 +362,7 @@
                     <div class="col-2">
                         @if (Model.IsICA)
                         {
-                            <button type="button" class="btn btn-primary">View</button>
+                            <a href="/document/physician/@Model.PhysicianId/ICA.pdf" target="_blank" class="btn btn-primary">View</a>
                         }
                     </div>
                     <div class="col">
@@ -382,7 +386,7 @@
                     <div class="col-2">
                         @if (Model.IsBGCheck)
                         {
-                            <button type="button" class="btn btn-primary">View</button>
+                            <a href="/document/physician/@Model.PhysicianId/BackgroundCheck.pdf" target="_blank" class="btn btn-primary">View</a>
                         }
                     </div>
                     <div class="col">
@@ -406,7 +410,7 @@
                     <div class="col-2">
                         @if (Model.IsHIPAA)
                         {
-                            <button type="button" class="btn btn-primary">View</button>
+                            <a href="/document/physician/@Model.PhysicianId/HipaaCompliance.pdf" target="_blank" class="btn btn-primary">View</a>
                         }
                     </div>
                     <div class="col">
@@ -430,7 +434,7 @@
                     <div class="col-2">
                         @if (Model.IsNDA)
                         {
-                            <button type="button" class="btn btn-primary">View</button>
+                            <a href="/document/physician/@Model.PhysicianId/NDA.pdf" target="_blank" class="btn btn-primary">View</a>
                         }
                     </div>
                     <div class="col">
@@ -454,7 +458,7 @@
                     <div class="col-2">
                         @if (Model.IsLicenseDoc)
                         {
-                            <button type="button" class="btn btn-primary">View</button>
+                            <a href="/document/physician/@Model.PhysicianId/LicenseDoc.pdf" target="_blank" class="btn btn-primary">View</a>
                         }
                     </div>
                     <div class="col">
@@ -588,7 +592,6 @@
     $('#phy-onboarding-form').submit(function (event) {
         event.preventDefault();
 
-
         var formData = new FormData($(this)[0]);
 
         $.ajax({
@@ -629,6 +632,25 @@
             },
         });
 
+    });
+
+    $('#physician-account-info-form').submit(function (event) {
+        event.preventDefault();
+
+        console.log($('#phy-role-list').val());
+
+        $.ajax({
+            url: "/Admin/UpdatePhysicianAccountInfo",
+            data: { roleId: $('#phy-role-list').val(), statusId: $('#phy-status-list').val(), physicianId : @Model.PhysicianId },
+            type: 'POST',
+            success: function (result) {
+                location.reload();
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
     });
 
     $('#physician-info-form').submit(function (event) {
