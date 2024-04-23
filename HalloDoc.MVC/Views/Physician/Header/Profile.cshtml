@@ -405,6 +405,7 @@
             data: { updatePassword: $('#phy-password').val() },
             type: 'POST',
             success: function (result) {
+                $('#phy-password').val("");
             },
             error: function (error) {
                 console.log(error);

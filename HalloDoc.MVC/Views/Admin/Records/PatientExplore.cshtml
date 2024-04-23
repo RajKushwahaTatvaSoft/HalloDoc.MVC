@@ -47,7 +47,7 @@
                 {
                     <tr class="table-row">
                         <td>
-                            @explore.Name
+                            @explore.patientName
                         </td>
                         <td>@explore.createdAt  </td>
 
@@ -61,7 +61,7 @@
                         @if ((bool)explore.finalReport)
                         {
                             <td>
-                                <a asp-controller="AdminRecord" asp-action="ViewEncounter" asp-route-id="@explore.id" class="btn btn-outline-info align-middle">
+                                <a asp-controller="Admin" asp-action="DownloadEncounterPdf" asp-route-requestId="@explore.requestId" class="btn btn-outline-info align-middle">
                                     <span class="text-info">View</span>
                                 </a>
                             </td>
@@ -78,8 +78,8 @@
                             </a>
 
                             <ul class="dropdown-menu" aria-labelledby="provider-tab">
-                                <li><a class="dropdown-item" asp-controller="Admin" asp-action="ViewCase" asp-route-RequestID="@explore.id">View Case</a></li>
-                                <li><a class="dropdown-item" asp-controller="Admin" asp-action="ViewUploads" asp-route-RequestID="@explore.id">(@explore.count) Documenst</a></li>
+                                <li><a class="dropdown-item" asp-controller="Admin" asp-action="ViewCase" asp-route-RequestID="@explore.requestId">View Case</a></li>
+                                <li><a class="dropdown-item" asp-controller="Admin" asp-action="ViewUploads" asp-route-RequestID="@explore.requestId">(@explore.count) Documents</a></li>
                             </ul>
 
                         </td>

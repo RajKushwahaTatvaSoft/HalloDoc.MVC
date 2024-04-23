@@ -1,0 +1,141 @@
+﻿@model ViewShiftModel
+
+
+@{
+    bool isShiftInFuture = false;
+    DateTime shiftTime = Model.ShiftDate.Date.Add(Model.ShiftStartTime.ToTimeSpan());
+    @if (shiftTime > DateTime.Now)
+    {
+        isShiftInFuture = true;
+    }
+}
+
+<div class="modal fade" id="viewShiftModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <div class="modal-dark modal-title text-white" id="exampleModalLongTitle">
+                    View Shift
+                </div>
+                <button type="button" class="btn" aria-label="Close" data-bs-dismiss="modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
+                         fill="#FFFFFF">
+                        <path d="M0 0h24v24H0V0z" fill="none" />
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
+                    </svg>
+                </button>
+            </div>
+            <form method="post" id="edit-shift-modal-form">
+
+                <div class="modal-body">
+
+                    <fieldset id="view-shift-fieldset" disabled>
+
+                        <div class="modal-flex my-3">
+
+                            <input id="shift-detail-id" hidden asp-for="ShiftDetailId" />
+                            <div class="col-12">
+
+                                <div class="form-floating">
+                                    <select asp-for="RegionId" onchange="validateRequired(this)" id="view-shift-region-list" class="form-select">
+                                        <option value="">-- Select Region --</option>
+                                        @foreach (var region in Model.regions)
+                                        {
+                                            <option value="@region.Regionid">@region.Name </option>
+                                        }
+
+                                    </select>
+                                    <label for="view-shift-region-list">Select Region</label>
+                                    <span class="text-danger error-msg"></span>
+                                    
+                                </div>
+
+                            </div>
+
+                            <div class="col-12 mt-3">
+                                <div class="form-floating">
+
+                                    <input asp-for="ShiftDate" min="@DateTime.Now.ToString("yyyy-MM-dd")" onchange="validateShiftDate('view-shift-date-input')" id="view-shift-date-input" class="py-1 mt-1 form-control" type="date" style="height:60px;" />
+                                    <label for="floatingInput" class="">Shift Date</label>
+                                    <span asp-validation-for="ShiftDate" class="text-danger"></span>
+                                    <span class="text-danger error-msg" id="shift-date-error"></span>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between col-12 mt-3">
+                                <div class=" col-5 mx-1">
+                                    <div class="form-floating">
+                                        <input asp-for="ShiftStartTime" onchange="validateStartTime('view-shift-start-time','view-shift-date-input')" id="view-shift-start-time" type="time" class="form-control" placeholder="">
+                                        <label for="floatingInput">Start</label>
+                                        <span asp-validation-for="ShiftStartTime" class="text-danger"></span>
+                                    </div>
+                                </div>
+                                <div class=" col-5 mx-1">
+                                    <div class="form-floating">
+                                        <input asp-for="ShiftEndTime" onchange="validateEndTime('view-shift-end-time','view-shift-start-time')" id="view-shift-end-time" type="time" class="form-control" placeholder="">
+                                        <label for="floatingInput">End</label>
+                                        <span asp-validation-for="ShiftEndTime" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex flex-column">
+                                <span class="text-danger error-msg" id="start-time-error"></span>
+                                <span class="text-danger error-msg" id="end-time-error"></span>
+                            </div>
+                        </div>
+
+                    </fieldset>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" data-bs-dismiss="modal" class="btn btn-primary me-1">Return</button>
+                    @if (isShiftInFuture)
+                    {
+                        <button type="button" id="view-shift-edit-btn" class="btn btn-primary me-1 m-1">Edit</button>
+                        <button type="submit" id="view-shift-save-btn" class="btn btn-primary me-1 " style="display: none;">Save</button>
+                        <button type="button" id="view-shift-delete-btn" class="btn btn-danger me-1 ">Delete</button>
+                    }
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+@if (isShiftInFuture)
+{
+    <script>
+
+        $('#view-shift-delete-btn').click(function () {
+            $.ajax({
+                url: '/Physician/DeleteShift',
+                type: 'POST',
+                data: {
+                    shiftDetailId: $('#shift-detail-id').val(),
+                },
+                success: function (result) {
+                    location.reload();
+                },
+                error: function (err) {
+                    console.error(err);
+                }
+            });
+        });
+
+
+        $('#view-shift-edit-btn').click(function () {
+
+            document.getElementById("view-shift-fieldset").disabled = false;
+
+            $('#view-shift-save-btn').show();
+            $('#view-shift-edit-btn').hide();
+
+        });
+
+    </script>
+}
+
+<script src="/js/physician/modal/view-shift-modal.js"></script>

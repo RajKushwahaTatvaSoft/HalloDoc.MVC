@@ -18,8 +18,8 @@ namespace Data_Layer.ViewModels.Admin
 
     public class ExploreViewTRow
     {
-        public int? id { get; set; }
-        public string? Name { get; set; }
+        public int? requestId { get; set; }
+        public string? patientName { get; set; }
         public string? confirmationNumber { get; set; }
         public DateTime? createdAt { get; set; }
         public string? providerName { get; set; }

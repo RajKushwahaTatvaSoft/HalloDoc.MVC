@@ -10,7 +10,6 @@ namespace Data_Layer.ViewModels.Admin
 {
     public class ViewUploadsViewModel
     {
-        public string? UserName { get; set; }
         public bool IsAdmin { get; set; } = false;
         public string RequestFilesPath {  get; set; }
         public string PatientName { get; set; }

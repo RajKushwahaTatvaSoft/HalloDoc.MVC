@@ -11,7 +11,7 @@ namespace Business_Layer.Services.Helper.Interface
     public interface IUtilityService
     {
         public IEnumerable<City> GetCitiesByRegion(int regionId);
-        public SessionUser? GetSessionUserFromAdminId(int adminId, string adminAspId);
+        public SessionUser? GetSessionUserFromAdminId(int adminId);
         public string GenerateConfirmationNumber(User user);
     }
 }

@@ -8,19 +8,20 @@ namespace HalloDoc.MVC.Services
 
     public class CustomAuthorize : Attribute, IAuthorizationFilter
     {
-        private readonly int _roleId;
+        private readonly int _accountTypeId;
 
-        public CustomAuthorize(int roleId = 0)
+        public CustomAuthorize(int accountType = 0)
         {
-            _roleId = roleId;
+            _accountTypeId = accountType;
         }
  
         public void OnAuthorization(AuthorizationFilterContext context)
         {
 
-            if(_roleId == 0)
+            if(_accountTypeId == 0)
             {
                 context.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Guest", action = "Index" }));
+                context.HttpContext.Response.Cookies.Delete("hallodoc");
                 return;
             }
 
@@ -59,7 +60,7 @@ namespace HalloDoc.MVC.Services
                 return;
             }
 
-            if (!(_roleId == Convert.ToInt32(roleClaim.Value)))
+            if (!(_accountTypeId == Convert.ToInt32(roleClaim.Value)))
             {
                 context.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Guest", action = "AccessDenied" }));
                 return;

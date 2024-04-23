@@ -2,10 +2,10 @@
 using Business_Layer.Services.PhysicianServices.Interface;
 using Business_Layer.Utilities;
 using Data_Layer.CustomModels;
+using Data_Layer.CustomModels.Filter;
 using Data_Layer.CustomModels.TableRow.Physician;
 using Data_Layer.DataContext;
 using Data_Layer.DataModels;
-using Data_Layer.ViewModels.Admin;
 
 namespace Business_Layer.Services.PhysicianServices
 {
@@ -19,15 +19,15 @@ namespace Business_Layer.Services.PhysicianServices
 
         public async Task<PagedList<PhyDashboardTRow>> GetPhysicianRequestAsync(DashboardFilter dashboardParams, int physicianId)
         {
-            int pageNumber = dashboardParams.pageNumber;
+            int pageNumber = dashboardParams.PageNumber;
 
-            if (dashboardParams.pageNumber < 1)
+            if (dashboardParams.PageNumber < 1)
             {
                 pageNumber = 1;
             }
 
             List<short> validRequestTypes = new List<short>();
-            switch (dashboardParams.status)
+            switch (dashboardParams.Status)
             {
                 case (int)DashboardStatus.New:
                     validRequestTypes.Add((short)RequestStatus.Unassigned);
@@ -76,7 +76,7 @@ namespace Business_Layer.Services.PhysicianServices
                          }).AsQueryable();
 
             return await PagedList<PhyDashboardTRow>.CreateAsync(
-            query, pageNumber, dashboardParams.pageSize);
+            query, pageNumber, dashboardParams.PageSize);
 
         }
 

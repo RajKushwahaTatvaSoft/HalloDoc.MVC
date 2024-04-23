@@ -1,7 +1,7 @@
 ﻿using Data_Layer.CustomModels;
+using Data_Layer.CustomModels.Filter;
 using Data_Layer.CustomModels.TableRow.Physician;
 using Data_Layer.DataModels;
-using Data_Layer.ViewModels.Admin;
 
 namespace Data_Layer.ViewModels.Physician
 {

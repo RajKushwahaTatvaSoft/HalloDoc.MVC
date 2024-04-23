@@ -15,6 +15,19 @@ namespace Business_Layer.Utilities
             return ip;
         }
 
+        public static string GetRequestType(int requestTypeId)
+        {
+            switch (requestTypeId)
+            {
+                case (int)RequestType.Business: return "Business";
+                case (int)RequestType.Patient: return "Patient";
+                case (int)RequestType.Concierge: return "Concierge";
+                case (int)RequestType.Family: return "Relative/Family";
+                default: return "";
+            }
+
+        }
+
         public static int GetDashboardStatus(int requestStatus)
         {
             switch (requestStatus)

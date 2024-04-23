@@ -39,6 +39,21 @@ function loadSearchRecordTable(pageNo) {
     });
 }
 
+$('#export-data-to-excel').click(function () {
+    let searchRecordExportUrl = "https://localhost:7161/Admin/ExportSearchRecordToExcel?patientName=" + patient_name_filter +
+        "&requestStatus=" + request_status_filter +
+        "&requestType=" + request_type_filter +
+        "&phoneNumber=" + phone_number_filter +
+        "&fromDateOfService=" + from_date_service_filter +
+        "&toDateOfService=" + to_date_service_filter +
+        "&providerName=" + provider_name_filter +
+        "&patientEmail=" + patient_email_filter;
+    console.log(searchRecordExportUrl);
+
+    location.href = searchRecordExportUrl;
+
+});
+
 $('#search-record-search-btn').click(function () {
     request_status_filter = $('#search-record-request-status').val();
     patient_name_filter = $('#search-record-patient-name').val();

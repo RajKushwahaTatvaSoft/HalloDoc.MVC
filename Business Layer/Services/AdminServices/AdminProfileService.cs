@@ -38,7 +38,7 @@ namespace Business_Layer.Services.AdminServices
             string? state = _unitOfWork.RegionRepository.GetFirstOrDefault(r => r.Regionid == admin.Regionid)?.Name;
 
             IEnumerable<Region> regions = _unitOfWork.RegionRepository.GetAll();
-            IEnumerable<int> adminRegions = _unitOfWork.AdminRegionRepo.Where(region => region.Adminid == adminId).ToList().Select(x => (int)x.Regionid);
+            IEnumerable<int> adminRegions = _unitOfWork.AdminRegionRepo.Where(region => region.Adminid == adminId).ToList().Select(x => x.Regionid ?? 0);
             IEnumerable<City> adminMailCityList = _unitOfWork.CityRepository.Where(city => city.Regionid == admin.Regionid);
             int cityId = _unitOfWork.CityRepository.GetFirstOrDefault(city => city.Name == admin.City)?.Id ?? 0;
 
@@ -101,11 +101,11 @@ namespace Business_Layer.Services.AdminServices
 
         }
 
-        public ServiceResponse UpdateAdminRole(int roleId, int adminId, string adminAspId)
+        public ServiceResponse UpdateAdminAccountInfo(int roleId, int statusId, int adminId)
         {
 
             ServiceResponse response = new ServiceResponse();
-            if (adminId == 0 || adminAspId == null)
+            if (adminId == 0)
             {
                 response.StatusCode = ResponseCode.Error;
                 response.Message = "Cannot find admin Id.";
@@ -121,6 +121,7 @@ namespace Business_Layer.Services.AdminServices
             }
 
             adminUser.Roleid = roleId;
+            adminUser.Status = (short) statusId;
             _unitOfWork.AdminRepository.Update(adminUser);
             _unitOfWork.Save();
 

@@ -2,9 +2,9 @@
 using Business_Layer.Services.AdminServices.Interface;
 using Business_Layer.Utilities;
 using Data_Layer.CustomModels;
+using Data_Layer.CustomModels.Filter;
 using Data_Layer.DataContext;
 using Data_Layer.DataModels;
-using Data_Layer.ViewModels.Admin;
 using DocumentFormat.OpenXml.Drawing.Charts;
 
 namespace Business_Layer.Services.AdminServices
@@ -19,15 +19,15 @@ namespace Business_Layer.Services.AdminServices
 
         public async Task<PagedList<AdminRequest>> GetAdminRequestsAsync(DashboardFilter dashboardParams)
         {
-            int pageNumber = dashboardParams.pageNumber;
+            int pageNumber = dashboardParams.PageNumber;
 
-            if (dashboardParams.pageNumber < 1)
+            if (dashboardParams.PageNumber < 1)
             {
                 pageNumber = 1;
             }
 
             List<short> validRequestTypes = new List<short>();
-            switch (dashboardParams.status)
+            switch (dashboardParams.Status)
             {
                 case (int)DashboardStatus.New:
                     validRequestTypes.Add((short)RequestStatus.Unassigned);
@@ -85,7 +85,7 @@ namespace Business_Layer.Services.AdminServices
                          }).AsQueryable();
 
             return await PagedList<AdminRequest>.CreateAsync(
-            query, pageNumber, dashboardParams.pageSize);
+            query, pageNumber, dashboardParams.PageSize);
 
         }
 
@@ -234,9 +234,9 @@ namespace Business_Layer.Services.AdminServices
             {
                 return "";
             }
-            string udb = u.Intyear?.ToString("D4") + "-" + u.Strmonth + "-" + u.Intdate?.ToString("D2");
 
-            DateTime dobDate = DateTime.Parse(udb);
+
+            DateTime dobDate = DateHelper.GetDOBDateTime(u.Intyear??0,u.Strmonth,u.Intdate??0);
             string dob = dobDate.ToString("MMM dd, yyyy");
             var today = DateTime.Today;
             var age = today.Year - dobDate.Year;

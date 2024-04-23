@@ -28,11 +28,13 @@ namespace Business_Layer.Services.AdminServices
             AdminDashboardService = new AdminDashboardService(_unitOfWork);
             ProviderLocationService = new ProviderLocationService(_config, _unitOfWork);
             AdminProfileService = new AdminProfileService(_unitOfWork);
+            AdminRecordService = new AdminRecordService(_unitOfWork);
         }
 
         public IAdminProviderService AdminProviderService { get; private set; }
         public IAdminDashboardService AdminDashboardService { get; private set; }
         public IProviderLocationService ProviderLocationService { get; private set; }
         public IAdminProfileService AdminProfileService { get; private set; }
+        public IAdminRecordService AdminRecordService { get; private set; }
     }
 }

@@ -40,6 +40,7 @@ namespace Data_Layer.ViewModels.Guest
 
         [RegularExpression("(?=^.{8,}$)((?=.*\\d)|(?=.*\\W+))(?![.\\n])(?=.*[A-Z])(?=.*[a-z]).*$", ErrorMessage = "Password must contain 1 capital, 1 small, 1 Special symbol and at least 8 characters")]
         public string? Password { get; set; }
+
         [Compare("Password", ErrorMessage = "Password and Confirm Password should be same.")]
         public string? ConfirmPassword { get; set; }
 

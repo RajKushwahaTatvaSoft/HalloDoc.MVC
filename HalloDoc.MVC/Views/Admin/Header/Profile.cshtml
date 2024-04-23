@@ -48,23 +48,23 @@
 
                     </div>
 
-                    <div class=" col-md-6 col-12 mt-4">
-                        <select asp-for="StatusId" class="form-select account-info-input" id="account-info-status" disabled style="height:60px;">
-                            <option selected value="0">-- Select Status --</option>
+                    <div class=" col-md-6 col-12 mt-4 form-floating">
+                        <select asp-for="StatusId" class="form-select account-info-input" id="account-info-status" disabled>
                             <option value="1">Active</option>
-                            <option value="2">Pending</option>
-                            <option value="3">Heaven</option>
+                            <option value="2">Disabled</option>
                         </select>
+                        <label for="account-info-status">Status</label>
                     </div>
 
-                    <div class="col-md-6 col-12 mt-4">
-                        <select asp-for="RoleId" class="form-select account-info-input" id="account-info-role" disabled style="height:60px;">
-                            <option selected value="">-- Select Role --</option>
+                    <div class="col-md-6 col-12 mt-4 form-floating">
+                        <select asp-for="RoleId" class="form-select account-info-input" id="account-info-role" disabled >
+                            <option selected disabled value="">-- Select Role --</option>
                             @foreach (var role in Model.roles)
                             {
                                 <option value="@role.Roleid">@role.Name</option>
                             }
                         </select>
+                        <label for="account-info-role">Role</label>
                     </div>
 
                     <div class="d-flex justify-content-end mt-3">
@@ -118,9 +118,9 @@
                         </div>
 
                         <div class="col-md-6  mt-4">
-                            <div class="form-floating d-flex  w-100">
-                                <input asp-for="CountryCode" id="admin-phone-country" class="" hidden style="height:60px;" />
-                                <input asp-for="PhoneNumber" id="admin-phone" class=" py-4 form-control" type="tel" style="height:60px;" />
+                            <div class="form-floating">
+                                <input asp-for="CountryCode" id="admin-phone-country" class="" hidden />
+                                <input asp-for="PhoneNumber" id="admin-phone" class=" py-4 form-control" type="tel" />
                             </div>
                         </div>
 
@@ -200,7 +200,7 @@
 
                     <div class="col-md-6 col-12 mt-4 form-floating floating-label">
                         <select disabled asp-for="RegionId" class="form-select billingChange" id="admin-billing-state">
-                            <option disabled value="0"> -- Select State -- </option>
+                            <option disabled value=""> -- Select State -- </option>
 
                             @foreach (var region in Model.regions)
                             {
@@ -295,6 +295,7 @@
             type: 'POST',
             data: {
                 roleId: $('#account-info-role').val(),
+                statusId: $('#account-info-status').val(),
             },
             success: function (result) {
                 if (result) {

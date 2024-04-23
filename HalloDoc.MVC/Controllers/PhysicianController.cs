@@ -17,6 +17,9 @@ using Rotativa.AspNetCore;
 using Business_Layer.Services.AdminServices.Interface;
 using Business_Layer.Services.AdminServices;
 using Business_Layer.Services.PhysicianServices.Interface;
+using System.IO.Compression;
+using Data_Layer.CustomModels.Filter;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace HalloDoc.MVC.Controllers
 {
@@ -396,9 +399,9 @@ namespace HalloDoc.MVC.Controllers
                 RequestTypeFilter = typeFilter,
                 PatientSearchText = searchFilter,
                 RegionFilter = regionFilter,
-                pageNumber = pageNumber,
-                pageSize = 5,
-                status = status,
+                PageNumber = pageNumber,
+                PageSize = 5,
+                Status = status,
             };
 
             PagedList<PhyDashboardTRow> pagedList = await _physicianService.PhysicianDashboardService.GetPhysicianRequestAsync(filter, phyId);
@@ -416,42 +419,162 @@ namespace HalloDoc.MVC.Controllers
         [RoleAuthorize((int)AllowMenu.ProviderDashboard)]
         public IActionResult ViewUploads(int requestId)
         {
-            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-            string? adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
 
-            Request? req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestId);
-            if (req == null)
+            ViewUploadsViewModel? model = _physicianService.AdminProviderService.GetViewUploadsModel(requestId, false);
+
+            if (model == null)
             {
-                return View("Error");
+                _notyf.Error("Cannot get data. Please try again later.");
+                return RedirectToAction("Dashboard");
             }
 
-            Requestclient? reqCli = _unitOfWork.RequestClientRepository.GetFirstOrDefault(reqcli => reqcli.Requestid == req.Requestid);
-            if (reqCli == null)
-            {
-                return View("Error");
-            }
-
-            List<Requestwisefile> files = _unitOfWork.RequestWiseFileRepository.Where(file => file.Requestid == requestId && file.Isdeleted != true).ToList();
-
-            List<string> ext = new List<string>();
-            for (int i = 0; i < files.Count; i++)
-            {
-                ext.Add(Path.GetExtension(files[i].Filename));
-            }
-
-            ViewUploadsViewModel model = new ViewUploadsViewModel()
-            {
-                PatientName = reqCli.Firstname + " " + reqCli.Lastname,
-                requestwisefiles = files,
-                ConfirmationNumber = req.Confirmationnumber,
-                RequestId = req.Requestid,
-                extensions = ext,
-                UserName = adminName,
-                RequestFilesPath = REQUEST_FILE_PATH,
-            };
-
-            return View("Dashboard/ViewUploads", model);
+            return View("AdminProvider/ViewUploads", model);
         }
+
+        [HttpPost]
+        public IActionResult ViewUploads(ViewUploadsViewModel uploadsVM)
+        {
+            int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+
+            if (uploadsVM.File != null)
+            {
+                string webRootPath = _environment.WebRootPath;
+                string requestPath = Path.Combine(webRootPath, REQUEST_FILE_PATH, uploadsVM.RequestId.ToString());
+                FileHelper.InsertFileAtPath(uploadsVM.File, requestPath);
+
+                Requestwisefile requestwisefile = new()
+                {
+                    Requestid = uploadsVM.RequestId,
+                    Filename = uploadsVM.File.FileName,
+                    Createddate = DateTime.Now,
+                    Physicianid = phyId,
+                    Ip = "127.0.0.1",
+                };
+
+                _unitOfWork.RequestWiseFileRepository.Add(requestwisefile);
+                _unitOfWork.Save();
+
+                uploadsVM.File = null;
+            }
+
+            return RedirectToAction("ViewUploads", new { Requestid = uploadsVM.RequestId });
+        }
+
+
+        [HttpPost]
+        public bool SendFilesViaMail(List<int> fileIds, int requestId)
+        {
+            try
+            {
+                if (fileIds.Count < 1)
+                {
+                    TempData["error"] = "Please select at least one document before sending email.";
+                    return false;
+                }
+                Requestclient? reqCli = _unitOfWork.RequestClientRepository.GetFirstOrDefault(requestCli => requestCli.Requestid == requestId);
+
+                string? senderEmail = _config.GetSection("OutlookSMTP")["Sender"];
+                string? senderPassword = _config.GetSection("OutlookSMTP")["Password"];
+
+                if (reqCli == null || reqCli.Email == null || senderEmail == null)
+                {
+                    _notyf.Error("Could not fetch credentials");
+                    return false;
+                }
+
+                SmtpClient client = new SmtpClient("smtp.office365.com")
+                {
+                    Port = 587,
+                    Credentials = new NetworkCredential(senderEmail, senderPassword),
+                    EnableSsl = true,
+                    DeliveryMethod = SmtpDeliveryMethod.Network,
+                    UseDefaultCredentials = false
+                };
+
+                MailMessage mailMessage = new MailMessage
+                {
+                    From = new MailAddress(senderEmail, "HalloDoc"),
+                    Subject = "Hallodoc documents attachments",
+                    IsBodyHtml = true,
+                    Body = "<h3>Admin has sent you documents regarding your request.</h3>",
+                };
+
+                MemoryStream memoryStream;
+                foreach (int fileId in fileIds)
+                {
+                    Requestwisefile? file = _unitOfWork.RequestWiseFileRepository.GetFirstOrDefault(reqFile => reqFile.Requestwisefileid == fileId);
+
+                    if (file == null)
+                    {
+                        continue;
+                    }
+
+                    string documentPath = Path.Combine(_environment.WebRootPath, "document", "request", requestId.ToString(), file.Filename);
+
+                    byte[] fileBytes = System.IO.File.ReadAllBytes(documentPath);
+                    memoryStream = new MemoryStream(fileBytes);
+                    mailMessage.Attachments.Add(new Attachment(memoryStream, file.Filename));
+                }
+
+                mailMessage.To.Add(reqCli.Email);
+
+                client.Send(mailMessage);
+
+                TempData["success"] = "Email with selected documents has been successfully sent to " + reqCli.Email;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                TempData["error"] = "Error occured while sending documents. Please try again later.";
+                return false;
+            }
+        }
+
+
+        public async Task<IActionResult> DownloadAllFiles(int requestId)
+        {
+            try
+            {
+                // Fetch all document details for the given request:
+                List<Requestwisefile> documentDetails = _unitOfWork.RequestWiseFileRepository.Where(m => m.Requestid == requestId && m.Isdeleted != true).ToList();
+
+                if (documentDetails == null || documentDetails.Count == 0)
+                {
+                    return NotFound("No documents found for download");
+                }
+
+                // Create a unique zip file name
+                string? zipFileName = $"Documents_{DateTime.Now:yyyyMMddHHmmss}.zip";
+                string zipFilePath = Path.Combine(_environment.WebRootPath, "DownloadableZips", zipFileName);
+
+                // Create the directory if it doesn't exist
+                string? zipDirectory = Path.GetDirectoryName(zipFilePath);
+                if (!Directory.Exists(zipDirectory))
+                {
+                    Directory.CreateDirectory(zipDirectory);
+                }
+
+                // Create a new zip archive
+                using (ZipArchive zipArchive = ZipFile.Open(zipFilePath, ZipArchiveMode.Create))
+                {
+                    // Add each document to the zip archive
+                    foreach (Requestwisefile document in documentDetails)
+                    {
+                        string documentPath = Path.Combine(_environment.WebRootPath, "document", "request", requestId.ToString(), document.Filename);
+                        zipArchive.CreateEntryFromFile(documentPath, document.Filename);
+                    }
+                }
+
+                // Return the zip file for download
+                byte[] zipFileBytes = await System.IO.File.ReadAllBytesAsync(zipFilePath);
+                return File(zipFileBytes, "application/zip", zipFileName);
+            }
+            catch
+            {
+                return BadRequest("Error downloading files");
+            }
+        }
+
 
         [HttpPost]
         public bool DeleteAllFiles(int requestId)
@@ -521,174 +644,273 @@ namespace HalloDoc.MVC.Controllers
             return index;
         }
 
-        [HttpPost]
-        public IActionResult AddShift(SchedulingViewModel model)
+
+        public IActionResult ViewShiftModal(int shiftDetailId)
         {
+
+            int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
+
+            Shiftdetail? shiftdetail = _unitOfWork.ShiftDetailRepository.GetFirstOrDefault(shift => shift.Shiftdetailid == shiftDetailId);
+            if (shiftdetail == null)
+            {
+                return View("Error");
+            }
+
+            DateTime currentTime = DateTime.Now;
+            IEnumerable<int> phyRegions = _unitOfWork.PhysicianRegionRepo.Where(phy => phy.Physicianid == phyId).Select(_ => _.Regionid);
+
+            ViewShiftModel model = new ViewShiftModel()
+            {
+                PhysicianId = phyId,
+                RegionId = shiftdetail.Regionid ?? 0,
+                regions = _unitOfWork.RegionRepository.Where( reg => phyRegions.Contains(reg.Regionid)),
+                selectedPhysicians = _unitOfWork.PhysicianRepository.Where(phy => phy.Regionid == shiftdetail.Regionid),
+                ShiftDate = shiftdetail.Shiftdate,
+                ShiftEndTime = shiftdetail.Endtime,
+                ShiftStartTime = shiftdetail.Starttime,
+            };
+
+            return PartialView("Schedule/ViewShiftModal", model);
+
+        }
+
+
+        [HttpGet]
+        public IActionResult AddShiftModal()
+        {
+            int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
+
+            IEnumerable<int> phyRegions = _unitOfWork.PhysicianRegionRepo.Where(phy => phy.Physicianid == phyId).Select(_ => _.Regionid);
+            AddShiftModel model = new AddShiftModel();
+            model.regions = _unitOfWork.RegionRepository.Where(reg => phyRegions.Contains(reg.Regionid));
+            model.PhysicianId = phyId;
+            return PartialView("Schedule/AddShiftModal", model);
+        }
+
+
+        [HttpPost]
+        public bool DeleteShift(int shiftDetailId)
+        {
+            int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
+
             try
             {
-                int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
-                string phyAspId = HttpContext.Request.Headers.Where(x => x.Key == "userAspId").FirstOrDefault().Value;
+                Shiftdetail? sd = _unitOfWork.ShiftDetailRepository.GetFirstOrDefault(s => s.Shiftdetailid == shiftDetailId);
 
+
+                if (sd == null)
+                {
+                    TempData["error"] = "Cannot Find Shift";
+                    return false;
+                }
+
+                DateTime shiftTime = sd.Shiftdate.Date.Add(sd.Starttime.ToTimeSpan());
+                if (shiftTime <= DateTime.Now)
+                {
+                    _notyf.Error("Only future shifts are allowed to be deleted");
+                    return false;
+                }
+
+                sd.Isdeleted = true;
+                _unitOfWork.ShiftDetailRepository.Update(sd);
+                _unitOfWork.Save();
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                TempData["error"] = e.Message;
+                return false;
+            }
+
+        }
+
+
+        [HttpPost]
+        public bool EditShift(ViewShiftModel model)
+        {
+            string? phyAspId = HttpContext.Request.Headers.Where(x => x.Key == "userAspId").FirstOrDefault().Value;
+
+            try
+            {
                 if (ModelState.IsValid)
                 {
 
-                    List<DateTime> totalShiftDates = new List<DateTime>();
-                    List<DateTime> clashingShifts = new List<DateTime>();
-                    bool isAnotherShiftExists = false;
-
-                    totalShiftDates.Add(model.shiftDate.Value.Date);
-
-                    bool isExistsInit = _unitOfWork.ShiftDetailRepository.GetAll().Any(
-                        sd => sd.Isdeleted != true
-                        && sd.Shift.Physicianid == phyId
-                        && sd.Shiftdate.Date == model.shiftDate.Value.Date
-                    && ((model.shiftStartTime <= sd.Endtime && model.shiftStartTime >= sd.Starttime) // checks if new start time falls between exisiting
-                    || (model.shiftEndTime >= sd.Starttime && model.shiftEndTime <= sd.Endtime))); // checks if new end time falls between existing);
-
-                    if (isExistsInit)
+                    Shiftdetail? sd = _unitOfWork.ShiftDetailRepository.GetFirstOrDefault(s => s.Shiftdetailid == model.ShiftDetailId);
+                    if (sd == null)
                     {
-                        isAnotherShiftExists = true;
-                        clashingShifts.Add(model.shiftDate.Value.Date);
+                        _notyf.Error("Cannot Find shift");
+                        return false;
                     }
 
-                    if (model.isRepeat != null && model.repeatDays != null)
+                    sd.Regionid = model.RegionId;
+                    sd.Starttime = model.ShiftStartTime;
+                    sd.Endtime = model.ShiftEndTime;
+                    sd.Shiftdate = model.ShiftDate;
+                    sd.Modifieddate = DateTime.Now;
+                    sd.Modifiedby = phyAspId;
+                    sd.Status = (int)ShiftStatus.Pending;
+
+                    _unitOfWork.ShiftDetailRepository.Update(sd);
+                    _unitOfWork.Save();
+
+                    _notyf.Success("Shift Edited Successfully");
+
+                    return true;
+                }
+
+                IEnumerable<ModelStateEntry>? invalidValues = ModelState.Values.Where(val => val.ValidationState == ModelValidationState.Invalid);
+                foreach (var invalid in invalidValues)
+                {
+                    _notyf.Error(invalid.Errors.FirstOrDefault()?.ErrorMessage);
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return false;
+            }
+        }
+
+
+        [HttpPost]
+        public bool AddShift(AddShiftModel model)
+        {
+
+            int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
+            string? phyAspId = HttpContext.Request.Headers.Where(a => a.Key == "userAspId").FirstOrDefault().Value;
+
+            if (phyAspId == null || phyId == 0)
+            {
+                _notyf.Error("Physician Not found");
+                return false;
+            }
+
+            if (model.ShiftDate == null || model.StartTime == null || model.EndTime == null)
+            {
+                _notyf.Error("Please enter all the required details");
+                return false;
+            }
+
+            if (model.ShiftDate.Value.Date == DateTime.Today && model.StartTime < TimeOnly.FromDateTime(DateTime.Now))
+            {
+                _notyf.Error("Please create shifts after the current time for today's shifts.");
+                return false;
+            }
+
+            if (ModelState.IsValid)
+            {
+
+                List<DateTime> totalShiftDates = new List<DateTime>();
+                List<DateTime> clashingShifts = new List<DateTime>();
+                bool isAnotherShiftExists = false;
+
+                totalShiftDates.Add(model.ShiftDate.Value.Date);
+                bool isExistsInit = _unitOfWork.ShiftDetailRepository.IsAnotherShiftExists(model.PhysicianId, model.ShiftDate.Value.Date, model.StartTime, model.EndTime);
+
+                if (isExistsInit)
+                {
+                    isAnotherShiftExists = true;
+                    clashingShifts.Add(model.ShiftDate.Value.Date);
+                }
+
+                if (model.IsRepeat != null && model.repeatDays != null)
+                {
+                    DateTime nextShiftDate = model.ShiftDate ?? DateTime.Now;
+                    int currentDayOfWeek = (int)nextShiftDate.DayOfWeek;
+                    List<int> sorted = model.repeatDays.OrderBy(_ => _).ToList();
+
+                    int offset = GetOffSet(currentDayOfWeek, sorted);
+
+                    for (int i = 0; i < model.RepeatCount; i++)
                     {
-                        DateTime nextShiftDate = model.shiftDate ?? DateTime.Now;
-                        int currentDayOfWeek = (int)nextShiftDate.DayOfWeek;
-                        List<int> sorted = model.repeatDays.OrderBy(_ => _).ToList();
+                        int length = sorted.Count;
 
-                        int offset = GetOffSet(currentDayOfWeek, sorted);
-
-                        for (int i = 0; i < model.repeatCount; i++)
+                        for (int j = 0; j < length; j++)
                         {
-                            int length = sorted.Count;
+                            int offsetIndex = (j + offset) % length;
 
-                            for (int j = 0; j < length; j++)
+                            nextShiftDate = GetNextWeekday(nextShiftDate, sorted[offsetIndex]);
+                            totalShiftDates.Add(nextShiftDate);
+
+                            bool isExists = _unitOfWork.ShiftDetailRepository.IsAnotherShiftExists(model.PhysicianId, nextShiftDate.Date, model.StartTime, model.EndTime);
+
+                            if (isExists)
                             {
-                                int offsetIndex = (j + offset) % length;
-
-                                nextShiftDate = GetNextWeekday(nextShiftDate, sorted[offsetIndex]);
-                                totalShiftDates.Add(nextShiftDate);
-
-                                bool isExists = _unitOfWork.ShiftDetailRepository.GetAll().Any(
-                                    sd => sd.Isdeleted != true
-                                    && sd.Shift.Physicianid == phyId
-                                    && sd.Shiftdate.Date == model.shiftDate.Value.Date
-                                && ((model.shiftStartTime <= sd.Endtime && model.shiftStartTime >= sd.Starttime) // checks if new start time falls between exisiting
-                                || (model.shiftEndTime >= sd.Starttime && model.shiftEndTime <= sd.Endtime))); // checks if new end time falls between existing
-
-                                if (isExists)
-                                {
-                                    isAnotherShiftExists = true;
-                                    clashingShifts.Add(nextShiftDate);
-                                }
-
+                                isAnotherShiftExists = true;
+                                clashingShifts.Add(nextShiftDate);
                             }
 
                         }
 
                     }
 
-                    if (!isAnotherShiftExists)
-                    {
-                        Shift shift = new()
-                        {
-                            Physicianid = phyId,
-                            Startdate = DateOnly.FromDateTime(model.shiftDate.Value.Date),
-                            Repeatupto = model.repeatCount,
-                            Createddate = DateTime.Now,
-                            Createdby = phyAspId,
-                            Isrepeat = model.isRepeat != null,
-                        };
+                }
 
-                        _unitOfWork.ShiftRepository.Add(shift);
-                        _unitOfWork.Save();
-
-
-                        foreach (DateTime date in totalShiftDates)
-                        {
-
-                            Shiftdetail shiftdetail = new()
-                            {
-                                Shiftid = shift.Shiftid,
-                                Shiftdate = date,
-                                Regionid = model.addShiftRegion,
-                                Starttime = (TimeOnly)model.shiftStartTime,
-                                Endtime = (TimeOnly)model.shiftEndTime,
-                                Status = (short)ShiftStatus.Pending,
-                                Isdeleted = false
-                            };
-
-                            _unitOfWork.ShiftDetailRepository.Add(shiftdetail);
-                            _unitOfWork.Save();
-
-                            Shiftdetailregion s = new()
-                            {
-                                Shiftdetailid = shiftdetail.Shiftdetailid,
-                                Regionid = (int)shiftdetail.Regionid
-                            };
-                            _unitOfWork.ShiftDetailRegionRepository.Add(s);
-                            _unitOfWork.Save();
-
-                        }
-
-                        _notyf.Success("Successfully Added shifts");
-                        return RedirectToAction("Schedule");
-
-                    }
-
+                if (isAnotherShiftExists)
+                {
                     StringBuilder stringBuilder = new StringBuilder();
                     foreach (DateTime date in clashingShifts)
                     {
                         stringBuilder.Append(date.ToString("ddd, dd MMM yyyy"));
                     }
 
-
                     _notyf.Error("Your shifts are clashing with shifts on: \n" + stringBuilder.ToString());
+                    return false;
+                }
 
+
+                Shift shift = new()
+                {
+                    Physicianid = model.PhysicianId,
+                    Startdate = DateOnly.FromDateTime(model.ShiftDate.Value.Date),
+                    Repeatupto = model.RepeatCount,
+                    Createddate = DateTime.Now,
+                    Createdby = phyAspId,
+                    Isrepeat = model.IsRepeat != null,
+                };
+
+                _unitOfWork.ShiftRepository.Add(shift);
+                _unitOfWork.Save();
+
+
+                foreach (DateTime date in totalShiftDates)
+                {
+
+                    Shiftdetail shiftdetail = new()
+                    {
+                        Shiftid = shift.Shiftid,
+                        Shiftdate = date,
+                        Regionid = model.RegionId,
+                        Starttime = (TimeOnly)model.StartTime,
+                        Endtime = (TimeOnly)model.EndTime,
+                        Status = (short)ShiftStatus.Pending,
+                        Isdeleted = false
+                    };
+
+                    _unitOfWork.ShiftDetailRepository.Add(shiftdetail);
+                    _unitOfWork.Save();
+
+                    Shiftdetailregion s = new()
+                    {
+                        Shiftdetailid = shiftdetail.Shiftdetailid,
+                        Regionid = (int)shiftdetail.Regionid
+                    };
+                    _unitOfWork.ShiftDetailRegionRepository.Add(s);
+                    _unitOfWork.Save();
 
                 }
 
-                return RedirectToAction("Schedule");
+                _notyf.Success("Successfully Added shifts");
+                return true;
 
             }
-            catch (Exception ex)
-            {
-                _notyf.Error(ex.Message);
-                return RedirectToAction("Schedule");
-            }
+
+            _notyf.Error("Please enter all the required details");
+            return false;
         }
 
-
-        [HttpPost]
-        public IActionResult ViewUploads(ViewUploadsViewModel uploadsVM)
-        {
-            int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-
-            if (uploadsVM.File != null)
-            {
-                string webRootPath = _environment.WebRootPath;
-                string requestPath = Path.Combine(webRootPath, REQUEST_FILE_PATH, uploadsVM.RequestId.ToString());
-                FileHelper.InsertFileAtPath(uploadsVM.File, requestPath);
-
-                Requestwisefile requestwisefile = new()
-                {
-                    Requestid = uploadsVM.RequestId,
-                    Filename = uploadsVM.File.FileName,
-                    Createddate = DateTime.Now,
-                    Physicianid = phyId,
-                    Ip = "127.0.0.1",
-                };
-
-                _unitOfWork.RequestWiseFileRepository.Add(requestwisefile);
-                _unitOfWork.Save();
-
-                uploadsVM.File = null;
-
-            }
-
-            return RedirectToAction("ViewUploads", new { Requestid = uploadsVM.RequestId });
-        }
 
 
         [RoleAuthorize((int)AllowMenu.ProviderDashboard)]
@@ -736,8 +958,8 @@ namespace HalloDoc.MVC.Controllers
             }
 
             DashboardFilter initialFilter = new DashboardFilter();
-            initialFilter.status = (int)status;
-            initialFilter.pageNumber = (int)page;
+            initialFilter.Status = (int)status;
+            initialFilter.PageNumber = (int)page;
             initialFilter.RegionFilter = (int)region;
             initialFilter.RequestTypeFilter = (int)type;
             initialFilter.PatientSearchText = (string)search;
@@ -1015,65 +1237,27 @@ namespace HalloDoc.MVC.Controllers
             //    pdfDoc.Close();
             //    return File(stream.ToArray(), "application/pdf", "Grid.pdf");
             //}
-
-            Request? request = _unitOfWork.RequestRepository.GetFirstOrDefault(r => r.Requestid == requestId);
-
-            if (request == null)
+            try
             {
-                _notyf.Error("Cannot Find Request");
+
+                EncounterFormViewModel? model = _physicianService.AdminProviderService.GetEncounterFormModel(requestId ?? 0, true);
+
+                if (model == null)
+                {
+                    _notyf.Error("Coundn't fetch encounter data. Please try again later");
+                    return RedirectToAction("Dashboard");
+                }
+
+                return new ViewAsPdf("Partial/PdfPartial", model)
+                {
+                    FileName = "FinalizedEncounterForm.pdf"
+                };
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
                 return RedirectToAction("Dashboard");
             }
-
-            Encounterform? oldEncounterForm = _unitOfWork.EncounterFormRepository.GetFirstOrDefault(e => e.Requestid == requestId);
-            Requestclient requestclient = _unitOfWork.RequestClientRepository.GetFirstOrDefault(e => e.Requestid == requestId);
-            string dobDate = null;
-
-
-            if (requestclient.Intyear != null && requestclient.Strmonth != null && requestclient.Intdate != null)
-            {
-                dobDate = requestclient.Intyear + "-" + requestclient.Strmonth + "-" + requestclient.Intdate;
-            }
-
-            EncounterFormViewModel encounterViewModel = new EncounterFormViewModel()
-            {
-                FirstName = requestclient.Firstname,
-                LastName = requestclient.Lastname,
-                Email = requestclient.Email,
-                PhoneNumber = requestclient.Phonenumber,
-                DOB = dobDate != null ? DateTime.Parse(dobDate) : null,
-                CreatedDate = request.Createddate,
-                Location = requestclient.Street + " " + requestclient.City + " " + requestclient.State,
-                MedicalHistory = oldEncounterForm.Medicalhistory,
-                History = oldEncounterForm.Historyofpresentillnessorinjury,
-                Medications = oldEncounterForm.Medications,
-                Allergies = oldEncounterForm.Allergies,
-                Temp = oldEncounterForm.Temp,
-                HR = oldEncounterForm.Hr,
-                RR = oldEncounterForm.Rr,
-                BpLow = oldEncounterForm.Bloodpressuresystolic,
-                BpHigh = oldEncounterForm.Bloodpressuresystolic,
-                O2 = oldEncounterForm.O2,
-                Pain = oldEncounterForm.Pain,
-                Heent = oldEncounterForm.Heent,
-                CV = oldEncounterForm.Cv,
-                Chest = oldEncounterForm.Chest,
-                ABD = oldEncounterForm.Abd,
-                Extr = oldEncounterForm.Extremities,
-                Skin = oldEncounterForm.Skin,
-                Neuro = oldEncounterForm.Neuro,
-                Other = oldEncounterForm.Other,
-                Diagnosis = oldEncounterForm.Diagnosis,
-                TreatmentPlan = oldEncounterForm.TreatmentPlan,
-                Procedures = oldEncounterForm.Procedures,
-                MedicationDispensed = oldEncounterForm.Medicaldispensed,
-                FollowUps = oldEncounterForm.Followup
-
-            };
-
-            return new ViewAsPdf("Partial/PdfPartial", encounterViewModel)
-            {
-                FileName = "FinalizedEncounterForm.pdf"
-            };
         }
 
         [HttpPost]
@@ -1310,7 +1494,7 @@ namespace HalloDoc.MVC.Controllers
             try
             {
 
-                EncounterFormViewModel? model = _physicianService.AdminProviderService.GetEncounterFormModel(requestId,false);
+                EncounterFormViewModel? model = _physicianService.AdminProviderService.GetEncounterFormModel(requestId, false);
 
                 if (model == null)
                 {

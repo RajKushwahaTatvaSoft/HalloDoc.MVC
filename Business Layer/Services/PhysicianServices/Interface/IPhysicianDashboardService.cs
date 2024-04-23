@@ -1,6 +1,6 @@
 ﻿using Data_Layer.CustomModels;
+using Data_Layer.CustomModels.Filter;
 using Data_Layer.CustomModels.TableRow.Physician;
-using Data_Layer.ViewModels.Admin;
 using System;
 using System.Collections.Generic;
 using System.Linq;

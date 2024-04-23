@@ -25,7 +25,7 @@
 
         <div class="shadow dashboard-card container mt-4 px-3">
 
-            <form method="post" id="admin-account-info-form">
+            <form method="post">
 
                 <input hidden asp-for="AdminId"/>
                 <div class="row border-2">
@@ -42,37 +42,38 @@
 
                     <div class="col-md-6 mt-4 ">
                         <div class="floating-label form-floating">
-                            <input asp-for="Password" type="text" class="form-control" placeholder="Password" id="floatingInput">
+                            <input asp-for="Password" type="text" class="form-control" placeholder="Password" id="account-info-password">
                             <label for="floatingInput">Password</label>
                         </div>
-
                     </div>
 
-                    <div class=" col-md-6 col-12 mt-4">
-                        <select disabled asp-for="StatusId" class="form-select" id="adminStatusSelect" style="height:60px;">
-                            <option selected value="0">-- Select Status --</option>
+                    <div class=" col-md-6 col-12 mt-4 form-floating">
+                        <select disabled asp-for="StatusId" class="form-select account-info-input" id="account-info-status">
+                            <option selected disabled value="">-- Select Status --</option>
                             <option value="1">Active</option>
-                            <option value="2">Pending</option>
-                            <option value="3">F</option>
-                            <option value="4">Sleepy</option>
+                            <option value="2">Disabled</option>
                         </select>
+                        <label for="account-info-status">Status</label>
                     </div>
 
-                    <div class="col-md-6 col-12 mt-4">
-                        <select disabled asp-for="RoleId" class="form-select" id="adminStatusSelect" style="height:60px;">
-                            <option value="1">Role 1</option>
-                            <option value="1">Role 2</option>
-                            <option value="1">Role 3</option>
+                    <div class="col-md-6 col-12 mt-4 form-floating">
+
+                        <select asp-for="RoleId" class="form-select account-info-input" id="account-info-role" disabled>
+                            <option selected disabled value="">-- Select Role --</option>
+                            @foreach (var role in Model.roles)
+                            {
+                                <option value="@role.Roleid">@role.Name</option>
+                            }
                         </select>
+                        <label for="account-info-role">Role</label>
+
                     </div>
 
                     <div class=" d-flex justify-content-end mt-4">
-
-                        <button class="btn btn-outline-info" type="submit">
-
-                            <span>Reset Password</span>
-
-                        </button>
+                        <button id="account-info-edit-btn" type="button" class="btn btn-primary m-1">Edit</button>
+                        <button type="reset" id="account-info-cancel-btn" class="btn btn-danger me-1 d-none">Cancel</button>
+                        <button type="button" id="account-info-save-btn" class="btn btn-primary me-1 d-none">Save</button><br />
+                        <button class="btn btn-outline-info" id="account-info-reset-pass-btn" type="button">Reset Password</button>
 
                     </div>
 
@@ -117,8 +118,8 @@
 
                     <div class="col-md-6  mt-4">
                         <div class="form-floating d-flex  w-100">
-                            <input asp-for="CountryCode" id="admin-phone-country" class="changeable" hidden style="height:60px;" disabled />
-                            <input asp-for="PhoneNumber" id="admin-phone" class="changeable py-4 form-control" type="tel" style="height:60px;" disabled />
+                            <input asp-for="CountryCode" id="admin-phone-country" class="changeable" hidden disabled />
+                            <input asp-for="PhoneNumber" id="admin-phone" class="changeable py-4 form-control" type="tel" disabled />
                         </div>
                     </div>
 
@@ -159,13 +160,13 @@
 
                         </div>
 
-
                     </div>
                 </div>
             </form>
 
             <form method="post" id="admin-billing-info-form">
                 <div class="row">
+                    <input  asp-for="AdminId"  hidden/>
 
                     <h4 class="mt-4 col-12 text-grey  fs-6">Mailing and billing information</h4>
 
@@ -226,8 +227,8 @@
 
                     <div class="col-md-6 d-flex justify-content-evenly flex-wrap mt-4">
                         <div class="form-floating d-flex  w-100">
-                            <input asp-for="AltCountryCode" id="alt-phone-country" class="billingChange" hidden style="height:60px;" disabled />
-                            <input asp-for="AltPhoneNumber" id="alt-phone" class="billingChange py-4 form-control" type="tel" style="height:60px;" disabled />
+                            <input asp-for="AltCountryCode" id="alt-phone-country" class="billingChange" hidden  disabled />
+                            <input asp-for="AltPhoneNumber" id="alt-phone" class="billingChange py-4 form-control" type="tel" disabled />
                         </div>
                     </div>
                     <div class="row">
@@ -386,7 +387,7 @@
 
         $.ajax({
             url: "/Admin/SaveAdministratorInfo",
-            data: { regions: $('#adminSelectedRegions').val(), firstName: $('#firstNameInput').val(), lastName: $('#lastNameInput').val(), email: $('#emailInput').val(), phone: adminPhone },
+            data: { adminId : @Model.AdminId , regions: $('#adminSelectedRegions').val(), firstName: $('#firstNameInput').val(), lastName: $('#lastNameInput').val(), email: $('#emailInput').val(), phone: adminPhone },
             type: 'POST',
             success: function (result) {
                 location.reload();
@@ -473,4 +474,80 @@
     $('.admin-tab').removeClass("active");
     $('#access-tab').addClass("active");
 
+</script>
+
+
+<script>
+
+    var adminAccountInfoEdit = document.getElementById("account-info-edit-btn");
+    var adminAccountInfoSave = document.getElementById("account-info-save-btn");
+    var adminAccountInfoCancel = document.getElementById("account-info-cancel-btn");
+
+    $('#account-info-edit-btn').click(function () {
+
+        var inputs = document.getElementsByClassName("account-info-input");
+        for (var i = 0; i < inputs.length; i++) {
+            inputs[i].disabled = false;
+        }
+
+        adminAccountInfoEdit.classList.add('d-none');
+        adminAccountInfoSave.classList.remove('d-none');
+        adminAccountInfoCancel.classList.remove('d-none');
+    });
+
+    $('#account-info-reset-pass-btn').click(function () {
+
+        $.ajax({
+            url: '/Admin/AdminResetPassword',
+            type: 'POST',
+            data: {
+                password: $('#account-info-password').val(), adminId : @Model.AdminId,
+            },
+            success: function (result) {
+                $('#account-info-password').val("");
+            },
+            error: function (err) {
+                console.error(err);
+            }
+        });
+    });
+
+    $('#account-info-save-btn').click(function () {
+
+        console.log('save btn');
+
+        $.ajax({
+            url: '/Admin/SaveAdminAccountInfo',
+            type: 'POST',
+            data: {
+                roleId: $('#account-info-role').val(),
+                statusId: $('#account-info-status').val(),
+                adminId : @Model.AdminId,
+            },
+            success: function (result) {
+                if (result) {
+                    $('#account-info-cancel-btn').click();
+                    setTimeout(function () {
+                        location.reload();
+                    }, 1000);
+                }
+            },
+            error: function (err) {
+                console.error(err);
+            }
+        });
+    });
+
+    $('#account-info-cancel-btn').click(function () {
+
+        var inputs = document.getElementsByClassName("account-info-input");
+        for (var i = 0; i < inputs.length; i++) {
+            inputs[i].disabled = true;
+        }
+
+        adminAccountInfoEdit.classList.remove('d-none');
+        adminAccountInfoSave.classList.add('d-none');
+        adminAccountInfoCancel.classList.add('d-none');
+
+    });
 </script>

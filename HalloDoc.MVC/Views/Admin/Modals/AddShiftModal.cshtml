@@ -1,6 +1,7 @@
 ﻿@model AddShiftModel
 
-<partial name="_ValidationScriptsPartial" />
+<script src="/js/validation.js"></script>
+
 @{
     string repeatDaysList = "repeatDays";
 }
@@ -29,7 +30,7 @@
                         <input hidden />
                         <div class="col-12 form-floating">
 
-                            <select id="add-shift-region-list" asp-for="RegionId" class="form-select">
+                            <select id="add-shift-region-list" asp-for="RegionId" class="form-select" onchange="validateRequired(this)">
                                 <option disabled selected value="">-- Select Region --</option>
 
                                 @foreach (var region in Model.regions)
@@ -46,7 +47,7 @@
 
                         <div class="col-12 mt-3">
                             <div class="form-floating">
-                                <select id="add-shift-physician-list" asp-for="PhysicianId" class="form-select">
+                                <select id="add-shift-physician-list" asp-for="PhysicianId" class="form-select" onchange="validateRequired(this)">
                                     <option disabled selected value="">-- Select Physician --</option>
                                 </select>
                                 <label for="add-shift-physician-list">Select Physician</label>
@@ -57,7 +58,7 @@
 
                         <div class="col-12 mt-3">
                             <div class="form-floating">
-                                <input asp-for="ShiftDate" min="@DateTime.Now.ToString("yyyy-MM-dd")" onchange="validateShiftDate()" id="add-shift-date-input" class="form-control" type="date" style="height:60px;" />
+                                <input asp-for="ShiftDate" min="@DateTime.Now.ToString("yyyy-MM-dd")" onchange="validateShiftDate('add-shift-date-input')" id="add-shift-date-input" class="form-control" type="date" style="height:60px;" />
                                 <label for="floatingInput" class="">Shift Date</label>
                                 <span asp-validation-for="ShiftDate" class="text-danger"></span>
                                 <span class="text-danger error-msg" id="shift-date-error"></span>
@@ -67,21 +68,25 @@
                         <div class="d-flex justify-content-between col-12 mt-3">
                             <div class=" col-5 mx-1">
                                 <div class="form-floating">
-                                    <input asp-for="StartTime" onchange="validateStartTime()" id="add-shift-start-time" type="time" class="form-control" placeholder="">
+                                    <input asp-for="StartTime" onchange="validateStartTime('add-shift-start-time','add-shift-date-input')" id="add-shift-start-time" type="time" class="form-control" placeholder="">
                                     <label for="floatingInput">Start</label>
                                     <span asp-validation-for="StartTime" class="text-danger"></span>
                                 </div>
                             </div>
                             <div class=" col-5 mx-1">
                                 <div class="form-floating">
-                                    <input asp-for="EndTime" onchange="validateEndTime()" id="add-shift-end-time" type="time" class="form-control" placeholder="Email">
+                                    <input asp-for="EndTime" onchange="validateEndTime('add-shift-end-time','add-shift-start-time')" id="add-shift-end-time" type="time" class="form-control" placeholder="Email">
                                     <label for="floatingInput">End</label>
                                     <span asp-validation-for="EndTime" class="text-danger"></span>
                                 </div>
                             </div>
                         </div>
-                        <span class="text-danger error-msg" id="start-time-error"></span>
-                        <span class="text-danger error-msg" id="end-time-error"></span>
+
+                        <div class="d-flex flex-column">
+                            <span class="text-danger error-msg" id="start-time-error"></span>
+                            <span class="text-danger error-msg" id="end-time-error"></span>
+                        </div>
+
                         <div class="col-12 mt-3 d-flex justify-content-start">
 
                             <div class="form-check form-switch">
@@ -89,7 +94,6 @@
                                 <input class="form-check-input" type="checkbox" role="switch" name="IsRepeat" value="1" id="is-repeat-switch">
                                 <span asp-validation-for="IsRepeat" class="text-danger"></span>
                                 <span class="text-danger error-msg"></span>
-
                             </div>
 
                         </div>
@@ -100,6 +104,12 @@
                                 <span>Repeat Days</span>
 
                                 <div class="p-0 d-flex flex-wrap mt-3">
+                                    <div class="form-check">
+                                        <input class="mx-1 form-check-input" name="@repeatDaysList" type="checkbox" value="0" id="flexCheckDefault">
+                                        <label class="form-check-label" for="flexCheckDefault">
+                                            Sunday
+                                        </label>
+                                    </div>
                                     <div class="form-check">
                                         <input class="form-check-input me-1" name="@repeatDaysList" type="checkbox" value="1" id="flexCheckDefault">
                                         <label class="form-check-label" for="flexCheckDefault">
@@ -136,13 +146,6 @@
                                             Saturday
                                         </label>
                                     </div>
-                                    <div class="form-check">
-                                        <input class="mx-1 form-check-input" name="@repeatDaysList" type="checkbox" value="0" id="flexCheckDefault">
-                                        <label class="form-check-label" for="flexCheckDefault">
-                                            Sunday
-                                        </label>
-                                    </div>
-
                                 </div>
 
                             </div>

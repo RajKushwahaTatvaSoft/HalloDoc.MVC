@@ -25,6 +25,7 @@ namespace HalloDoc.MVC.Services
             if (_menuId == 0)
             {
                 context.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Guest", action = "Index" }));
+                context.HttpContext.Response.Cookies.Delete("hallodoc");
                 return;
             }
 

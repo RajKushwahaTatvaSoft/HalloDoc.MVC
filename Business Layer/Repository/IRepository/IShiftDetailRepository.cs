@@ -9,5 +9,6 @@ namespace Business_Layer.Repository.IRepository
 {
     public interface IShiftDetailRepository : IGenericRepository<Shiftdetail>
     {
+        public bool IsAnotherShiftExists(int physicianId, DateTime shiftDate, TimeOnly? startTime, TimeOnly? endTime);
     }
 }

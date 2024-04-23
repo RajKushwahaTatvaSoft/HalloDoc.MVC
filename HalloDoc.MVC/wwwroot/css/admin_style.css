@@ -377,12 +377,18 @@ x::-webkit-file-upload-button, input[type=file]:after {
     box-shadow: none !important
 }
 
+.normal-input select:focus, .normal-input input:focus, .normal-input textarea:focus {
+    box-shadow: none !important
+}
+
+
+
 .normal-input {
     border: 1px solid grey;
 }
 
     .normal-input:focus-within {
-        border: 1px solid var(--primary);
+        border: 1px solid var(--primary);        
     }
 
 .filter-options {

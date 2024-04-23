@@ -544,15 +544,19 @@ namespace HalloDoc.MVC.Controllers
                 int decryptedId = Convert.ToInt32(EncryptionService.Decrypt(requestId.Trim()));
 
                 Request? req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == decryptedId);
+                Requestclient? client = _unitOfWork.RequestClientRepository.GetFirstOrDefault(cli => cli.Requestid == decryptedId);
+
+                if(req == null || client == null)
+                {
+                    _notyf.Error(NotificationMessage.REQUEST_NOT_FOUND);
+                    return View("Index");
+                }
 
                 if (req.Status != (short)RequestStatus.Accepted)
                 {
                     TempData["error"] = "Request is no longer in pending state.";
                     return View("Index");
                 }
-
-                Requestclient client = _unitOfWork.RequestClientRepository.GetFirstOrDefault(cli => cli.Requestid == decryptedId);
-
 
                 SendAgreementViewModel model = new()
                 {

@@ -4,6 +4,105 @@ const validPasswordRegex = /(?=^.{8,}$)((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(
 const validNumberRegex = /^[0-9\+\-]+$/; // Only digits are allowed
 const intlPhoneErrorMapping = ["Invalid number", "Invalid country code", "Too short", "Too long", "Invalid number"];
 
+let todayDate = new Date().setHours(0, 0, 0, 0);
+
+function validateShiftDate(elementId) {
+    let dateElement = document.getElementById(elementId);
+
+    if (!dateElement.value.trim()) {
+        $('#shift-date-error').show();
+        $('#shift-date-error').text("Please enter date");
+        return false;
+    }
+
+    const selectedDate = new Date(dateElement.value);
+    if (selectedDate < todayDate) {
+
+        $('#shift-date-error').show();
+        $('#shift-date-error').text("Shift date invalid");
+        return false;
+    }
+
+    $('#shift-date-error').hide();
+    return true;
+}
+
+function validateStartTime(startTimeId,dateId) {
+
+    let dateElement = document.getElementById(dateId);
+    let startTimeElement = document.getElementById(startTimeId);
+    const selectedDate = new Date(dateElement.value);
+    let currentTime = new Date();
+    const startTime = startTimeElement.value;
+
+    if (!startTime.trim()) {
+        $('#start-time-error').show();
+        $('#start-time-error').text("Please select start time");
+        return false;
+    }
+
+    if (selectedDate.setHours(0, 0, 0, 0) < todayDate) {
+        $('#start-time-error').show();
+        $('#start-time-error').text("Can't create shift in past.");
+        return false;
+    }
+
+    if (selectedDate.setHours(0, 0, 0, 0) == todayDate) {
+
+        const userInputHours = parseInt(startTime.split(":")[0]);
+        const userInputMinutes = parseInt(startTime.split(":")[1]);
+
+        const userInputTimeObject = new Date(currentTime.getFullYear(), currentTime.getMonth(), currentTime.getDate(), userInputHours, userInputMinutes);
+
+        if (userInputTimeObject.getTime() < currentTime.getTime()) {
+            $('#start-time-error').show();
+            $('#start-time-error').text("Shift can be created after the current time.");
+            return false;
+        }
+    }
+
+    $('#start-time-error').hide();
+    return true;
+}
+
+function validateEndTime(endTimeId,startTimeId) {
+    let startTimeElement = document.getElementById(startTimeId);
+    let endTimeElement = document.getElementById(endTimeId);
+    const startTime = startTimeElement.value;
+    const endTime = endTimeElement.value;
+
+    if (!endTime.trim()) {
+        $('#end-time-error').show();
+        $('#end-time-error').text("Please select end time");
+        return false;
+    }
+
+    let timefrom = new Date();
+    let timeFromHour = parseInt(startTime.split(":")[0]);
+    let timeFromMinute = parseInt(startTime.split(":")[1]);
+    timefrom.setHours((timeFromHour - 1 + 24) % 24);
+    timefrom.setMinutes(timeFromMinute);
+
+    let timeto = new Date();
+    let timeToHour = parseInt(endTime.split(":")[0]);
+    let timeToMinute = parseInt(endTime.split(":")[1]);
+    timeto.setHours((timeToHour - 1 + 24) % 24);
+    timeto.setMinutes(timeToMinute);
+
+    console.log(startTime);
+    console.log(endTime);
+
+    if (timeto <= timefrom) {
+        $('#end-time-error').show();
+        $('#end-time-error').text("End time should be more than start time");
+        return false;
+    }
+
+    $('#end-time-error').hide();
+    return true;
+}
+
+
 function validateRequired(element) {
 
     let parentElementClasses = element.parentElement.classList;

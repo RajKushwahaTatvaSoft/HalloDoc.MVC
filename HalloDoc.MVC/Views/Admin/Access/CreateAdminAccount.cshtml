@@ -1,7 +1,15 @@
-﻿@model EditPhysicianViewModel
+﻿@model AdminProfileViewModel
 @{
     Layout = "_AdminDashboardLayout";
 }
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/1.1.2/js/bootstrap-multiselect.min.js" integrity="sha512-lxQ4VnKKW7foGFV6L9zlSe+6QppP9B2t+tMMaV4s4iqAv4iHIyXED7O+fke1VeLNaRdoVkVt8Hw/jmZ+XocsXQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/1.1.2/css/bootstrap-multiselect.css" integrity="sha512-tlP4yGOtHdxdeW9/VptIsVMLtgnObNNr07KlHzK4B5zVUuzJ+9KrF86B/a7PJnzxEggPAMzoV/eOipZd8wWpag==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/css/bootstrap-select.css" />
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/js/bootstrap-select.min.js"></script>
+
+<partial name="_ValidationScriptsPartial" />
 
 <div>
     <div class="container-fluid d-flex justify-content-between mt-4" style="max-width:1000px">
@@ -26,21 +34,23 @@
             <div class="row g-2 m-1">
                 <div class="col-md-6">
                     <div class="form-floating">
-                        <input asp-for="PhyUserName" type="text" class="form-control" disabled>
+                        <input asp-for="UserName" type="text" class="form-control" disabled>
                         <label for="">UserName</label>
+                        <span class="text-danger" asp-validation-for="UserName"></span>
                     </div>
                 </div>
 
                 <div class="col-md-6">
-                    <div class="form-floating phone-div w-100 h-100 ">
-                        <input asp-for="Password" type="password" class=" form-control w-100 h-100">
+                    <div class="form-floating  ">
+                        <input asp-for="Password" type="password" class=" form-control ">
                         <label for="">Password</label>
+                        <span class="text-danger" asp-validation-for="Password"></span>
                     </div>
                 </div>
-                <div class="col-md-6 col-12 mt-4">
+                <div class="col-md-6 col-12">
                     <div class="form-floating">
 
-                        <select asp-for="RoleId" class="white-back form-select" id="accountType" style="height:60px;">
+                        <select asp-for="RoleId" class="form-select" id="accountType">
                             <option disabled selected value="">-- Select Role --</option>
 
                             @foreach (var role in Model.roles)
@@ -51,6 +61,7 @@
 
                         </select>
                         <label for="accountType">Role</label>
+                        <span class="text-danger" asp-validation-for="RoleId"></span>
                     </div>
 
 
@@ -65,51 +76,53 @@
                     <div class="form-floating">
                         <input asp-for="FirstName" type="text" class="form-control">
                         <label for="">First Name</label>
+                        <span class="text-danger" asp-validation-for="FirstName"></span>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-floating">
                         <input asp-for="LastName" type="text" class="form-control">
                         <label for="floatingSelectGrid">Last Name</label>
+                        <span class="text-danger" asp-validation-for="LastName"></span>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-floating">
                         <input asp-for="Email" type="email" class="form-control">
                         <label for="">Email</label>
+                        <span class="text-danger" asp-validation-for="Email"></span>
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="form-floating phone-div w-100 h-100 ">
-                        <input asp-for="SyncEmail" type="email" class=" form-control w-100 h-100">
+                    <div class="form-floating">
+                        <input asp-for="ConfirmEmail" type="email" class=" form-control">
                         <label for="">Confirm Email</label>
+                        <span class="text-danger" asp-validation-for="ConfirmEmail"></span>
                     </div>
                 </div>
                 <div class="col-md-6">
 
-                    <div class="form-floating d-flex " style="height:58px;">
+                    <div class="form-floating">
 
                         <input id="patient-phone-country" asp-for="CountryCode" hidden />
 
-                        <input id="patient-phone" class="py-4 form-control" type="tel" asp-for="Phone" />
+                        <input id="patient-phone" class="py-4 form-control" type="tel" asp-for="PhoneNumber" />
+                        <span class="text-danger" asp-validation-for="PhoneNumber"></span>
 
                     </div>
 
                 </div>
 
-                <div class="col-md-6 d-flex justify-content-start flex-wrap mt-4">
-                    @foreach(var region in Model.regions)
-                    {
-                        <div class="form-floating mt-1 me-3 checkColor ">
+                <div class="col-md-6 col-12">
+                    <select multiple data-live-search="true" class="form-select col-6 selectpicker" id="adminSelectedRegions" asp-for="selectedRegions">
 
-                            <input name="selectedRegions" class="changeable check form-check-input" value="@region.Regionid" type="checkbox" style="" />
+                        @foreach (var region in Model.regions)
+                        {
+                            <option value="@region.Regionid" style="font-size: 10px;">@region.Name</option>
+                        }
 
-                            <span>@region.Name</span>
-
-                        </div>
-                    }
+                    </select>
                 </div>
-
             </div>
 
 
@@ -122,20 +135,21 @@
                     <div class="form-floating">
                         <input asp-for="Address1" type="text" class="form-control" placeholder="">
                         <label for="">Address1</label>
+                        <span class="text-danger" asp-validation-for="Address1"></span>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-floating">
                         <input asp-for="Address2" type="text" class="form-control" placeholder="">
                         <label for="floatingSelectGrid">Address2</label>
+                        <span class="text-danger" asp-validation-for="Address2"></span>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-floating">
 
-                        <select disabled asp-for="CityId" class="form-select billingChange" id="create-phy-city">
+                        <select asp-for="CityId" class="form-select billingChange" id="admin-billing-city">
                             <option disabled value=""> -- Select City -- </option>
-
                         </select>
                         <label for="admin-billing-city">City</label>
                         <span asp-validation-for="CityId" class="text-danger"></span>
@@ -143,39 +157,40 @@
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="form-floating phone-div w-100 h-100 ">
-                        <select asp-for="RegionId" class="form-select border-0" aria-label="Default select example">
+                    <div class="form-floating">
+                        <select asp-for="RegionId" class="form-select" id="admin-billing-state">
+                            <option selected disabled value=""> -- Select State -- </option>
                             @foreach (var region in Model.regions)
                             {
                                 <option value="@region.Regionid">@region.Name</option>
                             }
                         </select>
                         <label for="">Select A Region</label>
+                        <span class="text-danger" asp-validation-for="RegionId"></span>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-floating">
                         <input asp-for="Zip" type="text" class="form-control" placeholder="">
                         <label for="">Zip</label>
+                        <span class="text-danger" asp-validation-for="Zip"></span>
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="form-floating d-flex " style="height:58px;">
-                        <input id="phone-country" asp-for="MailCountryCode" hidden />
+                    <div class="form-floating">
+                        <input id="alt-phone-country" asp-for="AltCountryCode" hidden />
 
-                        <input id="phone" class="py-4 form-control" type="tel" asp-for="MailPhone" />
+                        <input id="alt-phone" class="py-4 form-control" type="tel" asp-for="AltPhoneNumber" />
+                        <span class="text-danger" asp-validation-for="AltPhoneNumber"></span>
                     </div>
                 </div>
             </div>
 
-
             <div class="my-3"></div>
 
+            <button type="submit" onclick="changeCountryCode()" class="btn btn-success float-end m-1 ">Create Account</button>
+            <button type="reset" class="btn btn-danger float-end m-1 ">Reset</button>
 
-
-            <div class="border-bottom border-5"></div>
-            <button type="submit" class="btn login-button float-end m-1 ">Create Account</button>
-            <button type="reset" class="btn login-button float-end m-1 ">Reset</button><br />
         </form>
     </div>
 </div>
@@ -193,10 +208,8 @@
 
 <script>
 
-    $('#access-tab').removeClass("text-grey")
-
-    const phoneInputField1 = document.getElementById("patient-phone");
-    var patientPhoneInput1 = window.intlTelInput(phoneInputField1, {
+    const adminPhoneInput = document.getElementById("patient-phone");
+    let adminPhoneIntlField = window.intlTelInput(adminPhoneInput, {
         utilsScript:
             "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
         preferredCountries: ["in"],
@@ -204,29 +217,24 @@
         initialCountry: "in"
     });
 
-
-    function changeCountryCode1() {
-        var countryCode1 = document.getElementById("patient-phone-country");
-        countryCode1.value = patientPhoneInput1.getSelectedCountryData().dialCode;
-        console.log(countryCode1.value);
-    }
-
-
-    const phoneInputField2 = document.getElementById("phone");
-    var patientPhoneInput2 = window.intlTelInput(phoneInputField2, {
+    const adminAltPhoneInput = document.getElementById("alt-phone");
+    let adminAltPhoneIntlField = window.intlTelInput(adminAltPhoneInput, {
         utilsScript:
             "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
         preferredCountries: ["in"],
         separateDialCode: true,
         initialCountry: "in"
-    });
+    });    
 
+    function changeCountryCode() {
+        var phoneCode = document.getElementById("patient-phone-country");
+        phoneCode.value = adminPhoneIntlField.getSelectedCountryData().dialCode;
 
-    function changeCountryCode2() {
-        var countryCode2 = document.getElementById("phone-country");
-        countryCode2.value = patientPhoneInput2.getSelectedCountryData().dialCode;
-        console.log(countryCode2.value);
+        var altPhoneCode = document.getElementById("alt-phone-country");
+        altPhoneCode.value = adminAltPhoneIntlField.getSelectedCountryData().dialCode;
+
     }
+
 
     // $('#createAdminForm').submit(function (e) {
     //     e.preventDefault();
@@ -255,4 +263,41 @@
     //     });
 
     // });
+</script>
+
+<script>
+    $("#admin-billing-state").change(function () {
+
+        var regId = $('option:selected', this).val();
+
+        $.ajax({
+            url: '/Admin/GetCitiesByRegion',
+            type: 'POST',
+            data: {
+                regionId: regId,
+            },
+            success: function (result) {
+                console.log(result);
+                $('#admin-billing-city').empty();
+                $('#admin-billing-city').append($('<option>', {
+                    value: 0,
+                    text: '-- Select City --',
+                    selected: true,
+                    disabled: true
+                }));
+                $.each(result, function (index, object) {
+
+                    $('#admin-billing-city').append($('<option>', {
+                        value: object["id"],
+                        text: object["name"]
+                    }));
+
+                });
+            },
+            error: function (err) {
+                console.error(err);
+            }
+        });
+    });
+
 </script>

@@ -27,7 +27,7 @@ namespace HalloDoc.MVC.Controllers
         private readonly IUnitOfWork _unitOfWork;
         private readonly INotyfService _notyf;
 
-        public PatientController(IWebHostEnvironment environment, IConfiguration config, IPatientDashboardRepository patientDashboardRepository, IUnitOfWork unitwork,INotyfService notyfService)
+        public PatientController(IWebHostEnvironment environment, IConfiguration config, IPatientDashboardRepository patientDashboardRepository, IUnitOfWork unitwork, INotyfService notyfService)
         {
             _environment = environment;
             _config = config;
@@ -54,7 +54,7 @@ namespace HalloDoc.MVC.Controllers
 
             var pagedList = await _dashboardRepo.GetPatientRequestsAsync(userId, page, pageSize);
 
-            return PartialView("Partial/DashboardTable",pagedList);
+            return PartialView("Partial/DashboardTable", pagedList);
         }
 
         public IActionResult Dashboard()
@@ -84,14 +84,14 @@ namespace HalloDoc.MVC.Controllers
             int userId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
 
 
-            if (userId == null)
+            if (userId == 0)
             {
                 return View("Error");
             }
 
             User user = _unitOfWork.UserRepository.GetUserWithID((int)userId);
 
-            string dobDate;
+            DateTime? dobDate;
 
             if (user.Intyear == null || user.Strmonth == null || user.Intdate == null)
             {
@@ -99,18 +99,18 @@ namespace HalloDoc.MVC.Controllers
             }
             else
             {
-                dobDate = user.Intyear + "-" + user.Strmonth + "-" + user.Intdate;
+                dobDate = DateHelper.GetDOBDateTime(user.Intyear ?? 0, user.Strmonth, user.Intdate ?? 0);
             }
 
-            IEnumerable<City> selectedCities = _unitOfWork.CityRepository.Where(city=> city.Regionid == user.Regionid);
-            int? cityId = _unitOfWork.CityRepository.GetFirstOrDefault(city=> city.Name == user.City)?.Id;
+            IEnumerable<City> selectedCities = _unitOfWork.CityRepository.Where(city => city.Regionid == user.Regionid);
+            int? cityId = _unitOfWork.CityRepository.GetFirstOrDefault(city => city.Name == user.City)?.Id;
 
             MeRequestViewModel model = new()
             {
                 UserId = user.Userid,
                 FirstName = user.Firstname,
                 LastName = user.Lastname,
-                DOB = dobDate == null ? null : DateTime.Parse(dobDate),
+                DOB = dobDate,
                 Phone = user.Mobile,
                 Email = user.Email,
                 Street = user.Street,
@@ -558,13 +558,17 @@ namespace HalloDoc.MVC.Controllers
 
             if (user != null)
             {
-                string dobDate = user.Intyear + "-" + user.Strmonth + "-" + user.Intdate;
+                DateTime? dobDate = null;
+                if (user.Intyear != null || user.Intdate != null || user.Strmonth != null)
+                {
+                    dobDate = DateHelper.GetDOBDateTime(user.Intyear ?? 0, user.Strmonth ?? "", user.Intdate ?? 0);
+                }
 
                 PatientProfileViewModel model = new()
                 {
                     FirstName = user.Firstname,
                     LastName = user.Lastname,
-                    DateOfBirth = DateTime.Parse(dobDate),
+                    DateOfBirth = dobDate,
                     Type = "Mobile",
                     Phone = user.Mobile,
                     Email = user.Email,
@@ -589,7 +593,7 @@ namespace HalloDoc.MVC.Controllers
             int userId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
             User? dbUser = _unitOfWork.UserRepository.GetFirstOrDefault(u => u.Userid == userId);
 
-            if(dbUser == null)
+            if (dbUser == null)
             {
                 _notyf.Error("User not found");
                 return RedirectToAction("Dashboard");

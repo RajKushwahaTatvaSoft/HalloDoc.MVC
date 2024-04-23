@@ -67,7 +67,6 @@
                             continue;
                         }
 
-
                         DateTime tableDate = Model.StartDate.AddDays(tempCounter - 1);
 
                         IEnumerable<Shiftdetail> shifts = Model.shiftDetails.Where(shift => shift.Shiftdate == tableDate).Skip(row - 1);
@@ -87,7 +86,7 @@
                                 statusClass = "pending-shift-bg";
                             }
 
-                            <td class="@statusClass">
+                            <td class="@statusClass view-shift-btn" style="cursor:pointer;" data-shiftdetailid="@shift.Shiftdetailid">
                                 @shift.Starttime - @shift.Endtime
                             </td>
 
@@ -158,7 +157,7 @@
                                         statusClass = "pending-shift-bg";
                                     }
 
-                                    <td class="@statusClass">
+                                    <td class="@statusClass view-shift-btn" style="cursor:pointer;" data-shiftdetailid="@shift.Shiftdetailid">
                                         @shift.Starttime - @shift.Endtime
                                     </td>
                                 }
@@ -220,17 +219,15 @@
 
     });
 
+
     $('.view-shift-btn').click(function () {
 
         var sDetailId = $(this).data("shiftdetailid");
         console.log('shift detail id: ' + sDetailId);
 
-        var phyId = $(this).data("physicianid");
-        console.log('phy id: ' + phyId);
-
         $.ajax({
             url: "/Physician/ViewShiftModal",
-            data: { shiftDetailId: sDetailId, physicianId: phyId },
+            data: { shiftDetailId: sDetailId },
             type: 'GET',
             success: function (result) {
                 $('#modal-div').html(result);

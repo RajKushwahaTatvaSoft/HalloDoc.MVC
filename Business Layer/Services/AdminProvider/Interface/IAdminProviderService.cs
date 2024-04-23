@@ -13,7 +13,7 @@ namespace Business_Layer.Services.AdminProvider.Interface
         public ViewCaseViewModel? GetViewCaseModel(int requestId);
         public ViewNotesViewModel? GetViewNotesModel(int requestId);
         public ServiceResponse SubmitViewNotes(ViewNotesViewModel model, string aspNetUserId, bool isAdmin);
-        public ViewUploadsViewModel? GetViewUploadsModel(int requestId);
+        public ViewUploadsViewModel? GetViewUploadsModel(int requestId,bool isAdmin);
         public ServiceResponse SubmitCreateRequest(AdminCreateRequestViewModel model, string adminAspId, string createAccLink, bool isAdmin);
         public ServiceResponse SubmitOrderDetails(SendOrderViewModel model, string aspUserId);
         public EncounterFormViewModel? GetEncounterFormModel(int requestId,bool isAdmin);

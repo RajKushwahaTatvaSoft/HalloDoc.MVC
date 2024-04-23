@@ -45,8 +45,7 @@ namespace Business_Layer.Services.AdminProvider
 
             if (client.Intyear != null && client.Intdate != null && client.Strmonth != null)
             {
-                string dobDate = client.Intyear + "-" + client.Strmonth + "-" + client.Intdate;
-                model.Dob = DateTime.Parse(dobDate);
+                model.Dob = DateHelper.GetDOBDateTime(client.Intyear ?? 0, client.Strmonth, client.Intdate ?? 0);
             }
 
             model.Confirmation = req.Confirmationnumber;
@@ -165,7 +164,7 @@ namespace Business_Layer.Services.AdminProvider
 
         }
 
-        public ViewUploadsViewModel? GetViewUploadsModel(int requestId)
+        public ViewUploadsViewModel? GetViewUploadsModel(int requestId, bool isAdmin)
         {
 
             Request? req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestId);
@@ -190,6 +189,7 @@ namespace Business_Layer.Services.AdminProvider
 
             ViewUploadsViewModel model = new ViewUploadsViewModel()
             {
+                IsAdmin = isAdmin,
                 PatientName = reqCli.Firstname + " " + reqCli.Lastname,
                 requestwisefiles = files,
                 ConfirmationNumber = req.Confirmationnumber,
@@ -404,7 +404,7 @@ namespace Business_Layer.Services.AdminProvider
 
             Requestclient? requestclient = _unitOfWork.RequestClientRepository.GetFirstOrDefault(e => e.Requestid == requestId);
             Request? request = _unitOfWork.RequestRepository.GetFirstOrDefault(r => r.Requestid == requestId);
-            string? dobDate = null;
+            DateTime? dobDate = null;
 
             if (request == null || requestclient == null)
             {
@@ -413,17 +413,18 @@ namespace Business_Layer.Services.AdminProvider
 
             if (requestclient.Intyear != null && requestclient.Strmonth != null && requestclient.Intdate != null)
             {
-                dobDate = requestclient.Intyear + "-" + requestclient.Strmonth + "-" + requestclient.Intdate;
+                dobDate = DateHelper.GetDOBDateTime(requestclient.Intyear ?? 0, requestclient.Strmonth, requestclient.Intdate ?? 0);
             }
 
             EncounterFormViewModel model = new()
             {
+                RequestId = requestId,
                 IsAdmin = isAdmin,
                 FirstName = requestclient.Firstname,
                 LastName = requestclient.Lastname,
                 Email = requestclient.Email,
                 PhoneNumber = requestclient.Phonenumber,
-                DOB = dobDate != null ? DateTime.Parse(dobDate) : null,
+                DOB = dobDate,
                 CreatedDate = request.Createddate,
                 Location = requestclient.Street + " " + requestclient.City + " " + requestclient.State,
                 MedicalHistory = encounterform?.Medicalhistory,
@@ -473,7 +474,7 @@ namespace Business_Layer.Services.AdminProvider
 
 
             Encounterform? encounterform = _unitOfWork.EncounterFormRepository.GetFirstOrDefault(e => e.Requestid == model.RequestId);
-            string phoneNumber ="+" + model.CountryCode +  "-" + model.PhoneNumber;
+            string phoneNumber = "+" + model.CountryCode + "-" + model.PhoneNumber;
             if (encounterform == null)
             {
                 Encounterform encf = new()

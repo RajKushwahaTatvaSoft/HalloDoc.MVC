@@ -396,8 +396,8 @@ C25.163,30.114,24.933,30.163,24.687,30.163z"></path>
 
 <script>
 
-    var currentStatus = @Model.filterOptions.status;
-    var currentPage = @Model.filterOptions.pageNumber;
+    var currentStatus = @Model.filterOptions.Status;
+    var currentPage = @Model.filterOptions.PageNumber;
     var currentRegion = @Model.filterOptions.RegionFilter;
     var currentType = @Model.filterOptions.RequestTypeFilter;
     var currentSearch = "@Model.filterOptions.PatientSearchText";
@@ -423,111 +423,4 @@ C25.163,30.114,24.933,30.163,24.687,30.163z"></path>
         $("#status-new-tab").click();
     }
 
-</script>
-
-<script>
-
-
-    $('#export-filtered-btn').click(function () {
-
-        @* location.href = "https://localhost:7161/Admin/ExportFilteredData"; *@
-         $.ajax({
-            url: "/Admin/ExportFilteredData",
-            type: 'POST',
-            data: { status: dashboardStatus, typeFilter: type_filter, searchFilter: search_filter, regionFilter: region_filter },
-            success: function (result) {
-
-                console.log('success');
-
-                var link = document.createElement('a');
-
-                link.href = "data:application/octet-stream;base64," + result;
-                link.target = '_blank';
-                link.download = 'Sample.xlsx';
-                link.click();
-
-            },
-            error: function (error) {
-                console.log(error);
-                alert('error fetching details')
-            },
-        }); 
-
-
-    });
-
-    function base64ToArrayBuffer(base64) {
-
-        var binaryString = window.atob(base64);
-        var binaryLen = binaryString.length;
-        var bytes = new Uint8Array(binaryLen);
-        for (var i = 0; i < binaryLen; i++) {
-            var ascii = binaryString.charCodeAt(i);
-            bytes[i] = ascii;
-        }
-        return bytes;
-    }
-
-    function saveByteArray(reportName, byte) {
-        var blob = new Blob([byte], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-        var link = document.createElement('a');
-        link.href = window.URL.createObjectURL(blob);
-        var fileName = reportName;
-        link.download = fileName;
-        link.click();
-    };
-
-
-    $('#export-all-btn').click(function () {
-
-        location.href = "https://localhost:7161/Admin/ExportAllExcel?status=" + dashboardStatus;
-
-        @* console.log('export all');
-        $.ajax({
-            url: "/Admin/ExportAllExcel",
-            data: { status: dashboardStatus },
-            success: function (result) {
-
-                console.log('success');
-
-                var link = document.createElement('a');
-
-                link.href = "data:application/octet-stream;base64," + result;
-                link.target = '_blank';
-                link.download = 'Sample.xlsx';
-                link.click();
-            },
-            error: function (error) {
-                console.log(error);
-                alert('Error Cancelling Request')
-            },
-        }); *@
-    });
-
-    $('#send-link-btn').click(function () {
-        console.log('hi');
-
-        $.ajax({
-            url: "/Admin/SendLinkModal",
-            data: {},
-            type: 'GET',
-            success: function (result) {
-                $('#modal-div').html(result);
-                $('#sendLinkModal').modal('show');
-            },
-            error: function (error) {
-                console.log(error);
-                alert('Error Cancelling Request')
-            },
-        });
-    });
-
-</script>
-
-<script type="text/javascript">
-    $(function () {
-        $("#export-btn").click(function () {
-            $("input[name='GridHtml']").val($("#partial-table").html());
-        });
-    });
 </script>

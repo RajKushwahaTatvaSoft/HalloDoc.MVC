@@ -1,5 +1,5 @@
 ﻿using Data_Layer.CustomModels;
-using Data_Layer.ViewModels.Admin;
+using Data_Layer.CustomModels.Filter;
 using System;
 using System.Collections.Generic;
 using System.Linq;

@@ -53,7 +53,7 @@
 
                 <div class="col-md-4">
                     <div class="form-floating w-100 h-100">
-                        <select asp-for="RoleId" class="form-select border-0" aria-label="Default select example">
+                        <select asp-for="RoleId" class="form-select " aria-label="Default select example">
                             <option disabled selected value="0">-- Select Role --</option>
                             @foreach (var role in Model.roles)
                             {
@@ -163,7 +163,7 @@
                 </div>
                 <div class="col-md-6">
                     <div class="form-floating phone-div w-100 h-100 ">
-                        <select asp-for="RegionId" class="form-select border-0" id="create-phy-state" placeholder="State">
+                        <select asp-for="RegionId" class="form-select " id="create-phy-state" placeholder="State">
                             @foreach (var region in Model.regions)
                             {
                                 <option value="@region.Regionid">@region.Name</option>

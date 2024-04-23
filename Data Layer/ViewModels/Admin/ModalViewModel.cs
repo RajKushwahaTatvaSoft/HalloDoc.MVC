@@ -4,9 +4,39 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Data_Layer.ViewModels.Admin
 {
+
+    public class ViewShiftModel
+    {
+        public int ShiftDetailId { get; set; }
+
+        public IEnumerable<Region>? regions { get; set; }
+        public IEnumerable<DataModels.Physician>? selectedPhysicians { get; set; }
+
+        [Required(ErrorMessage = "Region is required")]
+        public int RegionId { get; set; }
+
+        [Required(ErrorMessage = "Physician is required")]
+        public int PhysicianId { get; set; }
+
+        [Required(ErrorMessage = "Shift Date is required")]
+        [DateNotInPast(ErrorMessage = "Date cannot be in past")]
+        public DateTime ShiftDate { get; set; }
+
+        [Required(ErrorMessage = "Shift Start Time is required")]
+        [AfterCurrentTime(nameof(ShiftDate),ErrorMessage = "Shift should be created after current time")]
+        public TimeOnly ShiftStartTime { get; set; }
+
+        [Required(ErrorMessage = "Shift End Time is required")]
+        [EndAfterStart(nameof(ShiftStartTime),ErrorMessage = "End time should be greater than start time")]
+        public TimeOnly ShiftEndTime { get; set; }
+    }
+
     public class AddShiftModel
     {
+        [Required(ErrorMessage = "Region is required")]
         public int RegionId { get; set; }
+
+        [Required(ErrorMessage = "Physician is required")]
         public int PhysicianId { get; set; }
         public IEnumerable<Region>? regions { get; set; }
 
@@ -15,9 +45,11 @@ namespace Data_Layer.ViewModels.Admin
         public DateTime? ShiftDate {  get; set; }
 
         [Required(ErrorMessage = "Shift Start Time is required")]
+        [AfterCurrentTime(nameof(ShiftDate), ErrorMessage = "Shift should be created after current time")]
         public TimeOnly? StartTime {  get; set; }
 
         [Required(ErrorMessage = "Shift End Time is required")]
+        [EndAfterStart(nameof(StartTime), ErrorMessage = "End time should be greater than start time")]
         public TimeOnly? EndTime { get; set; }
         public int? IsRepeat { get; set; }
         public List<int>? repeatDays {  get; set; }
@@ -96,17 +128,6 @@ namespace Data_Layer.ViewModels.Admin
         public string Message { get; set; }
     }
 
-    public class ViewShiftModel
-    {
-        public int ShiftDetailId { get; set; }
-        public IEnumerable<Region> regions { get; set; }
-        public int RegionId { get; set; }
-        public IEnumerable<DataModels.Physician> selectedPhysicians { get; set; }
-        public int PhysicianId { get; set; }
-        public DateTime ShiftDate { get; set; }
-        public TimeOnly ShiftStartTime { get; set; }
-        public TimeOnly ShiftEndTime { get; set; }
-    }
 
 
 }

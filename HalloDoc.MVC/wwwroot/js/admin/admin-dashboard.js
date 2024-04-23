@@ -126,7 +126,7 @@ function loadPageWithStatus(pageNo, status) {
     }
     else if (status == 3) {
         $('#status-active-tab').click();
-            }
+    }
     else if (status == 4) {
         $('#status-conclude-tab').click();
 
@@ -146,7 +146,7 @@ function loadPage(pageNo) {
 
     let loading_div = document.getElementById('loading-animation-div');
     let partial_table_div = document.getElementById('partial-table');
-    partial_table_div.setAttribute('style','display:none');
+    partial_table_div.setAttribute('style', 'display:none');
     loading_div.setAttribute('style', 'display:static !important;margin-top:200px;');
 
     $.ajax({
@@ -167,3 +167,113 @@ function loadPage(pageNo) {
         },
     });
 }
+
+$('#export-filtered-btn').click(function () {
+
+    let exportFilteredUrl = "https://localhost:7161/Admin/ExportFilteredData?status=" + dashboardStatus +
+        "&typeFilter=" + type_filter +
+        "&searchFilter=" + search_filter +
+        "&regionFilter=" + region_filter;
+    console.log(exportFilteredUrl);
+
+    location.href = exportFilteredUrl;
+
+    // $.ajax({
+    //    url: "/Admin/ExportFilteredData",
+    //    type: 'POST',
+    //    data: { status: dashboardStatus, typeFilter: type_filter, searchFilter: search_filter, regionFilter: region_filter },
+    //    success: function (result) {
+
+    //        console.log('success');
+
+    //        var link = document.createElement('a');
+
+    //        link.href = "data:application/octet-stream;base64," + result;
+    //        link.target = '_blank';
+    //        link.download = 'Sample.xlsx';
+    //        link.click();
+
+    //    },
+    //    error: function (error) {
+    //        console.log(error);
+    //        alert('error fetching details')
+    //    },
+    //}); 
+
+});
+
+function base64ToArrayBuffer(base64) {
+
+    var binaryString = window.atob(base64);
+    var binaryLen = binaryString.length;
+    var bytes = new Uint8Array(binaryLen);
+    for (var i = 0; i < binaryLen; i++) {
+        var ascii = binaryString.charCodeAt(i);
+        bytes[i] = ascii;
+    }
+    return bytes;
+}
+
+function saveByteArray(reportName, byte) {
+    var blob = new Blob([byte], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    var link = document.createElement('a');
+    link.href = window.URL.createObjectURL(blob);
+    var fileName = reportName;
+    link.download = fileName;
+    link.click();
+};
+
+
+$('#export-all-btn').click(function () {
+
+    let exportAllUrl = "https://localhost:7161/Admin/ExportAllExcel?status=" + dashboardStatus;
+    console.log(exportAllUrl);
+    location.href = exportAllUrl;
+
+    //console.log('export all');
+    //$.ajax({
+    //    url: "/Admin/ExportAllExcel",
+    //    data: { status: dashboardStatus },
+    //    success: function (result) {
+
+    //        console.log('success');
+
+    //        var link = document.createElement('a');
+
+    //        link.href = "data:application/octet-stream;base64," + result;
+    //        link.target = '_blank';
+    //        link.download = 'Sample.xlsx';
+    //        link.click();
+    //    },
+    //    error: function (error) {
+    //        console.log(error);
+    //        alert('Error Cancelling Request')
+    //    },
+    //});
+
+});
+
+$('#send-link-btn').click(function () {
+    console.log('hi');
+
+    $.ajax({
+        url: "/Admin/SendLinkModal",
+        data: {},
+        type: 'GET',
+        success: function (result) {
+            $('#modal-div').html(result);
+            $('#sendLinkModal').modal('show');
+        },
+        error: function (error) {
+            console.log(error);
+            alert('Error Cancelling Request')
+        },
+    });
+});
+
+
+$(function () {
+    $("#export-btn").click(function () {
+        $("input[name='GridHtml']").val($("#partial-table").html());
+    });
+});

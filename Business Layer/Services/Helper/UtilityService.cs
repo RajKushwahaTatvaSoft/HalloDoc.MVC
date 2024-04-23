@@ -34,7 +34,7 @@ namespace Business_Layer.Services.Helper
             return confirmationNumber;
         }
 
-        public SessionUser? GetSessionUserFromAdminId(int adminId,string adminAspId)
+        public SessionUser? GetSessionUserFromAdminId(int adminId)
         {
             Admin? adminUser = _unitOfWork.AdminRepository.GetFirstOrDefault(admin => admin.Adminid == adminId);
 
@@ -46,7 +46,7 @@ namespace Business_Layer.Services.Helper
             SessionUser sessionUser = new SessionUser()
             {
                 UserId = adminUser.Adminid,
-                UserAspId = adminAspId,
+                UserAspId = adminUser.Aspnetuserid ?? "",
                 Email = adminUser.Email,
                 AccountTypeId = (int)AccountType.Admin,
                 RoleId = adminUser.Roleid ?? 0,
