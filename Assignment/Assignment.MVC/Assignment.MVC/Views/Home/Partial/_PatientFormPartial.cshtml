@@ -163,9 +163,8 @@
                             <div class="col-6">
 
                                 <div class="form-floating">
-                                    <input asp-for="Specialist" id="patient-specialist" class="form-control shadow-none bg-transparent" placeholder="Last Name" />
                                     
-                                     <select asp-for="Specialist" style="display:none;" id="patient-specialist-select" class="form-select shadow-none bg-transparent" placeholder="Specialist">
+                                     <select asp-for="Specialist" id="patient-specialist" class="form-select shadow-none bg-transparent" placeholder="Specialist">
                                         <option disabled selected value=""> -- Select Doctor -- </option>
 
                                         @if (Model != null && Model.DoctorList != null && Model.DoctorList.Any())
