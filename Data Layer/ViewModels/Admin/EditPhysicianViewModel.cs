@@ -18,6 +18,8 @@ namespace Data_Layer.ViewModels.Admin
         [RegularExpression("(?=^.{8,}$)((?=.*\\d)|(?=.*\\W+))(?![.\\n])(?=.*[A-Z])(?=.*[a-z]).*$", ErrorMessage = "Password must contain 1 capital, 1 small, 1 Special symbol and at least 8 characters")]
         public string Password { get; set; }
         public int? StatusId { get; set; }
+
+        [Required]
         public int? RoleId { get; set; }
 
         [Required(ErrorMessage = "First Name cannot be empty")]

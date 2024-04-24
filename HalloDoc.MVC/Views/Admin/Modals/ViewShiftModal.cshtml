@@ -39,7 +39,7 @@
 
                                 <div class="form-floating">
                                     <select asp-for="RegionId" id="view-shift-region-list" onchange="validateRequired(this)" class="form-select">
-                                        <option value="">-- Select Region --</option>
+                                        <option disabled value="">-- Select Region --</option>
                                         @foreach (var region in Model.regions)
                                         {
                                             <option value="@region.Regionid">@region.Name </option>

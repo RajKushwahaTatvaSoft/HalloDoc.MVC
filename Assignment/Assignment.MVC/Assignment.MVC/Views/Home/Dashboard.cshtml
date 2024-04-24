@@ -1,0 +1,32 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div id="modal-div"></div>
+
+<div>
+    <div class="bg-info col-12 py-2 d-flex justify-content-center">
+        <span class="text-white">Hospital Management System</span>
+    </div>
+
+    <div class="bg-danger col-12 py-2 px-3 d-flex justify-content-end">
+        <button @* data-bs-toggle="modal" data-bs-target="#addPatientModal" *@ id="add-patient-btn" class="btn bg-white">Add Patient</button>
+    </div>
+
+    <div class="col-12">
+
+        <div class="form-floating flex-grow-1 mx-5 my-2">
+            <input id="dashboard-patient-search" class="form-control shadow-none bg-transparent" placeholder="Search" />
+            <label for="floatingInputGroup1">Search</label>
+            <span class="text-danger"></span>
+            <span class="error-msg text-danger ms-2" style="display:none;"></span>
+        </div>
+
+    </div>
+    <div class="mx-5">
+        <div id="dashboard-partial-table-div"></div>
+    </div>
+
+</div>
+
+<script src="/js/dashboard.js"></script>

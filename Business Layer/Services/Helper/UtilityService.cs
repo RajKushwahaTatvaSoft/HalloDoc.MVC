@@ -23,6 +23,38 @@ namespace Business_Layer.Services.Helper
             return cities;
         }
 
+        public string GenerateUserName(AccountType accountType, string firstName, string lastName)
+        {
+            string prefix = "";
+
+            switch (accountType)
+            {
+                case AccountType.Admin:
+                    prefix = "AD";
+                    break;
+
+                case AccountType.Physician:
+                    prefix = "MD";
+                    break;
+
+                case AccountType.Patient:
+                    prefix = "PT";
+                    break;
+            }
+
+            string userName = prefix + "." + lastName + "." + firstName.ElementAt(0);
+
+            int count = 0;
+            while (_unitOfWork.AspNetUserRepository.GetAll().Any(aspUser => aspUser.Username == userName))
+            {
+                count++;
+                userName = userName + count.ToString();
+            }
+
+            return userName;
+        }
+
+
         public string GenerateConfirmationNumber(User user)
         {
             string? regionAbbr = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == user.Regionid)?.Abbreviation;

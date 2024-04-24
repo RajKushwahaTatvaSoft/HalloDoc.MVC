@@ -1,4 +1,5 @@
-﻿using Data_Layer.CustomModels;
+﻿using Business_Layer.Utilities;
+using Data_Layer.CustomModels;
 using Data_Layer.DataModels;
 using System;
 using System.Collections.Generic;
@@ -13,5 +14,6 @@ namespace Business_Layer.Services.Helper.Interface
         public IEnumerable<City> GetCitiesByRegion(int regionId);
         public SessionUser? GetSessionUserFromAdminId(int adminId);
         public string GenerateConfirmationNumber(User user);
+        public string GenerateUserName(AccountType accountType, string firstName, string lastName);
     }
 }

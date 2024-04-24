@@ -69,12 +69,15 @@
         var region = $('option:selected', this).val();
 
         $.ajax({
-            url: '/Admin/GetPhysicianByRegion',
+            url: '/Admin/GetPhysicianByPhysicianRegion',
             type: 'POST',
             data: {
                 regionId: region,
             },
             success: function (result) {
+
+                console.log(result);
+
                 $('#assignCasePhysician').empty();
                 $('#assignCasePhysician').append($('<option>', {
                     value: 0,
@@ -85,8 +88,8 @@
                 $.each(result, function (index, object) {
 
                     $('#assignCasePhysician').append($('<option>', {
-                        value: object["physicianId"],
-                        text: object["physicianName"]
+                        value: object["physicianid"],
+                        text: object["firstname"] + " " + object["lastname"]
                     }));
 
                 });

@@ -1,0 +1,257 @@
+﻿@model PatientFormViewModel
+
+@{
+    string action = "";
+    if (Model.IsEdit)
+    {
+        action = "EditPatient";
+    }
+    else
+    {
+        action = "AddPatient";
+    }
+}
+
+<div class="modal fade" id="addPatientModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <div class="modal-dark modal-title text-white" id="exampleModalLongTitle">
+                    Patient Form
+                </div>
+                <button type="button" class="btn" aria-label="Close" data-bs-dismiss="modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"
+                         fill="#FFFFFF">
+                        <path d="M0 0h24v24H0V0z" fill="none" />
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" />
+                    </svg>
+                </button>
+            </div>
+
+            <form method="post" id="add-patient-modal-form" novalidate>
+                <div class="modal-body">
+                    <div class="modal-flex">
+
+                        <input asp-for="PatientId" hidden />
+
+                        <div class="row">
+
+                            <div class="col-6">
+
+                                <div class="form-floating">
+                                    <input asp-for="PatientFirstName" class="form-control shadow-none bg-transparent" id="patient-first-name" placeholder="First Name" />
+                                    <label for="floatingInputGroup1">First Name</label>
+                                    <span asp-validation-for="PatientFirstName" class="text-danger"></span>
+                                    <span class="error-msg text-danger ms-2" style="display:none;"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-6">
+
+                                <div class="form-floating">
+                                    <input asp-for="PatientLastName" class="form-control shadow-none bg-transparent" id="patient-last-name" placeholder="Last Name" />
+                                    <label for="floatingInputGroup1">Last Name</label>
+                                    <span asp-validation-for="PatientLastName" class="text-danger"></span>
+                                    <span class="error-msg text-danger ms-2" style="display:none;"></span>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="row mt-3">
+
+                            <div class="col-6">
+
+                                <div class="form-floating">
+                                    <input asp-for="Email" id="patient-email" type="email" class="form-control shadow-none bg-transparent" placeholder="First Name" />
+                                    <label for="floatingInputGroup1">Email</label>
+                                    <span asp-validation-for="Email" class="text-danger"></span>
+                                    <span class="error-msg text-danger ms-2" style="display:none;"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-6">
+
+                                <div class="form-floating">
+                                    <input asp-for="Age" id="patient-age" class="form-control shadow-none bg-transparent" type="number" placeholder="Last Name" />
+                                    <label for="floatingInputGroup1">Age</label>
+                                    <span asp-validation-for="Age" class="text-danger"></span>
+                                    <span class="error-msg text-danger ms-2" style="display:none;"></span>
+                                </div>
+                            </div>
+
+                        </div>
+
+
+                        <div class="row mt-3">
+
+                            <div class="col-6">
+
+                                <span>Gender</span>
+                                <div class="d-flex flex-wrap" id="gender-radio-div">
+
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" asp-for="Gender" id="exampleRadios1" value="Male">
+                                        <label class="form-check-label" for="exampleRadios1">
+                                            Male
+                                        </label>
+                                    </div>
+
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" asp-for="Gender" id="exampleRadios2" value="Female">
+                                        <label class="form-check-label" for="exampleRadios2">
+                                            Female
+                                        </label>
+                                    </div>
+
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" asp-for="Gender" id="exampleRadios3" value="Others">
+                                        <label class="form-check-label" for="exampleRadios3">
+                                            Others
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <span asp-validation-for="Gender" class="text-danger"></span>
+                                <span class="error-msg text-danger ms-2" style="display:none;"></span>
+
+                            </div>
+
+                            <div class="col-6">
+
+                                <div class="form-floating">
+                                    <input asp-for="CountryCode" id="patient-phone-country" hidden />
+                                    <input asp-for="PhoneNumber" id="patient-phone" class="form-control shadow-none bg-transparent" type="tel" />
+                                    <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                                    <span class="error-msg text-danger ms-2" style="display:none;"></span>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="row mt-3">
+
+                            <div class="col-6">
+
+                                <div class="form-floating">
+                                    <select asp-for="Disease" id="patient-disease" class="form-select shadow-none bg-transparent" placeholder="Disease">
+                                        <option disabled selected value=""> -- Select Disease -- </option>
+
+                                        @if (Model != null && Model.DiseaseList != null && Model.DiseaseList.Any())
+                                        {
+                                            @foreach (string disease in Model.DiseaseList)
+                                            {
+                                                <option value="@disease">@disease</option>
+                                            }
+                                        }
+                                        else
+                                        {
+
+                                            <option value="Heart Disease">Heart Disease</option>
+                                            <option value="Lung Disease">Lung Disease</option>
+                                        }
+
+                                    </select>
+                                    <label for="floatingInputGroup1">Disease</label>
+                                    <span asp-validation-for="Disease" class="text-danger"></span>
+                                    <span class="error-msg text-danger ms-2" style="display:none;"></span>
+                                </div>
+
+                            </div>
+
+                            <div class="col-6">
+
+                                <div class="form-floating">
+                                    <input asp-for="Specialist" id="patient-specialist" class="form-control shadow-none bg-transparent" placeholder="Last Name" />
+                                    
+                                     <select asp-for="Specialist" style="display:none;" id="patient-specialist-select" class="form-select shadow-none bg-transparent" placeholder="Specialist">
+                                        <option disabled selected value=""> -- Select Doctor -- </option>
+
+                                        @if (Model != null && Model.DoctorList != null && Model.DoctorList.Any())
+                                        {
+                                            @foreach (string doctor in Model.DoctorList)
+                                            {
+                                                <option value="@doctor">@doctor</option>
+                                            }
+                                        }
+
+                                    </select> 
+                                    <label for="floatingInputGroup1">Specialist</label>
+                                    <span asp-validation-for="Specialist" class="text-danger"></span>
+                                    <span class="error-msg text-danger ms-2" style="display:none;"></span>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+                <div class="modal-footer">
+
+                    <button type="button" class="btn flex-grow-1 bg-danger" data-bs-dismiss="modal">Cancel</button>
+
+                    <button type="submit" class="btn btn-info flex-grow-1 text-white">Save</button>
+
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    $('#add-patient-modal-form').on('submit', function (event) {
+        event.preventDefault();
+
+        let firstNameResult = validateName(document.getElementById("patient-first-name"));
+        let lastNameResult = validateName(document.getElementById("patient-last-name"));
+        let emailResult = validateEmail(document.getElementById("patient-email"));
+        let ageResult = validateNumber(document.getElementById("patient-age"));
+        let genderResult = validateRadio("gender-radio-div", "Gender");
+        let phoneResult = validatePhoneNumber(patientPhoneInputElement, patientIntlInput);
+        let diseaseResult = validateRequired(document.getElementById("patient-disease"));
+        let specialistResult = validateRequired(document.getElementById("patient-specialist"));
+
+        if (firstNameResult && lastNameResult && emailResult && ageResult && genderResult && phoneResult && diseaseResult && specialistResult) {
+
+            let countryCodePatient = document.getElementById("patient-phone-country");
+            countryCodePatient.value = patientIntlInput.getSelectedCountryData().dialCode;
+
+
+            let formData = $(this).serialize();
+
+            $.ajax({
+                url: "/Home/@action",
+                data: formData,
+                type: 'GET',
+                success: function (result) {
+                    if (result) {
+                        $('#addPatientModal').modal('hide');
+                    }
+                    location.reload();
+                },
+                error: function (error) {
+                    console.log(error);
+                    alert('Error Fetching Data')
+                },
+            });
+        }
+    });
+
+</script>
+
+<script>
+
+    patientPhoneInputElement = document.getElementById("patient-phone");
+    patientIntlInput = window.intlTelInput(patientPhoneInputElement, {
+        utilsScript:
+            "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+        preferredCountries: ["in"],
+        separateDialCode: true,
+        initialCountry: "in"
+    });
+
+</script>
+
+

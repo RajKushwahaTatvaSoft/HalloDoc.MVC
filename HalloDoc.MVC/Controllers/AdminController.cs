@@ -2468,23 +2468,6 @@ namespace HalloDoc.MVC.Controllers
             return View("Providers/CreatePhysicianAccount", model);
         }
 
-        public string GenerateUserName(bool isAdmin, string firstName, string lastName)
-        {
-            string prefix = isAdmin ? "AD" : "MD";
-
-            string userName = prefix + "." + lastName + "." + firstName.ElementAt(0);
-
-            int count = 0;
-            while (_unitOfWork.AspNetUserRepository.GetAll().Any(aspUser => aspUser.Username == userName))
-            {
-                count++;
-                userName = userName + count.ToString();
-            }
-
-            return userName;
-        }
-
-
         public async Task<string> FetchLatLang(EditPhysicianViewModel model)
         {
             try
@@ -2540,12 +2523,22 @@ namespace HalloDoc.MVC.Controllers
                 int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
                 string? adminAspId = HttpContext.Request.Headers.Where(x => x.Key == "userAspId").FirstOrDefault().Value;
 
+                model.roles = _unitOfWork.RoleRepo.Where(role => role.Accounttype == (int)AccountType.Physician);
+                model.regions = _unitOfWork.RegionRepository.GetAll();
 
                 if (ModelState.IsValid)
                 {
                     List<string> validProfileExtensions = new List<string> { ".jpeg", ".png", ".jpg" };
                     List<string> validDocumentExtensions = new List<string> { ".pdf" };
-                    string city = _unitOfWork.CityRepository.GetFirstOrDefault(city => city.Id == model.CityId).Name;
+
+                    Physician? physician = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Email == model.Email);
+                    if(physician != null)
+                    {
+                        _notyf.Error("Physician already exists with given email");
+                        return View("Providers/CreatePhysicianAccount", model);
+                    }
+
+                    string? city = _unitOfWork.CityRepository.GetFirstOrDefault(city => city.Id == model.CityId)?.Name;
 
                     try
                     {
@@ -2554,7 +2547,7 @@ namespace HalloDoc.MVC.Controllers
                         Aspnetuser aspUser = new()
                         {
                             Id = generatedId.ToString(),
-                            Username = GenerateUserName(false, model.FirstName, model.LastName),
+                            Username = _utilityService.GenerateUserName(AccountType.Physician, model.FirstName, model.LastName),
                             Passwordhash = AuthHelper.GenerateSHA256(model.Password),
                             Email = model.Email,
                             Phonenumber = model.Phone,
@@ -2693,21 +2686,17 @@ namespace HalloDoc.MVC.Controllers
                     catch (Exception e)
                     {
                         TempData["error"] = e.Message;
-                        model.roles = _unitOfWork.RoleRepo.GetAll();
-                        model.regions = _unitOfWork.RegionRepository.GetAll();
                         return View("Providers/CreatePhysicianAccount", model);
                     }
 
-
                 }
 
-                model.roles = _unitOfWork.RoleRepo.Where(role => role.Accounttype == (int)AccountType.Physician);
-                model.regions = _unitOfWork.RegionRepository.GetAll();
-
+                _notyf.Error("Please enter valid details");
                 return View("Providers/CreatePhysicianAccount", model);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
+                _notyf.Error(ex.Message);
                 return View("Error");
             }
 
@@ -3073,7 +3062,6 @@ namespace HalloDoc.MVC.Controllers
             }
         }
 
-
         [HttpPost]
         [RoleAuthorize((int)AllowMenu.AdminProfile)]
         public bool SaveAdministratorInfo(List<int> regions, string firstName, string lastName, string email, string phone, int? adminId)
@@ -3243,62 +3231,82 @@ namespace HalloDoc.MVC.Controllers
 
             if (ModelState.IsValid)
             {
-                string? city = _unitOfWork.CityRepository.GetFirstOrDefault(city => city.Id == model.CityId)?.Name;
-                Guid generatedId = Guid.NewGuid();
-                string phoneNumber = "+" + model.CountryCode + "-" + model.PhoneNumber;
-                string altPhoneNumber = "+" + model.AltCountryCode + "-" + model.AltPhoneNumber;
-                Aspnetuser aspnetuser = new()
+
+                Admin? admin = _unitOfWork.AdminRepository.GetFirstOrDefault(admin => admin.Email == model.Email);
+                if (admin != null)
                 {
-                    Id = generatedId.ToString(),
-                    Username = GenerateUserName(true, model.FirstName, model.LastName),
-                    Passwordhash = AuthHelper.GenerateSHA256(model.Password),
-                    Email = model.Email,
-                    Phonenumber = phoneNumber,
-                    Createddate = DateTime.Now,
-                    Accounttypeid = (int)AccountType.Admin,
-                };
-
-                _unitOfWork.AspNetUserRepository.Add(aspnetuser);
-                _unitOfWork.Save();
-
-                Admin admin1 = new()
-                {
-                    Aspnetuserid = aspnetuser.Id,
-                    Firstname = model.FirstName,
-                    Lastname = model.LastName,
-                    Email = model.Email,
-                    Mobile = phoneNumber,
-                    Address1 = model.Address1,
-                    Address2 = model.Address2,
-                    City = city,
-                    Regionid = model.RegionId,
-                    Zip = model.Zip,
-                    Createdby = aspnetuser.Id,
-                    Createddate = DateTime.Now,
-                    Roleid = model.RoleId,
-                    Altphone = altPhoneNumber,
-                };
-                _unitOfWork.AdminRepository.Add(admin1);
-                _unitOfWork.Save();
-
-
-                if (model.selectedRegions != null && model.selectedRegions.Any())
-                {
-                    foreach (int Item in model.selectedRegions)
-                    {
-                        Adminregion adminregion = new()
-                        {
-                            Regionid = Item,
-                            Adminid = admin1.Adminid
-                        };
-                        _unitOfWork.AdminRegionRepo.Add(adminregion);
-                        _unitOfWork.Save();
-                    }
+                    _notyf.Error("Physician already exists with given email");
+                    return View("Access/CreateAdminAccount", model);
                 }
 
+                try
+                {
 
-                TempData["success"] = "Admin Created sucessfully";
-                return RedirectToAction("UserAccess");
+                    string? city = _unitOfWork.CityRepository.GetFirstOrDefault(city => city.Id == model.CityId)?.Name;
+                    Guid generatedId = Guid.NewGuid();
+                    string phoneNumber = "+" + model.CountryCode + "-" + model.PhoneNumber;
+                    string altPhoneNumber = "+" + model.AltCountryCode + "-" + model.AltPhoneNumber;
+                    Aspnetuser aspnetuser = new()
+                    {
+                        Id = generatedId.ToString(),
+                        Username = _utilityService.GenerateUserName(AccountType.Admin, model.FirstName, model.LastName),
+                        Passwordhash = AuthHelper.GenerateSHA256(model.Password),
+                        Email = model.Email,
+                        Phonenumber = phoneNumber,
+                        Createddate = DateTime.Now,
+                        Accounttypeid = (int)AccountType.Admin,
+                    };
+
+                    _unitOfWork.AspNetUserRepository.Add(aspnetuser);
+                    _unitOfWork.Save();
+
+                    Admin admin1 = new()
+                    {
+                        Aspnetuserid = aspnetuser.Id,
+                        Firstname = model.FirstName,
+                        Lastname = model.LastName,
+                        Email = model.Email,
+                        Mobile = phoneNumber,
+                        Address1 = model.Address1,
+                        Address2 = model.Address2,
+                        City = city,
+                        Regionid = model.RegionId,
+                        Zip = model.Zip,
+                        Createdby = aspnetuser.Id,
+                        Createddate = DateTime.Now,
+                        Roleid = model.RoleId,
+                        Altphone = altPhoneNumber,
+                    };
+                    _unitOfWork.AdminRepository.Add(admin1);
+                    _unitOfWork.Save();
+
+
+                    if (model.selectedRegions != null && model.selectedRegions.Any())
+                    {
+                        foreach (int Item in model.selectedRegions)
+                        {
+                            Adminregion adminregion = new()
+                            {
+                                Regionid = Item,
+                                Adminid = admin1.Adminid
+                            };
+                            _unitOfWork.AdminRegionRepo.Add(adminregion);
+                            _unitOfWork.Save();
+                        }
+                    }
+
+
+                    TempData["success"] = "Admin Created sucessfully";
+                    return RedirectToAction("UserAccess");
+                }
+                catch (Exception ex)
+                {
+                    _notyf.Error(ex.Message);
+                    model.roles = _unitOfWork.RoleRepo.Where(role => role.Accounttype == (int)AccountType.Admin);
+                    model.regions = _unitOfWork.RegionRepository.GetAll();
+                    return View("Access/CreateAdminAccount", model);
+                }
+
             }
 
             _notyf.Error("Please ensure all fields are valid.");
@@ -4469,6 +4477,18 @@ namespace HalloDoc.MVC.Controllers
             }
 
             return result;
+        }
+
+        [HttpPost]
+        public IEnumerable<Physician> GetPhysicianByPhysicianRegion(int regionId)
+        {
+            var result = new JsonArray();
+
+            IEnumerable<int> phyRegions = _unitOfWork.PhysicianRegionRepo.Where(phyReg => phyReg.Regionid == regionId).Select(_ => _.Physicianid);
+
+            IEnumerable<Physician> physicians = _unitOfWork.PhysicianRepository.Where(phy => phyRegions.Contains(phy.Physicianid));
+
+            return physicians;
         }
 
         [HttpPost]

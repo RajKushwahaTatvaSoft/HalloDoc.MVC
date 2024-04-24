@@ -236,7 +236,7 @@ namespace Business_Layer.Services.AdminProvider
                     Aspnetuser aspnetuser = new()
                     {
                         Id = generatedId.ToString(),
-                        Username = model.FirstName,
+                        Username = _utilityService.GenerateUserName(AccountType.Patient,model.FirstName,model.LastName),
                         Passwordhash = null,
                         Email = model.Email,
                         Phonenumber = phoneNumber,
@@ -275,40 +275,24 @@ namespace Business_Layer.Services.AdminProvider
 
                 User? user = _unitOfWork.UserRepository.GetFirstOrDefault(u => u.Email == model.Email);
 
-                Request request;
-                if (isAdmin)
+                Request request = new()
                 {
-                    // Adding request in Request Table
-                    request = new()
-                    {
-                        Requesttypeid = 2,
-                        Userid = user.Userid,
-                        Firstname = model.FirstName,
-                        Lastname = model.LastName,
-                        Phonenumber = phoneNumber,
-                        Email = model.Email,
-                        Status = (short)RequestStatus.Unassigned,
-                        Createddate = DateTime.Now,
-                        Confirmationnumber = _utilityService.GenerateConfirmationNumber(user),
-                        Patientaccountid = user.Aspnetuserid,
-                    };
-                }
-                else
+                    Requesttypeid = (int)RequestType.Patient,
+                    Userid = user.Userid,
+                    Firstname = model.FirstName,
+                    Lastname = model.LastName,
+                    Phonenumber = phoneNumber,
+                    Email = model.Email,
+                    Status = (short)RequestStatus.Unassigned,
+                    Createddate = DateTime.Now,
+                    Confirmationnumber = _utilityService.GenerateConfirmationNumber(user),
+                    Patientaccountid = user.Aspnetuserid,
+                };
+
+                if (!isAdmin)
                 {
-                    request = new()
-                    {
-                        Requesttypeid = 2,
-                        Userid = user.Userid,
-                        Firstname = model.FirstName,
-                        Lastname = model.LastName,
-                        Phonenumber = phoneNumber,
-                        Email = model.Email,
-                        Status = (short)RequestStatus.Accepted,
-                        Physicianid = phy.Physicianid,
-                        Createddate = DateTime.Now,
-                        Confirmationnumber = _utilityService.GenerateConfirmationNumber(user),
-                        Patientaccountid = user.Aspnetuserid,
-                    };
+                    request.Status = (short)RequestStatus.Accepted;
+                    request.Physicianid = phy.Physicianid;
                 }
 
                 _unitOfWork.RequestRepository.Add(request);
