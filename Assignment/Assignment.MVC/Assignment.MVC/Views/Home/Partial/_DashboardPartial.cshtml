@@ -35,15 +35,16 @@
                     <td>
                         <div class="d-flex">
                             <button class="btn bg-info text-white edit-patient-btn"
-                            data-patientid="@patient.PatientId"
-                            data-firstname="@patient.FirstName"
-                            data-lastname="@patient.LastName"
-                            data-email="@patient.Email"
-                            data-age="@patient.Age"
-                            data-phoneno="@patient.PhoneNo"
-                            data-disease="@patient.Disease"
-                            data-specialist="@patient.Specialist"
-                            >Edit</button>
+                                    data-patientid="@patient.PatientId"
+                                    data-firstname="@patient.FirstName"
+                                    data-lastname="@patient.LastName"
+                                    data-email="@patient.Email"
+                                    data-age="@patient.Age"
+                                    data-phoneno="@patient.PhoneNo"
+                                    data-disease="@patient.Disease"
+                                    data-specialist="@patient.Specialist">
+                                Edit
+                            </button>
                             <button class="btn bg-danger text-white ms-2 delete-patient-btn" data-patientid="@patient.PatientId">Delete</button>
                         </div>
                     </td>
@@ -55,37 +56,59 @@
 
 </div>
 
-<div class="pagination d-flex align-content-center mt-3">
+<div class="pagination d-flex justify-content-end align-content-center">
 
-    <div></div>
+    <div class="d-flex">
+        <span>Rows per page: </span>
+
+        <select id="pagination-page-size" asp-for="PageSize" class="form-select shadow-none bg-transparent">
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="20">20</option>
+
+        </select>
+
+    </div>
+
+    @{
+        int startCount = (Model.CurrentPage - 1) * Model.PageSize + 1;
+        int endCount = startCount + Model.PageSize - 1;
+
+        if(endCount > Model.TotalCount)
+        {
+            endCount = Model.TotalCount;
+        }
+    }
+
+    <span>@startCount - @endCount of @Model.TotalCount</span>
 
     @if (Model.hasPrevious)
     {
-        <button class="border-0 mx-1 page-item" onclick="loadPartialTable(1)">❮❮</button>
         <button class="page-item mx-1 border-0" onclick="loadPartialTable(@(Model.CurrentPage-1))">❮</button>
     }
     else
     {
-        <button disabled class="disabled border-0 mx-1 page-item">❮❮</button>
         <button disabled class="disabled page-item mx-1 border-0">❮</button>
     }
-
-    <button class="page-item mx-1 active border-0">@Model.CurrentPage</button>
 
     @if (Model.hasNext)
     {
         <button class="page-item mx-1 border-0" onclick="loadPartialTable(@(Model.CurrentPage+1))">❯</button>
-        <button class="page-item mx-1 border-0" onclick="loadPartialTable(@Model.TotalPages)">❯❯</button>
     }
     else
     {
         <button disabled class="page-item disabled mx-1 border-0">❯</button>
-        <button disabled class="page-item disabled mx-1 border-0">❯❯</button>
     }
 
 </div>
 
 <script>
+
+    $('#pagination-page-size').change(function () {
+        page_size = $(this).val();
+        loadPartialTable(1);
+    });
+
 
     $('.edit-patient-btn').click(function () {
         let patientId = $(this).data("patientid");

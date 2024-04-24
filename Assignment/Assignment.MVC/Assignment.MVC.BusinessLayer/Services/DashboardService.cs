@@ -17,7 +17,7 @@ namespace Assignment.MVC.BusinessLayer.Services
 
         public async Task<PagedList<Patient>> FetchPaginatedPatientData(int pageNo, int pageSize, string? searchFilter)
         {
-            pageSize = 5;
+
             if (pageNo < 1)
             {
                 pageNo = 1;

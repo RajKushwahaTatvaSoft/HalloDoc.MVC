@@ -3,6 +3,7 @@ $(document).ready(function () {
 });
 
 let search_filter = "";
+let page_size = 5;
 
 let searchTimer;
 let patientIntlInput;
@@ -27,7 +28,7 @@ function loadPartialTable(pageNo) {
 
     $.ajax({
         url: "/Home/LoadDashboardPartialTable",
-        data: { pageNo: pageNo, searchFilter : search_filter },
+        data: { pageNo: pageNo, searchFilter : search_filter, pageSize : page_size },
         type: 'GET',
         success: function (result) {
             $('#dashboard-partial-table-div').html(result);
