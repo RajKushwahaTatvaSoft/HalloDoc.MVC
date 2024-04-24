@@ -163,8 +163,8 @@
                             <div class="col-6">
 
                                 <div class="form-floating">
-                                    
-                                     <select asp-for="Specialist" id="patient-specialist" class="form-select shadow-none bg-transparent" placeholder="Specialist">
+
+                                    <select asp-for="Specialist" id="patient-specialist" class="form-select shadow-none bg-transparent" placeholder="Specialist">
                                         <option disabled selected value=""> -- Select Doctor -- </option>
 
                                         @if (Model != null && Model.DoctorList != null && Model.DoctorList.Any())
@@ -175,7 +175,7 @@
                                             }
                                         }
 
-                                    </select> 
+                                    </select>
                                     <label for="floatingInputGroup1">Specialist</label>
                                     <span asp-validation-for="Specialist" class="text-danger"></span>
                                     <span class="error-msg text-danger ms-2" style="display:none;"></span>

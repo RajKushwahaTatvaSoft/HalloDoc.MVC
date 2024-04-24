@@ -61,12 +61,12 @@
     <div class="d-flex">
         <span>Rows per page: </span>
 
-        <select id="pagination-page-size" asp-for="PageSize" class="form-select shadow-none bg-transparent">
-            <option value="5">5</option>
-            <option value="10">10</option>
-            <option value="20">20</option>
+            <select id="pagination-page-size" asp-for="PageSize" class="shadow-none bg-transparent">
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="20">20</option>
 
-        </select>
+            </select>
 
     </div>
 
@@ -74,7 +74,7 @@
         int startCount = (Model.CurrentPage - 1) * Model.PageSize + 1;
         int endCount = startCount + Model.PageSize - 1;
 
-        if(endCount > Model.TotalCount)
+        if (endCount > Model.TotalCount)
         {
             endCount = Model.TotalCount;
         }
