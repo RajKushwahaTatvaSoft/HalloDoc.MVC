@@ -159,7 +159,6 @@ function loadPage(pageNo) {
         complete: function () {
             loading_div.setAttribute('style', 'display:none !important;margin-top:200px;');
             partial_table_div.setAttribute('style', 'display:static');
-
         },
         error: function (error) {
             console.log(error);

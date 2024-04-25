@@ -95,8 +95,33 @@
     }
 
     $('#send-link-modal-form').submit(function (event) {
+
+        event.preventDefault();
+
         loading_div.setAttribute('style', 'display:flex !important;');
         $('.modal-body').hide();
+
+        let formData = $(this).serialize();
+
+        $.ajax({
+            url: '/Admin/SendLinkForSubmitRequest',
+            type: 'POST',
+            data: formData,
+            success: function (result) {                
+                if (result) {
+                    $('#sendLinkModal').modal('hide');
+                }
+                else {
+                    loading_div.setAttribute('style', 'display:none !important;');
+                    $('.modal-body').show();
+                }
+            },
+            error: function (err) {
+                console.error(err);
+            }
+        });
+
+
     });
 
 </script>

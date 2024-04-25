@@ -29,6 +29,7 @@ namespace Business_Layer.Services.AdminServices
             ProviderLocationService = new ProviderLocationService(_config, _unitOfWork);
             AdminProfileService = new AdminProfileService(_unitOfWork);
             AdminRecordService = new AdminRecordService(_unitOfWork);
+            AdminAccessService = new AdminAccessService(_unitOfWork);
         }
 
         public IAdminProviderService AdminProviderService { get; private set; }
@@ -36,5 +37,6 @@ namespace Business_Layer.Services.AdminServices
         public IProviderLocationService ProviderLocationService { get; private set; }
         public IAdminProfileService AdminProfileService { get; private set; }
         public IAdminRecordService AdminRecordService { get; private set; }
+        public IAdminAccessService AdminAccessService { get; private set; }
     }
 }

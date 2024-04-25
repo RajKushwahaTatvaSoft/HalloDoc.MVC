@@ -1,0 +1,208 @@
+﻿@model EditAccessViewModel
+@{
+    Layout = "_AdminDashboardLayout";
+}
+
+<div class="container mt-4">
+
+    <div class="p-4 mb-5 rounded">
+        <div class=" d-flex justify-content-between mt-5">
+            <h4>Edit Role</h4>
+
+            <button onclick="history.back(-1)" class="btn btn-outline-info shadow-none night-mode-btn d-flex align-items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 -960 960 960">
+                    <path d="m142-480 294 294q15 15 14.5 35T435-116q-15 15-35 15t-35-15L57-423q-12-12-18-27t-6-30q0-15 6-30t18-27l308-308q15-15 35.5-14.5T436-844q15 15 15 35t-15 35L142-480Z" />
+                </svg>
+                <span>Back</span>
+            </button>
+        </div>
+        <div class="shadow container mt-4 p-2">
+
+            <div class="row border-2">
+
+                <h4 class="mt-4 col-12">Details </h4>
+
+                <form method="post" id="edit-role-form">
+
+                    <input asp-for="RoleId" hidden/>
+
+                    <fieldset id="edit-role-fieldset"></fieldset>
+                    <div class="row mt-4">
+                        <div class="col-md-6 mt-4 ">
+
+                            <div class="form-floating">
+                                <input asp-for="RoleName" type="text" class="changeable form-control" placeholder="Role Name" id="roleName" disabled>
+                                <label for="floatingInput">Role Name</label>
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-6 col-12 mt-4">
+
+                            <div class="form-floating">
+
+                                <select asp-for="AccountType" class="form-select" id="accountType" disabled>
+                                    <option disabled selected value=""> -- Select Account Type -- </option>
+
+                                    @if (Model.netRoles != null && Model.netRoles.Any())
+                                    {
+                                        foreach (var netRole in Model.netRoles)
+                                        {
+                                            <option value="@netRole.Id">@netRole.Name</option>
+                                        }
+                                    }
+
+                                </select>
+                                <label>Account Type</label>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="row mt-4">
+
+                        <div class="col-12 d-flex justify-content-start flex-wrap mt-4">
+
+                            @if (Model.Menus != null && Model.Menus.Any())
+                            {
+                                @foreach (Menu menu in Model.Menus)
+                                {
+                                    <div class="form-floating mt-1 me-3 checkColor ">
+                                        @if (Model.selectedMenus.Contains(menu.Menuid))
+                                        {
+                                            <input name="selectedMenus" class="changeable check form-check-input" value="@menu.Menuid" type="checkbox" style="" disabled checked />
+                                        }
+                                        else
+                                        {
+                                            <input name="selectedMenus" class="changeable check form-check-input" value="@menu.Menuid" type="checkbox" style="" disabled />
+                                        }
+                                        <span class="me-3">@menu.Name</span>
+
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div>No menus to select</div>
+                            }
+                        </div>
+
+                    </div>
+
+
+                    <div class="row">
+
+                        <div class="d-flex justify-content-end">
+
+                            <button id="editBtn" type="button" onclick="editDetails()" class="btn my-4 py-2 px-4" style="background-color: #10bce9; color: white;">
+                                Edit
+                            </button>
+
+                            <button id="administratorSaveBtn" type="submit" class="btn my-4 py-2 px-4" style="background-color: #10bce9; color: white; display:none;">
+                                Save
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+<style>
+
+    input[type="checkbox"]:checked {
+        background-color: #10BCE9 !important;
+    }
+
+</style>
+<script>
+
+    $('#edit-role-form').on('submit',function(event){
+        event.preventDefault();
+        
+        let formData = $(this).serialize();
+
+        $.ajax({
+            url: "/Admin/EditAccessSubmit",
+            data: formData,
+            type: 'POST',
+            success: function (result) {
+                location.reload();
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error stopping Notification')
+            },
+        });
+
+
+    });
+
+    function roleEdit() {
+        let selectedFiles = [];
+        let checkboxes = document.querySelectorAll(".check");
+
+        $("input:checkbox:checked").each(function () {
+            selectedFiles.push($(this).val());
+        });
+
+        $.ajax({
+            url: "/Admin/EditRoleSubmit",
+            data: { menus: selectedFiles, roleid: @Model.RoleId },
+            type: 'POST',
+            success: function (result) {
+                location.reload();
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error stopping Notification')
+            },
+        });
+    }
+</script>
+
+<script>
+
+    function editDetails() {
+
+        var inputs = document.getElementsByClassName("changeable");
+        for (var i = 0; i < inputs.length; i++) {
+            inputs[i].disabled = false;
+        }
+
+        var editBtn = document.getElementById("editBtn");
+        editBtn.style.display = "none";
+
+        var saveBtn = document.getElementById("administratorSaveBtn");
+        saveBtn.style.display = "block";
+
+    }
+
+    function saveDetails() {
+
+        var inputs = document.getElementsByClassName("changeable");
+        for (var i = 0; i < inputs.length; i++) {
+            inputs[i].disabled = true;
+        }
+
+
+        var editBtn = document.getElementById("editBtn");
+        editBtn.style.display = "block";
+
+        var saveBtn = document.getElementById("administratorSaveBtn");
+        saveBtn.style.display = "none";
+
+    }
+</script>
+
+<script>
+
+    $('.admin-tab').removeClass("active");
+    $('#access-tab').addClass("active");
+
+</script>

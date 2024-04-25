@@ -81,3 +81,15 @@
         background-color: #151515;
         color: white;
     }
+
+    .dark-mode .scheduling-body .pending-shift-bg {
+        background-color: #e76377;
+    }
+
+    .dark-mode .scheduling-body .approved-shift-bg {
+        background-color: #1dc31d;
+    }
+
+    .dark-mode .scheduling-body .row-header {
+        background-color: #8b8b8b !important;
+    }

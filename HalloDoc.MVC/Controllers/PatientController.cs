@@ -52,18 +52,26 @@ namespace HalloDoc.MVC.Controllers
             int userId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
             int pageSize = 5;
 
-            var pagedList = await _dashboardRepo.GetPatientRequestsAsync(userId, page, pageSize);
+            try
+            {
+                var pagedList = await _dashboardRepo.GetPatientRequestsAsync(userId, page, pageSize);
+                return PartialView("Partial/DashboardTable", pagedList);
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return View("Error");
+            }
 
-            return PartialView("Partial/DashboardTable", pagedList);
         }
 
         public IActionResult Dashboard()
         {
 
             int userId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-            string userName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+            string? userName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
 
-            if (userId == null)
+            if (userId == 0)
             {
                 return View("Error");
             }
@@ -71,9 +79,8 @@ namespace HalloDoc.MVC.Controllers
             PatientDashboardViewModel model = new PatientDashboardViewModel()
             {
                 UserId = userId,
-                UserName = userName,
+                UserName = userName ?? "",
             };
-
 
             return View("Dashboard/Dashboard", model);
         }
@@ -82,7 +89,6 @@ namespace HalloDoc.MVC.Controllers
         {
 
             int userId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-
 
             if (userId == 0)
             {
@@ -564,8 +570,12 @@ namespace HalloDoc.MVC.Controllers
                     dobDate = DateHelper.GetDOBDateTime(user.Intyear ?? 0, user.Strmonth ?? "", user.Intdate ?? 0);
                 }
 
+                int? cityId = _unitOfWork.CityRepository.GetFirstOrDefault(city => city.Name.ToLower().Equals(user.City))?.Id;
+
                 PatientProfileViewModel model = new()
                 {
+                    CityId = cityId,
+                    RegionId = user.Regionid,
                     FirstName = user.Firstname,
                     LastName = user.Lastname,
                     DateOfBirth = dobDate,

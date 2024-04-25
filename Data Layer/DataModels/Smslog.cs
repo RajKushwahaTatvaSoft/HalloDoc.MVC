@@ -51,4 +51,8 @@ public partial class Smslog
 
     [Column("action")]
     public int? Action { get; set; }
+
+    [Column("recipientname")]
+    [StringLength(50)]
+    public string Recipientname { get; set; } = null!;
 }

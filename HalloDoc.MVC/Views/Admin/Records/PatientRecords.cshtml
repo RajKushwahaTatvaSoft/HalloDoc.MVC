@@ -24,27 +24,24 @@
 
                 <div class="row align-items-center">
 
-
                     <div class="col-lg-3 mt-3">
-
                         <div class="form-floating">
-                            <input name="FirstName" type="text" class="form-control" placeholder="Receiver Name" id="floatingTextarea2" required>
+                            <input name="FirstName" type="text" class="form-control" placeholder="Receiver Name" id="patient-record-first-name" required>
                             <label for="floatingTextarea2">First Name</label>
                         </div>
-
                     </div>
 
                     <div class="col-lg-3 mt-3">
                         <div class="form-floating">
-                            <input name="LastName" type="text" class="form-control" placeholder="Receiver Name" id="floatingTextarea2" required>
+                            <input name="LastName" type="text" class="form-control" placeholder="Receiver Name" id="patient-record-last-name" required>
                             <label for="floatingTextarea2">Last Name</label>
                         </div>
                     </div>
 
                     <div class="col-lg-3 mt-3">
                         <div class="form-floating">
-                            <input name="EmailAddress" type="text" class="form-control" placeholder="Email Id" id="floatingTextarea2" required>
-                            <label for="floatingTextarea2">Email Id</label>
+                            <input name="EmailAddress" type="text" class="form-control" placeholder="Email Address" id="patient-record-email" required>
+                            <label for="floatingTextarea2">Email Address</label>
                         </div>
                     </div>
 
@@ -53,7 +50,8 @@
                         <div class="form-floating d-flex " style="height:58px;">
                             <input id="phone-country" name="CountryCode" hidden />
 
-                            <input id="phone" class="py-4 form-control" type="tel" name="PhoneNumber" />
+                            <input id="patient-record-phone-number" class="form-control" type="tel" placeholder="Phone Number" name="PhoneNumber" />
+                            <label>Phone Number</label>
                         </div>
 
                     </div>
@@ -66,7 +64,7 @@
 
                         <div class="">
 
-                            <button type="button" class="btn btn-info align-middle" id="email-log-search-btn">
+                            <button type="button" class="btn btn-info align-middle" id="patient-record-search-btn">
                                 <span class="text-white">Search</span>
                             </button>
 
@@ -94,46 +92,77 @@
 </div>
 
 <script>
-    const phoneInputField2 = document.getElementById("phone");
-    var patientPhoneInput2 = window.intlTelInput(phoneInputField2, {
-        utilsScript:
-            "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
-        preferredCountries: ["in"],
-        separateDialCode: true,
-        initialCountry: "in"
-    });
+
+    var first_name_filter = "";
+    var last_name_filter = "";
+    var email_filter = "";
+    var phone_number_filter = "";
+
+    // const phoneInputField2 = document.getElementById("phone");
+    // var patientPhoneInput2 = window.intlTelInput(phoneInputField2, {
+    //     utilsScript:
+    //         "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+    //     preferredCountries: ["in"],
+    //     separateDialCode: true,
+    //     initialCountry: "in"
+    // });
 
 
-    function changeCountryCode2() {
-        var countryCode2 = document.getElementById("phone-country");
-        countryCode2.value = patientPhoneInput2.getSelectedCountryData().dialCode;
-        console.log(countryCode2.value);
-    }
+    // function changeCountryCode2() {
+    //     var countryCode2 = document.getElementById("phone-country");
+    //     countryCode2.value = patientPhoneInput2.getSelectedCountryData().dialCode;
+    //     console.log(countryCode2.value);
+    // }
 
-    $('#email-log-search-btn').click(function () {
-
-        var formData = $('#patient-records-filter-form').serialize();
-        console.log(formData);
+    function loadPartialTable(pageNo){
+        // let code = patientPhoneInput2.getSelectedCountryData().dialCode;
+        // let phone = "+" + code + "-" + phone_number_filter;
 
         $.ajax({
             url: "/Admin/PatientRecordsPartial",
             type: 'POST',
-            data: formData,
+            data: {
+                pageNo: pageNo,
+                firstName : first_name_filter,
+                lastName : last_name_filter,
+                emailAddress: email_filter,
+                phoneNumber: phone_number_filter
+            },
             success: function (result) {
                 $('#patient-records-partial-table').html(result);
             },
             complete: function () {
-
             },
             error: function (error) {
                 console.log(error);
                 alert('error fetching details')
             },
         });
+    }
 
+    loadPartialTable(1);
+
+
+    $('#patient-record-search-btn').click(function () {
+        first_name_filter = $('#patient-record-first-name').val();
+        last_name_filter = $('#patient-record-last-name').val();
+        email_filter = $('#patient-record-email').val();
+        phone_number_filter = $('#patient-record-phone-number').val();
+        
+        loadSearchRecordTable(1);
     });
 
-    $('#email-log-search-btn').click();
+
+    // $('#email-log-search-btn').click(function () {
+
+    //     var formData = $('#patient-records-filter-form').serialize();
+    //     console.log(formData);
+
+        
+
+    // });
+
+    // $('#email-log-search-btn').click();
 
 </script>
 

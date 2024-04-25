@@ -9,5 +9,6 @@ namespace Business_Layer.Services.AdminServices.Interface
         public IProviderLocationService ProviderLocationService { get; }
         public IAdminProfileService AdminProfileService { get; }
         public IAdminRecordService AdminRecordService { get; }
+        public IAdminAccessService AdminAccessService { get; }
     }
 }

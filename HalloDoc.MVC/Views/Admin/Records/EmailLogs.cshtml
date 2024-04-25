@@ -5,110 +5,109 @@
     ViewData["UserName"] = Model.UserName;
 }
 
-<div class="container-md container-fluid ">
-    <div>
-        <div class=" d-flex justify-content-between mt-5">
-            <h4>Email Logs (Gmail)</h4>
+<div>
+    <div class=" d-flex justify-content-between mx-5 mt-5">
+        <h4>Email Logs (Gmail)</h4>
 
-            <button class="btn btn-outline-info align-middle" onclick="history.back(-1)">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="#01bce9" width="15" height="15" viewBox="0 -960 960 960">
-                    <path d="m142-480 294 294q15 15 14.5 35T435-116q-15 15-35 15t-35-15L57-423q-12-12-18-27t-6-30q0-15 6-30t18-27l308-308q15-15 35.5-14.5T436-844q15 15 15 35t-15 35L142-480Z" />
-                </svg>
-                <span>Back</span>
-            </button>
+        <button class="btn btn-outline-info align-middle" onclick="history.back(-1)">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="#01bce9" width="15" height="15" viewBox="0 -960 960 960">
+                <path d="m142-480 294 294q15 15 14.5 35T435-116q-15 15-35 15t-35-15L57-423q-12-12-18-27t-6-30q0-15 6-30t18-27l308-308q15-15 35.5-14.5T436-844q15 15 15 35t-15 35L142-480Z" />
+            </svg>
+            <span>Back</span>
+        </button>
 
-        </div>
+    </div>
 
-        <div class="shadow dashboard-card container mt-4 pb-3 px-3">
+    <div class="shadow dashboard-card mx-5 mt-4 pb-3 px-3">
 
-            <form id="email-log-filter-form">
+        <form id="email-log-filter-form">
 
-                <div class="row align-items-center">
+            <div class="row align-items-center">
 
-                    <div class="col-lg-2 mt-3">
+                <div class="col-lg-2 mt-3">
 
-                        <div class="form-floating">
-                            <select class="form-select" id="email-log-role-filter" required name="roleIdFilter">
-                                <option selected value="0"> All Roles </option>
-                                @foreach(var role in Model.roles){
-                                    <option value="@role.Roleid">@role.Name</option>
-                                }
-                            </select>
-                            <label for="patient-state">Search By Role</label>
-                        </div>
-
+                    <div class="form-floating">
+                        <select class="form-select" id="email-log-role-filter" required name="roleIdFilter">
+                            <option selected value="0"> All Roles </option>
+                            @foreach (var role in Model.roles)
+                            {
+                                <option value="@role.Roleid">@role.Name</option>
+                            }
+                        </select>
+                        <label for="patient-state">Search By Role</label>
                     </div>
 
-                    <div class="col-lg-2 mt-3">
-                        <div class="form-floating">
-                            <input name="receiverName" type="text" class="form-control" placeholder="Receiver Name"
-                                   id="email-log-receiver-name" required>
-                            <label for="floatingTextarea2">Receiver Name</label>
-                        </div>
+                </div>
+
+                <div class="col-lg-2 mt-3">
+                    <div class="form-floating">
+                        <input name="receiverName" type="text" class="form-control" placeholder="Receiver Name"
+                               id="email-log-receiver-name" required>
+                        <label for="floatingTextarea2">Receiver Name</label>
                     </div>
+                </div>
 
-                    <div class="col-lg-2 mt-3">
-                        <div class="form-floating">
-                            <input name="emailAddress" type="text" class="form-control" placeholder="Email Id"
-                                   id="email-log-email-id" required>
-                            <label for="floatingTextarea2">Email Id</label>
-                        </div>
+                <div class="col-lg-2 mt-3">
+                    <div class="form-floating">
+                        <input name="emailAddress" type="text" class="form-control" placeholder="Email Id"
+                               id="email-log-email-id" required>
+                        <label for="floatingTextarea2">Email Id</label>
                     </div>
+                </div>
 
-                    <div class="col-lg-2 mt-3">
+                <div class="col-lg-2 mt-3">
 
-                        <div class="form-floating">
+                    <div class="form-floating">
 
-                            <input class="form-control" placeholder="Created Date" type="date"
-                                   id="email-log-created-date" name="createdDate">
-                            <label for="floatingTextarea2">Created Date</label>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="col-lg-2 mt-3">
-
-                        <div class="form-floating">
-
-                            <input class="form-control" placeholder="Sent Date" type="date"
-                                   id="email-log-sent-date" name="sentDate">
-                            <label for="floatingTextarea2">Sent Date</label>
-
-                        </div>
+                        <input class="form-control" placeholder="Created Date" type="date"
+                               id="email-log-created-date" name="createdDate">
+                        <label for="floatingTextarea2">Created Date</label>
 
                     </div>
-
-
-                    <div class="col-lg-2 d-flex justify-content-end mt-3">
-
-                        <div class="">
-
-                            <button onclick="loadPartialTable(1)" type="button" class="btn btn-info align-middle">
-                                <span class="text-white">Search</span>
-                            </button>
-
-                        </div>
-
-                        <div class="ms-3">
-
-                            <button type="reset" class="btn btn-outline-info align-middle">
-                                <span class="text-info">Clear</span>
-                            </button>
-
-                        </div>
-                    </div>
-
 
                 </div>
 
 
-            </form>
+                <div class="col-lg-2 mt-3">
 
-            <div id="email-logs-partial-table"></div>
+                    <div class="form-floating">
 
-        </div>
+                        <input class="form-control" placeholder="Sent Date" type="date"
+                               id="email-log-sent-date" name="sentDate">
+                        <label for="floatingTextarea2">Sent Date</label>
+
+                    </div>
+
+                </div>
+
+
+                <div class="col-lg-2 d-flex justify-content-end mt-3">
+
+                    <div class="">
+
+                        <button onclick="loadPartialTable(1)" type="button" class="btn btn-info align-middle">
+                            <span class="text-white">Search</span>
+                        </button>
+
+                    </div>
+
+                    <div class="ms-3">
+
+                        <button type="reset" class="btn btn-outline-info align-middle">
+                            <span class="text-info">Clear</span>
+                        </button>
+
+                    </div>
+                </div>
+
+
+            </div>
+
+
+        </form>
+
+        <div id="email-logs-partial-table"></div>
+
     </div>
 </div>
 

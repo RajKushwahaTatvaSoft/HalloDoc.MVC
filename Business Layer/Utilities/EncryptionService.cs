@@ -66,23 +66,24 @@ namespace Business_Layer.Utilities
             }
         }
 
-        private static string GenerateRandomKey(int keySizeInBits)
-        {
-            // Convert the key size to bytes
-            int keySizeInBytes = keySizeInBits / 8;
+        //private static string GenerateRandomKey(int keySizeInBits)
+        //{
+        //    // Convert the key size to bytes
+        //    int keySizeInBytes = keySizeInBits / 8;
 
-            // Create a byte array to hold the random key
-            byte[] keyBytes = new byte[keySizeInBytes];
+        //    // Create a byte array to hold the random key
+        //    byte[] keyBytes = new byte[keySizeInBytes];
 
-            // Use a cryptographic random number generator to fill the byte array
-            using (var rng = new RNGCryptoServiceProvider())
-            {
-                rng.GetBytes(keyBytes);
-            }
+        //    // Use a cryptogra
+        //    phic random number generator to fill the byte array
+        //    using (var rng = new RNGCryptoServiceProvider())
+        //    {
+        //        rng.GetBytes(keyBytes);
+        //    }
 
-            // Convert the byte array to a base64-encoded string for storage
-            return Convert.ToBase64String(keyBytes);
-        }
+        //    // Convert the byte array to a base64-encoded string for storage
+        //    return Convert.ToBase64String(keyBytes);
+        //}
 
     }
 }

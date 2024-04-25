@@ -16,6 +16,8 @@
     <link rel="stylesheet" href="~/css/admin_style.css">
     <link rel="stylesheet" href="~/css/admin_style_dark.css">
 
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 </head>
 
 <body>
@@ -29,7 +31,6 @@
     
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
-
     @await Component.InvokeAsync("Notyf")
 
 </body>

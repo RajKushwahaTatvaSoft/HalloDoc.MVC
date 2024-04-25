@@ -8,8 +8,6 @@ html, body {
     height: 100%;
 }
 
-
-
 input[type="checkbox"]:disabled {
     background-color: #AAAAAA;
 }
@@ -458,6 +456,10 @@ x::-webkit-file-upload-button, input[type=file]:after {
 
 .scheduling-body .approved-shift-bg {
     background-color: lightgreen;
+}
+
+.scheduling-body .row-header {
+    background-color: #dfdfdf !important;
 }
 
 .week-wise-table {

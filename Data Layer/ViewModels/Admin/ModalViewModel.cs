@@ -9,14 +9,8 @@ namespace Data_Layer.ViewModels.Admin
     {
         public int ShiftDetailId { get; set; }
 
-        public IEnumerable<Region>? regions { get; set; }
-        public IEnumerable<DataModels.Physician>? selectedPhysicians { get; set; }
-
-        [Required(ErrorMessage = "Region is required")]
-        public int RegionId { get; set; }
-
-        [Required(ErrorMessage = "Physician is required")]
-        public int PhysicianId { get; set; }
+        public string? PhysicianName {  get; set; } 
+        public string? RegionName {  get; set; } 
 
         [Required(ErrorMessage = "Shift Date is required")]
         [DateNotInPast(ErrorMessage = "Date cannot be in past")]

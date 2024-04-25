@@ -1,7 +1,7 @@
-﻿@model SMSLogsViewModel
+﻿@model PagedList<LogTableRow>
 
 <div class="table-responsive mt-3 d-none d-md-block">
-    <table class="table admin-dashboard">
+    <table class="table">
 
         <thead class="table-head align-middle">
 
@@ -23,21 +23,23 @@
 
         <tbody class="align-middle" id="dashboard-table-body">
 
-            @foreach (var log in Model.smsLogs)
+            @foreach (var log in Model)
             {
                 <tr>
-                    <td>@log.Smslogid</td>
+                    <td>@log.RecipientName</td>
                     <td>@log.Action</td>
-                    <td>@log.Roleid</td>
-                    <td>@log.Mobilenumber</td>
-                    <td>@log.Createdate</td>
-                    <td>@log.Sentdate</td>
-                    <td>@log.Issmssent</td>
-                    <td>@log.Senttries</td>
-                    <td>@log.Confirmationnumber</td>
+                    <td>@log.RoleName</td>
+                    <td>@log.MobileNumber</td>
+                    <td>@log.CreatedDate</td>
+                    <td>@log.SentDate</td>
+                    <td>@log.IsSent</td>
+                    <td>@log.SentTries</td>
+                    <td>@log.ConfirmationNumber</td>
                 </tr>
             }
         </tbody>
 
     </table>
 </div>
+
+<partial name="_PaginationButton" />

@@ -65,10 +65,10 @@
                 <span id="shift-date-time" class="fw-bold"></span>
             </div>
             <div class=" mx-0 mt-4 d-flex justify-content-end">
-                <div class=" d-flex flex-wrap justify-content-md-end col-1" style="background-color:lightpink; height:25px; width:30px; border-radius:5px; border:1px solid hotpink">
+                <div class=" d-flex flex-wrap justify-content-md-end col-1 pending-shift-bg" style="height:25px; width:30px; border-radius:5px; border:1px solid hotpink">
                 </div>
                 <span class="col-2 d-flex flex-wrap justify-content-md-center">Pending Shifts</span>
-                <div class=" d-flex flex-wrap justify-content-md-end col-1" style="background-color:lightgreen; height:25px; width:30px; border-radius:5px; border:1px solid green">
+                <div class=" d-flex flex-wrap justify-content-md-end col-1 approved-shift-bg" style="height:25px; width:30px; border-radius:5px; border:1px solid green">
                 </div>
                 <span class=" d-flex flex-wrap justify-content-md-center col-2">Approved Shifts</span>
             </div>
@@ -103,15 +103,15 @@
             <div class="col-md-6 d-flex justify-content-end">
 
                 <button type="button" id="day-wise-schedule-btn" class="btn cal-filter-active calender-filter">
-                    Days
+                    <span>Day</span>
                 </button>
 
                 <button type="button" id="week-wise-schedule-btn" class="btn ms-2 calender-filter">
-                    Weeks
+                    <span>Week</span>
                 </button>
 
                 <button type="button" id="month-wise-schedule-btn" class="btn ms-2 calender-filter">
-                    Month
+                    <span>Month</span>
                 </button>
             </div>
         </div>

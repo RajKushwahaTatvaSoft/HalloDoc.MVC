@@ -13,7 +13,7 @@
             <button onclick="history.back(-1)" class="btn btn-outline-info"> ❮  Back </button>
         </div>
     </div>
-    <div class="dashboard-card  shadow p-4 mb-5 rounded">
+    <div class="dashboard-card shadow p-4 mb-5 rounded">
         <div class="row justify-content-between">
 
             <div class="col-12 col-lg-4 d-flex normal-input rounded align-items-center ps-2">
@@ -23,7 +23,7 @@
                     </path>
                 </svg>
 
-                <select id="filter-regions" class="form-select  shadow-none" aria-label="Default select example">
+                <select id="filter-regions" class="form-select border-0 shadow-none" aria-label="Default select example">
                     <option selected value="0">All Regions</option>
                     @foreach (Region region in Model.regions)
                     {

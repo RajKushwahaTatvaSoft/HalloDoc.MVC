@@ -1,7 +1,7 @@
-﻿@model PagedList<Emaillog>
+﻿@model PagedList<LogTableRow>
 
 <div class="table-responsive mt-3 d-none d-md-block">
-    <table class="table admin-dashboard">
+    <table class="table">
 
         <thead class="table-head align-middle">
 
@@ -26,15 +26,15 @@
             @foreach (var log in Model)
             {
                 <tr>
-                    <td>@log.Recipientname</td>
-                    <td>@log.Subjectname</td>
-                    <td>@log.Roleid</td>
-                    <td>@log.Emailid</td>
-                    <td>@log.Createdate</td>
-                    <td>@log.Sentdate</td>
-                    <td>@log.Isemailsent</td>
-                    <td>@log.Senttries</td>
-                    <td>@log.Confirmationnumber</td>
+                    <td>@log.RecipientName</td>
+                    <td>@log.Action</td>
+                    <td>@log.RoleName</td>
+                    <td>@log.Email</td>
+                    <td>@log.CreatedDate</td>
+                    <td>@log.SentDate</td>
+                    <td>@log.IsSent</td>
+                    <td>@log.SentTries</td>
+                    <td>@log.ConfirmationNumber</td>
                 </tr>
             }
         </tbody>

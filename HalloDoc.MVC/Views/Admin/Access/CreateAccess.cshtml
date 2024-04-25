@@ -3,10 +3,10 @@
     Layout = "_AdminDashboardLayout";
 }
 
-<div class="admin-dashboard container admin-dashboard mt-4">
+<div class="container mt-4">
 
-    <div class=" border-0 shadow p-4 mb-5 rounded">
-        <div class=" d-flex justify-content-between mt-5">
+    <div class="p-4 mb-5 rounded">
+        <div class="d-flex justify-content-between mt-5">
             <h4>Create Access</h4>
 
             <button onclick="history.back(-1)" class="btn btn-outline-info shadow-none night-mode-btn d-flex align-items-center">
@@ -17,35 +17,39 @@
             </button>
 
         </div>
+
         <div class="shadow container mt-4 p-2">
             <div class="row   border-2">
-                <h4 class="mt-4 col-12  fs-6">Details </h4>
+                <h4 class="mt-4 col-12">Details </h4>
 
                 <form method="post">
 
                     <div class="row mt-4">
                         <div class="col-md-6 mt-4 ">
-                            <div class=" floating-label form-floating">
-                                <input asp-for="RoleName" type="text" class="changeable form-control" placeholder="First Name" id="roleName">
+
+                            <div class="form-floating">
+                                <input asp-for="RoleName" type="text" class="changeable form-control" placeholder="Role Name" id="roleName">
                                 <label for="floatingInput">Role Name</label>
                             </div>
 
                         </div>
                         <div class="col-md-6 col-12 mt-4">
-                            <select asp-for="AccountType" class="white-back form-select" id="accountType" style="height:60px;">
-                                <option disabled selected value="0"> -- Select Account Type -- </option>
+                            <div class="form-floating">
 
-                                @if(Model.netRoles != null && Model.netRoles.Any())
-                                {
-                                    foreach (var netRole in Model.netRoles)
+                                <select asp-for="AccountType" class="form-select" id="accountType">
+                                    <option disabled selected value=""> -- Select Account Type -- </option>
+
+                                    @if (Model.netRoles != null && Model.netRoles.Any())
                                     {
-                                        <option value="@netRole.Id">@netRole.Name</option>
+                                        foreach (var netRole in Model.netRoles)
+                                        {
+                                            <option value="@netRole.Id">@netRole.Name</option>
+                                        }
                                     }
-                                }
 
-
-                            </select>
-
+                                </select>
+                                <label>Account Type</label>
+                            </div>
 
                         </div>
 
@@ -62,8 +66,8 @@
                             <button type="submit" class="btn my-4 py-2 px-4" style="background-color: #10bce9; color: white;">
                                 Save
                             </button>
-                        </div>
 
+                        </div>
 
                     </div>
 
@@ -86,7 +90,6 @@
 <script>
     $("#accountType").change(function () {
         var type1 = $('option:selected', this).val();
-
 
         $.ajax({
             url: "/Admin/GetMenusByAccounttype",

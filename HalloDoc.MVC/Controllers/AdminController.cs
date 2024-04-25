@@ -59,16 +59,25 @@ namespace HalloDoc.MVC.Controllers
         {
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
             string? adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
-
-            AdminProfileViewModel? model = _adminService.AdminProfileService.GetAdminProfileModel(adminId);
-            if (model == null)
+            try
             {
-                _notyf.Error("Cannot fetch data.");
+
+                AdminProfileViewModel? model = _adminService.AdminProfileService.GetAdminProfileModel(adminId);
+                if (model == null)
+                {
+                    _notyf.Error("Cannot fetch data.");
+                    return RedirectToAction("Dashboard");
+                }
+
+                model.UserName = adminName;
+                return View("Header/Profile", model);
+
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
                 return RedirectToAction("Dashboard");
             }
-
-            model.UserName = adminName;
-            return View("Header/Profile", model);
         }
 
         [RoleAuthorize((int)AllowMenu.ProviderLocation)]
@@ -76,16 +85,26 @@ namespace HalloDoc.MVC.Controllers
         {
             string? adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
 
-            ProviderLocationViewModel? model = _adminService.ProviderLocationService.GetProviderLocationModel();
-
-            if (model == null)
+            try
             {
+
+                ProviderLocationViewModel? model = _adminService.ProviderLocationService.GetProviderLocationModel();
+
+                if (model == null)
+                {
+                    return RedirectToAction("Dashboard");
+                }
+
+                model.UserName = adminName;
+
+                return View("Header/ProviderLocation", model);
+
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
                 return RedirectToAction("Dashboard");
             }
-
-            model.UserName = adminName;
-
-            return View("Header/ProviderLocation", model);
         }
 
         public IActionResult Logout()
@@ -103,72 +122,90 @@ namespace HalloDoc.MVC.Controllers
         [HttpPost]
         public async Task<ActionResult> PartialTable(int status, int page, int typeFilter, string searchFilter, int regionFilter)
         {
-
-            HttpContext.Session.SetInt32("currentStatus", status);
-            HttpContext.Session.SetInt32("currentPage", page);
-            HttpContext.Session.SetInt32("currentTypeFilter", typeFilter);
-            HttpContext.Session.SetInt32("currentRegionFilter", regionFilter);
-            HttpContext.Session.SetString("currentSearchFilter", searchFilter ?? "");
-
-            int pageNumber = 1;
-            if (page > 0)
+            try
             {
-                pageNumber = page;
+
+                HttpContext.Session.SetInt32("currentStatus", status);
+                HttpContext.Session.SetInt32("currentPage", page);
+                HttpContext.Session.SetInt32("currentTypeFilter", typeFilter);
+                HttpContext.Session.SetInt32("currentRegionFilter", regionFilter);
+                HttpContext.Session.SetString("currentSearchFilter", searchFilter ?? "");
+
+                int pageNumber = 1;
+                if (page > 0)
+                {
+                    pageNumber = page;
+                }
+
+                DashboardFilter filter = new DashboardFilter()
+                {
+                    RequestTypeFilter = typeFilter,
+                    PatientSearchText = searchFilter,
+                    RegionFilter = regionFilter,
+                    PageNumber = pageNumber,
+                    PageSize = 5,
+                    Status = status,
+                };
+
+                PagedList<AdminRequest> pagedList = await _adminService.AdminDashboardService.GetAdminRequestsAsync(filter);
+
+                AdminDashboardViewModel model = new AdminDashboardViewModel();
+                model.pagedList = pagedList;
+                model.DashboardStatus = status;
+                model.CurrentPage = pageNumber;
+                model.filterOptions = filter;
+
+                return PartialView("Partial/PartialTable", model);
+
             }
-
-            DashboardFilter filter = new DashboardFilter()
+            catch (Exception ex)
             {
-                RequestTypeFilter = typeFilter,
-                PatientSearchText = searchFilter,
-                RegionFilter = regionFilter,
-                PageNumber = pageNumber,
-                PageSize = 5,
-                Status = status,
-            };
-
-            PagedList<AdminRequest> pagedList = await _adminService.AdminDashboardService.GetAdminRequestsAsync(filter);
-
-            AdminDashboardViewModel model = new AdminDashboardViewModel();
-            model.pagedList = pagedList;
-            model.DashboardStatus = status;
-            model.CurrentPage = pageNumber;
-            model.filterOptions = filter;
-
-            return PartialView("Partial/PartialTable", model);
+                _notyf.Error(ex.Message);
+                return RedirectToAction("Index", "Guest");
+            }
         }
 
         [RoleAuthorize((int)AllowMenu.AdminDashboard)]
         public IActionResult Dashboard()
         {
 
-            int? status = HttpContext.Session.GetInt32("currentStatus");
-            int? page = HttpContext.Session.GetInt32("currentPage");
-            int? region = HttpContext.Session.GetInt32("currentRegionFilter");
-            int? type = HttpContext.Session.GetInt32("currentTypeFilter");
-            string? search = HttpContext.Session.GetString("currentSearchFilter");
+            try
+            {
+                int? status = HttpContext.Session.GetInt32("currentStatus");
+                int? page = HttpContext.Session.GetInt32("currentPage");
+                int? region = HttpContext.Session.GetInt32("currentRegionFilter");
+                int? type = HttpContext.Session.GetInt32("currentTypeFilter");
+                string? search = HttpContext.Session.GetString("currentSearchFilter");
 
-            DashboardFilter initialFilter = new DashboardFilter();
-            initialFilter.Status = status ?? 1;
-            initialFilter.PageNumber = page ?? 1;
-            initialFilter.RegionFilter = region ?? 0;
-            initialFilter.RequestTypeFilter = type ?? 0;
-            initialFilter.PatientSearchText = search ?? "";
+                DashboardFilter initialFilter = new DashboardFilter();
+                initialFilter.Status = status ?? 1;
+                initialFilter.PageNumber = page ?? 1;
+                initialFilter.RegionFilter = region ?? 0;
+                initialFilter.RequestTypeFilter = type ?? 0;
+                initialFilter.PatientSearchText = search ?? "";
 
 
-            AdminDashboardViewModel model = new AdminDashboardViewModel();
+                AdminDashboardViewModel model = new AdminDashboardViewModel();
 
-            model.physicians = _unitOfWork.PhysicianRepository.GetAll();
-            model.regions = _unitOfWork.RegionRepository.GetAll();
-            model.NewReqCount = _unitOfWork.RequestRepository.Where(r => r.Status == (short)RequestStatus.Unassigned).Count();
-            model.PendingReqCount = _unitOfWork.RequestRepository.Where(r => r.Status == (short)RequestStatus.Accepted).Count();
-            model.ActiveReqCount = _unitOfWork.RequestRepository.Where(r => (r.Status == (short)RequestStatus.MDEnRoute) || (r.Status == (short)RequestStatus.MDOnSite)).Count();
-            model.ConcludeReqCount = _unitOfWork.RequestRepository.Where(r => r.Status == (short)RequestStatus.Conclude).Count();
-            model.ToCloseReqCount = _unitOfWork.RequestRepository.Where(r => (r.Status == (short)RequestStatus.Cancelled) || (r.Status == (short)RequestStatus.CancelledByPatient) || (r.Status == (short)RequestStatus.Closed)).Count();
-            model.UnpaidReqCount = _unitOfWork.RequestRepository.Where(r => r.Status == (short)RequestStatus.Unpaid).Count();
-            model.casetags = _unitOfWork.CaseTagRepository.GetAll();
-            model.filterOptions = initialFilter;
+                model.physicians = _unitOfWork.PhysicianRepository.GetAll();
+                model.regions = _unitOfWork.RegionRepository.GetAll();
+                model.NewReqCount = _unitOfWork.RequestRepository.Where(r => r.Status == (short)RequestStatus.Unassigned).Count();
+                model.PendingReqCount = _unitOfWork.RequestRepository.Where(r => r.Status == (short)RequestStatus.Accepted).Count();
+                model.ActiveReqCount = _unitOfWork.RequestRepository.Where(r => (r.Status == (short)RequestStatus.MDEnRoute) || (r.Status == (short)RequestStatus.MDOnSite)).Count();
+                model.ConcludeReqCount = _unitOfWork.RequestRepository.Where(r => r.Status == (short)RequestStatus.Conclude).Count();
+                model.ToCloseReqCount = _unitOfWork.RequestRepository.Where(r => (r.Status == (short)RequestStatus.Cancelled) || (r.Status == (short)RequestStatus.CancelledByPatient) || (r.Status == (short)RequestStatus.Closed)).Count();
+                model.UnpaidReqCount = _unitOfWork.RequestRepository.Where(r => r.Status == (short)RequestStatus.Unpaid).Count();
+                model.casetags = _unitOfWork.CaseTagRepository.GetAll();
+                model.filterOptions = initialFilter;
 
-            return View("Header/Dashboard", model);
+                return View("Header/Dashboard", model);
+
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return RedirectToAction("Index", "Guest");
+            }
 
         }
 
@@ -474,9 +511,9 @@ namespace HalloDoc.MVC.Controllers
         public IActionResult ClearCaseModal(ClearCaseModel model)
         {
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-            string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value;
+            string? adminName = HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value;
 
-            if (adminId != null)
+            if (adminId != 0)
             {
                 try
                 {
@@ -587,7 +624,7 @@ namespace HalloDoc.MVC.Controllers
         }
 
         [HttpPost]
-        public IActionResult SendLinkForSubmitRequest(SendLinkModel model)
+        public bool SendLinkForSubmitRequest(SendLinkModel model)
         {
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
 
@@ -652,17 +689,17 @@ namespace HalloDoc.MVC.Controllers
                     _unitOfWork.Save();
 
                     _notyf.Success("Link Send successfully.");
-                    return Redirect("/Admin/Dashboard");
+                    return true;
                 }
                 catch (Exception e)
                 {
                     TempData["error"] = "Error occurred : " + e.Message;
-                    return Redirect("/Admin/Dashboard");
+                    return false;
                 }
             }
 
             TempData["error"] = "Please Fill all details for sending link.";
-            return Redirect("/Admin/Dashboard");
+            return false;
         }
 
 
@@ -672,43 +709,53 @@ namespace HalloDoc.MVC.Controllers
 
         public async Task<IActionResult> ExportFilteredData(int status, int typeFilter, string searchFilter, int regionFilter)
         {
-            int? page = HttpContext.Session.GetInt32("currentPage");
-
-            int pageNumber = page < 1 ? 1 : page ?? 1;
-
-            DashboardFilter filter = new DashboardFilter()
+            try
             {
-                RequestTypeFilter = typeFilter,
-                PatientSearchText = searchFilter,
-                RegionFilter = regionFilter,
-                PageNumber = pageNumber,
-                PageSize = 5,
-                Status = status,
-            };
 
-            PagedList<AdminRequest> pagedList = await _adminService.AdminDashboardService.GetAdminRequestsAsync(filter);
+                int? page = HttpContext.Session.GetInt32("currentPage");
 
-            if (pagedList.Count() < 1)
-            {
-                _notyf.Error("No Request Data For Downloading");
-                return RedirectToAction("Dashboard");
-            }
+                int pageNumber = page < 1 ? 1 : page ?? 1;
 
-            DataTable dt = GetDataTableFromList(pagedList, status);
-
-            //Name of File
-            string fileName = "Sample.xlsx";
-
-            using (XLWorkbook wb = new XLWorkbook())
-            {
-                //Add DataTable in worksheet  
-                wb.Worksheets.Add(dt);
-                using (MemoryStream stream = new MemoryStream())
+                DashboardFilter filter = new DashboardFilter()
                 {
-                    wb.SaveAs(stream);
-                    //Return xlsx Excel File  
-                    return File(stream.ToArray(), "application/vnd.ms-excel", fileName);
+                    RequestTypeFilter = typeFilter,
+                    PatientSearchText = searchFilter,
+                    RegionFilter = regionFilter,
+                    PageNumber = pageNumber,
+                    PageSize = 5,
+                    Status = status,
+                };
+
+                PagedList<AdminRequest> pagedList = await _adminService.AdminDashboardService.GetAdminRequestsAsync(filter);
+
+                if (pagedList.Count() < 1)
+                {
+                    _notyf.Error("No Request Data For Downloading");
+                    return RedirectToAction("Dashboard");
                 }
+
+                DataTable dt = GetDataTableFromList(pagedList, status);
+
+                //Name of File
+                string fileName = "Sample.xlsx";
+
+                using (XLWorkbook wb = new XLWorkbook())
+                {
+                    //Add DataTable in worksheet  
+                    wb.Worksheets.Add(dt);
+                    using (MemoryStream stream = new MemoryStream())
+                    {
+                        wb.SaveAs(stream);
+                        //Return xlsx Excel File  
+                        return File(stream.ToArray(), "application/vnd.ms-excel", fileName);
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return RedirectToAction("Dashboard");
             }
 
             //string path = Path.Combine(_environment.WebRootPath, "export", "filter.csv");
@@ -898,27 +945,36 @@ namespace HalloDoc.MVC.Controllers
 
         public IActionResult ExportAllExcel(int status)
         {
-
-            IEnumerable<AdminRequest> allRequest = _adminService.AdminDashboardService.GetAllRequestByStatus(status);
-
-            if (!allRequest.Any())
+            try
             {
-                _notyf.Error("No Request Data For Downloading");
-                return RedirectToAction("Dashboard");
-            }
-            DataTable dt = GetDataTableFromList(allRequest.ToList(), status);
-            //Name of File
-            string fileName = "Sample.xlsx";
-            using (XLWorkbook wb = new XLWorkbook())
-            {
-                //Add DataTable in worksheet  
-                wb.Worksheets.Add(dt);
-                using (MemoryStream stream = new MemoryStream())
+
+                IEnumerable<AdminRequest> allRequest = _adminService.AdminDashboardService.GetAllRequestByStatus(status);
+
+                if (!allRequest.Any())
                 {
-                    wb.SaveAs(stream);
-                    //Return xlsx Excel File  
-                    return File(stream.ToArray(), "application/vnd.ms-excel", fileName);
+                    _notyf.Error("No Request Data For Downloading");
+                    return RedirectToAction("Dashboard");
                 }
+                DataTable dt = GetDataTableFromList(allRequest.ToList(), status);
+                //Name of File
+                string fileName = "Sample.xlsx";
+                using (XLWorkbook wb = new XLWorkbook())
+                {
+                    //Add DataTable in worksheet  
+                    wb.Worksheets.Add(dt);
+                    using (MemoryStream stream = new MemoryStream())
+                    {
+                        wb.SaveAs(stream);
+                        //Return xlsx Excel File  
+                        return File(stream.ToArray(), "application/vnd.ms-excel", fileName);
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return RedirectToAction("Dashboard");
             }
         }
 
@@ -1806,7 +1862,6 @@ namespace HalloDoc.MVC.Controllers
                         return false;
                     }
 
-                    sd.Regionid = model.RegionId;
                     sd.Starttime = model.ShiftStartTime;
                     sd.Endtime = model.ShiftEndTime;
                     sd.Shiftdate = model.ShiftDate;
@@ -1846,23 +1901,17 @@ namespace HalloDoc.MVC.Controllers
             if (physicianId == null)
             {
                 Shift? shift = _unitOfWork.ShiftRepository.GetFirstOrDefault(shift => shift.Shiftid == shiftdetail.Shiftid);
-
-                if (shift == null)
-                {
-                    return View("Error");
-                }
-
                 physicianId = shift?.Physicianid;
             }
+
+            Physician? phy = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Physicianid == physicianId);
 
             DateTime currentTime = DateTime.Now;
 
             ViewShiftModel model = new ViewShiftModel()
             {
-                PhysicianId = physicianId ?? 0,
-                RegionId = shiftdetail.Regionid ?? 0,
-                regions = _unitOfWork.RegionRepository.GetAll(),
-                selectedPhysicians = _unitOfWork.PhysicianRepository.Where(phy => phy.Regionid == shiftdetail.Regionid),
+                PhysicianName = phy?.Firstname + " " + phy?.Lastname,
+                RegionName = _unitOfWork.RegionRepository.GetFirstOrDefault(reg => reg.Regionid == shiftdetail.Regionid)?.Name,
                 ShiftDate = shiftdetail.Shiftdate,
                 ShiftEndTime = shiftdetail.Endtime,
                 ShiftStartTime = shiftdetail.Starttime,
@@ -2532,7 +2581,7 @@ namespace HalloDoc.MVC.Controllers
                     List<string> validDocumentExtensions = new List<string> { ".pdf" };
 
                     Physician? physician = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Email == model.Email);
-                    if(physician != null)
+                    if (physician != null)
                     {
                         _notyf.Error("Physician already exists with given email");
                         return View("Providers/CreatePhysicianAccount", model);
@@ -3181,34 +3230,24 @@ namespace HalloDoc.MVC.Controllers
                 return RedirectToAction("Profile");
             }
 
-            Admin? admin = _unitOfWork.AdminRepository.GetFirstOrDefault(ad => ad.Aspnetuserid == adminAspId);
-            Aspnetuser? aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(user => user.Id == adminAspId);
-            int? cityId = admin?.City == null ? null : _unitOfWork.CityRepository.GetFirstOrDefault(city => city.Name == admin.City)?.Id;
-            string? state = _unitOfWork.RegionRepository.GetFirstOrDefault(reg => reg.Regionid == admin.Regionid)?.Name;
-
-            AdminProfileViewModel model = new AdminProfileViewModel()
+            try
             {
-                StatusId = admin.Status,
-                AdminId = admin.Adminid,
-                AspUserName = aspUser.Username,
-                RoleId = admin.Roleid,
-                FirstName = admin.Firstname,
-                LastName = admin.Lastname,
-                Email = admin.Email,
-                PhoneNumber = admin.Mobile,
-                selectedRegions = _unitOfWork.AdminRegionRepo.Where(ar => ar.Adminid == admin.Adminid).Select(_ => _.Regionid ?? 0),
-                Address1 = admin.Address1,
-                Address2 = admin.Address2,
-                CityId = cityId ?? 0,
-                State = state,
-                Zip = admin.Zip,
-                AltPhoneNumber = admin.Altphone,
-                RegionId = admin.Regionid ?? 0,
-                roles = _unitOfWork.RoleRepo.Where(role => role.Accounttype == (int)AccountType.Admin),
-                regions = _unitOfWork.RegionRepository.GetAll(),
-                adminMailCities = _unitOfWork.CityRepository.Where(city => city.Regionid == admin.Regionid),
-            };
-            return View("Access/EditAdminAccount", model);
+
+                AdminProfileViewModel? model = _adminService.AdminAccessService.GetEditAdminAccountModel(adminAspId);
+                if (model == null)
+                {
+                    _notyf.Error("Cannot fetch data");
+                    return RedirectToAction("Dashboard");
+                }
+
+                return View("Access/EditAdminAccount", model);
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return RedirectToAction("Dashboard");
+            }
+
         }
 
 
@@ -3334,82 +3373,62 @@ namespace HalloDoc.MVC.Controllers
                                                                AccounttypeName = r.Accounttype == 1 ? "Admin" : "Physician",
                                                                AccountType = r.Accounttype,
                                                            });
-
             model.roles = accessTables;
             return View("Access/AccountAccess", model);
         }
 
         [RoleAuthorize((int)AllowMenu.AccountAccess)]
-        public IActionResult EditRole(int roleid, int accounttype)
+        public IActionResult EditRole(int roleId)
         {
+            Role? role = _unitOfWork.RoleRepo.GetFirstOrDefault(role => role.Roleid == roleId);
 
-            IEnumerable<int?> list1 = _unitOfWork.RoleMenuRepository.Where(a => a.Roleid == roleid).ToList().Select(x => x.Menuid);
-
-
-            EditRoleViewModel model = new()
+            if (role == null)
             {
-                Menus = _unitOfWork.MenuRepository.Where(menu => menu.Accounttype == accounttype),
-                list = list1,
-                RoleId = roleid
+                _notyf.Error("Role not found");
+                return RedirectToAction("AccountAccess");
+            }
+
+            IEnumerable<int> list1 = _unitOfWork.RoleMenuRepository.Where(a => a.Roleid == roleId).ToList().Select(x => x.Menuid ?? 0);
+
+            EditAccessViewModel model = new()
+            {
+                Menus = _unitOfWork.MenuRepository.Where(menu => menu.Accounttype == role.Accounttype),
+                selectedMenus = list1,
+                RoleId = roleId,
+                RoleName = role.Name,
+                AccountType = role.Accounttype,
+                netRoles = _unitOfWork.AspNetRoleRepository.GetAll(),
             };
 
-            return View("Access/EditRole", model);
+            return View("Access/EditAccess", model);
         }
 
         [HttpPost]
         [RoleAuthorize((int)AllowMenu.AccountAccess)]
-        public bool EditRoleSubmit(List<int> menus, int roleid)
+        public bool EditAccessSubmit(EditAccessViewModel model)
         {
             try
             {
                 int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
                 string? adminAspId = HttpContext.Request.Headers.Where(x => x.Key == "userAspId").FirstOrDefault().Value;
 
-                if (roleid == 0 || menus.Count == 0)
+                if (ModelState.IsValid)
                 {
-                    _notyf.Error("Please enter all details");
+                    ServiceResponse response = _adminService.AdminAccessService.EditAccessSubmit(model);
+
+                    if (response.StatusCode == ResponseCode.Success)
+                    {
+                        _notyf.Success("Role updated successfully");
+                        return true;
+                    }
+
+                    _notyf.Error(response.Message);
                     return false;
+
                 }
 
-                List<Rolemenu> rolemenus1 = _unitOfWork.RoleMenuRepository.Where(x => x.Roleid == roleid).ToList();
-                List<int?> rolemenus = _unitOfWork.RoleMenuRepository.Where(x => x.Roleid == roleid).Select(x => x.Menuid).ToList();
-                for (int i = 0; i < rolemenus.Count; i++)
-                {
-                    if (!menus.Contains((int)rolemenus[i]))
-                    {
-                        Role role = _unitOfWork.RoleRepo.GetFirstOrDefault(r => r.Roleid == roleid);
-                        role.Modifiedby = adminAspId;
-                        role.Modifieddate = DateTime.Now;
-                        Rolemenu? rolemenu = _unitOfWork.RoleMenuRepository.GetFirstOrDefault(x => x.Menuid == rolemenus[i]);
-                        _unitOfWork.RoleMenuRepository.Remove(rolemenu);
-                        _unitOfWork.RoleRepo.Update(role);
-                        _unitOfWork.Save();
-                    }
-                }
-                for (int i = 0; i < menus.Count; i++)
-                {
-                    if (!rolemenus.Contains(menus[i]))
-                    {
-
-                        Role role = _unitOfWork.RoleRepo.GetFirstOrDefault(r => r.Roleid == roleid);
-                        role.Modifiedby = adminAspId;
-                        role.Modifieddate = DateTime.Now;
-                        Rolemenu item = new Rolemenu();
-                        item.Menuid = menus[i];
-                        item.Roleid = roleid;
-                        _unitOfWork.RoleMenuRepository.Add(item);
-                        _unitOfWork.RoleRepo.Update(role);
-                        _unitOfWork.Save();
-
-                    }
-                    else
-                    {
-                        continue;
-                    }
-                }
-
-                _notyf.Success("Role Edited Successfully");
-                return true;
+                _notyf.Error("Fill all details correctly.");
+                return false;
 
             }
             catch (Exception ex)
@@ -3420,29 +3439,23 @@ namespace HalloDoc.MVC.Controllers
         }
 
         [RoleAuthorize((int)AllowMenu.AccountAccess)]
-        public IActionResult DeleteRole(int roleid)
+        public IActionResult DeleteRole(int roleId)
         {
+            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
             try
             {
 
-                int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
-                Admin? admin = _unitOfWork.AdminRepository.GetFirstOrDefault(x => x.Adminid == adminId);
+                ServiceResponse response = _adminService.AdminAccessService.DeleteRole(roleId);
 
-                Role? role = _unitOfWork.RoleRepo.GetFirstOrDefault(z => z.Roleid == roleid);
-
-                if (role == null)
+                if (response.StatusCode == ResponseCode.Success)
                 {
-                    TempData["error"] = "Error occured while removing role. Please try again later.";
+                    TempData["success"] = "Role Deleted Successfully";
                     return RedirectToAction("AccountAccess");
                 }
 
-                role.Isdeleted = true;
-                _unitOfWork.RoleRepo.Update(role);
-                _unitOfWork.Save();
-
-                TempData["success"] = "Role Deleted Successfully";
-
+                TempData["error"] = response.Message;
                 return RedirectToAction("AccountAccess");
+
             }
             catch (Exception e)
             {
@@ -3475,6 +3488,7 @@ namespace HalloDoc.MVC.Controllers
         [RoleAuthorize((int)AllowMenu.AccountAccess)]
         public IActionResult CreateAccess(CreateAccessViewModel model)
         {
+            model.netRoles = _unitOfWork.AspNetRoleRepository.GetAll();
             try
             {
                 if (ModelState.IsValid)
@@ -3482,11 +3496,14 @@ namespace HalloDoc.MVC.Controllers
 
                     int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
                     string? adminAspId = HttpContext.Request.Headers.Where(x => x.Key == "userAspId").FirstOrDefault().Value;
-                    //if (string.IsNullOrEmpty(model.RoleName) || model.AccountType == 0 || model.selectedMenus == null || !model.selectedMenus.Any())
-                    //{
-                    //    TempData["error"] = "Please fill all necessary details";
-                    //    return RedirectToAction("CreateAccess");
-                    //}
+
+                    bool isRoleWithSameNameExists = _unitOfWork.RoleRepo.Where(x => x.Name.ToLower().Equals(model.RoleName.ToLower())).Any();
+
+                    if (isRoleWithSameNameExists)
+                    {
+                        _notyf.Error("Role With same already exists");
+                        return View("Access/CreateAccess", model);
+                    }
                     Role role = new()
                     {
                         Name = model.RoleName,
@@ -3664,7 +3681,6 @@ namespace HalloDoc.MVC.Controllers
                                      Status = "Active",
                                      OpenRequests = _unitOfWork.RequestRepository.GetAll().Where(r => !invalidRequestTypes.Contains(r.Status)).Count(),
                                  }).AsQueryable();
-
                 }
 
                 if (accountType == 0 || accountType == (int)AccountType.Physician)
@@ -3797,46 +3813,15 @@ namespace HalloDoc.MVC.Controllers
 
             try
             {
-                DateTime currentTime = DateTime.Now;
-                Blockrequest? blockRequest = _unitOfWork.BlockRequestRepo.GetFirstOrDefault(b => b.Requestid == requestId);
-                Request? request = _unitOfWork.RequestRepository.GetFirstOrDefault(b => b.Requestid == requestId);
+                ServiceResponse response = _adminService.AdminRecordService.UnBlockRequest(requestId, adminName, adminId);
 
-                if (blockRequest == null || request == null)
+                if (response.StatusCode == ResponseCode.Success)
                 {
-                    _notyf.Error(NotificationMessage.REQUEST_NOT_FOUND);
+                    _notyf.Success(NotificationMessage.REQUEST_UNBLOCKED_SUCCESSFULLY);
                     return RedirectToAction("BlockedHistory");
                 }
 
-                if (blockRequest.Isactive == false && request.Status == (int)RequestStatus.Unassigned)
-                {
-                    _notyf.Error(NotificationMessage.REQUEST_ALREADY_BLOCKED);
-                    return RedirectToAction("BlockedHistory");
-                }
-
-                blockRequest.Isactive = false;
-                blockRequest.Modifieddate = currentTime;
-
-                request.Status = (short)RequestStatus.Unassigned;
-                request.Modifieddate = currentTime;
-
-                _unitOfWork.RequestRepository.Update(request);
-                _unitOfWork.BlockRequestRepo.Update(blockRequest);
-
-                string logNotes = adminName + " unblocked this request on " + currentTime.ToString("MM/dd/yyyy") + " at " + currentTime.ToString("HH:mm:ss");
-
-                Requeststatuslog reqStatusLog = new Requeststatuslog()
-                {
-                    Requestid = requestId,
-                    Status = (short)RequestStatus.Unassigned,
-                    Adminid = adminId,
-                    Notes = logNotes,
-                    Createddate = currentTime,
-                };
-                _unitOfWork.RequestStatusLogRepository.Add(reqStatusLog);
-
-                _unitOfWork.Save();
-
-                _notyf.Success(NotificationMessage.REQUEST_UNBLOCKED_SUCCESSFULLY);
+                _notyf.Error(response.Message);
                 return RedirectToAction("BlockedHistory");
 
             }
@@ -3850,20 +3835,26 @@ namespace HalloDoc.MVC.Controllers
 
         [HttpPost]
         [RoleAuthorize((int)AllowMenu.SMSLogs)]
-        public IActionResult SMSLogsPartialTable(int roleIdFilter, string receiverName, string mobileNumber, DateTime? createdDate, DateTime? sentDate)
+        public async Task<IActionResult> SMSLogsPartialTable(int pageNo, int roleIdFilter, string receiverName, string mobileNumber, DateTime? createdDate, DateTime? sentDate)
         {
-            IEnumerable<Smslog> logs = (from log in _unitOfWork.SMSLogRepository.GetAll()
-                                        where (roleIdFilter == 0 || log.Roleid == roleIdFilter)
-                                        && (string.IsNullOrEmpty(mobileNumber) || log.Mobilenumber == mobileNumber)
-                                        && (createdDate == null || log.Createdate.Date == createdDate.Value.Date)
-                                        && (sentDate == null || log.Sentdate == null ? true : log.Sentdate.Value.Date == sentDate.Value.Date)
-                                        select log);
 
-            SMSLogsViewModel model = new()
+            int pageSize = 10;
+            int pageNumber = pageNo;
+
+            LogFilter filter = new LogFilter()
             {
-                smsLogs = logs,
+                PageNumber = pageNo,
+                PageSize = pageSize,
+                RoleId = roleIdFilter,
+                ReceiverName = receiverName,
+                MobileNumber = mobileNumber,
+                CreatedDate = createdDate,
+                SentDate = sentDate,
             };
-            return PartialView("Records/Partial/_SMSLogPartialTable", model);
+
+            PagedList<LogTableRow> pagedList = await _adminService.AdminRecordService.GetSMSLogsPaginatedAsync(filter);
+
+            return PartialView("Records/Partial/_SMSLogPartialTable", pagedList);
         }
 
         [HttpPost]
@@ -3873,15 +3864,18 @@ namespace HalloDoc.MVC.Controllers
             int pageSize = 10;
             int pageNumber = pageNo;
 
-            var query = (from log in _unitOfWork.EmailLogRepository.GetAll()
-                         where (roleIdFilter == 0 || log.Roleid == roleIdFilter)
-                         && (string.IsNullOrEmpty(emailAddress) || log.Emailid == emailAddress)
-                         && (createdDate == null || log.Createdate.Date == createdDate.Value.Date)
-                         && (sentDate == null || log.Sentdate == null ? true : log.Sentdate.Value.Date == sentDate.Value.Date)
-                         select log).AsQueryable();
+            LogFilter filter = new LogFilter()
+            {
+                PageNumber = pageNo,
+                PageSize = pageSize,
+                RoleId = roleIdFilter,
+                ReceiverName = receiverName,
+                EmailAddress = emailAddress,
+                CreatedDate = createdDate,
+                SentDate = sentDate,
+            };
 
-            PagedList<Emaillog> pagedList = await PagedList<Emaillog>.CreateAsync(
-            query, pageNumber, pageSize);
+            PagedList<LogTableRow> pagedList = await _adminService.AdminRecordService.GetEmailLogsPaginatedAsync(filter);
 
             return PartialView("Records/Partial/_EmailLogPartialTable", pagedList);
         }
@@ -3909,57 +3903,10 @@ namespace HalloDoc.MVC.Controllers
             return PartialView("Records/Partial/_SearchRecordPartialTable", pagedList);
         }
 
-        public DataTable GetDataTableForSearchRecord(IEnumerable<SearchRecordTRow> requestList)
-        {
-
-            DataTable dt = new DataTable();
-            dt.TableName = "Search Record Data";
-
-            dt.Columns.Add("Patient Name", typeof(string));
-            dt.Columns.Add("Requestor", typeof(string));
-            dt.Columns.Add("Date Of Service", typeof(string));
-            dt.Columns.Add("Close Case Date", typeof(string));
-            dt.Columns.Add("Email", typeof(string));
-            dt.Columns.Add("Phone Number", typeof(string));
-            dt.Columns.Add("Address", typeof(string));
-            dt.Columns.Add("Zip", typeof(string));
-            dt.Columns.Add("Request Status", typeof(string));
-            dt.Columns.Add("Physician", typeof(string));
-            dt.Columns.Add("Physician Note", typeof(string));
-            dt.Columns.Add("Cancelled By Provider Note", typeof(string));
-            dt.Columns.Add("Admin Note", typeof(string));
-            dt.Columns.Add("Patient Note", typeof(string));
-
-            foreach (SearchRecordTRow searchRecord in requestList)
-            {
-                dt.Rows.Add(
-                    searchRecord.PatientName,
-                    searchRecord.Requestor,
-                    searchRecord.DateOfService,
-                    searchRecord.CloseCaseDate,
-                    searchRecord.Email,
-                    searchRecord.PhoneNumber,
-                    searchRecord.Address,
-                    searchRecord.Zip,
-                    searchRecord.RequestStatus,
-                    searchRecord.Physician,
-                    searchRecord.PhysicianNote,
-                    searchRecord.CancelledByPhysicianNote,
-                    searchRecord.AdminNote,
-                    searchRecord.PatientNote
-                    );
-            }
-
-            dt.AcceptChanges();
-
-            return dt;
-        }
-
         public IActionResult ExportSearchRecordToExcel(string patientName, int requestStatus, int requestType, string phoneNumber, DateTime? fromDateOfService, DateTime? toDateOfService, string providerName, string patientEmail)
         {
             try
             {
-
                 SearchRecordFilter searchRecordFilter = new SearchRecordFilter
                 {
                     PatientName = patientName,
@@ -3979,18 +3926,15 @@ namespace HalloDoc.MVC.Controllers
                     _notyf.Error("No Request Data For Downloading");
                     return RedirectToAction("SearchRecords");
                 }
+                DataTable dt = _adminService.AdminRecordService.GetDataTableForSearchRecord(allRequest);
 
-                DataTable dt = GetDataTableForSearchRecord(allRequest);
-                //Name of File
                 string fileName = "SearchRecord.xlsx";
                 using (XLWorkbook wb = new XLWorkbook())
                 {
-                    //Add DataTable in worksheet  
                     wb.Worksheets.Add(dt);
                     using (MemoryStream stream = new MemoryStream())
                     {
                         wb.SaveAs(stream);
-                        //Return xlsx Excel File  
                         return File(stream.ToArray(), "application/vnd.ms-excel", fileName);
                     }
                 }
@@ -4003,6 +3947,7 @@ namespace HalloDoc.MVC.Controllers
         }
 
         [HttpPost]
+        [RoleAuthorize((int)AllowMenu.SearchRecords)]
         public bool DeleteRequest(int requestId)
         {
             try
@@ -4061,7 +4006,6 @@ namespace HalloDoc.MVC.Controllers
         }
 
 
-
         [RoleAuthorize((int)AllowMenu.SMSLogs)]
         public IActionResult SMSLogs()
         {
@@ -4091,19 +4035,23 @@ namespace HalloDoc.MVC.Controllers
 
         [HttpPost]
         [RoleAuthorize((int)AllowMenu.PatientRecords)]
-        public IActionResult PatientRecordsPartial(string FirstName, string LastName, string EmailAddress, string PhoneNumber)
+        public async Task<IActionResult> PatientRecordsPartial(int pageNo, string firstName, string lastName, string emailAddress, string phoneNumber)
         {
-            List<User> logs = _unitOfWork.UserRepository.Where(user =>
-            (string.IsNullOrEmpty(FirstName) || user.Firstname.ToLower().Contains(FirstName.ToLower()))
-            && (string.IsNullOrEmpty(LastName) || user.Lastname.ToLower().Contains(LastName.ToLower()))
-            && (string.IsNullOrEmpty(EmailAddress) || user.Email.ToLower().Contains(EmailAddress.ToLower()))
-            && (string.IsNullOrEmpty(PhoneNumber) || user.Mobile.ToLower().Contains(PhoneNumber))).ToList();
+            int pageSize = 10;
 
-            PatientRecordsViewModel model = new()
+            PatientRecordFilter filter = new PatientRecordFilter()
             {
-                users = logs,
+                PageNumber = pageNo,
+                PageSize = pageSize,
+                FirstName = firstName,
+                LastName = lastName,
+                EmailAddress = emailAddress,
+                PhoneNumber = phoneNumber,
             };
-            return PartialView("Records/Partial/_PatientRecordPartialTable", model);
+
+            PagedList<User> pagedList = await _adminService.AdminRecordService.GetPatientRecordsPaginatedAsync(filter);
+
+            return PartialView("Records/Partial/_PatientRecordPartialTable", pagedList);
         }
 
 
@@ -4397,17 +4345,6 @@ namespace HalloDoc.MVC.Controllers
 
         #region HelperFunctions
 
-        public string GenerateConfirmationNumber(User user)
-        {
-            string regionAbbr = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == user.Regionid).Abbreviation;
-
-            DateTime todayStart = DateTime.Now.Date;
-            int count = _unitOfWork.RequestRepository.Where(req => req.Createddate > todayStart).Count();
-
-            string confirmationNumber = regionAbbr + user.Createddate.Date.ToString("D2") + user.Createddate.Month.ToString("D2") + user.Lastname.Substring(0, 2).ToUpper() + user.Firstname.Substring(0, 2).ToUpper() + (count + 1).ToString("D4");
-            return confirmationNumber;
-        }
-
 
         public void SendMailForCreateAccount(string email)
         {
@@ -4480,14 +4417,19 @@ namespace HalloDoc.MVC.Controllers
         }
 
         [HttpPost]
-        public IEnumerable<Physician> GetPhysicianByPhysicianRegion(int regionId)
+        public IEnumerable<Physician> GetPhysicianByPhysicianRegion(int regionId, int? physicianId)
         {
             var result = new JsonArray();
 
             IEnumerable<int> phyRegions = _unitOfWork.PhysicianRegionRepo.Where(phyReg => phyReg.Regionid == regionId).Select(_ => _.Physicianid);
 
-            IEnumerable<Physician> physicians = _unitOfWork.PhysicianRepository.Where(phy => phyRegions.Contains(phy.Physicianid));
+            List<Physician> physicians = _unitOfWork.PhysicianRepository.Where(phy => phyRegions.Contains(phy.Physicianid)).ToList();
 
+            Physician? removePhy = physicians.SingleOrDefault(p => p.Physicianid == physicianId);
+            if (removePhy != null)
+            {
+                physicians.Remove(removePhy);
+            }
             return physicians;
         }
 
