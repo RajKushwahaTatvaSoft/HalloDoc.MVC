@@ -29,8 +29,8 @@ namespace HalloDoc.MVC.Services
 
             if (jwtService == null)
             {
-                context.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Guest", action = "Index" }));
                 context.HttpContext.Response.Cookies.Delete("hallodoc");
+                context.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Guest", action = "Index" }));
                 return;
             }
 
@@ -38,8 +38,8 @@ namespace HalloDoc.MVC.Services
          
             if (token == null || !jwtService.ValidateToken(token, out JwtSecurityToken jwtToken))
             {
-                context.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Guest", action = "Index" }));
                 context.HttpContext.Response.Cookies.Delete("hallodoc");
+                context.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Guest", action = "Index" }));
                 return;
             }
 

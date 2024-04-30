@@ -1,13 +1,7 @@
 ﻿using Business_Layer.Repository.IRepository;
 using Data_Layer.DataContext;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Business_Layer.Repository
 {
@@ -36,6 +30,7 @@ namespace Business_Layer.Repository
         {
             dbSet.Update(entity);
         }
+
         public virtual IQueryable<T> GetAll()
         {
             IQueryable<T> query = dbSet;

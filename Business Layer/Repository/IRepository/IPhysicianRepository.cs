@@ -9,5 +9,6 @@ namespace Business_Layer.Repository.IRepository
 {
     public interface IPhysicianRepository : IGenericRepository<Physician>
     {
+        public IEnumerable<Physician> GetPhysiciansByPhysicianRegion(int regionId);
     }
 }

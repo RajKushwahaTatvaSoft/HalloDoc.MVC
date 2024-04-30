@@ -9,6 +9,6 @@ namespace Business_Layer.Repository.IRepository
 {
     public interface IAspNetUserRepository : IGenericRepository<Aspnetuser>
     {
-
+        public bool IsUserWithEmailExists(string email);
     }
 }

@@ -62,8 +62,7 @@ namespace Business_Layer.Services.AdminServices
                          join phy in _unitOfWork.PhysicianRepository.GetAll() on r.Physicianid equals phy.Physicianid into phyGroup
                          from phyItem in phyGroup.DefaultIfEmpty()
                          join region in _unitOfWork.RegionRepository.GetAll() on rc.Regionid equals region.Regionid into regionGroup
-                         from regionItem in regionGroup.DefaultIfEmpty()
-                         
+                         from regionItem in regionGroup.DefaultIfEmpty()                         
                          select new AdminRequest
                          {
                              PhysicianId = r.Physicianid,
@@ -95,7 +94,6 @@ namespace Business_Layer.Services.AdminServices
             double difference = dateNow.Subtract(requestDate).TotalMinutes;
             return requestDate.ToString("MMM dd, yyyy") + " ( " + Math.Floor(difference) + " ) mins";
         }
-
 
         public List<AdminRequest> GetAllRequestByStatus(int status)
         {
@@ -155,7 +153,6 @@ namespace Business_Layer.Services.AdminServices
 
             return adminRequests;
         }
-
 
         public List<AdminRequest> GetAdminRequest(int status, int page, DashboardFilter filters)
         {
@@ -230,17 +227,17 @@ namespace Business_Layer.Services.AdminServices
         public static string GetPatientDOB(Requestclient u)
         {
 
-            if (u.Intyear == null || u.Intyear == 0 || string.IsNullOrEmpty(u.Strmonth) || u.Intdate == null || u.Intdate == 0)
+            DateTime? dobDate = DateHelper.GetDOBDateTime(u.Intyear,u.Strmonth,u.Intdate);
+
+            if(dobDate == null)
             {
                 return "";
             }
 
-
-            DateTime dobDate = DateHelper.GetDOBDateTime(u.Intyear??0,u.Strmonth,u.Intdate??0);
-            string dob = dobDate.ToString("MMM dd, yyyy");
+            string dob = dobDate.Value.ToString("MMM dd, yyyy");
             var today = DateTime.Today;
-            var age = today.Year - dobDate.Year;
-            if (dobDate.Date > today.AddYears(-age)) age--;
+            var age = today.Year - dobDate.Value.Year;
+            if (dobDate.Value.Date > today.AddYears(-age)) age--;
 
             string dobString = dob + " (" + age + ")";
 

@@ -38,6 +38,7 @@ namespace Data_Layer.ViewModels
         public string? State { get; set; }
         public string? ZipCode { get; set; }
         public string? Location { get; set; }
-        public IEnumerable<Region> regions { get; set; }
+        public IEnumerable<City>? selectedCities {  get; set; }
+        public IEnumerable<Region>? regions { get; set; }
     }
 }

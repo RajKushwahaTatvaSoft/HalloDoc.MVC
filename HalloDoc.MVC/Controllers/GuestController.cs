@@ -17,6 +17,8 @@ using Business_Layer.Services.Guest.Interface;
 using System.Text.Json.Nodes;
 using System.Transactions;
 using Data_Layer.ViewModels.Guest;
+using System.IO.IsolatedStorage;
+using System.Security.Claims;
 
 
 namespace HalloDoc.MVC.Controllers
@@ -30,7 +32,6 @@ namespace HalloDoc.MVC.Controllers
         private readonly IUtilityService _utilityService;
         private readonly INotyfService _notyf;
         private readonly IRequestService _requestService;
-        private readonly ILogger _logger;
 
         public GuestController(IUnitOfWork unitOfWork, IJwtService jwt, IWebHostEnvironment environment, IConfiguration config, IUtilityService utilityService, INotyfService notyf, IRequestService requestService)
         {
@@ -45,7 +46,7 @@ namespace HalloDoc.MVC.Controllers
 
         public IActionResult Index()
         {
-            var token = HttpContext.Request.Cookies["hallodoc"];
+            string? token = HttpContext.Request.Cookies["hallodoc"];
             if (token == null)
             {
                 return View();
@@ -57,7 +58,7 @@ namespace HalloDoc.MVC.Controllers
                 return View();
             }
 
-            var roleClaim = jwtToken.Claims.FirstOrDefault(claims => claims.Type == "accountTypeId");
+            Claim? roleClaim = jwtToken.Claims.FirstOrDefault(claims => claims.Type == "accountTypeId");
             int roleId = Convert.ToInt32(roleClaim?.Value);
 
             if (roleId == (int)AccountType.Patient)
@@ -77,32 +78,27 @@ namespace HalloDoc.MVC.Controllers
 
         }
 
-
-        [HttpPost]
-        public IEnumerable<City> GetCitiesByRegion(int regionId)
-        {
-            return _utilityService.GetCitiesByRegion(regionId);
-        }
-
         // email token isdeleted createddate aspnetuserid expirydate
         [HttpGet]
         public IActionResult CreateAccount(string token)
         {
             try
             {
-                if (ValidatePassToken(token, false))
-                {
-                    ForgotPasswordViewModel fpvm = new ForgotPasswordViewModel();
-                    Passtoken pass = _unitOfWork.PassTokenRepository.GetFirstOrDefault(pass => pass.Uniquetoken == token);
+                bool isTokenValid = _unitOfWork.PassTokenRepository.ValidatePassToken(token, false, out string errorMessage);
 
-                    fpvm.Email = pass.Email;
-
-                    return View("Patient/CreateAccount", fpvm);
-                }
-                else
+                if (!isTokenValid)
                 {
+                    _notyf.Error(errorMessage);
                     return View("Index");
                 }
+
+                ForgotPasswordViewModel fpvm = new ForgotPasswordViewModel();
+                Passtoken? pass = _unitOfWork.PassTokenRepository.GetFirstOrDefault(pass => pass.Uniquetoken == token);
+
+                fpvm.Email = pass?.Email;
+
+                return View("Patient/CreateAccount", fpvm);
+
 
             }
             catch (Exception ex)
@@ -115,88 +111,49 @@ namespace HalloDoc.MVC.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult CreateAccount(ForgotPasswordViewModel fpvm)
         {
-
-            Aspnetuser user = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(u => u.Email == fpvm.Email);
-
-            if (user == null)
-            {
-                TempData["error"] = "User doesn't exists. Please try again.";
-                return NotFound("Error");
-            }
-
-            if (ModelState.IsValid)
-            {
-                string passHash = GenerateSHA256(fpvm.Password);
-                user.Passwordhash = passHash;
-                user.Modifieddate = DateTime.Now;
-
-                _unitOfWork.AspNetUserRepository.Update(user);
-                _unitOfWork.Save();
-
-                Passtoken token = _unitOfWork.PassTokenRepository.GetFirstOrDefault(pass => pass.Email == fpvm.Email);
-                token.Isdeleted = true;
-                _unitOfWork.PassTokenRepository.Update(token);
-                _unitOfWork.Save();
-
-                TempData["success"] = "Account Successfully Created.";
-                return RedirectToAction("Login");
-
-            }
-
-            return View();
-        }
-
-        public void SendMailForCreateAccount(string email)
-        {
             try
             {
-                Aspnetuser aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(user => user.Email == email);
+                Aspnetuser? user = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(u => u.Email == fpvm.Email);
 
-                string createAccToken = Guid.NewGuid().ToString();
-
-                Passtoken passtoken = new Passtoken()
+                if (user == null)
                 {
-                    Aspnetuserid = aspUser.Id,
-                    Createddate = DateTime.Now,
-                    Email = email,
-                    Isdeleted = false,
-                    Isresettoken = false,
-                    Uniquetoken = createAccToken,
-                };
+                    _notyf.Error("User doesn't exists. Please try again.");
+                    return NotFound("Error");
+                }
 
-                _unitOfWork.PassTokenRepository.Add(passtoken);
-                _unitOfWork.Save();
-
-                var createLink = Url.Action("CreateAccount", "Guest", new { token = createAccToken }, Request.Scheme);
-
-                string senderEmail = _config.GetSection("OutlookSMTP")["Sender"];
-                string senderPassword = _config.GetSection("OutlookSMTP")["Password"];
-
-                SmtpClient client = new SmtpClient("smtp.office365.com")
+                if (ModelState.IsValid)
                 {
-                    Port = 587,
-                    Credentials = new NetworkCredential(senderEmail, senderPassword),
-                    EnableSsl = true,
-                    DeliveryMethod = SmtpDeliveryMethod.Network,
-                    UseDefaultCredentials = false
-                };
+                    string passHash = GenerateSHA256(fpvm.Password);
+                    user.Passwordhash = passHash;
+                    user.Modifieddate = DateTime.Now;
 
-                MailMessage mailMessage = new MailMessage
-                {
-                    From = new MailAddress(senderEmail, "HalloDoc"),
-                    Subject = "Set up your Account",
-                    IsBodyHtml = true,
-                    Body = "<h1>Create Account By clicking below</h1><a href=\"" + createLink + "\" >Create Account link</a>",
-                };
+                    _unitOfWork.AspNetUserRepository.Update(user);
+                    _unitOfWork.Save();
 
-                mailMessage.To.Add(email);
+                    Passtoken? token = _unitOfWork.PassTokenRepository.GetFirstOrDefault(pass => pass.Email == fpvm.Email);
 
-                client.Send(mailMessage);
-                TempData["success"] = "Email has been successfully sent to " + email + " for create account link.";
+                    if (token == null)
+                    {
+                        _notyf.Error("Token not found");
+                        return RedirectToAction("Login");
+                    }
+
+                    token.Isdeleted = true;
+                    _unitOfWork.PassTokenRepository.Update(token);
+                    _unitOfWork.Save();
+
+                    _notyf.Success("Account Successfully Created.");
+                    return RedirectToAction("Login");
+
+                }
+
+                return View();
+
             }
             catch (Exception ex)
             {
-                TempData["error"] = ex.Message;
+                _notyf.Error(ex.Message);
+                return View("Index");
             }
         }
 
@@ -245,7 +202,7 @@ namespace HalloDoc.MVC.Controllers
 
                 if (aspUser == null)
                 {
-                    TempData["error"] = "User doesn't exists";
+                    _notyf.Error("User doesn't exists");
                     return View();
                 }
 
@@ -258,7 +215,7 @@ namespace HalloDoc.MVC.Controllers
                     User? patientUser = _unitOfWork.UserRepository.GetFirstOrDefault(u => u.Aspnetuserid == aspUser.Id);
                     if (patientUser == null)
                     {
-                        TempData["error"] = "Patient doesn't exists";
+                        _notyf.Error("Patient doesn't exists");
                         return View();
                     }
 
@@ -272,7 +229,6 @@ namespace HalloDoc.MVC.Controllers
                         UserName = patientUser.Firstname + (String.IsNullOrEmpty(patientUser.Lastname) ? "" : " " + patientUser.Lastname),
                     };
 
-                    TempData["success"] = "Patient Login Successful";
 
                     controller = "Patient";
                 }
@@ -282,7 +238,7 @@ namespace HalloDoc.MVC.Controllers
                     Physician? physicianUser = _unitOfWork.PhysicianRepository.GetFirstOrDefault(u => u.Aspnetuserid == aspUser.Id);
                     if (physicianUser == null)
                     {
-                        TempData["error"] = "Physician doesn't exists";
+                        _notyf.Error("Physician doesn't exists");
                         return View();
                     }
 
@@ -291,12 +247,11 @@ namespace HalloDoc.MVC.Controllers
                         UserId = physicianUser.Physicianid,
                         UserAspId = aspUser.Id,
                         Email = physicianUser.Email,
-                        AccountTypeId = aspUser.Accounttypeid ,
+                        AccountTypeId = aspUser.Accounttypeid,
                         RoleId = physicianUser.Roleid ?? 0,
                         UserName = physicianUser.Firstname + (String.IsNullOrEmpty(physicianUser.Lastname) ? "" : " " + physicianUser.Lastname),
                     };
 
-                    TempData["success"] = "Physician Login Successful";
 
                     controller = "Physician";
                 }
@@ -306,7 +261,7 @@ namespace HalloDoc.MVC.Controllers
                     Admin? adminUser = _unitOfWork.AdminRepository.GetFirstOrDefault(u => u.Aspnetuserid == aspUser.Id);
                     if (adminUser == null)
                     {
-                        TempData["error"] = "Admin doesn't exists";
+                        _notyf.Error("Admin doesn't exists");
                         return View();
                     }
 
@@ -315,19 +270,16 @@ namespace HalloDoc.MVC.Controllers
                         UserId = adminUser.Adminid,
                         UserAspId = aspUser.Id,
                         Email = adminUser.Email,
-                        AccountTypeId = aspUser.Accounttypeid ,
+                        AccountTypeId = aspUser.Accounttypeid,
                         RoleId = adminUser.Roleid ?? 0,
                         UserName = adminUser.Firstname + (String.IsNullOrEmpty(adminUser.Lastname) ? "" : " " + adminUser.Lastname),
                     };
 
                     controller = "Admin";
 
-                    //TempData["success"] = "Admin Login Successful";
-
-                    _notyf.Success("Login Successfull", 3);
                 }
 
-
+                _notyf.Success("Login Successfull", 3);
                 string jwtToken = _jwtService.GenerateJwtToken(sessionUser);
                 Response.Cookies.Append("hallodoc", jwtToken);
 
@@ -335,7 +287,7 @@ namespace HalloDoc.MVC.Controllers
             }
 
 
-            TempData["error"] = "Invalid Username or Password";
+            _notyf.Error("Invalid Username or Password");
 
             return View();
 
@@ -405,11 +357,9 @@ namespace HalloDoc.MVC.Controllers
         [HttpPost]
         public JsonResult PatientCheckEmail(string email)
         {
-            bool emailExists = _unitOfWork.UserRepository.IsUserWithEmailExists(email);
+            bool emailExists = _unitOfWork.AspNetUserRepository.IsUserWithEmailExists(email);
             return Json(new { exists = emailExists });
         }
-
-
 
         public IActionResult FamilyFriendRequest()
         {
@@ -546,7 +496,7 @@ namespace HalloDoc.MVC.Controllers
                 Request? req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == decryptedId);
                 Requestclient? client = _unitOfWork.RequestClientRepository.GetFirstOrDefault(cli => cli.Requestid == decryptedId);
 
-                if(req == null || client == null)
+                if (req == null || client == null)
                 {
                     _notyf.Error(NotificationMessage.REQUEST_NOT_FOUND);
                     return View("Index");
@@ -554,7 +504,7 @@ namespace HalloDoc.MVC.Controllers
 
                 if (req.Status != (short)RequestStatus.Accepted)
                 {
-                    TempData["error"] = "Request is no longer in pending state.";
+                    _notyf.Error("Request is no longer in pending state.");
                     return View("Index");
                 }
 
@@ -581,7 +531,7 @@ namespace HalloDoc.MVC.Controllers
 
             if (client == null)
             {
-                TempData["error"] = "Cannot find the request";
+                _notyf.Error("Cannot find the request");
                 return false;
             }
 
@@ -594,7 +544,7 @@ namespace HalloDoc.MVC.Controllers
                 Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestId);
                 if (req == null)
                 {
-                    TempData["error"] = "Request not found. Please try again later.";
+                    _notyf.Error("Request not found. Please try again later.");
                     return false;
                 }
 
@@ -609,7 +559,7 @@ namespace HalloDoc.MVC.Controllers
                     Status = (short)RequestStatus.MDEnRoute,
                     Notes = logNotes,
                     Createddate = currentTime,
-                    Ip = GetRequestIP(),
+                    Ip = RequestHelper.GetRequestIP(),
                 };
 
                 _unitOfWork.RequestStatusLogRepository.Add(statuslog);
@@ -617,14 +567,14 @@ namespace HalloDoc.MVC.Controllers
 
                 _unitOfWork.Save();
 
-                TempData["success"] = "Agreement Accepted Successfully.";
+                _notyf.Success("Agreement Accepted Successfully.");
 
                 return true;
 
             }
             catch (Exception ex)
             {
-                TempData["error"] = ex.Message.ToString();
+                _notyf.Error(ex.Message);
                 return false;
             }
         }
@@ -637,7 +587,7 @@ namespace HalloDoc.MVC.Controllers
 
             if (client == null)
             {
-                TempData["error"] = "Cannot find the request";
+                _notyf.Error("Cannot find the request");
                 return false;
             }
 
@@ -653,7 +603,7 @@ namespace HalloDoc.MVC.Controllers
                 Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == requestId);
                 if (req == null)
                 {
-                    TempData["error"] = "Request not found. Please try again later.";
+                    _notyf.Error("Request not found. Please try again later.");
                     return false;
                 }
 
@@ -668,7 +618,7 @@ namespace HalloDoc.MVC.Controllers
                     Status = (short)RequestStatus.CancelledByPatient,
                     Notes = logNotes,
                     Createddate = currentTime,
-                    Ip = GetRequestIP(),
+                    Ip = RequestHelper.GetRequestIP(),
                 };
 
                 _unitOfWork.RequestStatusLogRepository.Add(statuslog);
@@ -676,13 +626,13 @@ namespace HalloDoc.MVC.Controllers
 
                 _unitOfWork.Save();
 
-                TempData["success"] = "Agreement Cancelled Successfully.";
+                _notyf.Success("Agreement Cancelled Successfully.");
                 return true;
 
             }
             catch (Exception ex)
             {
-                TempData["error"] = ex.Message.ToString();
+                _notyf.Error(ex.Message);
                 return false;
             }
         }
@@ -706,19 +656,20 @@ namespace HalloDoc.MVC.Controllers
         {
             try
             {
-                if (ValidatePassToken(token, true))
-                {
-                    ForgotPasswordViewModel fpvm = new ForgotPasswordViewModel();
-                    Passtoken pass = _unitOfWork.PassTokenRepository.GetFirstOrDefault(pass => pass.Uniquetoken == token);
+                bool isValidToken = _unitOfWork.PassTokenRepository.ValidatePassToken(token, true, out string errorMessage);
 
-                    fpvm.Email = pass.Email;
-
-                    return View("Patient/ResetPassword", fpvm);
-                }
-                else
+                if (!isValidToken)
                 {
+                    _notyf.Error(errorMessage);
                     return View("Index");
                 }
+
+                ForgotPasswordViewModel fpvm = new ForgotPasswordViewModel();
+                Passtoken? pass = _unitOfWork.PassTokenRepository.GetFirstOrDefault(pass => pass.Uniquetoken == token);
+
+                fpvm.Email = pass?.Email;
+
+                return View("Patient/ResetPassword", fpvm);
 
             }
             catch (Exception ex)
@@ -727,62 +678,47 @@ namespace HalloDoc.MVC.Controllers
             }
         }
 
-        private bool ValidatePassToken(string token, bool isResetToken)
-        {
-            if (token == null)
-            {
-                TempData["error"] = "Invalid Token. Cannot Reset Password";
-                return false;
-            }
-
-            Passtoken passtoken = _unitOfWork.PassTokenRepository.GetFirstOrDefault(pass => pass.Uniquetoken == token);
-            if (passtoken == null || passtoken.Isresettoken != isResetToken || passtoken.Isdeleted)
-            {
-                TempData["error"] = "Invalid Token. Cannot Reset Password";
-                return false;
-            }
-
-            TimeSpan diff = DateTime.Now - passtoken.Createddate;
-            if (diff.Hours > 24)
-            {
-                TempData["error"] = "Token Expired. Cannot Reset Password";
-                return false;
-            }
-
-            return true;
-        }
-
         [HttpPost]
         public IActionResult ResetPassword(ForgotPasswordViewModel fpvm)
         {
-            Aspnetuser user = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(u => u.Email == fpvm.Email);
-
-            if (user == null)
+            try
             {
-                TempData["error"] = "User doesn't exists. Please try again.";
-                return NotFound("Error");
-            }
+                Aspnetuser? user = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(u => u.Email == fpvm.Email);
 
-            if (ModelState.IsValid)
+                if (user == null)
+                {
+                    _notyf.Error("User doesn't exists. Please try again.");
+                    return NotFound("Error");
+                }
+
+                if (ModelState.IsValid)
+                {
+
+                    string passHash = GenerateSHA256(fpvm.Password ?? "");
+                    user.Passwordhash = passHash;
+                    user.Modifieddate = DateTime.Now;
+
+                    _unitOfWork.AspNetUserRepository.Update(user);
+                    _unitOfWork.Save();
+
+                    Passtoken? token = _unitOfWork.PassTokenRepository.GetFirstOrDefault(pass => pass.Email == fpvm.Email);
+                    token.Isdeleted = true;
+
+                    _unitOfWork.PassTokenRepository.Update(token);
+                    _unitOfWork.Save();
+
+                    _notyf.Success("Password Reset Successful");
+                    return RedirectToAction("Login");
+
+                }
+                return View("Patient/ResetPassword", fpvm);
+
+            }
+            catch (Exception ex)
             {
-                string passHash = GenerateSHA256(fpvm.Password);
-                user.Passwordhash = passHash;
-                user.Modifieddate = DateTime.Now;
-
-                _unitOfWork.AspNetUserRepository.Update(user);
-                _unitOfWork.Save();
-
-                Passtoken token = _unitOfWork.PassTokenRepository.GetFirstOrDefault(pass => pass.Email == fpvm.Email);
-                token.Isdeleted = true;
-
-                _unitOfWork.PassTokenRepository.Update(token);
-                _unitOfWork.Save();
-
-                TempData["success"] = "Password Reset Successful";
-                return RedirectToAction("Login");
-
+                _notyf.Error(ex.Message);
+                return View("Patient/ResetPassword", fpvm);
             }
-            return View("Patient/ResetPassword");
         }
 
         public IActionResult ForgetPassword()
@@ -836,12 +772,12 @@ namespace HalloDoc.MVC.Controllers
                 mailMessage.To.Add(email);
 
                 client.Send(mailMessage);
-                TempData["success"] = "Mail sent successfully. Please check " + email + " for reset password link.";
+                _notyf.Success("Mail sent successfully. Please check " + email + " for reset password link.");
                 return RedirectToAction("ForgetPassword", "Guest");
             }
             catch (Exception ex)
             {
-                TempData["error"] = ex.Message;
+                _notyf.Error(ex.Message);
                 return RedirectToAction("ForgetPassword", "Guest");
             }
 
@@ -853,19 +789,39 @@ namespace HalloDoc.MVC.Controllers
         {
             if (ModelState.IsValid)
             {
-                bool isUserExists = _unitOfWork.UserRepository.IsUserWithEmailExists(forPasVM.Email);
+                bool isUserExists = _unitOfWork.UserRepository.IsUserWithEmailExists(forPasVM.Email ?? "");
                 if (isUserExists)
                 {
-                    return SendMailForForgetPassword(forPasVM.Email);
+                    return SendMailForForgetPassword(forPasVM.Email ?? "");
                 }
             }
-            TempData["error"] = "User doesn't exist.";
+            _notyf.Error("User doesn't exist.");
             return View("Patient/ForgetPassword");
 
         }
 
         #region HelperFunctions
 
+        [HttpPost]
+        public IEnumerable<City> GetCitiesByRegion(int regionId)
+        {
+            return _utilityService.GetCitiesByRegion(regionId);
+        }
+
+        [HttpPost]
+        // Removes the physician whose physicianId is passed : reason for transfer case modal
+        public IEnumerable<Physician> GetPhysicianByPhysicianRegion(int regionId, int? physicianId)
+        {
+            var result = new JsonArray();
+
+            List<Physician> physicians = _unitOfWork.PhysicianRepository.GetPhysiciansByPhysicianRegion(regionId).ToList();
+            Physician? removePhy = physicians.SingleOrDefault(p => p.Physicianid == physicianId);
+            if (removePhy != null)
+            {
+                physicians.Remove(removePhy);
+            }
+            return physicians;
+        }
 
         [HttpPost]
         public JsonArray GetBusinessByType(int professionType)

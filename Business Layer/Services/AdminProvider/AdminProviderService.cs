@@ -43,10 +43,8 @@ namespace Business_Layer.Services.AdminProvider
 
             model.RequestId = requestId;
 
-            if (client.Intyear != null && client.Intdate != null && client.Strmonth != null)
-            {
-                model.Dob = DateHelper.GetDOBDateTime(client.Intyear ?? 0, client.Strmonth, client.Intdate ?? 0);
-            }
+            model.Dob = DateHelper.GetDOBDateTime(client.Intyear, client.Strmonth, client.Intdate);
+
 
             model.Confirmation = req.Confirmationnumber;
             model.DashboardStatus = RequestHelper.GetDashboardStatus(req.Status);
@@ -236,7 +234,7 @@ namespace Business_Layer.Services.AdminProvider
                     Aspnetuser aspnetuser = new()
                     {
                         Id = generatedId.ToString(),
-                        Username = _utilityService.GenerateUserName(AccountType.Patient,model.FirstName,model.LastName),
+                        Username = _utilityService.GenerateUserName(AccountType.Patient, model.FirstName, model.LastName),
                         Passwordhash = null,
                         Email = model.Email,
                         Phonenumber = phoneNumber,
@@ -395,10 +393,8 @@ namespace Business_Layer.Services.AdminProvider
                 return null;
             }
 
-            if (requestclient.Intyear != null && requestclient.Strmonth != null && requestclient.Intdate != null)
-            {
-                dobDate = DateHelper.GetDOBDateTime(requestclient.Intyear ?? 0, requestclient.Strmonth, requestclient.Intdate ?? 0);
-            }
+            dobDate = DateHelper.GetDOBDateTime(requestclient.Intyear, requestclient.Strmonth, requestclient.Intdate);
+
 
             EncounterFormViewModel model = new()
             {

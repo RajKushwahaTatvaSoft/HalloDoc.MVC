@@ -13,6 +13,6 @@ namespace Business_Layer.Services.AdminServices.Interface
         public AdminProfileViewModel? GetAdminProfileModel(int adminId);
         public ServiceResponse UpdateAdminPassword(int adminId, string password);
         public ServiceResponse UpdateAdminAccountInfo(int roleId,int statusId, int adminId);
-        public ServiceResponse UpdateAdminPersonalDetails(int adminId, List<int> regions, string firstName, string lastName, string email, string phone);
+        public ServiceResponse UpdateAdminPersonalDetails(int adminId, List<int>? regions, string firstName, string lastName, string email, string phone);
     }
 }

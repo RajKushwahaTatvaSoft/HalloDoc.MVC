@@ -25,7 +25,7 @@ namespace Data_Layer.ViewModels.Admin
         public string? CountryCode{ get; set; }
 
         [Required(ErrorMessage = "Phone cannot be empty")]
-        [RegularExpression("^[0-9\\+\\-]+$", ErrorMessage = "Enter valid Phone")]
+        [RegularExpression("^[0-9\\+\\- ]+$", ErrorMessage = "Enter valid Phone")]
         public string? PhoneNumber { get; set; }
         public string? History { get; set; }
         public string? MedicalHistory { get; set; }

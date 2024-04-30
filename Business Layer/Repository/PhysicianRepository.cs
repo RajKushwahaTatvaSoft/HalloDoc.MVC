@@ -16,5 +16,14 @@ namespace Business_Layer.Repository
         {
             _context = context;
         }
+
+        public IEnumerable<Physician> GetPhysiciansByPhysicianRegion(int regionId)
+        {
+            IEnumerable<int> phyRegions = _context.Physicianregions.Where(phyReg => phyReg.Regionid == regionId).Select(_ => _.Physicianid);
+
+            IEnumerable<Physician> physicians = _context.Physicians.Where(phy => phyRegions.Contains(phy.Physicianid));
+
+            return physicians;
+        }
     }
 }

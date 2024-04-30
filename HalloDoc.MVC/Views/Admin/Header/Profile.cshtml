@@ -10,6 +10,8 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/js/bootstrap-select.min.js"></script>
 
+<partial name="_ValidationScriptsPartial" />
+
 <div class="container-md container-fluid ">
     <div>
         <div class=" d-flex justify-content-between mt-5">
@@ -44,6 +46,7 @@
                         <div class="floating-label form-floating">
                             <input asp-for="Password" type="text" class="form-control" placeholder="Password" id="account-info-password">
                             <label for="floatingInput">Password</label>
+                            <span class="error-msg text-danger" ></span>
                         </div>
 
                     </div>
@@ -57,7 +60,7 @@
                     </div>
 
                     <div class="col-md-6 col-12 mt-4 form-floating">
-                        <select asp-for="RoleId" class="form-select account-info-input" id="account-info-role" disabled >
+                        <select asp-for="RoleId" class="form-select account-info-input" id="account-info-role" disabled>
                             <option selected disabled value="">-- Select Role --</option>
                             @foreach (var role in Model.roles)
                             {
@@ -81,7 +84,7 @@
             </form>
 
 
-            <form method="post" asp-controller="Admin" asp-action="AdministratorInfo">
+            <form method="post" asp-controller="Admin" asp-action="SaveAdministratorInfo">
 
                 <fieldset id="administrator-info-set" disabled>
 
@@ -93,12 +96,14 @@
                             <div class=" floating-label form-floating">
                                 <input asp-for="FirstName" type="text" class=" form-control" placeholder="First Name" id="firstNameInput">
                                 <label for="floatingInput">First Name</label>
+                                <span class="text-danger" asp-validation-for="FirstName"></span>
                             </div>
                         </div>
                         <div class="col-md-6 mt-4 ">
                             <div class="floating-label form-floating">
                                 <input asp-for="LastName" type="text" class=" form-control" placeholder="Last Name" id="lastNameInput">
                                 <label for="floatingInput">Last Name</label>
+                                <span class="text-danger" asp-validation-for="LastName"></span>
                             </div>
 
                         </div>
@@ -107,12 +112,14 @@
                             <div class=" floating-label form-floating">
                                 <input asp-for="Email" type="text" class=" form-control" placeholder="Email" id="emailInput">
                                 <label for="floatingInput">Email</label>
+                                <span class="text-danger" asp-validation-for="Email"></span>
                             </div>
                         </div>
                         <div class="col-md-6 col-12 mt-4">
                             <div class=" floating-label form-floating">
                                 <input asp-for="ConfirmEmail" type="text" class=" form-control" placeholder="Confirm Email" id="floatingInput">
                                 <label for="floatingInput">Confirm Email</label>
+                                <span class="text-danger" asp-validation-for="ConfirmEmail"></span>
                             </div>
 
                         </div>
@@ -121,6 +128,7 @@
                             <div class="form-floating">
                                 <input asp-for="CountryCode" id="admin-phone-country" class="" hidden />
                                 <input asp-for="PhoneNumber" id="admin-phone" class=" py-4 form-control" type="tel" />
+                                <span class="text-danger" asp-validation-for="PhoneNumber"></span>
                             </div>
                         </div>
 
@@ -136,7 +144,6 @@
 
                         </div>
 
-
                     </div>
 
                 </fieldset>
@@ -149,7 +156,7 @@
                             Edit
                         </button>
 
-                        <button id="administratorSaveBtn" type="button" class="btn my-4 py-2 px-4" style="background-color: #10bce9; color: white; display:none;">
+                        <button id="administratorSaveBtn" type="submit" class="btn my-4 py-2 px-4" style="background-color: #10bce9; color: white; display:none;">
                             Save
                         </button>
 
@@ -271,19 +278,23 @@
 
     $('#account-info-reset-pass-btn').click(function () {
 
-        $.ajax({
-            url: '/Admin/AdminResetPassword',
-            type: 'POST',
-            data: {
-                password: $('#account-info-password').val(),
-            },
-            success: function (result) {
-                $('#account-info-password').val("");
-            },
-            error: function (err) {
-                console.error(err);
-            }
-        });
+        let passResult = validatePassword(document.getElementById("account-info-password"));
+
+        if (passResult) {
+            $.ajax({
+                url: '/Admin/AdminResetPassword',
+                type: 'POST',
+                data: {
+                    password: $('#account-info-password').val(),
+                },
+                success: function (result) {
+                    $('#account-info-password').val("");
+                },
+                error: function (err) {
+                    console.error(err);
+                }
+            });
+        }
     });
 
     $('#account-info-save-btn').click(function () {
@@ -416,7 +427,7 @@
 
 <script>
 
-    $('#administratorSaveBtn').click(function () {
+    $('#').click(function () {
 
         // let selectedRegions = [];
         // let checkboxes = document.querySelectorAll(".check");

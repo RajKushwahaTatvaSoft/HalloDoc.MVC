@@ -12,8 +12,6 @@ namespace Data_Layer.ViewModels.Admin
         public IEnumerable<Role>? roles {  get; set; }
         public int? AdminId { get; set; }
 
-        public ProfileAdministratorInfo? AdministratorInfo { get; set; }
-        
         [Required(ErrorMessage = "First Name cannot be empty")]
         [RegularExpression("^[A-Za-z\\s]{1,}[\\.]{0,1}[A-Za-z\\s]{0,}$", ErrorMessage = "Enter Valid Name")]
         public string? FirstName { get; set; }
@@ -37,7 +35,7 @@ namespace Data_Layer.ViewModels.Admin
         public string? CountryCode { get; set; }
 
         [Required(ErrorMessage = "Phone cannot be empty")]
-        [RegularExpression("^[0-9\\+\\-]+$", ErrorMessage = "Enter valid Phone")]
+        [RegularExpression("^[0-9\\+\\- ]+$", ErrorMessage = "Enter valid Phone")]
         public string? PhoneNumber { get; set; }
         public string? AspUserName { get; set; }
         public int? StatusId { get; set; }
@@ -66,8 +64,10 @@ namespace Data_Layer.ViewModels.Admin
 
     public class ProfileAdministratorInfo
     {
+        public int? adminId {  get; set; }
+
         [Required(ErrorMessage = "First Name cannot be empty")]
-        [RegularExpression("^[A-Za-s]{}[\\.],1}[A-z\\s]{0,}$", ErrorMessage = "Enter Valid Name")]
+        [RegularExpression("^[A-Za-z\\s]{1,}[\\.]{0,1}[A-Za-z\\s]{0,}$", ErrorMessage = "Enter Valid Name")]
         public string? FirstName { get; set; }
 
         [Required(ErrorMessage = "Last Name cannot be empty")]
@@ -83,6 +83,8 @@ namespace Data_Layer.ViewModels.Admin
         [Compare(nameof(Email), ErrorMessage ="Email and Confirm Email should be same")]
         public string? ConfirmEmail { get; set; }
 
+        [Required(ErrorMessage = "Phone cannot be empty")]
+        [RegularExpression("^[0-9\\+\\- ]+$", ErrorMessage = "Enter valid Phone")]
         public string? PhoneNumber { get; set; }
 
         public IEnumerable<int>? selectedRegions { get; set; }

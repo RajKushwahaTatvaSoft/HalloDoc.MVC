@@ -64,7 +64,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" onclick="setCountryCode()" class="btn btn-info text-white">Submit</button>
+                    <button type="submit" id="send-link-modal-submit-btn" onclick="setCountryCode()" class="btn btn-info text-white">Submit</button>
                     <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
                 </div>
             </form>
@@ -100,6 +100,7 @@
 
         loading_div.setAttribute('style', 'display:flex !important;');
         $('.modal-body').hide();
+        $('#send-link-modal-submit-btn').prop('disabled', true);
 
         let formData = $(this).serialize();
 
@@ -114,6 +115,7 @@
                 else {
                     loading_div.setAttribute('style', 'display:none !important;');
                     $('.modal-body').show();
+                    $('#send-link-modal-submit-btn').prop('disabled', false);
                 }
             },
             error: function (err) {

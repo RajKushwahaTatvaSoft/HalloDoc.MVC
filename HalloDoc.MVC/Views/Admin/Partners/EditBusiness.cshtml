@@ -31,7 +31,7 @@
                     <div class="row g-2 m-1">
                         <div class="col-md">
                             <div class="form-floating">
-                                <input type="text" asp-for="BusinessName" class="form-control" id="businessName" />
+                                <input type="text" asp-for="BusinessName" class="form-control" id="businessName" placeholder="Business Name" />
                                 <label for="userName">Business Name</label>
                                 <span class="text-danger" asp-validation-for="BusinessName"></span>
                             </div>
@@ -53,14 +53,14 @@
                     <div class="row g-2 m-1">
                         <div class="col-md-6">
                             <div class="form-floating">
-                                <input type="text" asp-for="FaxNumber" class="form-control" id="faxNumber" />
+                                <input type="text" asp-for="FaxNumber" class="form-control" id="faxNumber" placeholder="Fax Number" />
                                 <label for="userName">Fax Number</label>
                                 <span class="text-danger" asp-validation-for="FaxNumber"></span>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-floating">
-                                <input type="tel" asp-for="PhoneNumber" class="form-control">
+                                <input type="tel" asp-for="PhoneNumber" class="form-control" placeholder="Phone Number">
                                 <label for="">Phone Number</label>
                                 <span class="text-danger" asp-validation-for="PhoneNumber"></span>
                             </div>
@@ -69,14 +69,14 @@
                     <div class="row g-2 m-1">
                         <div class="col-md-6">
                             <div class="form-floating">
-                                <input type="email" class="form-control" asp-for="Email">
+                                <input type="email" class="form-control" asp-for="Email" placeholder="Email">
                                 <label for="">Email</label>
                                 <span class="text-danger" asp-validation-for="Email"></span>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-floating phone-div w-100 h-100">
-                                <input type="tel" class="patientPhone form-control w-100 h-100" asp-for="BusinessContact">
+                                <input type="tel" class="patientPhone form-control w-100 h-100" asp-for="BusinessContact" placeholder="Business Contact">
                                 <label for="">Business Contact</label>
                                 <span class="text-danger" asp-validation-for="BusinessContact"></span>
                             </div>
@@ -85,7 +85,7 @@
                     <div class="row g-2 m-1">
                         <div class="col-md-6">
                             <div class="form-floating">
-                                <input type="text" class="form-control" asp-for="Street">
+                                <input type="text" class="form-control" asp-for="Street" placeholder="Street">
                                 <label for="">Street</label>
                                 <span class="text-danger" asp-validation-for="Street"></span>
                             </div>
@@ -94,6 +94,10 @@
                             <div class="form-floating">
                                 <select asp-for="CityId" class="form-select" id="business-city" required>
                                     <option disabled selected value=""> -- Select City -- </option>
+                                    @foreach (var city in Model.selectedCities)
+                                    {
+                                        <option value="@city.Id">@city.Name</option>
+                                    }
                                 </select>
                                 <label for="business-city">City</label>
                                 <span asp-validation-for="CityId" class="text-danger"></span>
@@ -104,19 +108,19 @@
                         <div class="col-md-6">
                             <div class="form-floating">
                                 <select class="form-select " asp-for="RegionId" id="business-state">
-                                    <option selected disabled>Select A Region</option>
+                                    <option selected disabled>--Select Region--</option>
                                     @foreach (var items in Model.regions)
                                     {
                                         <option value="@items.Regionid">@items.Name</option>
                                     }
                                 </select>
-                                <label for="">Select A Region</label>
+                                <label for="">Region</label>
                                 <span class="text-danger" asp-validation-for="RegionId"></span>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-floating">
-                                <input type="text" asp-for="Zip" class="form-control">
+                                <input type="text" asp-for="Zip" class="form-control" placeholder="Zip/Postal">
                                 <label for="">Zip/Postal</label>
                                 <span class="text-danger" asp-validation-for="Zip"></span>
                             </div>
@@ -133,6 +137,13 @@
     </div>
 
 </div>
+
+
+<script>
+    $('.admin-tab').removeClass("active");
+    $('#partner-tab').addClass("active");
+</script>
+
 
 <script>
 

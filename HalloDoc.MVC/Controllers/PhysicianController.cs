@@ -50,7 +50,7 @@ namespace HalloDoc.MVC.Controllers
         {
 
             Response.Cookies.Delete("hallodoc");
-            TempData["success"] = "Logout Successfull";
+            _notyf.Success("Logout Successfull");
 
             return Redirect("/Guest/Login");
         }
@@ -355,7 +355,7 @@ namespace HalloDoc.MVC.Controllers
 
                 if (sd == null)
                 {
-                    TempData["error"] = "Cannot Find Shift";
+                    _notyf.Error("Cannot Find Shift");
                     return false;
                 }
 
@@ -374,7 +374,7 @@ namespace HalloDoc.MVC.Controllers
             }
             catch (Exception e)
             {
-                TempData["error"] = e.Message;
+                _notyf.Error(e.Message);
                 return false;
             }
 
@@ -919,7 +919,7 @@ namespace HalloDoc.MVC.Controllers
             {
                 if (fileIds.Count < 1)
                 {
-                    TempData["error"] = "Please select at least one document before sending email.";
+                    _notyf.Error("Please select at least one document before sending email.");
                     return false;
                 }
                 Requestclient? reqCli = _unitOfWork.RequestClientRepository.GetFirstOrDefault(requestCli => requestCli.Requestid == requestId);
@@ -971,12 +971,12 @@ namespace HalloDoc.MVC.Controllers
 
                 client.Send(mailMessage);
 
-                TempData["success"] = "Email with selected documents has been successfully sent to " + reqCli.Email;
+                _notyf.Success("Email with selected documents has been successfully sent to " + reqCli.Email);
                 return true;
             }
             catch (Exception ex)
             {
-                TempData["error"] = "Error occured while sending documents. Please try again later.";
+                _notyf.Error("Error occured while sending documents. Please try again later.");
                 return false;
             }
         }
@@ -1042,12 +1042,12 @@ namespace HalloDoc.MVC.Controllers
 
                 _unitOfWork.Save();
 
-                TempData["success"] = "Files deleted Succesfully.";
+                _notyf.Success("Files deleted Succesfully.");
                 return true;
             }
             catch (Exception ex)
             {
-                TempData["error"] = "Error occured while deleting files.";
+                _notyf.Error("Error occured while deleting files.");
                 return false;
             }
         }
@@ -1063,12 +1063,12 @@ namespace HalloDoc.MVC.Controllers
                 _unitOfWork.RequestWiseFileRepository.Update(file);
                 _unitOfWork.Save();
 
-                TempData["success"] = "File deleted Succesfully.";
+                _notyf.Success("File deleted Succesfully.");
                 return true;
             }
             catch (Exception e)
             {
-                TempData["error"] = "Error occured while deleting file.";
+                _notyf.Error("Error occured while deleting file.");
                 return false;
             }
 
@@ -1210,13 +1210,13 @@ namespace HalloDoc.MVC.Controllers
 
                 client.Send(mailMessage);
 
-                TempData["success"] = "Agreement Sent Successfully.";
+                _notyf.Success("Agreement Sent Successfully.");
                 return Redirect("/Admin/Dashboard");
 
             }
             catch (Exception ex)
             {
-                TempData["error"] = "An error occurred while sending agreement.";
+                _notyf.Error("An error occurred while sending agreement.");
                 return Redirect("/Admin/Dashboard");
             }
 
@@ -1431,7 +1431,7 @@ namespace HalloDoc.MVC.Controllers
         {
 
             int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-            string phyName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+            string? phyName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
 
             try
             {
@@ -1439,7 +1439,6 @@ namespace HalloDoc.MVC.Controllers
                 Encounterform? encounterform = _unitOfWork.EncounterFormRepository.GetFirstOrDefault(form => form.Requestid == requestId);
                 if (encounterform == null || !encounterform.Isfinalize)
                 {
-                    TempData["error"] = "Please finalize encounter";
                     _notyf.Error("Please finalize encounter form before concluding the case.");
                     return RedirectToAction("ConcludeCare", new { requestId = requestId });
                 }
@@ -1475,7 +1474,7 @@ namespace HalloDoc.MVC.Controllers
 
                 _unitOfWork.Save();
 
-                _notyf.Success("Successfully Consulted Request.");
+                _notyf.Success("Successfully Concluded Request.");
 
                 return RedirectToAction("Dashboard");
             }
@@ -1545,7 +1544,6 @@ namespace HalloDoc.MVC.Controllers
                 _notyf.Error(ex.Message);
                 return RedirectToAction("Dashboard");
             }
-
         }
 
 
@@ -1680,11 +1678,11 @@ namespace HalloDoc.MVC.Controllers
                 _unitOfWork.EmailLogRepository.Add(emailLog);
                 _unitOfWork.Save();
 
-                TempData["success"] = "Email has been successfully sent to " + email + " for create account link.";
+                _notyf.Success("Email has been successfully sent to " + email + " for create account link.");
             }
             catch (Exception ex)
             {
-                TempData["error"] = ex.Message;
+                _notyf.Error(ex.Message);
             }
         }
 
@@ -1806,12 +1804,12 @@ namespace HalloDoc.MVC.Controllers
                 }
                 catch (Exception e)
                 {
-                    TempData["error"] = "Error occurred : " + e.Message;
+                    _notyf.Error("Error occurred : " + e.Message);
                     return Redirect("/Physician/Dashboard");
                 }
             }
 
-            TempData["error"] = "Please Fill all details for sending link.";
+            _notyf.Error("Please Fill all details for sending link.");
             return Redirect("/Physician/Dashboard");
         }
 

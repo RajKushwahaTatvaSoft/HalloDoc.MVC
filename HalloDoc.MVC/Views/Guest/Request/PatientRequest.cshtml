@@ -79,7 +79,7 @@
                         <div class="form-floating mt-3">
                             <input asp-for="FirstName" type="text" class="form-control" placeholder="First Name"
                                    id="patient-form-first-name" required>
-                            <label for="floatingTextarea2">First Name</label>
+                            <label for="floatingTextarea2">First Name <sup class="text-danger">*</sup></label>
                             <span asp-validation-for="FirstName" class="text-danger"></span>
                             <span class="error-msg text-danger" style="display:none;"></span>
 
@@ -101,7 +101,7 @@
 
                             <input asp-for="DOB" class="form-control" placeholder="Date of Birth:" type="date"
                                    id="patient-dob">
-                            <label for="floatingTextarea2">Date of Birth:</label>
+                            <label for="floatingTextarea2">Date of Birth <sup class="text-danger">*</sup> :</label>
                             <span asp-validation-for="DOB" class="text-danger"></span>
                             <span class="error-msg text-danger" style="display:none;"></span>
 
@@ -121,7 +121,7 @@
                         <div class="form-floating mt-3">
                             <input asp-for="Email" type="email" class="form-control" placeholder="Email"
                                    id="patient-form-email" required>
-                            <label for="floatingInputemail">Email</label>
+                            <label for="floatingInputemail">Email <sup class="text-danger">*</sup></label>
                             <span asp-validation-for="Email" class="text-danger"></span>
                             <span class="error-msg text-danger" style="display:none;"></span>
                         </div>
@@ -132,6 +132,7 @@
                         <div class="form-floating mt-3">
                             <input id="patient-phone-country" asp-for="Countrycode" hidden />
                             <input asp-for="Phone" id="patient-phone" class="form-control" type="tel" required>
+                            <sup class="text-danger">* Required</sup>
                             <span asp-validation-for="Phone" class="text-danger"></span>
                             <span class="error-msg text-danger" style="display:none;"></span>
                         </div>
@@ -153,7 +154,7 @@
                     <div class="col-md-6 col-12">
                         <div class="form-floating mt-3">
                             <input asp-for="Password" class="form-control" placeholder="Password" id="patient-password">
-                            <label for="floatingTextarea2">Password</label>
+                            <label for="floatingTextarea2">Password <sup class="text-danger">*</sup></label>
                             <span asp-validation-for="Password" class="text-danger"></span>
                             <span class="error-msg text-danger" style="display:none;"></span>
                         </div>
@@ -163,7 +164,7 @@
                         <div class="form-floating mt-3">
                             <input asp-for="ConfirmPassword" class="form-control" placeholder="Confirm Password"
                                    id="patient-confirm-password">
-                            <label for="floatingTextarea2">Confirm Password</label>
+                            <label for="floatingTextarea2">Confirm Password <sup class="text-danger">*</sup></label>
                             <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
                             <span class="error-msg text-danger" style="display:none;"></span>
                         </div>
@@ -191,7 +192,7 @@
                             <select asp-for="CityId" class="form-select" id="patient-city" required>
                                 <option disabled selected value=""> -- Select City -- </option>
                             </select>
-                            <label for="patient-city">City</label>
+                            <label for="patient-city">City <sup class="text-danger">*</sup></label>
                             <span asp-validation-for="CityId" class="text-danger"></span>
                             <span class="error-msg text-danger" style="display:none;"></span>
                         </div>
@@ -211,7 +212,7 @@
                                 }
 
                             </select>
-                            <label for="patient-state">State</label>
+                            <label for="patient-state">State <sup class="text-danger">*</sup></label>
                             <span asp-validation-for="RegionId" class="text-danger"></span>
                             <span class="error-msg text-danger" style="display:none;"></span>
                         </div>

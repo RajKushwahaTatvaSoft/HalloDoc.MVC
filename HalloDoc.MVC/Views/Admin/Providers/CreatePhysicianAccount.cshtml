@@ -46,7 +46,7 @@
                 <div class="col-md-4">
                     <div class="form-floating">
                         <input type="text" asp-for="Password" class="form-control" placeholder="Password">
-                        <label for="floatingSelectGrid">Password</label>
+                        <label for="floatingSelectGrid">Password <sup class="text-danger">*</sup></label>
                         <span class="text-danger" asp-validation-for="Password"></span>
                     </div>
                 </div>
@@ -54,13 +54,13 @@
                 <div class="col-md-4">
                     <div class="form-floating w-100 h-100">
                         <select asp-for="RoleId" class="form-select " aria-label="Default select example">
-                            <option disabled selected value="0">-- Select Role --</option>
+                            <option disabled selected value="">-- Select Role --</option>
                             @foreach (var role in Model.roles)
                             {
                                 <option value="@role.Roleid">@role.Name</option>
                             }
                         </select>
-                        <label for="">Select Role</label>
+                        <label for="">Role <sup class="text-danger">*</sup></label>
                     </div>
                 </div>
 
@@ -73,21 +73,21 @@
                 <div class="col-md-6">
                     <div class="form-floating">
                         <input asp-for="FirstName" type="text" class="form-control" placeholder="First Name">
-                        <label for="">First Name</label>
+                        <label for="">First Name <sup class="text-danger">*</sup></label>
                         <span class="text-danger" asp-validation-for="FirstName"></span>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-floating">
                         <input asp-for="LastName" type="text" class="form-control" placeholder="Last Name">
-                        <label for="floatingSelectGrid">Last Name</label>
+                        <label for="floatingSelectGrid">Last Name <sup class="text-danger">*</sup></label>
                         <span class="text-danger" asp-validation-for="LastName"></span>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-floating">
                         <input asp-for="Email" type="email" class="form-control" placeholder="Email">
-                        <label for="">Email</label>
+                        <label for="">Email <sup class="text-danger">*</sup></label>
                         <span class="text-danger" asp-validation-for="Email"></span>
                     </div>
                 </div>
@@ -96,8 +96,8 @@
 
                     <div class="form-floating">
                         <input id="phy-phone-country" asp-for="CountryCode" hidden />
-
                         <input id="phy-phone" class="py-4 form-control" type="tel" asp-for="Phone" placeholder="Phone">
+                        <sup class="text-danger">* Required</sup>
                         <span class="text-danger" asp-validation-for="Phone"></span>
                     </div>
 
@@ -153,10 +153,9 @@
                     <div class="form-floating">
 
                         <select asp-for="CityId" class="form-select billingChange" id="create-phy-city" placeholder="City">
-                            <option disabled value=""> -- Select City -- </option>
-
+                            <option selected disabled value=""> -- Select City -- </option>
                         </select>
-                        <label for="admin-billing-city">City</label>
+                        <label for="admin-billing-city">City <sup class="text-danger">*</sup></label>
                         <span asp-validation-for="CityId" class="text-danger"></span>
 
                     </div>
@@ -164,12 +163,14 @@
                 <div class="col-md-6">
                     <div class="form-floating phone-div w-100 h-100 ">
                         <select asp-for="RegionId" class="form-select " id="create-phy-state" placeholder="State">
+                            <option selected disabled value=""> -- Select Region -- </option>
+
                             @foreach (var region in Model.regions)
                             {
                                 <option value="@region.Regionid">@region.Name</option>
                             }
                         </select>
-                        <label for="">Select A Region</label>
+                        <label for="">Region <sup class="text-danger">*</sup></label>
                         <span class="text-danger" asp-validation-for="RegionId"></span>
                     </div>
                 </div>
@@ -183,7 +184,8 @@
                 <div class="col-md-6">
                     <div class="form-floating">
                         <input asp-for="MailCountryCode" hidden id="phy-alt-phone-country" />
-                        <input asp-for="MailPhone" type="tel" id="phy-alt-phone" class="form-control w-100 h-100" placeholder="Mail Phone">
+                        <input asp-for="MailPhone" type="tel" id="phy-alt-phone" class="form-control" placeholder="Mail Phone">
+                        <sup class="text-danger">* Required</sup>
                         <span class="text-danger" asp-validation-for="MailPhone"></span>
                     </div>
                 </div>
@@ -201,11 +203,13 @@
                     </div>
                 </div>
                 <div class="col-md-6">
+
                     <div class="form-floating">
                         <input asp-for="BusinessWebsite" type="text" class="form-control" placeholder="Business Website">
                         <label for="floatingSelectGrid">Business Website</label>
                         <span class="text-danger" asp-validation-for="BusinessWebsite"></span>
                     </div>
+
                 </div>
 
                 <div class="col-md-6 mt-2">
@@ -280,6 +284,7 @@
                     <span class="text-danger" asp-validation-for="AdminNotes"></span>
 
                 </div>
+
             </div>
 
             <div class="my-4"></div>
@@ -443,7 +448,7 @@
 
 <script>
 
-    
+
 
     function dataURLtoFile(dataurl, filename) {
         var arr = dataurl.split(','),
@@ -466,7 +471,7 @@
             signaturePad.clear();
         });
 
-        $('#cancel-signature').click(function(){
+        $('#cancel-signature').click(function () {
             $('#signature-div').css("display", "none");
             signaturePad.clear();
         });

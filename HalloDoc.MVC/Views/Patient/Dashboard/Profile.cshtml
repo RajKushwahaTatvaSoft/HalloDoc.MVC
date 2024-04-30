@@ -117,9 +117,12 @@
 
                                     <select asp-for="CityId" class="form-select" id="patient-city" required>
                                         <option disabled selected value=""> -- Select City -- </option>
+                                        @foreach (var city in Model.selectedCities)
+                                        {
+                                            <option value="@city.Id">@city.Name</option>
+                                        }
                                     </select>
                                     <label for="patient-city">City</label>
-
 
                                     <span asp-validation-for="CityId" class="text-danger"></span>
                                     <span class="error-msg text-danger" style="display:none;"></span>

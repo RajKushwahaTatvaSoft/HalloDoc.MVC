@@ -236,6 +236,15 @@ x::-webkit-file-upload-button, input[type=file]:after {
     background-color: white !important;
 }
 
+.dashboard-sidebar .nav-link .active {
+    background-color : #10bce9;
+    border-radius : 7px;
+}
+
+.dashboard-sidebar .nav-link .active span {
+    color: white;
+}
+
 .active .tabHeader {
     text-decoration: none;
     color: var(--primary);

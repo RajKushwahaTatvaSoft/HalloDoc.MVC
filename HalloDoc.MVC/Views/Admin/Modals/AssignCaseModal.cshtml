@@ -61,7 +61,6 @@
     </div>
 </div>
 
-
 <script>
 
     $('#assignCaseRegion').change(function (event) {
@@ -69,7 +68,7 @@
         var region = $('option:selected', this).val();
 
         $.ajax({
-            url: '/Admin/GetPhysicianByPhysicianRegion',
+            url: '/Guest/GetPhysicianByPhysicianRegion',
             type: 'POST',
             data: {
                 regionId: region,

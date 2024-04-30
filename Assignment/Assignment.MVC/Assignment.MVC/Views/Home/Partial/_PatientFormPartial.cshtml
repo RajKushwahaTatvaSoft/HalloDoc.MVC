@@ -163,9 +163,8 @@
                             <div class="col-6">
 
                                 <div class="form-floating">
-                                    <input id="patient-specialist" class="form-control shadow-none bg-transparent" type="tel" />
 
-                                    <select asp-for="Specialist" id="patient-specialist-select" class="form-select shadow-none bg-transparent" placeholder="Specialist">
+                                    <select asp-for="Specialist" id="patient-specialist" class="form-select shadow-none bg-transparent" placeholder="Specialist">
                                         <option disabled selected value=""> -- Select Doctor -- </option>
 
                                         @if (Model != null && Model.DoctorList != null && Model.DoctorList.Any())
@@ -198,16 +197,8 @@
         </div>
     </div>
 </div>
-<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js" integrity="sha256-lSjKY0/srUM9BE3dPm+c4fBo1dky2v27Gdjm2uoZaL0=" crossorigin="anonymous"></script>
 <script>
 
-    $('#patient-specialist').autocomplete({
-        source: '@Url.Action("Suggest")',
-        minLength: 3,
-        select: function (evt, ui) {
-
-        }
-    });
     $('#add-patient-modal-form').on('submit', function (event) {
         event.preventDefault();
 

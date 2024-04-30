@@ -9,5 +9,6 @@ namespace Business_Layer.Repository.IRepository
 {
     public interface IPassTokenRepository : IGenericRepository<Passtoken>
     {
+        public bool ValidatePassToken(string token, bool isResetToken, out string errorMessage);
     }
 }

@@ -29,11 +29,28 @@
 </style>
 
 <header class="">
+
     <div class="d-flex mx-3 align-items-center justify-content-between">
-        <img src="/images/hallo_doc_logo.png" alt="logo_icon" height="100px">
+
+        <div class="d-md-none">
+
+            <a class="navbar-toggler shadow-none text-decoration-none" class="btn btn-primary" data-bs-toggle="offcanvas" href="#offcanvasExample" role="button" aria-controls="offcanvasExample">
+                <span class="navbar-toggler-icon"></span>
+                <svg class="mb-3 navbar-toggler-icon" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="24px" height="24px" viewBox="0,0,256,256">
+                    <g fill="#01bce9" fill-rule="nonzero" stroke="none" stroke-width="0" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0" font-family="none" font-weight="none" font-size="none" text-anchor="none" style="mix-blend-mode: normal"><g transform="scale(8.53333,8.53333)"><path d="M3,7c-0.36064,-0.0051 -0.69608,0.18438 -0.87789,0.49587c-0.18181,0.3115 -0.18181,0.69676 0,1.00825c0.18181,0.3115 0.51725,0.50097 0.87789,0.49587h24c0.36064,0.0051 0.69608,-0.18438 0.87789,-0.49587c0.18181,-0.3115 0.18181,-0.69676 0,-1.00825c-0.18181,-0.3115 -0.51725,-0.50097 -0.87789,-0.49587zM3,14c-0.36064,-0.0051 -0.69608,0.18438 -0.87789,0.49587c-0.18181,0.3115 -0.18181,0.69676 0,1.00825c0.18181,0.3115 0.51725,0.50097 0.87789,0.49587h24c0.36064,0.0051 0.69608,-0.18438 0.87789,-0.49587c0.18181,-0.3115 0.18181,-0.69676 0,-1.00825c-0.18181,-0.3115 -0.51725,-0.50097 -0.87789,-0.49587zM3,21c-0.36064,-0.0051 -0.69608,0.18438 -0.87789,0.49587c-0.18181,0.3115 -0.18181,0.69676 0,1.00825c0.18181,0.3115 0.51725,0.50097 0.87789,0.49587h24c0.36064,0.0051 0.69608,-0.18438 0.87789,-0.49587c0.18181,-0.3115 0.18181,-0.69676 0,-1.00825c-0.18181,-0.3115 -0.51725,-0.50097 -0.87789,-0.49587z"></path></g></g>
+                </svg>
+            </a>
+
+        </div>
+
+        <img src="/images/hallo_doc_logo.png" alt="logo_icon" height="70px">
+
         <div>
-            <span class="mx-1">Welcome <b>@Accessor.HttpContext?.Session.GetString("userName")</b></span>
+
+            <span class="mx-1 d-none d-md-inline">Welcome <b>@Accessor.HttpContext?.Session.GetString("userName")</b></span>
+
             <a asp-controller="Admin" asp-action="Logout" class="btn btn-outline-info shadow-none night-mode-btn">
+
                 <svg class="d-flex d-md-none" fill="#00ffff" height="24px" width="24px" version="1.1" id="Capa_1"
                      xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
                      viewBox="0 0 384.971 384.971" xml:space="preserve">
@@ -58,7 +75,9 @@
                     </svg>
 
                 <span class="d-none d-md-flex">Logout</span>
+
             </a>
+
             <button onclick="myFunction()" class="btn btn-outline-info shadow-none night-mode-btn mx-2">
                 <svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="24px"
                      viewBox="0 0 24 24" width="24px">
@@ -68,11 +87,12 @@
             </button>
         </div>
     </div>
+
 </header>
 
 <hr class="m-0">
 
-<ul class="nav nav-pills ps-4 shadow" id="myTab" role="tablist">
+<ul class="nav nav-pills d-none d-md-flex ps-4 shadow" id="myTab" role="tablist">
 
     @{
         string menus = Accessor.HttpContext?.Session.GetString("roleMenu") ?? "";
@@ -211,3 +231,123 @@
         </li>
     }
 </ul>
+
+<div class="offcanvas offcanvas-start d-md-none" tabindex="-1" id="offcanvasExample" aria-labelledby="offcanvasExampleLabel">
+
+    <div class="offcanvas-header py-0 mt-3">
+        <h5 class="offcanvas-title" id="offcanvasExampleLabel">HalloDoc</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+
+    <div class="dashboard-sidebar offcanvas-body">
+
+        @if (list.Contains((int)AllowMenu.AdminDashboard))
+        {
+            <a asp-controller="Admin" asp-action="Dashboard" class="nav-link px-0 admin-tab" id="mobile-dashboard-tab">
+                <span class="tabHeader py-2 px-3">Dashboard</span>
+            </a>
+        }
+
+        @if (list.Contains((int)AllowMenu.ProviderLocation))
+        {
+            <a asp-controller="Admin" asp-action="ProviderLocation" class="nav-link mt-2 px-0 admin-tab" id="provider-location-tab">
+                <span class="tabHeader py-2 px-3">Provider Location</span>
+            </a>
+        }
+
+        @if (list.Contains((int)AllowMenu.AdminProfile))
+        {
+            <a asp-controller="Admin" asp-action="Profile" class="nav-link px-0 mt-2 admin-tab" id="profile-tab">
+                <span class="tabHeader py-2 px-3">My Profile</span>
+            </a>
+        }
+
+        @if (list.Contains((int)AllowMenu.ProviderMenu) || list.Contains((int)AllowMenu.Scheduling) || list.Contains((int)AllowMenu.Invoicing))
+        {
+            <a style="cursor:pointer" class="nav-link admin-tab px-0 mt-2" id="provider-tab" data-bs-toggle="dropdown">
+                <span class="tabHeader py-2 px-3">Providers</span>
+            </a>
+
+            <ul class="dropdown-menu" aria-labelledby="provider-tab">
+
+                @if (list.Contains((int)AllowMenu.ProviderMenu))
+                {
+                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="ProviderMenu">Providers</a></li>
+                }
+                @if (list.Contains((int)AllowMenu.Scheduling))
+                {
+                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="Scheduling">Scheduling</a></li>
+                }
+                @if (list.Contains((int)AllowMenu.Invoicing))
+                {
+                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="Invoicing">Invoicing</a></li>
+                }
+
+            </ul>
+
+        }
+
+        @if (list.Contains((int)AllowMenu.Partners))
+        {
+            <a asp-controller="Admin" asp-action="Vendors" class="nav-link mt-2 px-0 admin-tab" id="partner-tab">
+                <span class="tabHeader py-2 px-3">Partners</span>
+            </a>
+        }
+
+        @if (list.Contains((int)AllowMenu.AccountAccess) || list.Contains((int)AllowMenu.UserAccess))
+        {
+            <a style="cursor:pointer" class="nav-link admin-tab mt-2 px-0" id="access-tab" data-bs-toggle="dropdown">
+                <span class="tabHeader py-2 px-3">Access</span>
+            </a>
+
+            <ul class="dropdown-menu" aria-labelledby="access-tab">
+
+                @if (list.Contains((int)AllowMenu.AccountAccess))
+                {
+                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="AccountAccess">Account Access</a></li>
+
+                }
+                @if (list.Contains((int)AllowMenu.UserAccess))
+                {
+                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="UserAccess">User Access</a></li>
+
+                }
+            </ul>
+
+        }
+
+        @if (list.Contains((int)AllowMenu.SearchRecords) || list.Contains((int)AllowMenu.EmailLogs) || list.Contains((int)AllowMenu.SMSLogs) || list.Contains((int)AllowMenu.PatientRecords) || list.Contains((int)AllowMenu.BlockedHistory))
+        {
+            <a style="cursor:pointer" class="nav-link admin-tab mt-2 px-0" id="record-tab" data-bs-toggle="dropdown">
+                <span class="tabHeader py-2 px-3">Records</span>
+            </a>
+
+            <ul class="dropdown-menu" aria-labelledby="access-tab">
+
+                @if (list.Contains((int)AllowMenu.SearchRecords))
+                {
+                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="SearchRecords">Search Records</a></li>
+
+                }
+                @if (list.Contains((int)AllowMenu.EmailLogs))
+                {
+                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="EmailLogs">Email Logs</a></li>
+                }
+                @if (list.Contains((int)AllowMenu.SMSLogs))
+                {
+                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="SMSLogs">SMS Logs</a></li>
+                }
+                @if (list.Contains((int)AllowMenu.PatientRecords))
+                {
+                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="PatientRecords">Patient Records</a></li>
+                }
+                @if (list.Contains((int)AllowMenu.BlockedHistory))
+                {
+                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="BlockedHistory">Blocked History</a></li>
+                }
+            </ul>
+
+        }
+    </div>
+
+</div>

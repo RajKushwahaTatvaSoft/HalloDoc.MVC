@@ -713,6 +713,29 @@ C25.163,30.114,24.933,30.163,24.687,30.163z"></path>
 
 <script>
 
+    $('#sendAgreement-modal-submit-btn').click(function (e) {
+        console.log("modal entry");
+        e.preventDefault();
+
+        $.ajax({
+            url: "/Physician/SendAgreementMail",
+            data: { PatientPhone: $('#sendAgreementNumber').val(), PatientEmail: $('#sendagreementEmail').val(), RequestId: $('#sendAgreementRequestId').val() },
+            type: 'POST',
+            success: function (result) {
+                location.reload();
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
+
+    });
+
+</script>
+
+<script>
+
     // House Call = 1; Consult = 2;
     let encounter_type = 0;
 
@@ -732,7 +755,9 @@ C25.163,30.114,24.933,30.163,24.687,30.163z"></path>
                 data: { requestId: $('#encounter-modal-request-id').val() },
                 type: 'POST',
                 success: function (result) {
-
+                    if(result){
+                        location.reload();
+                    }
                 },
                 error: function (error) {
                     console.log('Error Updating Location')
@@ -746,7 +771,9 @@ C25.163,30.114,24.933,30.163,24.687,30.163z"></path>
                 data: { requestId: $('#encounter-modal-request-id').val() },
                 type: 'POST',
                 success: function (result) {
-
+                    if (result) {
+                        location.reload();
+                    }
                 },
                 error: function (error) {
                     console.log('Error Updating Location')

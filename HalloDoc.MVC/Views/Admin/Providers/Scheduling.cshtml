@@ -103,15 +103,15 @@
             <div class="col-md-6 d-flex justify-content-end">
 
                 <button type="button" id="day-wise-schedule-btn" class="btn cal-filter-active calender-filter">
-                    <span>Day</span>
+                    Day
                 </button>
 
                 <button type="button" id="week-wise-schedule-btn" class="btn ms-2 calender-filter">
-                    <span>Week</span>
+                    Week
                 </button>
 
                 <button type="button" id="month-wise-schedule-btn" class="btn ms-2 calender-filter">
-                    <span>Month</span>
+                    Month
                 </button>
             </div>
         </div>
@@ -183,10 +183,10 @@
         let listId = '#' + phyListId;
 
         $.ajax({
-            url: '/Admin/GetPhyByRegion',
+            url: '/Guest/GetPhysicianByPhysicianRegion',
             type: 'POST',
             data: {
-                id: regionType,
+                regionId: regionType,
             },
             success: function (result) {
                 //console.log(result);

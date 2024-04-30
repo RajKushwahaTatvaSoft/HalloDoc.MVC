@@ -39,7 +39,7 @@
                     <div class="col-md-6 mt-4">
                         <div class=" form-floating floating-label">
                             <input asp-for="FirstName" type="text" class="form-control" placeholder="First Name">
-                            <label for="floatingInput">First name</label>
+                            <label for="floatingInput">First name <sup class="text-danger">*</sup></label>
                             <span class="text-danger" asp-validation-for="FirstName"></span>
                         </div>
 
@@ -47,7 +47,7 @@
                     <div class="col-md-6 mt-4">
                         <div class=" floating-label form-floating">
                             <input asp-for="LastName" type="text" class="form-control" placeholder="Last name">
-                            <label for="floatingInput">Last name</label>
+                            <label for="floatingInput">Last name <sup class="text-danger">*</sup></label>
                             <span class="text-danger" asp-validation-for="LastName"></span>
                         </div>
                     </div>
@@ -56,6 +56,7 @@
                         <div class="form-floating" style="height:60px;">
                             <input id="admin-phone-country" asp-for="CountryCode" hidden />
                             <input id="admin-phone" class=" form-control" type="tel" asp-for="PhoneNumber" />
+                            <sup class="text-danger">* Required</sup>
                             <span class="text-danger" asp-validation-for="PhoneNumber"></span>
                         </div>
 
@@ -63,13 +64,13 @@
                     <div class="col-md-6 col-sm-12 mt-4 form-floating">
                         <input asp-for="Email" type="email" class="form-control " id="floatingInputemail"
                                placeholder="Email" aria-label="Email">
-                        <label class="ms-2 " for="floatingInputemail">Email</label>
+                        <label class="ms-2 " for="floatingInputemail">Email <sup class="text-danger">*</sup></label>
                         <span class="text-danger" asp-validation-for="Email"></span>
                     </div>
                     <div class=" col-md-6 col-sm-12  form-floating mt-4 ">
                         <input asp-for="DOB" type="date" class="form-control " id="floatingInputdate"
                                placeholder="Date Of Birth" aria-label="Date Of Birth">
-                        <label class="ms-2 " for="floatingInputdate">Date Of Birth</label>
+                        <label class="ms-2 " for="floatingInputdate">Date Of Birth <sup class="text-danger">*</sup></label>
                         <span class="text-danger" asp-validation-for="DOB"></span>
                     </div>
 
@@ -91,7 +92,7 @@
                             <select asp-for="CityId" class="form-select" id="patient-city" required>
                                 <option disabled selected value=""> -- Select City -- </option>
                             </select>
-                            <label for="patient-city">City</label>
+                            <label for="patient-city">City <sup class="text-danger">*</sup></label>
                             <span asp-validation-for="CityId" class="text-danger"></span>
                             <span class="error-msg text-danger" style="display:none;"></span>
                         </div>
@@ -111,7 +112,7 @@
                                 }
 
                             </select>
-                            <label for="patient-state">State</label>
+                            <label for="patient-state">State <sup class="text-danger">*</sup></label>
                             <span asp-validation-for="RegionId" class="text-danger"></span>
                             <span class="error-msg text-danger" style="display:none;"></span>
                         </div>

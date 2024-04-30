@@ -12,8 +12,8 @@ namespace Data_Layer.ViewModels
     {
         public string UserName { get; set; }
         public int RequestId { get; set; }
-        public string ConfirmationNumber { get; set; }
+        public string? ConfirmationNumber { get; set; }
         public List<Requestwisefile> requestwisefiles { get; set; }
-        public IFormFile File { get; set; }
+        public IFormFile? File { get; set; }
     }
 }

@@ -21,7 +21,6 @@ using System.Globalization;
 using System.IO.Compression;
 using System.Net;
 using System.Net.Mail;
-using System.Net.NetworkInformation;
 using System.Text;
 using System.Text.Json.Nodes;
 
@@ -109,12 +108,8 @@ namespace HalloDoc.MVC.Controllers
 
         public IActionResult Logout()
         {
-
             Response.Cookies.Delete("hallodoc");
-
-
-            TempData["success"] = "Logout Successfull";
-
+            _notyf.Success("Logout Successfull");
             return Redirect("/Guest/Login");
         }
 
@@ -233,16 +228,23 @@ namespace HalloDoc.MVC.Controllers
         public IActionResult CancelCaseModal(CancelCaseModel model)
         {
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-            string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value;
+            string? adminName = HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value;
 
             try
             {
 
                 DateTime currentTime = DateTime.Now;
 
-                Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == model.RequestId);
+                Request? req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == model.RequestId);
+
+                if(req == null)
+                {
+                    _notyf.Error(NotificationMessage.REQUEST_NOT_FOUND);
+                    return Redirect("/Admin/Dashboard");
+                }
+
                 req.Status = (short)RequestStatus.Cancelled;
-                req.Casetag = _unitOfWork.CaseTagRepository.GetFirstOrDefault(tag => tag.Casetagid == model.ReasonId).Name;
+                req.Casetag = _unitOfWork.CaseTagRepository.GetFirstOrDefault(tag => tag.Casetagid == model.ReasonId)?.Name;
                 req.Modifieddate = currentTime;
 
                 _unitOfWork.RequestRepository.Update(req);
@@ -262,12 +264,14 @@ namespace HalloDoc.MVC.Controllers
                 _unitOfWork.RequestStatusLogRepository.Add(reqStatusLog);
                 _unitOfWork.Save();
 
-                TempData["success"] = "Request Successfully Cancelled";
+
+                _notyf.Success("Request Successfully Cancelled");
                 return Redirect("/Admin/Dashboard");
             }
             catch (Exception ex)
             {
-                TempData["error"] = "Error Occured while cancelling request.";
+                Console.WriteLine(ex.Message);
+                _notyf.Error("Error Occured while cancelling request.");
                 return Redirect("/Admin/Dashboard");
             }
 
@@ -291,11 +295,11 @@ namespace HalloDoc.MVC.Controllers
         {
 
             int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-            string adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+            string? adminName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
 
             if (model.RequestId == null || model.RequestId <= 0 || model.PhysicianId == null || model.PhysicianId <= 0)
             {
-                TempData["error"] = "Error occured while assigning request.";
+                _notyf.Success("Error occured while assigning request.");
                 return Redirect("/Admin/Dashboard");
             }
 
@@ -316,8 +320,8 @@ namespace HalloDoc.MVC.Controllers
                 _unitOfWork.RequestRepository.Update(req);
                 _unitOfWork.Save();
 
-                Physician phy = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Physicianid == model.PhysicianId);
-                string logNotes = adminName + " assigned to " + phy.Firstname + " " + phy.Lastname + " on " + currentTime.ToString("MM/dd/yyyy") + " at " + currentTime.ToString("HH:mm:ss") + " : " + model.Notes;
+                Physician? phy = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Physicianid == model.PhysicianId);
+                string logNotes = adminName + " assigned to " + phy?.Firstname + " " + phy?.Lastname + " on " + currentTime.ToString("MM/dd/yyyy") + " at " + currentTime.ToString("HH:mm:ss") + " : " + model.Notes;
 
                 Requeststatuslog reqStatusLog = new Requeststatuslog()
                 {
@@ -332,12 +336,12 @@ namespace HalloDoc.MVC.Controllers
                 _unitOfWork.RequestStatusLogRepository.Add(reqStatusLog);
                 _unitOfWork.Save();
 
-                TempData["success"] = "Request Successfully Assigned.";
+                _notyf.Success("Request Successfully Assigned.");
                 return Redirect("/Admin/Dashboard");
             }
             catch (Exception ex)
             {
-                TempData["error"] = "Error Occured while assigning request.";
+                _notyf.Error("Error Occured while assigning request.");
                 return Redirect("/Admin/Dashboard");
             }
 
@@ -366,14 +370,14 @@ namespace HalloDoc.MVC.Controllers
 
             if (model.RequestId == null || model.RequestId <= 0 || model.PhysicianId == null || model.PhysicianId <= 0)
             {
-                TempData["error"] = "Error occured while transfering request.";
+                _notyf.Error("Error occured while transfering request.");
                 return Redirect("/Admin/Dashboard");
             }
             try
             {
                 DateTime currentTime = DateTime.Now;
 
-                Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == model.RequestId);
+                Request? req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == model.RequestId);
                 req.Status = (short)RequestStatus.Accepted;
                 req.Modifieddate = currentTime;
                 req.Physicianid = model.PhysicianId;
@@ -381,9 +385,9 @@ namespace HalloDoc.MVC.Controllers
                 _unitOfWork.RequestRepository.Update(req);
                 _unitOfWork.Save();
 
-                Physician phy = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Physicianid == model.PhysicianId);
+                Physician? phy = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Physicianid == model.PhysicianId);
 
-                string logNotes = adminName + " tranferred to " + phy.Firstname + " " + phy.Lastname + " on " + currentTime.ToString("MM/dd/yyyy") + " at " + currentTime.ToString("HH:mm:ss") + " : " + model.Notes;
+                string logNotes = adminName + " tranferred to " + phy?.Firstname + " " + phy?.Lastname + " on " + currentTime.ToString("MM/dd/yyyy") + " at " + currentTime.ToString("HH:mm:ss") + " : " + model.Notes;
 
                 Requeststatuslog reqStatusLog = new Requeststatuslog()
                 {
@@ -398,12 +402,12 @@ namespace HalloDoc.MVC.Controllers
                 _unitOfWork.RequestStatusLogRepository.Add(reqStatusLog);
                 _unitOfWork.Save();
 
-                TempData["success"] = "Request Successfully Transferred.";
+                _notyf.Success("Request Successfully Transferred.");
                 return Redirect("/Admin/Dashboard");
             }
             catch (Exception ex)
             {
-                TempData["error"] = "Error Occured while transfering request.";
+                _notyf.Error("Error Occured while transfering request.");
                 return Redirect("/Admin/Dashboard");
             }
 
@@ -434,7 +438,7 @@ namespace HalloDoc.MVC.Controllers
 
                 if (req == null || reqCli == null)
                 {
-                    TempData["error"] = NotificationMessage.REQUEST_NOT_FOUND;
+                    _notyf.Error(NotificationMessage.REQUEST_NOT_FOUND);
                     return Redirect("/Admin/Dashboard");
                 }
 
@@ -487,12 +491,12 @@ namespace HalloDoc.MVC.Controllers
 
                 _unitOfWork.Save();
 
-                TempData["success"] = "Request Successfully Blocked";
+                _notyf.Success("Request Successfully Blocked");
                 return Redirect("/Admin/Dashboard");
             }
             catch (Exception ex)
             {
-                TempData["error"] = ex.Message;
+                _notyf.Error(ex.Message);
                 return Redirect("/Admin/Dashboard");
             }
         }
@@ -519,7 +523,7 @@ namespace HalloDoc.MVC.Controllers
                 {
                     DateTime currentTime = DateTime.Now;
 
-                    Request req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == model.RequestId);
+                    Request? req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == model.RequestId);
 
                     req.Status = (short)RequestStatus.Clear;
                     req.Modifieddate = currentTime;
@@ -541,18 +545,19 @@ namespace HalloDoc.MVC.Controllers
                     _unitOfWork.RequestStatusLogRepository.Add(reqStatusLog);
                     _unitOfWork.Save();
 
-                    TempData["success"] = "Request Successfully Cleared";
+                    _notyf.Success("Request Successfully Cleared");
                     return Redirect("/Admin/Dashboard");
                 }
                 catch (Exception ex)
                 {
-                    TempData["error"] = "Error Occured while clearign request.";
+                    Console.WriteLine(ex.Message);
+                    _notyf.Error("Error Occured while clearign request.");
                     return Redirect("/Admin/Dashboard");
                 }
             }
             else
             {
-                TempData["error"] = "Admin Not Found";
+                _notyf.Error("Admin Not Found");
                 return Redirect("/Admin/Dashboard");
             }
         }
@@ -579,8 +584,8 @@ namespace HalloDoc.MVC.Controllers
                 string encryptedId = EncryptionService.Encrypt(model.RequestId.ToString());
                 string? agreementLink = Url.Action("ReviewAgreement", "Guest", new { requestId = encryptedId }, Request.Scheme);
 
-                string senderEmail = _config.GetSection("OutlookSMTP")["Sender"];
-                string senderPassword = _config.GetSection("OutlookSMTP")["Password"];
+                string? senderEmail = _config.GetSection("OutlookSMTP")["Sender"];
+                string? senderPassword = _config.GetSection("OutlookSMTP")["Password"];
 
                 SmtpClient client = new SmtpClient("smtp.office365.com")
                 {
@@ -606,12 +611,12 @@ namespace HalloDoc.MVC.Controllers
 
                 client.Send(mailMessage);
 
-                TempData["success"] = "Agreement Sent Successfully.";
+                _notyf.Success("Agreement Sent Successfully.");
                 return Redirect("/Admin/Dashboard");
             }
             catch (Exception ex)
             {
-                TempData["error"] = "An error occurred while sending agreement.";
+                _notyf.Error("An error occurred while sending agreement.");
                 return Redirect("/Admin/Dashboard");
             }
 
@@ -646,7 +651,7 @@ namespace HalloDoc.MVC.Controllers
                         UseDefaultCredentials = false
                     };
 
-                    string subject = "Set up your Account";
+                    string subject = "Create Request Link";
                     string body = "<h1>Hola , " + model.FirstName + " " + model.LastName + "!!</h1><p>Clink the link below to create request.</p><a href=\"" + sendPatientLink + "\" >Submit Request Link</a>";
 
                     if (senderEmail != null)
@@ -675,6 +680,7 @@ namespace HalloDoc.MVC.Controllers
 
                     Smslog smsLog = new Smslog()
                     {
+                        Recipientname = model.FirstName + " " + model.LastName,
                         Smstemplate = "1",
                         Mobilenumber = model.Phone,
                         Roleid = (int)AccountType.Patient,
@@ -693,12 +699,12 @@ namespace HalloDoc.MVC.Controllers
                 }
                 catch (Exception e)
                 {
-                    TempData["error"] = "Error occurred : " + e.Message;
+                    _notyf.Error(e.Message);
                     return false;
                 }
             }
 
-            TempData["error"] = "Please Fill all details for sending link.";
+            _notyf.Error("Please Fill all details for sending link.");
             return false;
         }
 
@@ -1112,9 +1118,10 @@ namespace HalloDoc.MVC.Controllers
             string? adminName = HttpContext.Request.Headers.Where(a => a.Key == "userName").FirstOrDefault().Value;
             if (adminName == null)
             {
-                TempData["failure"] = "Admin not found!!!";
+                _notyf.Error("Admin not found");
                 return View("error");
             }
+
             Admin admin = _unitOfWork.AdminRepository.GetFirstOrDefault(a => a.Firstname + " " + a.Lastname == adminName);
             //PrviderOnCallViewModel model = new PrviderOnCallViewModel();
             DateTime current = DateTime.Now;
@@ -1176,11 +1183,11 @@ namespace HalloDoc.MVC.Controllers
             if (offDuty.Count() >= 1)
             {
                 client.Send(mailMessage);
-                TempData["success"] = "Email sent successfully to all the off duty physicians";
+                _notyf.Success("Email sent successfully to all the off duty physicians");
                 return RedirectToAction("Dashboard");
             }
 
-            TempData["error"] = "Nobody's free";
+            _notyf.Error("Nobody's free");
 
             return RedirectToAction("Dashboard");
         }
@@ -1373,12 +1380,12 @@ namespace HalloDoc.MVC.Controllers
 
                 _unitOfWork.Save();
 
-                TempData["success"] = "Files deleted Succesfully.";
+                _notyf.Success("Files deleted Succesfully.");
                 return true;
             }
             catch (Exception ex)
             {
-                TempData["error"] = "Error occured while deleting files.";
+                _notyf.Error("Error occured while deleting files.");
                 return false;
             }
         }
@@ -1394,12 +1401,12 @@ namespace HalloDoc.MVC.Controllers
                 _unitOfWork.RequestWiseFileRepository.Update(file);
                 _unitOfWork.Save();
 
-                TempData["success"] = "File deleted Succesfully.";
+                _notyf.Success("File deleted Succesfully.");
                 return true;
             }
             catch (Exception e)
             {
-                TempData["error"] = "Error occured while deleting file.";
+                _notyf.Error("Error occured while deleting file.");
                 return false;
             }
 
@@ -1412,7 +1419,7 @@ namespace HalloDoc.MVC.Controllers
             {
                 if (fileIds.Count < 1)
                 {
-                    TempData["error"] = "Please select at least one document before sending email.";
+                    _notyf.Error("Please select at least one document before sending email.");
                     return false;
                 }
                 Requestclient? reqCli = _unitOfWork.RequestClientRepository.GetFirstOrDefault(requestCli => requestCli.Requestid == requestId);
@@ -1464,12 +1471,12 @@ namespace HalloDoc.MVC.Controllers
 
                 client.Send(mailMessage);
 
-                TempData["success"] = "Email with selected documents has been successfully sent to " + reqCli.Email;
+                _notyf.Success("Email with selected documents has been successfully sent to " + reqCli.Email);
                 return true;
             }
             catch (Exception ex)
             {
-                TempData["error"] = "Error occured while sending documents. Please try again later.";
+                _notyf.Error("Error occured while sending documents. Please try again later.");
                 return false;
             }
         }
@@ -1489,11 +1496,8 @@ namespace HalloDoc.MVC.Controllers
                 return RedirectToAction("Dashboard");
             }
 
-            DateTime? dobDate = null;
-            if (requestClient.Intyear != null || requestClient.Intdate != null || requestClient.Strmonth != null)
-            {
-                dobDate = DateHelper.GetDOBDateTime(requestClient.Intyear ?? 0, requestClient.Strmonth, requestClient.Intdate ?? 0);
-            }
+            DateTime? dobDate = DateHelper.GetDOBDateTime(requestClient.Intyear, requestClient.Strmonth, requestClient.Intdate);
+
 
             CloseCaseViewModel closeCase = new CloseCaseViewModel
             {
@@ -1794,7 +1798,7 @@ namespace HalloDoc.MVC.Controllers
 
             }
 
-            _notyf.Error("Please enter all the required details");
+            _notyf.Error("Please enter valid details");
             return false;
         }
 
@@ -1818,9 +1822,8 @@ namespace HalloDoc.MVC.Controllers
 
                 if (sd == null)
                 {
-                    TempData["error"] = "Cannot Find Shift";
+                    _notyf.Error("Cannot Find Shift");
                     return false;
-
                 }
 
 
@@ -1839,7 +1842,7 @@ namespace HalloDoc.MVC.Controllers
             }
             catch (Exception e)
             {
-                TempData["error"] = e.Message;
+                _notyf.Error(e.Message);
                 return false;
             }
 
@@ -2287,7 +2290,7 @@ namespace HalloDoc.MVC.Controllers
 
                     if (!validProfileExtensions.Contains(sigExtension))
                     {
-                        TempData["error"] = "Invalid Signature Extension";
+                        _notyf.Error("Invalid Signature Extension");
                         return false;
                     }
                     InsertFileAfterRename(Signature, path, "Signature");
@@ -2302,7 +2305,7 @@ namespace HalloDoc.MVC.Controllers
 
                     if (!validProfileExtensions.Contains(profileExtension))
                     {
-                        TempData["error"] = "Invalid Profile Photo Extension";
+                        _notyf.Error("Invalid Profile Photo Extension");
                         return false;
                     }
 
@@ -2313,12 +2316,12 @@ namespace HalloDoc.MVC.Controllers
                 _unitOfWork.PhysicianRepository.Update(physician);
                 _unitOfWork.Save();
 
-                TempData["success"] = "Data updated successfully.";
+                _notyf.Success("Data updated successfully.");
                 return true;
             }
             catch (Exception e)
             {
-                TempData["error"] = e.Message;
+                _notyf.Error(e.Message);
                 return false;
             }
 
@@ -2382,12 +2385,12 @@ namespace HalloDoc.MVC.Controllers
                 _unitOfWork.PhysicianRepository.Update(phy);
                 _unitOfWork.Save();
 
-                TempData["success"] = "Data updated successfully";
+                _notyf.Success("Data updated successfully");
                 return true;
             }
             catch (Exception e)
             {
-                TempData["error"] = e.ToString();
+                _notyf.Error(e.Message);
                 return false;
             }
 
@@ -2397,7 +2400,7 @@ namespace HalloDoc.MVC.Controllers
         [RoleAuthorize((int)AllowMenu.ProviderMenu)]
         public bool SavePhysicianInformation(int PhysicianId, string FirstName, string LastName, string Email, string Phone, string CountryCode, string MedicalLicenseNumber, string NPINumber, string SyncEmail, List<int> selectedRegions)
         {
-            if (PhysicianId == null || PhysicianId == 0)
+            if (PhysicianId == 0)
             {
                 return false;
             }
@@ -2456,23 +2459,22 @@ namespace HalloDoc.MVC.Controllers
                 _unitOfWork.PhysicianRepository.Update(phy);
                 _unitOfWork.Save();
 
-                TempData["success"] = "Data updated successfully";
+                _notyf.Success("Data updated successfully");
                 return true;
             }
             catch (Exception e)
             {
-                TempData["error"] = e.ToString();
+                _notyf.Error(e.Message);
                 return false;
             }
 
-            return false;
         }
 
         [HttpPost]
         [RoleAuthorize((int)AllowMenu.ProviderMenu)]
         public bool SavePhysicianBillingInfo(int PhysicianId, string Address1, string Address2, string City, int RegionId, string Zip, string MailCountryCode, string MailPhone)
         {
-            if (PhysicianId == null || PhysicianId == 0)
+            if (PhysicianId == 0)
             {
                 return false;
             }
@@ -2492,12 +2494,12 @@ namespace HalloDoc.MVC.Controllers
                 _unitOfWork.PhysicianRepository.Update(phy);
                 _unitOfWork.Save();
 
-                TempData["success"] = "Data updated successfully";
+                _notyf.Success("Data updated successfully");
                 return true;
             }
             catch (Exception e)
             {
-                TempData["error"] = e.ToString();
+                _notyf.Error(e.Message);
                 return false;
             }
 
@@ -2551,7 +2553,6 @@ namespace HalloDoc.MVC.Controllers
                         ModelState.AddModelError(string.Empty, "Server error. Please contact administrator.");
                     }
                 }
-
 
                 return "sucess";
             }
@@ -2728,13 +2729,13 @@ namespace HalloDoc.MVC.Controllers
                         _unitOfWork.PhysicianRepository.Update(phy);
                         _unitOfWork.Save();
 
-                        TempData["success"] = "Physician Created Successfully";
+                        _notyf.Success("Physician Created Successfully");
 
                         return RedirectToAction("ProviderMenu");
                     }
                     catch (Exception e)
                     {
-                        TempData["error"] = e.Message;
+                        _notyf.Error(e.Message);
                         return View("Providers/CreatePhysicianAccount", model);
                     }
 
@@ -3113,56 +3114,68 @@ namespace HalloDoc.MVC.Controllers
 
         [HttpPost]
         [RoleAuthorize((int)AllowMenu.AdminProfile)]
-        public bool SaveAdministratorInfo(List<int> regions, string firstName, string lastName, string email, string phone, int? adminId)
+        public IActionResult SaveAdministratorInfo(ProfileAdministratorInfo model)
         {
             bool isProfile = false;
 
             try
             {
-
-                if (adminId == null)
-                {
-                    isProfile = true;
-                    adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-                }
-
-                ServiceResponse response = _adminService.AdminProfileService.UpdateAdminPersonalDetails(adminId ?? 0, regions, firstName, lastName, email, phone);
-
-                if (response.StatusCode == ResponseCode.Success)
+                if (ModelState.IsValid)
                 {
 
-                    if (!isProfile)
+                    if (model.adminId == null)
                     {
-                        _notyf.Success("Admin updated Successfully.");
-                        return true;
+                        isProfile = true;
+                        model.adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
                     }
 
-                    Response.Cookies.Delete("hallodoc");
-
-                    SessionUser? sessionUser = _utilityService.GetSessionUserFromAdminId(adminId ?? 0);
-
-                    if (sessionUser == null)
+                    if (model.selectedRegions == null || model.selectedRegions.Count() < 1)
                     {
-                        _notyf.Error("Cannot re-create session. Please login again.");
-                        return false;
+                        _notyf.Error("At least one region should be selected");
+                        return RedirectToAction("Profile");
                     }
 
-                    string jwtToken = _jwtService.GenerateJwtToken(sessionUser);
+                    ServiceResponse response = _adminService.AdminProfileService.UpdateAdminPersonalDetails(model.adminId ?? 0, model.selectedRegions?.ToList(), model.FirstName, model.LastName, model.Email, model.PhoneNumber);
 
-                    Response.Cookies.Append("hallodoc", jwtToken);
+                    if (response.StatusCode == ResponseCode.Success)
+                    {
 
-                    _notyf.Success("Profile updated Successfully.");
-                    return true;
+                        if (!isProfile)
+                        {
+                            _notyf.Success("Admin updated Successfully.");
+                            return RedirectToAction("Profile");
+                        }
+
+                        Response.Cookies.Delete("hallodoc");
+
+                        SessionUser? sessionUser = _utilityService.GetSessionUserFromAdminId(model.adminId ?? 0);
+
+                        if (sessionUser == null)
+                        {
+                            _notyf.Error("Cannot re-create session. Please login again.");
+                            return RedirectToAction("Profile");
+                        }
+
+                        string jwtToken = _jwtService.GenerateJwtToken(sessionUser);
+
+                        Response.Cookies.Append("hallodoc", jwtToken);
+
+                        _notyf.Success("Profile updated Successfully.");
+                        return RedirectToAction("Profile");
+                    }
+
+                    _notyf.Error(response.Message);
+                    return RedirectToAction("Profile");
+
                 }
 
-                _notyf.Error(response.Message);
-                return false;
-
+                _notyf.Error("Please enter valid details");
+                return RedirectToAction("Profile");
             }
             catch (Exception ex)
             {
-                _notyf.Error(ex.Message);
-                return false;
+                _notyf.Error("Error Occurred");
+                return RedirectToAction("Profile");
             }
 
         }
@@ -3179,7 +3192,7 @@ namespace HalloDoc.MVC.Controllers
 
             if (admin == null)
             {
-                TempData["error"] = "Admin not found";
+                _notyf.Error("Admin not found");
                 return false;
             }
 
@@ -3335,7 +3348,7 @@ namespace HalloDoc.MVC.Controllers
                     }
 
 
-                    TempData["success"] = "Admin Created sucessfully";
+                    _notyf.Success("Admin Created sucessfully");
                     return RedirectToAction("UserAccess");
                 }
                 catch (Exception ex)
@@ -3449,17 +3462,17 @@ namespace HalloDoc.MVC.Controllers
 
                 if (response.StatusCode == ResponseCode.Success)
                 {
-                    TempData["success"] = "Role Deleted Successfully";
+                    _notyf.Success("Role Deleted Successfully");
                     return RedirectToAction("AccountAccess");
                 }
 
-                TempData["error"] = response.Message;
+                _notyf.Error(response.Message);
                 return RedirectToAction("AccountAccess");
 
             }
             catch (Exception e)
             {
-                TempData["error"] = e.Message;
+                _notyf.Error(e.Message);
                 return RedirectToAction("AccountAccess");
             }
 
@@ -3529,7 +3542,6 @@ namespace HalloDoc.MVC.Controllers
 
                     _notyf.Success("Role Created Successfully");
                     return RedirectToAction("AccountAccess");
-
                 }
 
                 _notyf.Error("Please fill neccessary details");
@@ -3538,7 +3550,7 @@ namespace HalloDoc.MVC.Controllers
             }
             catch (Exception ex)
             {
-                TempData["error"] = ex.Message;
+                _notyf.Error(ex.Message);
                 return RedirectToAction("CreateAccess");
             }
 
@@ -3991,7 +4003,6 @@ namespace HalloDoc.MVC.Controllers
             return View("Records/SearchRecords", model);
         }
 
-
         [RoleAuthorize((int)AllowMenu.EmailLogs)]
         public IActionResult EmailLogs()
         {
@@ -4005,7 +4016,6 @@ namespace HalloDoc.MVC.Controllers
             return View("Records/EmailLogs", model);
         }
 
-
         [RoleAuthorize((int)AllowMenu.SMSLogs)]
         public IActionResult SMSLogs()
         {
@@ -4018,7 +4028,6 @@ namespace HalloDoc.MVC.Controllers
             };
             return View("Records/SMSLogs", model);
         }
-
 
         [RoleAuthorize((int)AllowMenu.PatientRecords)]
         public IActionResult PatientRecords()
@@ -4339,134 +4348,6 @@ namespace HalloDoc.MVC.Controllers
 
             return PartialView("Partners/Partial/_VendorPartialTable", parseData);
 
-        }
-
-        #endregion
-
-        #region HelperFunctions
-
-
-        public void SendMailForCreateAccount(string email)
-        {
-            int adminId = Convert.ToInt32(HttpContext.Request.Headers.FirstOrDefault(h => h.Key == "userId").Value);
-
-            try
-            {
-                Aspnetuser aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(user => user.Email == email);
-
-                string createAccToken = Guid.NewGuid().ToString();
-
-                Passtoken passtoken = new Passtoken()
-                {
-                    Aspnetuserid = aspUser.Id,
-                    Createddate = DateTime.Now,
-                    Email = email,
-                    Isdeleted = false,
-                    Isresettoken = false,
-                    Uniquetoken = createAccToken,
-                };
-
-                _unitOfWork.PassTokenRepository.Add(passtoken);
-                _unitOfWork.Save();
-
-                string? createLink = Url.Action("CreateAccount", "Guest", new { token = createAccToken }, Request.Scheme);
-                string subject = "Set up your Account";
-                string body = "<h1>Create Account By clicking below</h1><a href=\"" + createLink + "\" >Create Account link</a>";
-
-
-                _emailService.SendMail(email, body, subject, out int sentTries, out bool isSent);
-
-                Emaillog emailLog = new Emaillog()
-                {
-                    Emailtemplate = "1",
-                    Subjectname = subject,
-                    Emailid = email,
-                    Roleid = (int)AccountType.Patient,
-                    Adminid = adminId,
-                    Createdate = DateTime.Now,
-                    Sentdate = DateTime.Now,
-                    Isemailsent = isSent,
-                    Senttries = sentTries,
-                };
-
-                _unitOfWork.EmailLogRepository.Add(emailLog);
-                _unitOfWork.Save();
-
-
-                TempData["success"] = "Email has been successfully sent to " + email + " for create account link.";
-            }
-            catch (Exception ex)
-            {
-                TempData["error"] = ex.Message;
-            }
-        }
-
-
-        [HttpPost]
-        public JsonArray GetBusinessByType(int professionType)
-        {
-            JsonArray result = new JsonArray();
-            IEnumerable<Healthprofessional> businesses = _unitOfWork.HealthProfessionalRepo.Where(prof => prof.Profession == professionType);
-
-            foreach (Healthprofessional business in businesses)
-            {
-                result.Add(new { businessId = business.Vendorid, businessName = business.Vendorname });
-            }
-
-            return result;
-        }
-
-        [HttpPost]
-        public IEnumerable<Physician> GetPhysicianByPhysicianRegion(int regionId, int? physicianId)
-        {
-            var result = new JsonArray();
-
-            IEnumerable<int> phyRegions = _unitOfWork.PhysicianRegionRepo.Where(phyReg => phyReg.Regionid == regionId).Select(_ => _.Physicianid);
-
-            List<Physician> physicians = _unitOfWork.PhysicianRepository.Where(phy => phyRegions.Contains(phy.Physicianid)).ToList();
-
-            Physician? removePhy = physicians.SingleOrDefault(p => p.Physicianid == physicianId);
-            if (removePhy != null)
-            {
-                physicians.Remove(removePhy);
-            }
-            return physicians;
-        }
-
-        [HttpPost]
-        public JsonArray GetPhysicianByRegion(int regionId, int? physicianId)
-        {
-            var result = new JsonArray();
-            IEnumerable<Physician> physicians;
-
-            if (physicianId != null)
-            {
-                physicians = _unitOfWork.PhysicianRepository.Where(phy => phy.Regionid == regionId && phy.Physicianid != physicianId);
-            }
-            else
-            {
-                physicians = _unitOfWork.PhysicianRepository.Where(phy => phy.Regionid == regionId);
-            }
-
-
-            foreach (Physician physician in physicians)
-            {
-                result.Add(new { physicianId = physician.Physicianid, physicianName = physician.Firstname + " " + physician.Lastname });
-            }
-
-            return result;
-        }
-
-        [HttpPost]
-        public Healthprofessional? GetBusinessDetailsById(int vendorId)
-        {
-            if (vendorId <= 0)
-            {
-                return null;
-            }
-            Healthprofessional? business = _unitOfWork.HealthProfessionalRepo.GetFirstOrDefault(prof => prof.Vendorid == vendorId);
-
-            return business;
         }
 
         #endregion
