@@ -60,8 +60,6 @@ $(".status-tab").click(function () {
     applyFilters();
 });
 
-
-
 var searchTimer;
 
 $("#search-filter").on("keyup", function () {

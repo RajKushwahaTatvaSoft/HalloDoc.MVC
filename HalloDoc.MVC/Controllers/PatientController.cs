@@ -137,7 +137,11 @@ namespace HalloDoc.MVC.Controllers
 
                 User user = _unitOfWork.UserRepository.GetUserWithID((int)userId);
                 string requestIpAddress = RequestHelper.GetRequestIP();
-                string phoneNumber = "+" + meRequestViewModel.Countrycode + '-' + meRequestViewModel.Phone;
+
+                string phone = "+" + meRequestViewModel.Countrycode + '-' + meRequestViewModel.Phone;
+
+                string phoneNumber = phone.Replace(" ", "");
+
                 string state = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == meRequestViewModel.RegionId).Name;
                 string city = _unitOfWork.CityRepository.GetFirstOrDefault(city => city.Id == meRequestViewModel.CityId).Name;
 
@@ -172,6 +176,10 @@ namespace HalloDoc.MVC.Controllers
                     City = city,
                     Regionid = meRequestViewModel.RegionId,
                     State = state,
+                    Street = meRequestViewModel.Street,
+                    Strmonth = meRequestViewModel.DOB?.Month.ToString(),
+                    Intdate = meRequestViewModel.DOB?.Day,
+                    Intyear = meRequestViewModel.DOB?.Year,
                     Zipcode = meRequestViewModel.ZipCode,
                     Notes = meRequestViewModel.Symptom,
                     Ip = requestIpAddress,
@@ -329,6 +337,9 @@ namespace HalloDoc.MVC.Controllers
                             City = city,
                             Regionid = srvm.patientDetails.RegionId,
                             State = state,
+                            Strmonth = srvm.patientDetails.DOB?.Month.ToString(),
+                            Intdate = srvm.patientDetails.DOB?.Day,
+                            Intyear = srvm.patientDetails.DOB?.Year,
                             Zipcode = srvm.patientDetails.ZipCode,
                             Notes = srvm.patientDetails.Symptom,
                             Ip = requestIpAddress,

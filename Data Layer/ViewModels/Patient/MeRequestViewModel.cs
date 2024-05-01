@@ -31,7 +31,7 @@ namespace Data_Layer.ViewModels
         public string? Countrycode { get; set; }
 
         [Required(ErrorMessage = "Phone cannot be empty")]
-        [RegularExpression("^[0-9\\+\\-]+$", ErrorMessage = "Enter valid Phone")]
+        [RegularExpression("^[0-9\\+\\- ]+$", ErrorMessage = "Enter valid Phone")]
         public string? Phone { get; set; }
         public string? Street { get; set; }
         public string? State { get; set; }

@@ -1,0 +1,112 @@
+﻿@{
+    Layout = "_PhysicianDashboardLayout";
+}
+
+<div class="container-fluid d-flex justify-content-center row ">
+
+    <div class="col-md-8 col-12">
+
+        <div class="d-flex justify-content-between mt-3">
+
+            <h4>Timesheets</h4>
+
+            <button onclick="history.back(-1)" class="btn btn-outline-info shadow-none night-mode-btn d-flex align-items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 -960 960 960">
+                    <path d="m142-480 294 294q15 15 14.5 35T435-116q-15 15-35 15t-35-15L57-423q-12-12-18-27t-6-30q0-15 6-30t18-27l308-308q15-15 35.5-14.5T436-844q15 15 15 35t-15 35L142-480Z" />
+                </svg>
+                <span>Back</span>
+            </button>
+
+        </div>
+
+        <div class="dashboard-card">
+
+            <div class="d-flex mt-3 px-3 justify-content-between">
+
+                <div id="timesheet-div" class="form-floating">
+                    <input id="timesheet-date-text" type="text" class="form-control">
+                    <label>Timesheet</label>
+                    <input id="timesheet-datepicker" type="text" onchange="updateTimeSheetDate()" style="width: 0px;height: 0px;" />
+                </div>
+
+                <div>
+
+                    <button id="finalize-timesheet-btn"  class="btn btn-outline-info shadow-none night-mode-btn d-flex align-items-center">                     
+                        <span>Finalize Timesheet</span>
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div style="height: 20px;"></div>
+
+</div>
+
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.3/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/ui/1.13.3/jquery-ui.min.js" integrity="sha256-sw0iNNXmOJbQhYFuC9OF2kOlD5KQKe1y5lfBn4C9Sjg=" crossorigin="anonymous"></script>
+
+
+<script>
+
+    $("#finalize-timesheet-btn").click(function () {
+
+    });
+
+</script>
+
+<script>
+
+    let startDate = new Date();
+    let endDate = new Date();
+
+    $('#timesheet-datepicker').datepicker();
+
+    $("#timesheet-div").click(function () {
+        console.log("hi");
+        $('#timesheet-datepicker').datepicker('show');
+    });
+
+    function updateTimeSheetDate() {
+
+        let dateText = "";
+        let pickerDate = $('#timesheet-datepicker').val();
+        let selectedDate = new Date(pickerDate);
+
+        let date = selectedDate.getDate();
+        let month = selectedDate.getMonth();
+        let year = selectedDate.getFullYear();
+
+        if (date < 15) {
+
+            startDate = new Date(year, month, 1);
+            endDate = new Date(year, month, 14);
+
+            dateText = startDate.getDate() + "-" + (startDate.getMonth() + 1) + "-" + startDate.getFullYear() + " to " + endDate.getDate() + "-" + (endDate.getMonth() + 1) + "-" + endDate.getFullYear();
+
+            $('#timesheet-date-text').val(dateText);
+        }
+        else {
+
+            startDate = new Date(year, month, 15);
+            endDate = new Date(year, month + 1, 0);
+
+            dateText = startDate.getDate() + "-" + (startDate.getMonth() + 1) + "-" + startDate.getFullYear() + " to " + endDate.getDate() + "-" + (endDate.getMonth() + 1) + "-" + endDate.getFullYear();
+
+            $('#timesheet-date-text').val(dateText);
+        }
+
+    }
+
+</script>
+
+<script>
+
+    $('.admin-tab').removeClass("active");
+    $('#invoicing-tab').addClass("active");
+
+</script>

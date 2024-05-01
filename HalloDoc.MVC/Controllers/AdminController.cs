@@ -69,7 +69,7 @@ namespace HalloDoc.MVC.Controllers
                 }
 
                 model.UserName = adminName;
-                return View("Header/Profile", model);
+                return View("Profile/Profile", model);
 
             }
             catch (Exception ex)
@@ -96,7 +96,7 @@ namespace HalloDoc.MVC.Controllers
 
                 model.UserName = adminName;
 
-                return View("Header/ProviderLocation", model);
+                return View("ProviderLocation/ProviderLocation", model);
 
             }
             catch (Exception ex)
@@ -193,7 +193,7 @@ namespace HalloDoc.MVC.Controllers
                 model.casetags = _unitOfWork.CaseTagRepository.GetAll();
                 model.filterOptions = initialFilter;
 
-                return View("Header/Dashboard", model);
+                return View("Dashboard/Dashboard", model);
 
             }
             catch (Exception ex)
@@ -237,7 +237,7 @@ namespace HalloDoc.MVC.Controllers
 
                 Request? req = _unitOfWork.RequestRepository.GetFirstOrDefault(req => req.Requestid == model.RequestId);
 
-                if(req == null)
+                if (req == null)
                 {
                     _notyf.Error(NotificationMessage.REQUEST_NOT_FOUND);
                     return Redirect("/Admin/Dashboard");
@@ -581,35 +581,9 @@ namespace HalloDoc.MVC.Controllers
         {
             try
             {
-                string encryptedId = EncryptionService.Encrypt(model.RequestId.ToString());
-                string? agreementLink = Url.Action("ReviewAgreement", "Guest", new { requestId = encryptedId }, Request.Scheme);
 
-                string? senderEmail = _config.GetSection("OutlookSMTP")["Sender"];
-                string? senderPassword = _config.GetSection("OutlookSMTP")["Password"];
+                _emailService.SendMailForPatientAgreement(model.RequestId, model.PatientEmail);
 
-                SmtpClient client = new SmtpClient("smtp.office365.com")
-                {
-                    Port = 587,
-                    Credentials = new NetworkCredential(senderEmail, senderPassword),
-                    EnableSsl = true,
-                    DeliveryMethod = SmtpDeliveryMethod.Network,
-                    UseDefaultCredentials = false
-                };
-
-                string subject = "Set up your Account";
-                string body = "<h1>Hello , Patient!!</h1><p>You can review your agrrement and accept it to go ahead with the medical process, which  sent by the physician. </p><a href=\"" + agreementLink + "\" >Click here to accept agreement</a>";
-
-                MailMessage mailMessage = new MailMessage
-                {
-                    From = new MailAddress(senderEmail, "HalloDoc"),
-                    Subject = subject,
-                    IsBodyHtml = true,
-                    Body = body,
-                };
-
-                mailMessage.To.Add(model.PatientEmail);
-
-                client.Send(mailMessage);
 
                 _notyf.Success("Agreement Sent Successfully.");
                 return Redirect("/Admin/Dashboard");

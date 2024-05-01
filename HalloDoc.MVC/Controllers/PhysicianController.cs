@@ -117,7 +117,7 @@ namespace HalloDoc.MVC.Controllers
                 selectedRegions = _unitOfWork.PhysicianRegionRepo.Where(pr => pr.Physicianid == physician.Physicianid).Select(_ => _.Regionid),
             };
 
-            return View("Header/Profile", model);
+            return View("Profile/Profile", model);
         }
 
         public bool ResetPhysicianPassword(string? updatePassword)
@@ -573,7 +573,16 @@ namespace HalloDoc.MVC.Controllers
         [RoleAuthorize((int)AllowMenu.ProviderInvoicing)]
         public IActionResult Invoicing()
         {
-            return View("Header/Invoicing");
+            return View("Invoicing/Invoicing");
+        }
+
+
+        [RoleAuthorize((int)AllowMenu.ProviderInvoicing)]
+        public IActionResult FinalizeTimeSheetView(DateTime startDateISO)
+        {
+            DateTime startDate= startDateISO.ToLocalTime();
+
+            return View("Invoicing/FinalizeTimeSheet");
         }
 
         #endregion
@@ -643,7 +652,7 @@ namespace HalloDoc.MVC.Controllers
             model.casetags = _unitOfWork.CaseTagRepository.GetAll();
             model.filterOptions = initialFilter;
 
-            return View("Header/Dashboard", model);
+            return View("Dashboard/Dashboard", model);
 
         }
 
@@ -1870,7 +1879,6 @@ namespace HalloDoc.MVC.Controllers
 
             return business;
         }
-
 
         #endregion
     }
