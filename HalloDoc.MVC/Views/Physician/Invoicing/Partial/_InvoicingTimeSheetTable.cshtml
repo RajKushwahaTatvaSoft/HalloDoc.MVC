@@ -1,0 +1,53 @@
+﻿@model InvoicingTimeSheetViewModel
+
+@if (Model != null && Model.timeSheetRecords != null && Model.timeSheetRecords.Count() > 0)
+@* @if (true) *@
+{
+
+    <div>
+
+        <table class="table mt-4  table-bordered">
+
+            <thead class="table-head">
+
+                <tr class="">
+                    <th>Shift Date</th>
+                    <th>Shift</th>
+                    <th>Nightshift Weekend</th>
+                    <th>Housecall</th>
+                    <th>Housecall Night Weekend</th>
+                    <th>Phone Consults</th>
+                    <th>Phone Consults Night Weekend</th>
+                    <th>Batch Testing</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                @foreach (var record in Model.timeSheetRecords)
+                {
+                    <tr>
+                        <td>@record.ShiftDate.ToString("MMM dd, yyyy")</td>
+                        <td>@record.ShiftCount</td>
+                        <td>@record.NightShiftsWeekendCount</td>
+                        <td>@record.HouseCall</td>
+                        <td>@record.HouseCallNightWeekendCount</td>
+                        <td>@record.PhoneConsults</td>
+                        <td>@record.PhoneConsultsNightWeekendCount</td>
+                        <td>@record.BatchTesting</td>
+                    </tr>
+                }
+
+            </tbody>
+
+        </table>
+
+
+    </div>
+
+}
+else
+{
+    <h4>No Record(s) Found</h4>
+}

@@ -2,8 +2,8 @@
 {
     public class FinalizeTimeSheetViewModel
     {
-        public IEnumerable<TimeSheetDayRecord>? timeSheetDayRecords { get; set; }
-        public DateTime StartDate { get; set; }
-        public DateTime EndDate { get; set; }
+        public List<TimeSheetDayRecord>? timeSheetDayRecords { get; set; }
+        public DateOnly StartDate { get; set; }
+        public DateOnly EndDate { get; set; }
     }
 }

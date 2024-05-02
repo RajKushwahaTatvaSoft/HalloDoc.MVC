@@ -1833,9 +1833,18 @@ namespace HalloDoc.MVC.Controllers
                 {
 
                     Shiftdetail? sd = _unitOfWork.ShiftDetailRepository.GetFirstOrDefault(s => s.Shiftdetailid == model.ShiftDetailId);
+                    Shift? shift = _unitOfWork.ShiftRepository.GetFirstOrDefault(shift => shift.Shiftid == sd.Shiftid);
                     if (sd == null)
                     {
                         _notyf.Error("Cannot Find shift");
+                        return false;
+                    }
+
+                    bool isExistsInit = _unitOfWork.ShiftDetailRepository.IsAnotherShiftExists(shift.Physicianid, model.ShiftDate.Date, model.ShiftStartTime, model.ShiftEndTime);
+
+                    if (isExistsInit)
+                    {
+                        _notyf.Error("Shift already exists at given time");
                         return false;
                     }
 
@@ -2235,6 +2244,41 @@ namespace HalloDoc.MVC.Controllers
                 return false;
             }
 
+        }
+
+        [HttpPost]
+        public bool EditPhysicianPassword(string updatedPassword, int physicianId)
+        {
+            try
+            {
+                Physician? phy = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Physicianid == physicianId);
+                if(phy == null)
+                {
+                    _notyf.Error("Physician not found");
+                    return false;
+                }
+                Aspnetuser? aspnetuser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(user => user.Id == phy.Aspnetuserid);
+                if (aspnetuser == null)
+                {
+                    _notyf.Error("Physician not found");
+                    return false;
+                }
+
+                aspnetuser.Passwordhash = AuthHelper.GenerateSHA256(updatedPassword);
+                aspnetuser.Modifieddate = DateTime.Now;
+
+                _unitOfWork.AspNetUserRepository.Update(aspnetuser);
+                _unitOfWork.Save();
+
+                _notyf.Success("Password Updated successfully");
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return false;
+            }
         }
 
         [HttpPost]

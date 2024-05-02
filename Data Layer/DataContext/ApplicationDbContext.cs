@@ -58,6 +58,8 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<Physicianregion> Physicianregions { get; set; }
 
+    public virtual DbSet<ProviderPayrate> ProviderPayrates { get; set; }
+
     public virtual DbSet<Region> Regions { get; set; }
 
     public virtual DbSet<Request> Requests { get; set; }
@@ -91,6 +93,12 @@ public partial class ApplicationDbContext : DbContext
     public virtual DbSet<Shiftdetailregion> Shiftdetailregions { get; set; }
 
     public virtual DbSet<Smslog> Smslogs { get; set; }
+
+    public virtual DbSet<Timesheet> Timesheets { get; set; }
+
+    public virtual DbSet<TimesheetDetail> TimesheetDetails { get; set; }
+
+    public virtual DbSet<TimesheetDetailReimbursement> TimesheetDetailReimbursements { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
 
@@ -250,6 +258,23 @@ public partial class ApplicationDbContext : DbContext
             entity.HasOne(d => d.Region).WithMany(p => p.Physicianregions)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("physicianregion_regionid_fkey");
+        });
+
+        modelBuilder.Entity<ProviderPayrate>(entity =>
+        {
+            entity.HasKey(e => e.PayrateId).HasName("ProviderPayrate_pkey");
+
+            entity.Property(e => e.CreatedDate).HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.ProviderPayrateCreatedByNavigations)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_createdby");
+
+            entity.HasOne(d => d.ModifiedByNavigation).WithMany(p => p.ProviderPayrateModifiedByNavigations).HasConstraintName("fk_modifiedby");
+
+            entity.HasOne(d => d.Physician).WithMany(p => p.ProviderPayrates)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_provider");
         });
 
         modelBuilder.Entity<Region>(entity =>
@@ -434,6 +459,57 @@ public partial class ApplicationDbContext : DbContext
             entity.HasKey(e => e.Smslogid).HasName("smslog_pkey");
 
             entity.Property(e => e.Smslogid).UseIdentityAlwaysColumn();
+        });
+
+        modelBuilder.Entity<Timesheet>(entity =>
+        {
+            entity.HasKey(e => e.TimesheetId).HasName("Timesheet_pkey");
+
+            entity.Property(e => e.CreatedDate).HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.TimesheetCreatedByNavigations)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_createdby");
+
+            entity.HasOne(d => d.ModifiedByNavigation).WithMany(p => p.TimesheetModifiedByNavigations).HasConstraintName("fk_modifiedby");
+
+            entity.HasOne(d => d.Physician).WithMany(p => p.Timesheets)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_physician");
+        });
+
+        modelBuilder.Entity<TimesheetDetail>(entity =>
+        {
+            entity.HasKey(e => e.TimesheetDetailId).HasName("TimesheetDetail_pkey");
+
+            entity.Property(e => e.CreatedDate).HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.TimesheetDetailCreatedByNavigations)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_createdby");
+
+            entity.HasOne(d => d.ModifiedByNavigation).WithMany(p => p.TimesheetDetailModifiedByNavigations).HasConstraintName("fk_modifiedby");
+
+            entity.HasOne(d => d.Timesheet).WithMany(p => p.TimesheetDetails)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_timesheet");
+        });
+
+        modelBuilder.Entity<TimesheetDetailReimbursement>(entity =>
+        {
+            entity.HasKey(e => e.TimesheetDetailReimbursementId).HasName("TimesheetDetailReimbursement_pkey");
+
+            entity.Property(e => e.CreatedDate).HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.TimesheetDetailReimbursementCreatedByNavigations)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_createdby");
+
+            entity.HasOne(d => d.ModifiedByNavigation).WithMany(p => p.TimesheetDetailReimbursementModifiedByNavigations).HasConstraintName("fk_modifiedby");
+
+            entity.HasOne(d => d.TimesheetDetail).WithMany(p => p.TimesheetDetailReimbursements)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_timesheetdetail");
         });
 
         modelBuilder.Entity<User>(entity =>

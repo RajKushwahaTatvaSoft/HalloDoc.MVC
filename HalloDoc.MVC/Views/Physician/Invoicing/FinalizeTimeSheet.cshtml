@@ -1,1 +1,99 @@
-﻿<div></div>
+﻿@model FinalizeTimeSheetViewModel
+@{
+    Layout = "_PhysicianDashboardLayout";
+}
+
+
+<div class="container-fluid d-flex justify-content-center row ">
+
+    <div class="col-md-8 col-12">
+
+        <div class="d-flex justify-content-between mt-3">
+
+            <h4>Timesheets</h4>
+
+            <button onclick="history.back(-1)" class="btn btn-outline-info shadow-none night-mode-btn d-flex align-items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 -960 960 960">
+                    <path d="m142-480 294 294q15 15 14.5 35T435-116q-15 15-35 15t-35-15L57-423q-12-12-18-27t-6-30q0-15 6-30t18-27l308-308q15-15 35.5-14.5T436-844q15 15 15 35t-15 35L142-480Z" />
+                </svg>
+                <span>Back</span>
+            </button>
+
+        </div>
+
+        <div class="dashboard-card">
+
+            <div>
+
+                @if (Model != null && Model.timeSheetDayRecords != null && Model.timeSheetDayRecords.Count > 0)
+                @* @if (true) *@
+                {
+                    <form method="post">
+
+                        <input hidden asp-for="StartDate" />
+                        <input hidden asp-for="EndDate" />
+
+                        <div>
+
+                            <table class="table mt-4  table-bordered">
+
+                                <thead class="">
+
+                                    <tr class="">
+                                        <th>Date</th>
+                                        <th>On-Call Hours</th>
+                                        <th>Total Hours</th>
+                                        <th>Weekend/Holiday</th>
+                                        <th>Number of Housecalls</th>
+                                        <th>Number of Phone Consults</th>
+                                    </tr>
+
+                                </thead>
+
+                                <tbody>
+
+                                    @for (int i = 0; i < Model.timeSheetDayRecords.Count; i++)
+                                    {
+                                        <input asp-for="timeSheetDayRecords[i].DateOfRecord" hidden />
+                                        <tr>
+                                            <td>@Model.timeSheetDayRecords[i].DateOfRecord.ToString("dd-MM-yyyy")</td>
+                                            <td>@Model.timeSheetDayRecords[i].OnCallHours</td>
+                                            <td>
+                                                <input asp-for="timeSheetDayRecords[i].TotalHours" type="number" />
+                                            </td>
+                                            <td>
+                                                <input asp-for="timeSheetDayRecords[i].IsHoliday" type="checkbox" />
+                                            </td>
+                                            <td>
+                                                <input asp-for="timeSheetDayRecords[i].NoOfHouseCall" type="number" />
+                                            </td>
+                                            <td>
+                                                <input asp-for="timeSheetDayRecords[i].NoOfPhoneConsult" type="number" />
+                                            </td>
+                                        </tr>
+                                    }
+
+                                </tbody>
+
+                            </table>
+
+                            <button class="btn text-white btn-info" type="submit">Submit</button>
+
+                        </div>
+
+                    </form>
+                }
+                else
+                {
+                    <h4>Couldn't Fetch Timesheet Data</h4>
+                }
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div style="height: 20px;"></div>
+
+</div>

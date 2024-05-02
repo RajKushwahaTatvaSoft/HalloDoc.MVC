@@ -65,11 +65,35 @@ public partial class Aspnetuser
     [InverseProperty("ModifiedbyNavigation")]
     public virtual ICollection<Physician> PhysicianModifiedbyNavigations { get; set; } = new List<Physician>();
 
+    [InverseProperty("CreatedByNavigation")]
+    public virtual ICollection<ProviderPayrate> ProviderPayrateCreatedByNavigations { get; set; } = new List<ProviderPayrate>();
+
+    [InverseProperty("ModifiedByNavigation")]
+    public virtual ICollection<ProviderPayrate> ProviderPayrateModifiedByNavigations { get; set; } = new List<ProviderPayrate>();
+
     [InverseProperty("ModifiedbyNavigation")]
     public virtual ICollection<Shiftdetail> Shiftdetails { get; set; } = new List<Shiftdetail>();
 
     [InverseProperty("CreatedbyNavigation")]
     public virtual ICollection<Shift> Shifts { get; set; } = new List<Shift>();
+
+    [InverseProperty("CreatedByNavigation")]
+    public virtual ICollection<Timesheet> TimesheetCreatedByNavigations { get; set; } = new List<Timesheet>();
+
+    [InverseProperty("CreatedByNavigation")]
+    public virtual ICollection<TimesheetDetail> TimesheetDetailCreatedByNavigations { get; set; } = new List<TimesheetDetail>();
+
+    [InverseProperty("ModifiedByNavigation")]
+    public virtual ICollection<TimesheetDetail> TimesheetDetailModifiedByNavigations { get; set; } = new List<TimesheetDetail>();
+
+    [InverseProperty("CreatedByNavigation")]
+    public virtual ICollection<TimesheetDetailReimbursement> TimesheetDetailReimbursementCreatedByNavigations { get; set; } = new List<TimesheetDetailReimbursement>();
+
+    [InverseProperty("ModifiedByNavigation")]
+    public virtual ICollection<TimesheetDetailReimbursement> TimesheetDetailReimbursementModifiedByNavigations { get; set; } = new List<TimesheetDetailReimbursement>();
+
+    [InverseProperty("ModifiedByNavigation")]
+    public virtual ICollection<Timesheet> TimesheetModifiedByNavigations { get; set; } = new List<Timesheet>();
 
     [InverseProperty("Aspnetuser")]
     public virtual ICollection<User> Users { get; set; } = new List<User>();

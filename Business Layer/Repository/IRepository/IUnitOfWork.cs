@@ -39,6 +39,8 @@
         IAspNetRoleRepository AspNetRoleRepository { get; }
         IRequestStatusRepository RequestStatusRepository { get; }
         IRequestTypeRepository RequestTypeRepository { get; }
+        ITimeSheetRepository TimeSheetRepository { get; }
+        ITimeSheetDetailRepo TimeSheetDetailRepo { get; }
         void Save();
     }
 

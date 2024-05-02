@@ -20,6 +20,8 @@ using Business_Layer.Services.PhysicianServices.Interface;
 using System.IO.Compression;
 using Data_Layer.CustomModels.Filter;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using Data_Layer.DataContext;
 
 namespace HalloDoc.MVC.Controllers
 {
@@ -34,7 +36,7 @@ namespace HalloDoc.MVC.Controllers
         private readonly IPhysicianService _physicianService;
         private readonly string REQUEST_FILE_PATH = Path.Combine("document", "request");
 
-        public PhysicianController(IUnitOfWork unit, IPhysicianService physicianService, IAdminDashboardService dashboardRepository, IConfiguration config, IPhysicianDashboardService physicalDashboardService, INotyfService notyf, IWebHostEnvironment webHostEnvironment, IEmailService emailService)
+        public PhysicianController(IUnitOfWork unit, ApplicationDbContext context, IPhysicianService physicianService, IAdminDashboardService dashboardRepository, IConfiguration config, IPhysicianDashboardService physicalDashboardService, INotyfService notyf, IWebHostEnvironment webHostEnvironment, IEmailService emailService)
         {
             _unitOfWork = unit;
             _config = config;
@@ -45,6 +47,12 @@ namespace HalloDoc.MVC.Controllers
         }
 
         #region Header
+
+        public int GetPhysicianId()
+        {
+            int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+            return phyId;
+        }
 
         public IActionResult Logout()
         {
@@ -576,13 +584,234 @@ namespace HalloDoc.MVC.Controllers
             return View("Invoicing/Invoicing");
         }
 
+        public IActionResult LoadInvoicingPartialTable(DateTime startDateISO)
+        {
+            try
+            {
+                int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+
+                DateTime startDate = startDateISO.ToLocalTime();
+                DateTime endDate = startDate;
+                DateTime firstDayOfMonth = new DateTime(startDate.Year, startDate.Month, 1);
+
+                if (startDate.Day < 15)
+                {
+                    startDate = firstDayOfMonth;
+                    endDate = new DateTime(startDate.Year, startDate.Month, 14);
+                }
+                else
+                {
+                    startDate = new DateTime(startDate.Year, startDate.Month, 15);
+                    endDate = firstDayOfMonth.AddMonths(1).AddTicks(-1);
+                }
+
+                Timesheet? timesheet = _unitOfWork.TimeSheetRepository.GetFirstOrDefault(sheet => sheet.PhysicianId == phyId
+                && sheet.StartDate == DateOnly.FromDateTime(startDate) && sheet.EndDate == DateOnly.FromDateTime(endDate));
+
+                if (timesheet == null)
+                {
+                    return PartialView("Invoicing/Partial/_InvoicingTimeSheetTable");
+                }
+
+                InvoicingTimeSheetViewModel model = new InvoicingTimeSheetViewModel();
+
+                model.StartDate = DateOnly.FromDateTime(startDate);
+                model.EndDate = DateOnly.FromDateTime(endDate);
+                model.timeSheetRecords = (from record in _unitOfWork.TimeSheetDetailRepo.GetAll()
+                                          where record.TimesheetId == timesheet.TimesheetId
+                                          select new InvoicingTimeSheetTRow
+                                          {
+                                              ShiftDate = record.TimesheetDate,
+                                              ShiftCount = 3,
+                                              HouseCall = record.NumberOfHouseCall ?? 0,
+                                          });
+                              
+                return PartialView("Invoicing/Partial/_InvoicingTimeSheetTable", model);
+
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return PartialView("Invoicing/Partial/_InvoicingTimeSheetTable");
+            }
+        }
+
 
         [RoleAuthorize((int)AllowMenu.ProviderInvoicing)]
         public IActionResult FinalizeTimeSheetView(DateTime startDateISO)
         {
-            DateTime startDate= startDateISO.ToLocalTime();
+            try
+            {
+                int phyId = GetPhysicianId();
 
-            return View("Invoicing/FinalizeTimeSheet");
+                DateTime startDate = startDateISO.ToLocalTime();
+                DateTime endDate = startDate;
+
+                DateTime firstDayOfMonth = new DateTime(startDate.Year, startDate.Month, 1);
+
+                if (startDate.Day < 15)
+                {
+                    startDate = firstDayOfMonth;
+                    endDate = new DateTime(startDate.Year, startDate.Month, 14);
+                }
+                else
+                {
+                    startDate = new DateTime(startDate.Year, startDate.Month, 15);
+                    endDate = firstDayOfMonth.AddMonths(1).AddTicks(-1);
+                }
+
+                Timesheet? oldTimeSheet = _unitOfWork.TimeSheetRepository.GetFirstOrDefault(sheet =>
+                sheet.PhysicianId == phyId
+                && sheet.StartDate == DateOnly.FromDateTime(startDate)
+                && sheet.EndDate == DateOnly.FromDateTime(endDate)
+                );
+
+                if(oldTimeSheet == null)
+                {
+
+                    DateOnly loopDate = DateOnly.FromDateTime(startDate);
+
+                    List<TimeSheetDayRecord> records = new List<TimeSheetDayRecord>();
+                    while (loopDate <= DateOnly.FromDateTime(endDate))
+                    {
+                        TimeSheetDayRecord record = new TimeSheetDayRecord()
+                        {
+                            DateOfRecord = loopDate,
+                        };
+
+                        records.Add(record);
+                        loopDate = loopDate.AddDays(1);
+                    }
+
+                    FinalizeTimeSheetViewModel model = new FinalizeTimeSheetViewModel()
+                    {
+                        StartDate = DateOnly.FromDateTime(startDate),
+                        EndDate = DateOnly.FromDateTime(endDate),
+                        timeSheetDayRecords = records,
+                    };
+
+                    return View("Invoicing/FinalizeTimeSheet", model);
+                }
+                else
+                {
+
+                    IEnumerable<TimeSheetDayRecord> records = (from record in _unitOfWork.TimeSheetDetailRepo.GetAll()
+                                                               where record.TimesheetId == oldTimeSheet.TimesheetId
+                                                               select new TimeSheetDayRecord
+                                                               {
+                                                                   DateOfRecord = record.TimesheetDate,
+                                                                   IsHoliday = record.IsWeekend ?? false,
+                                                                   NoOfHouseCall = record.NumberOfHouseCall ?? 0,
+                                                                   NoOfPhoneConsult = record.NumberOfPhoneCall ?? 0,
+                                                                   OnCallHours = 3,
+                                                                   TotalHours = record.TotalHours ?? 0,
+                                                               });
+
+                    FinalizeTimeSheetViewModel model = new FinalizeTimeSheetViewModel()
+                    {
+                        StartDate = DateOnly.FromDateTime(startDate),
+                        EndDate = DateOnly.FromDateTime(endDate),
+                        timeSheetDayRecords = records.ToList(),
+                    };
+
+                    return View("Invoicing/FinalizeTimeSheet", model);
+                }             
+
+
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return RedirectToAction("Invoicing");
+            }
+        }
+
+        [HttpPost]
+        public IActionResult FinalizeTimeSheetView(FinalizeTimeSheetViewModel model)
+        {
+            int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+            string? phyAspId = HttpContext.Request.Headers.Where(x => x.Key == "userAspId").FirstOrDefault().Value;
+            try
+            {
+
+                Timesheet? oldTimeSheet = _unitOfWork.TimeSheetRepository.GetFirstOrDefault(sheet =>
+                sheet.PhysicianId == phyId
+                && sheet.StartDate == model.StartDate
+                && sheet.EndDate == model.EndDate
+                );
+
+                if (oldTimeSheet == null)
+                {
+                    Timesheet newTimeSheet = new Timesheet()
+                    {
+                        PhysicianId = phyId,
+                        StartDate = model.StartDate,
+                        EndDate = model.EndDate,
+                        IsFinalize = false,
+                        IsApproved = false,
+                        CreatedBy = phyAspId ?? "",
+                        CreatedDate = DateTime.Now,
+                    };
+
+                    _unitOfWork.TimeSheetRepository.Add(newTimeSheet);
+                    _unitOfWork.Save();
+
+                    if (model.timeSheetDayRecords != null && model.timeSheetDayRecords.Any())
+                    {
+                        foreach (TimeSheetDayRecord record in model.timeSheetDayRecords)
+                        {
+                            TimesheetDetail sheetDetail = new TimesheetDetail()
+                            {
+                                TimesheetId = newTimeSheet.TimesheetId,
+                                TimesheetDate = record.DateOfRecord,
+                                TotalHours = record.TotalHours,
+                                IsWeekend = record.IsHoliday,
+                                NumberOfHouseCall = record.NoOfHouseCall,
+                                NumberOfPhoneCall = record.NoOfPhoneConsult,
+                                CreatedBy = phyAspId ?? "",
+                                CreatedDate = DateTime.Now,
+                            };
+
+                            _unitOfWork.TimeSheetDetailRepo.Add(sheetDetail);
+                        }
+
+                        _unitOfWork.Save();
+                    }
+
+                }
+                else
+                {
+
+                    DateOnly loopDate = model.StartDate;
+
+                    while (loopDate <= model.EndDate)
+                    {
+                        TimesheetDetail? sheetDetail = _unitOfWork.TimeSheetDetailRepo.GetFirstOrDefault(sheet => sheet.TimesheetDate == loopDate);
+
+                        if(sheetDetail == null)
+                        {
+
+                        }
+
+                        TimeSheetDayRecord record = new TimeSheetDayRecord()
+                        {
+                            DateOfRecord = loopDate,
+                        };
+
+                        loopDate = loopDate.AddDays(1);
+                    }
+
+
+                }
+
+                return RedirectToAction("FinalizeTimeSheetView", new { startDateISO = model.StartDate });
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return View("Invoicing/FinalizeTimeSheet", model);
+            }
+
         }
 
         #endregion

@@ -29,7 +29,7 @@
     <div class="container-fluid justify-content-center mt-4" style="max-width:1000px">
 
         <input id="adminId" hidden />
-
+        <partial name="_ValidationScriptsPartial" />
         <form method="post" id="physician-account-info-form">
 
             <h5>Account Information</h5>
@@ -44,7 +44,7 @@
 
                 <div class="col-md">
                     <div class="form-floating">
-                        <input type="text" class="form-control" id="password" placeholder="Password">
+                        <input type="text" class="form-control" id="physician-account-info-password" placeholder="Password">
                         <label for="floatingSelectGrid">Password</label>
                     </div>
                 </div>
@@ -84,7 +84,7 @@
                 <button id="account-info-edit-btn" type="button" class="btn btn-primary m-1">Edit</button>
                 <button type="reset" id="account-info-cancel-btn" class="btn btn-danger me-1 d-none">Cancel</button>
                 <button type="submit" id="account-info-save-btn" class="btn btn-primary me-1 d-none">Save</button><br />
-                <button type="button" class="btn btn-outline-info m-1">Reset Password</button><br />
+                <button type="button" class="btn btn-outline-info m-1" id="reset-password-btn">Reset Password</button><br />
 
             </div>
 
@@ -633,6 +633,23 @@
         });
 
     });
+
+    $('#reset-password-btn').click(function () {
+
+        $.ajax({
+            url: "/Admin/EditPhysicianPassword",
+            data: { updatedPassword: $('#physician-account-info-password').val(), physicianId: @Model.PhysicianId },
+            type: 'POST',
+            success: function (result) {
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
+
+    });
+
 
     $('#physician-account-info-form').submit(function (event) {
         event.preventDefault();

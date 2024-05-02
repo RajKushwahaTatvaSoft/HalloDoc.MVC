@@ -46,6 +46,8 @@ namespace Business_Layer.Repository
             AspNetRoleRepository = new AspNetRoleRepository(_context);
             RequestStatusRepository = new RequestStatusRepository(_context);
             RequestTypeRepository = new RequestTypeRepository(_context);
+            TimeSheetDetailRepo = new TimeSheetDetailRepo(_context);
+            TimeSheetRepository = new TimeSheetRepository(_context);
         }
 
         public IAdminRepository AdminRepository { get; private set; }
@@ -96,6 +98,8 @@ namespace Business_Layer.Repository
         public IRequestStatusRepository RequestStatusRepository { get; private set; }
 
         public IRequestTypeRepository RequestTypeRepository { get; private set; }
+        public ITimeSheetRepository TimeSheetRepository { get; private set; }
+        public ITimeSheetDetailRepo TimeSheetDetailRepo { get; private set; }
 
         public void Save()
         {
