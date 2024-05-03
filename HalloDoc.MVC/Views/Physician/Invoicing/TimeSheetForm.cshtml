@@ -1,0 +1,272 @@
+﻿@model FinalizeTimeSheetViewModel
+@{
+    Layout = "_PhysicianDashboardLayout";
+}
+
+
+<div class="container-fluid d-flex justify-content-center row ">
+
+    <div class="col-md-8 col-12">
+
+        <div class="d-flex justify-content-between mt-3">
+
+            <h4>Timesheets</h4>
+
+            <button onclick="history.back(-1)" class="btn btn-outline-info shadow-none night-mode-btn d-flex align-items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 -960 960 960">
+                    <path d="m142-480 294 294q15 15 14.5 35T435-116q-15 15-35 15t-35-15L57-423q-12-12-18-27t-6-30q0-15 6-30t18-27l308-308q15-15 35.5-14.5T436-844q15 15 15 35t-15 35L142-480Z" />
+                </svg>
+                <span>Back</span>
+            </button>
+
+        </div>
+
+        <form method="post" enctype="multipart/form-data">
+
+            <div class="dashboard-card">
+
+                <div>
+
+                    @if (Model != null && Model.timeSheetDayRecords != null && Model.timeSheetDayRecords.Count > 0)
+                    @* @if (true) *@
+                    {
+
+                        <input hidden asp-for="StartDate" />
+                        <input hidden asp-for="EndDate" />
+
+                        <div>
+
+                            <table class="table mt-4  table-bordered">
+
+                                <thead class="">
+
+                                    <tr class="">
+                                        <th>Date</th>
+                                        <th>On-Call Hours</th>
+                                        <th>Total Hours</th>
+                                        <th>Weekend/Holiday</th>
+                                        <th>Number of Housecalls</th>
+                                        <th>Number of Phone Consults</th>
+                                    </tr>
+
+                                </thead>
+
+                                <tbody>
+
+                                    @for (int i = 0; i < Model.timeSheetDayRecords.Count; i++)
+                                    {
+                                        <input asp-for="timeSheetDayRecords[i].DateOfRecord" hidden />
+                                        <tr>
+                                            <td>@Model.timeSheetDayRecords[i].DateOfRecord.ToString("dd-MM-yyyy")</td>
+                                            <td>@Model.timeSheetDayRecords[i].OnCallHours</td>
+                                            <td>
+                                                <input asp-for="timeSheetDayRecords[i].TotalHours" type="number" />
+                                            </td>
+                                            <td>
+                                                <input asp-for="timeSheetDayRecords[i].IsHoliday" type="checkbox" />
+                                            </td>
+                                            <td>
+                                                <input asp-for="timeSheetDayRecords[i].NoOfHouseCall" type="number" />
+                                            </td>
+                                            <td>
+                                                <input asp-for="timeSheetDayRecords[i].NoOfPhoneConsult" type="number" />
+                                            </td>
+                                        </tr>
+                                    }
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    }
+                    else
+                    {
+                        <h4>Couldn't Fetch Timesheet Data</h4>
+                    }
+
+                </div>
+
+            </div>
+
+            <div class="d-flex mt-3 justify-content-start">
+                <button class="btn text-white btn-info" type="button" id="add-receipt-btn">Add Receipts</button>
+                <button class="btn text-white btn-danger" type="button" id="cancel-receipt-btn" style="display:none;">Cancel Receipts</button>
+            </div>
+
+            <div>
+
+                <table class="table mt-4 table-bordered d-none" id="bill-table">
+
+                    <colgroup>
+
+                        <col span="1" style="width: 10%;">
+                        <col span="1" style="width: 20%;">
+                        <col span="1" style="width: 20%;">
+                        <col span="1" style="width: 30%;">
+                        <col span="1" style="width: 20%;">
+
+                    </colgroup>
+
+                    <thead class="">
+
+                        <tr class="">
+                            <th>Date</th>
+                            <th>Item Name</th>
+                            <th>Amount</th>
+                            <th>Bill</th>
+                            <th>Actions</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+                        <input id="is-receipt-added-checkbox" asp-for="IsReceiptsAdded" type="checkbox" />
+
+                        @for (int i = 0; i < Model?.timeSheetReceiptRecords.Count; i++)
+                        {
+                            <input hidden asp-for="timeSheetReceiptRecords[i].RecordId" />
+                            <input asp-for="timeSheetReceiptRecords[i].DateOfRecord" hidden />
+                            <tr>
+                                <td>
+                                    @Model.timeSheetReceiptRecords[i].DateOfRecord.ToString("dd-MM-yyyy")
+                                </td>
+                                <td>
+                                    <input type="text" asp-for="timeSheetReceiptRecords[i].ItemName" class="form-control border-2" id="item-name">
+                                </td>
+                                <td>
+                                    <input type="text" asp-for="timeSheetReceiptRecords[i].Amount" class="form-control border-2" id="amoount">
+                                </td>
+                                <td>
+
+                                    <input id="bill-receipt-record-file-@i" class="form-control receipt-file" asp-for="timeSheetReceiptRecords[i].BillReceipt" accept="application/pdf" type="file" style="display:none;">
+
+                                    <div class="input-group mb-3">
+                                        <input type="text" id="bill-receipt-record-file-text-input-@i" data-fileindex="@i" class="form-control receipt-text-input-btn" placeholder="Select File"
+                                               style="caret-color: transparent" autocomplete="off">
+
+                                        <span class="input-group-text receipt-file-upload-btn" data-fileindex="@i" id="bill-receipt-record-file-span-@i" style="background-color: #10bce9;">
+                                            <label for="text_input_span_id">
+                                                <button style="background-color: #10bce9; border: none;" type="button">
+                                                    <img src="/images/upload_icon.svg" alt="upload-icon">
+                                                    <span class="ms-1 text-white">Upload</span>
+                                                </button>
+                                            </label>
+                                        </span>
+
+                                    </div>
+                                    @*
+                                <input type="file" hidden asp-for="timeSheetReceiptRecords[i].BillReceipt" class="fileUpload" id="bill-@i">
+                                <button type="button" class="btn btn-info text-white uploadbtn" data-file="@i">Select File</button>
+                                *@
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-outline-info">Edit</button>
+                                    <button type="button" class="btn btn-outline-info">Delete</button>
+                                    <button type=button class="btn btn-outline-info">View</button>
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <button class="btn text-white btn-info mt-3" type="submit">Submit</button>
+
+        </form>
+
+        <div class="d-flex justify-content-end">
+
+            <button class="btn text-white btn-info" type="button" id="finalize-timesheet-btn">Finalize</button>
+
+        </div>
+
+    </div>
+
+    <div style="height: 20px;"></div>
+
+</div>
+
+<script>
+
+    $('#add-receipt-btn').click(function () {
+        $(this).hide();
+        $('#cancel-receipt-btn').show();
+        $('#bill-table').removeClass("d-none");
+        $('#is-receipt-added-checkbox').prop("checked", true);
+    });
+
+    $('#cancel-receipt-btn').click(function () {
+        $(this).hide();
+        $('#add-receipt-btn').show();
+        $('#bill-table').addClass("d-none");
+        $('#is-receipt-added-checkbox').prop("checked", false);
+    });
+
+    $('#finalize-timesheet-btn').click(function () {
+
+        $.ajax({
+            url: '/Physician/FinalizeTimeSheet',
+            type: 'POST',
+            data: {
+                timeSheetId: @Model?.TimesheetId
+                                        },
+            success: function (result) {
+
+            },
+            error: function (err) {
+                console.error(err);
+                alert("error");
+            }
+        });
+
+
+    });
+
+</script>
+
+<script>
+
+    $('.receipt-file-upload-btn').on('click', function () {
+        let fileIndex = $(this).data('fileindex');
+        let fileInputBtn = document.getElementById("bill-receipt-record-file-" + fileIndex);
+        fileInputBtn.click();
+    });
+
+    $('.receipt-text-input-btn').on('click', function () {
+        let fileIndex = $(this).data('fileindex');
+        let fileInputBtn = document.getElementById("bill-receipt-record-file-" + fileIndex);
+        fileInputBtn.click();
+    });
+
+    $(".receipt-file").change(function () {
+
+        let textInputDiv = $(this).siblings("div").find("input");
+        let textInput = $(this).siblings("div");
+
+        textInputDiv.val(this.value.replace(/C:\\fakepath\\/i, ''));
+
+    });
+
+</script>
+
+<script>
+
+    $('#phy_photo_text_input_id').click(function () {
+        $("#phy_photo_input_id").trigger('click');
+    });
+
+    $('#phy_photo_span_input_id').click(function () {
+        $("#phy_photo_input_id").trigger('click');
+    });
+
+    $("#phy_photo_input_id").change(function () {
+        $('#phy_photo_text_input_id').val(this.value.replace(/C:\\fakepath\\/i, ''))
+    })
+
+</script>

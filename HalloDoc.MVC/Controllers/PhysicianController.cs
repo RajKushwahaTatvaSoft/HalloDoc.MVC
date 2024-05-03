@@ -22,6 +22,7 @@ using Data_Layer.CustomModels.Filter;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using Data_Layer.DataContext;
+using DocumentFormat.OpenXml.Office2010.PowerPoint;
 
 namespace HalloDoc.MVC.Controllers
 {
@@ -54,6 +55,18 @@ namespace HalloDoc.MVC.Controllers
             return phyId;
         }
 
+        public string? GetPhysicianName()
+        {
+            string? phyName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+            return phyName;
+        }
+
+        public string? GetPhysicianAspUserId()
+        {
+            string? phyAspId = HttpContext.Request.Headers.Where(x => x.Key == "userAspId").FirstOrDefault().Value;
+            return phyAspId;
+        }
+
         public IActionResult Logout()
         {
 
@@ -73,10 +86,9 @@ namespace HalloDoc.MVC.Controllers
         {
 
             int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-            string? phyAspId = HttpContext.Request.Headers.Where(x => x.Key == "userAspId").FirstOrDefault().Value;
+            string? phyAspId = GetPhysicianAspUserId();
 
-            Physician physician = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Aspnetuserid == phyAspId);
-
+            Physician? physician = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Aspnetuserid == phyAspId);
 
             if (physician == null)
             {
@@ -341,7 +353,7 @@ namespace HalloDoc.MVC.Controllers
         [HttpGet]
         public IActionResult AddShiftModal()
         {
-            int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
+            int phyId = GetPhysicianId();
 
             IEnumerable<int> phyRegions = _unitOfWork.PhysicianRegionRepo.Where(phy => phy.Physicianid == phyId).Select(_ => _.Regionid);
             AddShiftModel model = new AddShiftModel();
@@ -588,7 +600,7 @@ namespace HalloDoc.MVC.Controllers
         {
             try
             {
-                int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+                int phyId = GetPhysicianId();
 
                 DateTime startDate = startDateISO.ToLocalTime();
                 DateTime endDate = startDate;
@@ -622,10 +634,15 @@ namespace HalloDoc.MVC.Controllers
                                           select new InvoicingTimeSheetTRow
                                           {
                                               ShiftDate = record.TimesheetDate,
-                                              ShiftCount = 3,
+                                              ShiftCount = -1,
                                               HouseCall = record.NumberOfHouseCall ?? 0,
+                                              HouseCallNightWeekendCount = -1,
+                                              PhoneConsults = record.NumberOfPhoneCall ?? 0,
+                                              PhoneConsultsNightWeekendCount = -1,
+                                              NightShiftsWeekendCount = -1,
+                                              BatchTesting = -1,
                                           });
-                              
+
                 return PartialView("Invoicing/Partial/_InvoicingTimeSheetTable", model);
 
             }
@@ -638,7 +655,7 @@ namespace HalloDoc.MVC.Controllers
 
 
         [RoleAuthorize((int)AllowMenu.ProviderInvoicing)]
-        public IActionResult FinalizeTimeSheetView(DateTime startDateISO)
+        public IActionResult TimeSheetForm(DateTime startDateISO)
         {
             try
             {
@@ -666,7 +683,23 @@ namespace HalloDoc.MVC.Controllers
                 && sheet.EndDate == DateOnly.FromDateTime(endDate)
                 );
 
-                if(oldTimeSheet == null)
+
+                DateOnly receiptDate = DateOnly.FromDateTime(startDate);
+
+                List<ReceiptRecord> receiptRecords = new List<ReceiptRecord>();
+                while (receiptDate <= DateOnly.FromDateTime(endDate))
+                {
+                    ReceiptRecord record = new ReceiptRecord()
+                    {
+                        DateOfRecord = receiptDate,
+                    };
+
+                    receiptRecords.Add(record);
+                    receiptDate = receiptDate.AddDays(1);
+                }
+
+
+                if (oldTimeSheet == null)
                 {
 
                     DateOnly loopDate = DateOnly.FromDateTime(startDate);
@@ -688,12 +721,18 @@ namespace HalloDoc.MVC.Controllers
                         StartDate = DateOnly.FromDateTime(startDate),
                         EndDate = DateOnly.FromDateTime(endDate),
                         timeSheetDayRecords = records,
+                        timeSheetReceiptRecords = receiptRecords,
                     };
 
-                    return View("Invoicing/FinalizeTimeSheet", model);
+                    return View("Invoicing/TimeSheetForm", model);
                 }
                 else
                 {
+                    if (oldTimeSheet?.IsFinalize == true)
+                    {
+                        _notyf.Error("Timesheet is already finalized.");
+                        return RedirectToAction("Invoicing");
+                    }
 
                     IEnumerable<TimeSheetDayRecord> records = (from record in _unitOfWork.TimeSheetDetailRepo.GetAll()
                                                                where record.TimesheetId == oldTimeSheet.TimesheetId
@@ -703,20 +742,21 @@ namespace HalloDoc.MVC.Controllers
                                                                    IsHoliday = record.IsWeekend ?? false,
                                                                    NoOfHouseCall = record.NumberOfHouseCall ?? 0,
                                                                    NoOfPhoneConsult = record.NumberOfPhoneCall ?? 0,
-                                                                   OnCallHours = 3,
+                                                                   OnCallHours = -1,
                                                                    TotalHours = record.TotalHours ?? 0,
-                                                               });
+                                                               }).OrderBy(_ => _.DateOfRecord);
 
                     FinalizeTimeSheetViewModel model = new FinalizeTimeSheetViewModel()
                     {
+                        TimesheetId = oldTimeSheet?.TimesheetId ?? 0,
                         StartDate = DateOnly.FromDateTime(startDate),
                         EndDate = DateOnly.FromDateTime(endDate),
                         timeSheetDayRecords = records.ToList(),
+                        timeSheetReceiptRecords = receiptRecords,
                     };
 
-                    return View("Invoicing/FinalizeTimeSheet", model);
-                }             
-
+                    return View("Invoicing/TimeSheetForm", model);
+                }
 
             }
             catch (Exception ex)
@@ -727,7 +767,7 @@ namespace HalloDoc.MVC.Controllers
         }
 
         [HttpPost]
-        public IActionResult FinalizeTimeSheetView(FinalizeTimeSheetViewModel model)
+        public IActionResult TimeSheetForm(FinalizeTimeSheetViewModel model)
         {
             int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
             string? phyAspId = HttpContext.Request.Headers.Where(x => x.Key == "userAspId").FirstOrDefault().Value;
@@ -756,27 +796,88 @@ namespace HalloDoc.MVC.Controllers
                     _unitOfWork.TimeSheetRepository.Add(newTimeSheet);
                     _unitOfWork.Save();
 
-                    if (model.timeSheetDayRecords != null && model.timeSheetDayRecords.Any())
+                    if (model.IsReceiptsAdded)
                     {
-                        foreach (TimeSheetDayRecord record in model.timeSheetDayRecords)
-                        {
-                            TimesheetDetail sheetDetail = new TimesheetDetail()
-                            {
-                                TimesheetId = newTimeSheet.TimesheetId,
-                                TimesheetDate = record.DateOfRecord,
-                                TotalHours = record.TotalHours,
-                                IsWeekend = record.IsHoliday,
-                                NumberOfHouseCall = record.NoOfHouseCall,
-                                NumberOfPhoneCall = record.NoOfPhoneConsult,
-                                CreatedBy = phyAspId ?? "",
-                                CreatedDate = DateTime.Now,
-                            };
 
-                            _unitOfWork.TimeSheetDetailRepo.Add(sheetDetail);
+                        if (model.timeSheetDayRecords != null && model.timeSheetDayRecords.Any())
+                        {
+                            foreach (TimeSheetDayRecord record in model.timeSheetDayRecords)
+                            {
+                                TimesheetDetail sheetDetail = new TimesheetDetail()
+                                {
+                                    TimesheetId = newTimeSheet.TimesheetId,
+                                    TimesheetDate = record.DateOfRecord,
+                                    TotalHours = record.TotalHours,
+                                    IsWeekend = record.IsHoliday,
+                                    NumberOfHouseCall = record.NoOfHouseCall,
+                                    NumberOfPhoneCall = record.NoOfPhoneConsult,
+                                    CreatedBy = phyAspId ?? "",
+                                    CreatedDate = DateTime.Now,
+                                };
+
+                                _unitOfWork.TimeSheetDetailRepo.Add(sheetDetail);
+                                _unitOfWork.Save();
+
+                                ReceiptRecord? receipt = model.timeSheetReceiptRecords?.FirstOrDefault(receipt => receipt.DateOfRecord == record.DateOfRecord);
+
+                                if (receipt != null)
+                                {
+
+                                    TimesheetDetailReimbursement recordDetail = new TimesheetDetailReimbursement()
+                                    {
+                                        TimesheetDetailId = newTimeSheet.TimesheetId,
+                                        ItemName = receipt.ItemName,
+                                        Amount = receipt.Amount,
+                                        Bill = receipt.BillReceipt.FileName,
+                                        CreatedBy = phyAspId ?? "",
+                                        CreatedDate = DateTime.Now,
+                                    };
+
+                                    _unitOfWork.TimeSheetDetailReimbursementRepo.Add(recordDetail);
+                                    _unitOfWork.Save();
+                                }
+                                
+
+                            }
+
+
                         }
 
-                        _unitOfWork.Save();
+                        if (model.IsReceiptsAdded && model.timeSheetReceiptRecords != null && model.timeSheetReceiptRecords.Any())
+                        {
+
+                            _unitOfWork.Save();
+                            _notyf.Success("Time Sheet Added Successfully");
+
+                        }
                     }
+                    else
+                    {
+                        if (model.timeSheetDayRecords != null && model.timeSheetDayRecords.Any())
+                        {
+                            foreach (TimeSheetDayRecord record in model.timeSheetDayRecords)
+                            {
+                                TimesheetDetail sheetDetail = new TimesheetDetail()
+                                {
+                                    TimesheetId = newTimeSheet.TimesheetId,
+                                    TimesheetDate = record.DateOfRecord,
+                                    TotalHours = record.TotalHours,
+                                    IsWeekend = record.IsHoliday,
+                                    NumberOfHouseCall = record.NoOfHouseCall,
+                                    NumberOfPhoneCall = record.NoOfPhoneConsult,
+                                    CreatedBy = phyAspId ?? "",
+                                    CreatedDate = DateTime.Now,
+                                };
+
+                                _unitOfWork.TimeSheetDetailRepo.Add(sheetDetail);
+                            }
+
+                            _unitOfWork.Save();
+
+                        }
+                    }
+
+                    _notyf.Success("Time Sheet Added Successfully");
 
                 }
                 else
@@ -786,32 +887,64 @@ namespace HalloDoc.MVC.Controllers
 
                     while (loopDate <= model.EndDate)
                     {
-                        TimesheetDetail? sheetDetail = _unitOfWork.TimeSheetDetailRepo.GetFirstOrDefault(sheet => sheet.TimesheetDate == loopDate);
 
-                        if(sheetDetail == null)
+                        TimesheetDetail? sheetDetail = _unitOfWork.TimeSheetDetailRepo.GetFirstOrDefault(sheet => sheet.TimesheetId == oldTimeSheet.TimesheetId
+                        && sheet.TimesheetDate == loopDate);
+                        TimeSheetDayRecord? inputRecord = model.timeSheetDayRecords?.FirstOrDefault(record => record.DateOfRecord == loopDate);
+
+                        if (sheetDetail != null && inputRecord != null)
                         {
+                            sheetDetail.TotalHours = inputRecord.TotalHours;
+                            sheetDetail.IsWeekend = inputRecord.IsHoliday;
+                            sheetDetail.NumberOfHouseCall = inputRecord.NoOfHouseCall;
+                            sheetDetail.NumberOfPhoneCall = inputRecord.NoOfPhoneConsult;
 
+                            _unitOfWork.TimeSheetDetailRepo.Update(sheetDetail);
                         }
 
-                        TimeSheetDayRecord record = new TimeSheetDayRecord()
-                        {
-                            DateOfRecord = loopDate,
-                        };
-
                         loopDate = loopDate.AddDays(1);
+
                     }
 
+                    loopDate = model.StartDate;
 
+                    while (loopDate <= model.EndDate)
+                    {
+
+                        ReceiptRecord? inputRecord = model.timeSheetReceiptRecords?.FirstOrDefault(record => record.DateOfRecord == loopDate);
+                        TimesheetDetailReimbursement? sheetDetail = _unitOfWork.TimeSheetDetailReimbursementRepo.GetFirstOrDefault(sheet => sheet.TimesheetDetailReimbursementId == inputRecord.RecordId);
+
+                        if (sheetDetail != null && inputRecord != null)
+                        {
+                            sheetDetail.ItemName = inputRecord.ItemName;
+                            sheetDetail.Amount = inputRecord.Amount;
+                            sheetDetail.Bill = inputRecord.BillReceipt.FileName;
+
+                            _unitOfWork.TimeSheetDetailReimbursementRepo.Update(sheetDetail);
+                        }
+
+                        loopDate = loopDate.AddDays(1);
+
+                    }
+
+                    _unitOfWork.Save();
+                    _notyf.Success("Time Sheet Updated Successfully");
                 }
 
-                return RedirectToAction("FinalizeTimeSheetView", new { startDateISO = model.StartDate });
+                return RedirectToAction("Invoicing");
             }
             catch (Exception ex)
             {
                 _notyf.Error(ex.Message);
-                return View("Invoicing/FinalizeTimeSheet", model);
+                return View("Invoicing/TimeSheetForm", model);
             }
 
+        }
+
+        [HttpPost]
+        public bool FinalizeTimeSheet(int timeSheetId)
+        {
+            return false;
         }
 
         #endregion
@@ -822,8 +955,8 @@ namespace HalloDoc.MVC.Controllers
         [RoleAuthorize((int)AllowMenu.ProviderDashboard)]
         public IActionResult Dashboard()
         {
-            string? phyName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
-            int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+            string? phyName = GetPhysicianName();
+            int phyId = GetPhysicianId();
 
             if (phyName == null)
             {

@@ -41,6 +41,7 @@
         IRequestTypeRepository RequestTypeRepository { get; }
         ITimeSheetRepository TimeSheetRepository { get; }
         ITimeSheetDetailRepo TimeSheetDetailRepo { get; }
+        ITimeSheetDetailReimbursementRepo TimeSheetDetailReimbursementRepo{ get; }
         void Save();
     }
 

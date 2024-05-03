@@ -48,6 +48,7 @@ namespace Business_Layer.Repository
             RequestTypeRepository = new RequestTypeRepository(_context);
             TimeSheetDetailRepo = new TimeSheetDetailRepo(_context);
             TimeSheetRepository = new TimeSheetRepository(_context);
+            TimeSheetDetailReimbursementRepo = new TimeSheetDetailReimbursementRepo(_context);
         }
 
         public IAdminRepository AdminRepository { get; private set; }
@@ -100,6 +101,7 @@ namespace Business_Layer.Repository
         public IRequestTypeRepository RequestTypeRepository { get; private set; }
         public ITimeSheetRepository TimeSheetRepository { get; private set; }
         public ITimeSheetDetailRepo TimeSheetDetailRepo { get; private set; }
+        public ITimeSheetDetailReimbursementRepo TimeSheetDetailReimbursementRepo { get; private set; }
 
         public void Save()
         {
