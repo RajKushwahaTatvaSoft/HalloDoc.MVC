@@ -1,0 +1,119 @@
+﻿@model IEnumerable<ProviderPayrateTRow>
+@{
+    Layout = "_AdminDashboardLayout";
+}
+<div class="container-fluid d-flex justify-content-center row ">
+
+    <div class="col-md-8 col-12">
+
+        <div class="d-flex justify-content-between mt-3">
+
+            <h4>Payrate</h4>
+
+            <button onclick="history.back(-1)" class="btn btn-outline-info shadow-none night-mode-btn d-flex align-items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 -960 960 960">
+                    <path d="m142-480 294 294q15 15 14.5 35T435-116q-15 15-35 15t-35-15L57-423q-12-12-18-27t-6-30q0-15 6-30t18-27l308-308q15-15 35.5-14.5T436-844q15 15 15 35t-15 35L142-480Z" />
+                </svg>
+                <span>Back</span>
+            </button>
+
+        </div>
+
+        <div class="shadow p-3 dashboard-card mt-4">
+
+            <div class="table-responsive">
+
+                <table class="table mt-4">
+
+                    <colgroup>
+                        <col span="1" style="width:40%;" />
+                        <col span="1" style="width:40%;" />
+                        <col span="1" style="width:20%;" />
+                    </colgroup>
+
+                    <thead class="table-head">
+
+                        <tr class="">
+                            <th>Category</th>
+                            <th>Payrate</th>
+                            <th>Action</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+                        @foreach (var payrate in Model)
+                        {
+                            <form method="post" asp-action="UpdateProviderPayrate" asp-controller="Admin">
+
+                            <tr class="align-middle">
+
+                                <td>@payrate.CategoryName</td>
+
+                                <td>
+                                    <input type="text" asp-for="@payrate.ProviderId" name="physicianId" hidden />
+                                    <input type="text" asp-for="@payrate.PayrateId" name="payrateId" hidden />
+                                    <input type="text" asp-for="@payrate.CategoryId" name="payrateCategoryId" hidden />
+                                    <div class="form-floating">
+                                        <input type="text" asp-for="@payrate.PayrateAmount" name="payrateValue" class="form-control payrateInput" id="PayrateNightShiftWeekend" />
+                                        <label for="PayrateNightShiftWeekend" class="ms-2">Payrate</label>
+                                    </div>
+                                </td>
+
+                                <td>
+
+                                    <div class="d-flex">
+
+                                        <button class="btn btn-info text-light editReceiptBtn" type="button">Edit</button>
+                                        <button class="btn btn-danger text-light ms-2 cancelReceiptBtn" style="display:none;" type="button">Cancel</button>
+                                        <button class="btn btn-info text-light ms-2 saveReceiptBtn" style="display:none;" type="submit">Save</button>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+
+                            </form>
+                        }
+                    </tbody>
+
+                </table>
+
+            </div>
+        </div>
+
+
+    </div>
+
+    <div style="height: 20px;"></div>
+
+</div>
+
+<script>
+
+    $('.editReceiptBtn').click(function () {
+
+        $(this).hide();
+        $(this).siblings(".saveReceiptBtn").show();
+        $(this).siblings(".cancelReceiptBtn").show();
+
+    });
+
+
+    $('.cancelReceiptBtn').click(function () {
+
+        $(this).hide();
+        $(this).siblings(".saveReceiptBtn").hide();
+        $(this).siblings(".editReceiptBtn").show();
+
+    });
+
+</script>
+
+<script>
+
+    $('.admin-tab').removeClass("active");
+    $('#provider-tab').addClass("active");
+
+</script>

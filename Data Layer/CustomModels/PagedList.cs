@@ -8,8 +8,8 @@ namespace Data_Layer.CustomModels
         public int TotalPages { get; set; }
         public int PageSize { get; set; }
         public int TotalCount { get; set; }
-        public bool hasPrevious {  get; set; } = false;
-        public bool hasNext{  get; set; } =false;
+        public bool HasPrevious {  get; set; } = false;
+        public bool HasNext{  get; set; } =false;
 
         public PagedList(IEnumerable<T> currentItems, int count, int pageNumber, int pageSize)
         {
@@ -20,12 +20,12 @@ namespace Data_Layer.CustomModels
 
             if(pageNumber > 1)
             {
-                hasPrevious = true;
+                HasPrevious = true;
             }
 
             if(pageNumber < TotalPages)
             {
-                hasNext = true;
+                HasNext = true;
             }
 
             AddRange(currentItems);

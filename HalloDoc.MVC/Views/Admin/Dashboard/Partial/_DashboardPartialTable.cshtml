@@ -1,0 +1,687 @@
+﻿@model AdminDashboardViewModel
+
+<div class="table-responsive mt-3 d-none d-md-block" style="height:500px">
+    <table class="table">
+
+        @{
+            int dstatus = Model.DashboardStatus;
+        }
+        @if (dstatus == 1 || dstatus == 5)
+        {
+            <colgroup>
+                <col span="1" style="width: 17%;">
+                <col span="1" style="width: 8%;">
+                <col span="1" style="width: 9%;">
+                <col span="1" style="width: 8%;">
+                <col span="1" style="width: 12%;">
+                <col span="1" style="width: 19%;">
+                <col span="1" style="width: 12%;">
+                <col span="1" style="width: 6%;">
+            </colgroup>
+        }
+        else if (dstatus == 2 || dstatus == 3)
+        {
+            <colgroup>
+                <col span="1" style="width: 15%;">
+                <col span="1" style="width: 8%;">
+                <col span="1" style="width: 8%;">
+                <col span="1" style="width: 8%;">
+                <col span="1" style="width: 8%;">
+                <col span="1" style="width: 12%;">
+                <col span="1" style="width: 19%;">
+                <col span="1" style="width: 8%;">
+                <col span="1" style="width: 6%;">
+            </colgroup>
+        }
+        else if (dstatus == 4)
+        {
+            <colgroup>
+                <col span="1" style="width: 17%;">
+                <col span="1" style="width: 8%;">
+                <col span="1" style="width: 9%;">
+                <col span="1" style="width: 8%;">
+                <col span="1" style="width: 12%;">
+                <col span="1" style="width: 12%;">
+                <col span="1" style="width: 6%;">
+            </colgroup>
+        }
+        else if (dstatus == 6)
+        {
+            <colgroup>
+                <col span="1" style="width: 17%;">
+                <col span="1" style="width: 8%;">
+                <col span="1" style="width: 9%;">
+                <col span="1" style="width: 8%;">
+                <col span="1" style="width: 12%;">
+                <col span="1" style="width: 6%;">
+            </colgroup>
+        }
+
+        <thead class="table-head align-middle">
+            <tr>
+
+                <th>Name</th>
+                @if (dstatus != 6)
+                {
+                    <th>Date Of Birth</th>
+                }
+                @if (dstatus == 1 || dstatus == 2 || dstatus == 3)
+                {
+                    <th>Requestor</th>
+                }
+                @if (dstatus == 5)
+                {
+                    <th>Region</th>
+                }
+                @if (dstatus != 1)
+                {
+                    <th>Physician Name</th>
+                    <th>Date Of Service</th>
+                }
+                @if (dstatus == 1)
+                {
+                    <th>Request Date</th>
+                }
+                @if (dstatus != 5)
+                {
+                    <th>Phone</th>
+                }
+                <th>Address</th>
+                @if (dstatus != 4 && dstatus != 6)
+                {
+                    <th>Notes</th>
+                }
+                <th style="text-align: center">Actions</th>
+            </tr>
+        </thead>
+
+        <tbody class="align-middle" id="dashboard-table-body">
+            @for (int i = 0; i < Model.pagedList.Count; i++)
+            {
+                var currentRequest = Model.pagedList[i];
+                int type = currentRequest.RequestType;
+
+                string className = "", phoneTextName = "";
+
+                switch (type)
+                {
+                    case 1:
+                        className = "business-request-row";
+                        phoneTextName = "Business";
+                        break;
+                    case 2:
+                        className = "patient-request-row";
+                        break;
+                    case 3:
+                        className = "family-friend-request-row";
+                        phoneTextName = "Family/Friend";
+                        break;
+                    case 4:
+                        className = "concierge-request-row";
+                        phoneTextName = "Concierge";
+                        break;
+                }
+
+                <tr class="@className">
+                    <td>
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span>@currentRequest.PatientName</span>
+                            <a href="mailto:@currentRequest.Email">
+                                <div class="white-border-btn p-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 0 24 24"
+                                         width="20px" fill="#FFFFFF">
+                                        <path d="M0 0h24v24H0V0z" fill="none" />
+                                        <path d="M22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6zm-2 0l-8 5-8-5h16zm0 12H4V8l8 5 8-5v10z" />
+                                    </svg>
+                                </div>
+                            </a>
+                        </div>
+                        @if (dstatus == 1 && currentRequest.PhysicianId != null)
+                        {
+                            <div>
+                                <span class="px-2 py-1 rounded bg-danger">Assigned</span>
+                            </div>
+                        }
+                    </td>
+                    @if (dstatus != 6)
+                    {
+                        <td>@currentRequest.DateOfBirth</td>
+                    }
+                    @if (dstatus == 1 || dstatus == 2 || dstatus == 3)
+                    {
+                        <td>@currentRequest.Requestor</td>
+                    }
+                    @if (dstatus == 5)
+                    {
+                        <td>@currentRequest.RegionName</td>
+                    }
+                    @if (dstatus != 1)
+                    {
+                        <td>@currentRequest.PhysicianName</td>
+                        <td>@currentRequest.DateOfService</td>
+                    }
+                    @if (dstatus == 1)
+                    {
+                        <td>@currentRequest.RequestDate</td>
+                    }
+                    @if (dstatus != 5)
+                    {
+                        <td>
+                            <a style="text-decoration:none; color: white;" href="tel:@currentRequest.PatientPhone">
+                                <div class="white-border-btn px-2 py-1 align-items-center d-flex">
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="15px" viewBox="0 0 24 24" width="15px"
+                                         fill="white">
+                                        <path d="M0 0h24v24H0V0z" fill="none" />
+                                        <path d="M6.54 5c.06.89.21 1.76.45 2.59l-1.2 1.2c-.41-1.2-.67-2.47-.76-3.79h1.51m9.86 12.02c.85.24 1.72.39 2.6.45v1.49c-1.32-.09-2.59-.35-3.8-.75l1.2-1.19M7.5 3H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.49c0-.55-.45-1-1-1-1.24 0-2.45-.2-3.57-.57-.1-.04-.21-.05-.31-.05-.26 0-.51.1-.71.29l-2.2 2.2c-2.83-1.45-5.15-3.76-6.59-6.59l2.2-2.2c.28-.28.36-.67.25-1.02C8.7 6.45 8.5 5.25 8.5 4c0-.55-.45-1-1-1z" />
+                                    </svg>
+                                    <span class="ms-1">@currentRequest.PatientPhone</span>
+                                </div>
+                                <div>(Patient)</div>
+                            </a>
+
+                            @if (type != 2)
+                            {
+                                <a style="text-decoration:none; color: white;" href="tel:@currentRequest.PatientPhone">
+                                    <div class="white-border-btn px-2 py-1 align-items-center d-flex">
+                                        <svg xmlns="http://www.w3.org/2000/svg" height="15px" viewBox="0 0 24 24" width="15px"
+                                             fill="white">
+                                            <path d="M0 0h24v24H0V0z" fill="none" />
+                                            <path d="M6.54 5c.06.89.21 1.76.45 2.59l-1.2 1.2c-.41-1.2-.67-2.47-.76-3.79h1.51m9.86 12.02c.85.24 1.72.39 2.6.45v1.49c-1.32-.09-2.59-.35-3.8-.75l1.2-1.19M7.5 3H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.49c0-.55-.45-1-1-1-1.24 0-2.45-.2-3.57-.57-.1-.04-.21-.05-.31-.05-.26 0-.51.1-.71.29l-2.2 2.2c-2.83-1.45-5.15-3.76-6.59-6.59l2.2-2.2c.28-.28.36-.67.25-1.02C8.7 6.45 8.5 5.25 8.5 4c0-.55-.45-1-1-1z" />
+                                        </svg>
+                                        <span class="ms-1">@currentRequest.Phone</span>
+                                    </div>
+                                    <div>(@phoneTextName)</div>
+                                </a>
+                            }
+
+                        </td>
+                    }
+                    <td>@currentRequest.Address</td>
+                    @if (dstatus != 4 && dstatus != 6)
+                    {
+                        <td>@currentRequest.Notes</td>
+                    }
+                    <td>
+                        <div class="d-flex justify-content-center" style="margin: 0px 5px 0px 5px">
+                            <div class="dropdown">
+                                <a class="white-border-btn btn" id="dropdownMenu2" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <span class="text-white">Actions</span>
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="dropdownMenu2">
+                                    @if (dstatus == 1)
+                                    {
+                                        if (currentRequest.PhysicianId == null)
+                                        {
+                                            <li><button class="dropdown-item assign-case-btn" data-id="@currentRequest.RequestId" type="button">Assign Case</button></li>
+                                        }
+                                        <li><button class="dropdown-item cancel-case-btn" type="button" data-name="@currentRequest.PatientName" data-id="@currentRequest.RequestId">Cancel Case</button></li>
+                                        <li><a asp-controller="Admin" asp-action="ViewCase" asp-route-Requestid="@currentRequest.RequestId" class="dropdown-item">View Case</a></li>
+                                        <li><a asp-controller="Admin" asp-action="ViewNotes" asp-route-Requestid="@currentRequest.RequestId" class="dropdown-item" type="button">View Notes</a></li>
+                                        <li><button class="dropdown-item block-patient-btn" data-name="@currentRequest.PatientName" data-id="@currentRequest.RequestId" type="button">Block Patient</button></li>
+                                    }
+                                    else
+                                    {
+                                        <li><a asp-controller="Admin" asp-action="ViewCase" asp-route-Requestid="@currentRequest.RequestId" class="dropdown-item">View Case</a></li>
+                                        <li><a asp-controller="Admin" asp-action="ViewUploads" asp-route-Requestid="@currentRequest.RequestId" class="dropdown-item" type="button">View Uploads</a></li>
+                                        <li><a asp-controller="Admin" asp-action="ViewNotes" asp-route-Requestid="@currentRequest.RequestId" class="dropdown-item" type="button">View Notes</a></li>
+                                    }
+                                    @if (dstatus == 2)
+                                    {
+                                        <li><button data-id="@currentRequest.RequestId" data-phyid="@currentRequest.PhysicianId" class="dropdown-item transfer-case-btn" type="button">Transfer</button></li>
+                                        <li><button class="dropdown-item clear-case-btn" data-id="@currentRequest.RequestId" type="button">Clear Case</button></li>
+                                        <li><button data-type="@currentRequest.RequestType" data-id="@currentRequest.RequestId" data-email="@currentRequest.Email" data-number="@currentRequest.PatientPhone" class="send-agreement-btn dropdown-item" type="button">Send Agreement</button></li>
+                                    }
+                                    @if (dstatus == 3 || dstatus == 4)
+                                    {
+                                        <li><a asp-controller="Admin" asp-action="Orders" asp-route-requestId="@currentRequest.RequestId" class="dropdown-item" type="button">Orders</a></li>
+                                        <li><a asp-controller="Admin" asp-action="EncounterForm" asp-route-requestid="@currentRequest.RequestId" class="dropdown-item" type="button">Encounter</a></li>
+                                    }
+                                    @if (dstatus == 5)
+                                    {
+                                        <li><a asp-controller="Admin" asp-action="Orders" asp-route-requestId="@currentRequest.RequestId" class="dropdown-item" type="button">Orders</a></li>
+                                        <li><a asp-controller="Admin" asp-action="CloseCase" asp-route-requestid="@currentRequest.RequestId" class="dropdown-item" type="button">Close Case</a></li>
+                                        <li><button class="dropdown-item clear-case-btn" data-id="@currentRequest.RequestId" type="button">Clear Case</button></li>
+                                        <li><a asp-controller="Admin" asp-action="EncounterForm" asp-route-requestid="@currentRequest.RequestId" class="dropdown-item" type="button">Encounter</a></li>
+                                    }
+                                </ul>
+                            </div>
+                        </div>
+                    </td>
+
+                </tr>
+
+            }
+        </tbody>
+
+    </table>
+</div>
+
+<div class="col-12 mx-2 mt-1 d-md-none">
+
+    <div class="accordion" id="accordionExample">
+
+        @for (int i = 0; i < Model.pagedList.Count; i++)
+        {
+            var currentRequest = Model.pagedList[i];
+            string accordionId = "accordion" + i.ToString();
+            string collapseId = "collapse" + i.ToString();
+
+
+            <div class="accordion-item mt-3 py-3" style="background-color: #ebfafd;">
+
+                <div class="accordion-header" id="@accordionId">
+
+                    <div class="px-3" data-bs-toggle="collapse"
+                         data-bs-target="#@collapseId" aria-expanded="true" aria-controls="@collapseId">
+
+                        <div class="d-flex justify-content-between">
+                            <div class="fs-5">@currentRequest.PatientName</div>
+                            @{
+                                int type = currentRequest.RequestType;
+                            }
+                            @if (type == 2)
+                            {
+                                <div class="filter-options  rounded d-flex align-items-center ms-2 " id="filter-patient">
+                                    <div class="mx-1 fs-5">Patient</div>
+                                    <svg height="15" width="15" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                        <circle fill="#5fbc61" r="45" cx="50" cy="50" stroke="grey" stroke-width="3" />
+                                    </svg>
+                                </div>
+
+                            }
+                            else if (type == 1)
+                            {
+                                <div class="filter-options mx-2  rounded d-flex align-items-center ms-2 " id="filter-business">
+                                    <div class="mx-1 fs-5">Business</div>
+                                    <svg height="15" width="15" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                        <circle fill="#e26277" r="45" cx="50" cy="50" stroke="grey" stroke-width="3" />
+                                    </svg>
+                                </div>
+
+                            }
+                            else if (type == 4)
+                            {
+                                <div class="filter-options mx-2  rounded d-flex align-items-center ms-2 " id="filter-friend">
+                                    <div class="mx-1 fs-5">Family/Friends</div>
+                                    <svg height="15" width="15" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                        <circle fill="#ed9124" r="45" cx="50" cy="50" stroke="grey" stroke-width="3" />
+                                    </svg>
+                                </div>
+                            }
+                            else if (type == 3)
+                            {
+                                <div class="filter-options mx-2  rounded d-flex align-items-center ms-2 " id="filter-concierge">
+                                    <div class="mx-1 fs-5">Concierge</div>
+                                    <svg height="15" width="15" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                        <circle fill="#007fc6" r="45" cx="50" cy="50" stroke="grey" stroke-width="3" />
+                                    </svg>
+                                </div>
+                            }
+
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <div class="fs-5">@currentRequest.Address</div>
+
+                            <div class="">
+                                <a class="btn btn-outline-info fw-bold mt-0 mb-3 me-2">
+
+                                    <span class="mobile">Map</span>
+                                </a>
+                            </div>
+                        </div>
+
+                        @if (dstatus == 1)
+                        {
+                            <div class="d-flex">
+                                <svg class="mx-2" xmlns="http://www.w3.org/2000/svg" data-name="Layer 1" viewBox="0 0 100 125" x="0px" y="0px" fill="#01bce9" width="30px" height="30px">
+                                    <defs>
+                                        <style>
+                                            .cls-1 {
+                                                stroke-width: 0px;
+                                            }
+                                        </style>
+                                    </defs>
+                                    <path class="cls-1" d="M50,8c-23.16,0-42,18.84-42,42s18.84,42,42,42,42-18.84,42-42S73.16,8,50,8ZM50,88c-20.95,0-38-17.05-38-38S29.05,12,50,12s38,17.05,38,38-17.05,38-38,38Z" />
+                                    <path class="cls-1" d="M52,49.17v-23.17c0-1.1-.9-2-2-2s-2,.9-2,2v24c0,.53.21,1.04.59,1.41l16,16c.39.39.9.59,1.41.59s1.02-.2,1.41-.59c.78-.78.78-2.05,0-2.83l-15.41-15.41Z" />
+                                </svg>
+
+                                <span>Wait time : <b> @currentRequest.RequestDate </b></span>
+
+                            </div>
+                        }
+
+
+                    </div>
+
+                </div>
+
+                <div id="@collapseId" class="accordion-collapse collapse" aria-labelledby="@accordionId"
+                     data-bs-parent="#accordionExample">
+                    <div class="">
+
+                        <div class="d-flex align-items-center justify-content-end">
+                            <div class="flex-grow-1" style="background-color: grey; height: 1px;"></div>
+                            <div class="btn btn-outline rounded-pill" style="border-color: #203f9a; color: #203f9a;">View Case</div>
+                            <div class="" style="background-color: grey; height: 1px; width: 30px;"></div>
+                        </div>
+
+                        <div class="d-flex flex-column m-0">
+
+                            @if (dstatus != 6)
+                            {
+                                <div class="d-flex mt-3">
+                                    <svg class="ms-2" xmlns="http://www.w3.org/2000/svg" height="24" fill="#01bce9" viewBox="0 -960 960 960" width="24"><path d="M200-80q-33 0-56.5-23.5T120-160v-560q0-33 23.5-56.5T200-800h40v-80h80v80h320v-80h80v80h40q33 0 56.5 23.5T840-720v560q0 33-23.5 56.5T760-80H200Zm0-80h560v-400H200v400Zm0-480h560v-80H200v80Zm0 0v-80 80Zm280 240q-17 0-28.5-11.5T440-440q0-17 11.5-28.5T480-480q17 0 28.5 11.5T520-440q0 17-11.5 28.5T480-400Zm-160 0q-17 0-28.5-11.5T280-440q0-17 11.5-28.5T320-480q17 0 28.5 11.5T360-440q0 17-11.5 28.5T320-400Zm320 0q-17 0-28.5-11.5T600-440q0-17 11.5-28.5T640-480q17 0 28.5 11.5T680-440q0 17-11.5 28.5T640-400ZM480-240q-17 0-28.5-11.5T440-280q0-17 11.5-28.5T480-320q17 0 28.5 11.5T520-280q0 17-11.5 28.5T480-240Zm-160 0q-17 0-28.5-11.5T280-280q0-17 11.5-28.5T320-320q17 0 28.5 11.5T360-280q0 17-11.5 28.5T320-240Zm320 0q-17 0-28.5-11.5T600-280q0-17 11.5-28.5T640-320q17 0 28.5 11.5T680-280q0 17-11.5 28.5T640-240Z" /></svg>
+
+                                    <div class="ms-1">
+                                        Date of birth : @currentRequest.DateOfBirth
+                                    </div>
+                                </div>
+                            }
+                            <div class="d-flex mt-3">
+                                <svg class="ms-2" xmlns="http://www.w3.org/2000/svg" height="24" fill="#01bce9" viewBox="0 -960 960 960" width="24"><path d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm640-480L501-453q-5 3-10.5 4.5T480-447q-5 0-10.5-1.5T459-453L160-640v400h640v-400ZM480-520l320-200H160l320 200ZM160-640v10-59 1-32 32-.5 58.5-10 400-400Z" /></svg>
+
+                                <div class="ms-1">
+                                    Email : @currentRequest.Email
+                                </div>
+                            </div>
+
+
+                            @if (dstatus != 5)
+                            {
+                                <div class="d-flex mt-3">
+                                    <svg class="ms-2" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" fill="#01bce9" width="24"><path d="M798-120q-125 0-247-54.5T329-329Q229-429 174.5-551T120-798q0-18 12-30t30-12h162q14 0 25 9.5t13 22.5l26 140q2 16-1 27t-11 19l-97 98q20 37 47.5 71.5T387-386q31 31 65 57.5t72 48.5l94-94q9-9 23.5-13.5T670-390l138 28q14 4 23 14.5t9 23.5v162q0 18-12 30t-30 12ZM241-600l66-66-17-94h-89q5 41 14 81t26 79Zm358 358q39 17 79.5 27t81.5 13v-88l-94-19-67 67ZM241-600Zm358 358Z" /></svg>
+
+                                    <div class="ms-1">
+                                        Patient : @currentRequest.PatientPhone;
+                                    </div>
+                                </div>
+                            }
+                            @if (dstatus == 2 || dstatus == 3 || dstatus == 5)
+                            {
+                                <div class="d-flex mt-3">
+                                    <svg class="ms-2" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" fill="#01bce9" width="24"><path d="M798-120q-125 0-247-54.5T329-329Q229-429 174.5-551T120-798q0-18 12-30t30-12h162q14 0 25 9.5t13 22.5l26 140q2 16-1 27t-11 19l-97 98q20 37 47.5 71.5T387-386q31 31 65 57.5t72 48.5l94-94q9-9 23.5-13.5T670-390l138 28q14 4 23 14.5t9 23.5v162q0 18-12 30t-30 12ZM241-600l66-66-17-94h-89q5 41 14 81t26 79Zm358 358q39 17 79.5 27t81.5 13v-88l-94-19-67 67ZM241-600Zm358 358Z" /></svg>
+
+                                    <div class="ms-1">
+                                        Transfer :Admin transferred to  @currentRequest.PhysicianName on @currentRequest.RequestDate
+                                    </div>
+                                </div>
+                            }
+                            @if (dstatus != 1)
+                            {
+                                <div class="d-flex mt-3">
+                                    <svg class="ms-2" xmlns="http://www.w3.org/2000/svg" height="24" fill="#01bce9" viewBox="0 -960 960 960" width="24"><path d="M200-80q-33 0-56.5-23.5T120-160v-560q0-33 23.5-56.5T200-800h40v-80h80v80h320v-80h80v80h40q33 0 56.5 23.5T840-720v560q0 33-23.5 56.5T760-80H200Zm0-80h560v-400H200v400Zm0-480h560v-80H200v80Zm0 0v-80 80Zm280 240q-17 0-28.5-11.5T440-440q0-17 11.5-28.5T480-480q17 0 28.5 11.5T520-440q0 17-11.5 28.5T480-400Zm-160 0q-17 0-28.5-11.5T280-440q0-17 11.5-28.5T320-480q17 0 28.5 11.5T360-440q0 17-11.5 28.5T320-400Zm320 0q-17 0-28.5-11.5T600-440q0-17 11.5-28.5T640-480q17 0 28.5 11.5T680-440q0 17-11.5 28.5T640-400ZM480-240q-17 0-28.5-11.5T440-280q0-17 11.5-28.5T480-320q17 0 28.5 11.5T520-280q0 17-11.5 28.5T480-240Zm-160 0q-17 0-28.5-11.5T280-280q0-17 11.5-28.5T320-320q17 0 28.5 11.5T360-280q0 17-11.5 28.5T320-240Zm320 0q-17 0-28.5-11.5T600-280q0-17 11.5-28.5T640-320q17 0 28.5 11.5T680-280q0 17-11.5 28.5T640-240Z" /></svg>
+                                    <div class="ms-1">
+                                        Date of Service :@currentRequest.DateOfService  ;
+                                    </div>
+                                </div>
+
+                            }
+                            @if (dstatus != 1)
+                            {
+                                <div class="d-flex mt-3">
+                                    <svg class="ms-2" xmlns="http://www.w3.org/2000/svg" height="24" fill="#01bce9" viewBox="0 -960 960 960" width="24"><path d="M480-480q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47ZM160-240v-32q0-34 17.5-62.5T224-378q62-31 126-46.5T480-440q66 0 130 15.5T736-378q29 15 46.5 43.5T800-272v32q0 33-23.5 56.5T720-160H240q-33 0-56.5-23.5T160-240Zm80 0h480v-32q0-11-5.5-20T700-306q-54-27-109-40.5T480-360q-56 0-111 13.5T260-306q-9 5-14.5 14t-5.5 20v32Zm240-320q33 0 56.5-23.5T560-640q0-33-23.5-56.5T480-720q-33 0-56.5 23.5T400-640q0 33 23.5 56.5T480-560Zm0-80Zm0 400Z" /></svg>
+                                    <div class="ms-1">
+                                        Physician :@currentRequest.PhysicianName  ;
+                                    </div>
+                                </div>
+
+                            }
+                            @if (dstatus == 1 || dstatus == 2 || dstatus == 3)
+                            {
+                                <div class="d-flex mt-3">
+                                    <svg class="ms-2" xmlns="http://www.w3.org/2000/svg" height="24" fill="#01bce9" viewBox="0 -960 960 960" width="24"><path d="M480-480q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47ZM160-240v-32q0-34 17.5-62.5T224-378q62-31 126-46.5T480-440q66 0 130 15.5T736-378q29 15 46.5 43.5T800-272v32q0 33-23.5 56.5T720-160H240q-33 0-56.5-23.5T160-240Zm80 0h480v-32q0-11-5.5-20T700-306q-54-27-109-40.5T480-360q-56 0-111 13.5T260-306q-9 5-14.5 14t-5.5 20v32Zm240-320q33 0 56.5-23.5T560-640q0-33-23.5-56.5T480-720q-33 0-56.5 23.5T400-640q0 33 23.5 56.5T480-560Zm0-80Zm0 400Z" /></svg>
+                                    <div class="ms-1">
+                                        Requestor  :@currentRequest.Requestor;
+                                    </div>
+                                </div>
+
+                            }
+                            @if (dstatus == 5)
+                            {
+                                <div class="d-flex mt-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="24" fill="#01bce9" viewBox="0 -960 960 960" width="24"><path d="M480-480q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47ZM160-240v-32q0-34 17.5-62.5T224-378q62-31 126-46.5T480-440q66 0 130 15.5T736-378q29 15 46.5 43.5T800-272v32q0 33-23.5 56.5T720-160H240q-33 0-56.5-23.5T160-240Zm80 0h480v-32q0-11-5.5-20T700-306q-54-27-109-40.5T480-360q-56 0-111 13.5T260-306q-9 5-14.5 14t-5.5 20v32Zm240-320q33 0 56.5-23.5T560-640q0-33-23.5-56.5T480-720q-33 0-56.5 23.5T400-640q0 33 23.5 56.5T480-560Zm0-80Zm0 400Z" /></svg>
+                                    <div class="ms-1">
+                                        Region  :@currentRequest.RegionName;
+                                    </div>
+                                </div>
+                            }
+
+
+                        </div>
+
+                        <div class="row px-3">
+
+                            @if (dstatus == 1)
+                            {
+                                <div class="col-6 mt-2">
+                                    <button class="assign-case-btn btn w-100 rounded-pill" style="background-color:#943db8;color: white;">Assign Case</button>
+                                </div>
+                                <div class="col-6 mt-2">
+                                    <button data-id="@currentRequest.RequestId" data-name="@currentRequest.PatientName" class="cancel-case-btn btn w-100 rounded-pill" style="background-color:#e42929;color: white;">Cancel case</button>
+                                </div>
+                                <div class="col-6 mt-2">
+                                    <button data-name="@currentRequest.PatientName" data-id="@currentRequest.RequestId" class="block-patient-btn btn w-100 rounded-pill" style="background-color:#e42929;color: white;">Block Patient</button>
+                                </div>
+                            }
+                            @if (dstatus == 2)
+                            {
+                                <div class="col-6 mt-2">
+                                    <button data-type="@currentRequest.RequestType" data-id="@currentRequest.RequestId" data-email="@currentRequest.Email" data-number="@currentRequest.PatientPhone" class="send-agreement-btn btn w-100 rounded-pill" style="background-color: #ee9125; color: white;">Send agreement</button>
+                                </div>
+                                <div class="col-6 mt-2">
+                                    <button data-id="@currentRequest.RequestId" class="transfer-case-btn btn w-100 rounded-pill" style="background-color: #00adef; color: white;">Transfer</button>
+                                </div>
+                            }
+                            @if (dstatus == 5)
+                            {
+                                <div class="col-6 mt-2">
+                                    <a asp-controller="Admin" asp-action="CloseCase" asp-route-requestid="@currentRequest.RequestId" class="btn w-100 rounded-pill" style="background-color: #228b22; color: white;">Close Case</a>
+                                </div>
+                            }
+
+                            <div class="col-6 mt-2">
+                                <a asp-controller="Admin" asp-action="ViewNotes" asp-route-RequestID="@currentRequest.RequestId" class="btn w-100 rounded-pill" style="background-color: #228b22; color: white;">View Notes</a>
+                            </div>
+
+                            @if (dstatus == 3 || dstatus == 4)
+                            {
+
+                                <div class="col-6 mt-2">
+                                    <a asp-controller="Admin" asp-action="Orders" asp-route-RequestID="@currentRequest.RequestId" class="btn w-100 rounded-pill" style="background-color: #228b22; color: white;">Orders</a>
+                                </div>
+
+                            }
+                            @if (dstatus == 3 || dstatus == 4 || dstatus == 5)
+                            {
+
+                                <div class="col-6 mt-2">
+                                    <button class="btn w-100 rounded-pill" style="background-color: #228b22; color: white;">Encounter</button>
+                                </div>
+
+                            }
+                            @if (dstatus != 1)
+                            {
+                                <div class="col-6 mt-2">
+                                    <a asp-controller="Admin" asp-action="ViewUploads" asp-route-requestId="@currentRequest.RequestId" class="btn w-100 rounded-pill" style="background-color: #228b22; color: white;">View Uploads</a>
+                                </div>
+                            }
+
+                            @if (dstatus == 2 || dstatus == 5)
+                            {
+                                <div class="col-6 mt-2">
+                                    <button class="btn w-100 rounded-pill clear-case-btn" style="background-color: #228b22; color: white;">Clear Case</button>
+                                </div>
+                            }
+
+                            <div class="col-6 mt-2">
+                                <a href="mailto:@currentRequest.Email" class="btn w-100 rounded-pill" style="background-color: #228b22; color: white;">Email</a>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+        }
+    </div>
+
+
+</div>
+
+<div class="pagination d-flex justify-content-center align-content-center mt-3">
+
+    @if (Model.pagedList.HasPrevious)
+    {
+        <button class="border-0 mx-1 page-item" onclick="loadPage(1)">❮❮</button>
+        <button class="page-item mx-1 border-0" onclick="loadPage(@(Model.CurrentPage-1))">❮</button>
+    }
+    else
+    {
+        <button disabled class="disabled border-0 mx-1 page-item">❮❮</button>
+        <button disabled class="disabled page-item mx-1 border-0">❮</button>
+    }
+
+    <button class="page-item mx-1 active border-0">@Model.CurrentPage</button>
+
+    @if (Model.pagedList.HasNext)
+    {
+        <button class="page-item mx-1 border-0" onclick="loadPage(@(Model.CurrentPage+1))">❯</button>
+        <button class="page-item mx-1 border-0" onclick="loadPage(@Model.pagedList.TotalPages)">❯❯</button>
+    }
+    else
+    {
+        <button disabled class="page-item disabled mx-1 border-0">❯</button>
+        <button disabled class="page-item disabled mx-1 border-0">❯❯</button>
+    }
+
+</div>
+
+<script>
+
+    //Action Modal Buttons
+
+    $('.assign-case-btn').click(function () {
+        let Id = $(this).data("id");
+
+        $.ajax({
+            url: "/Admin/AssignCaseModal",
+            data: { requestId: Id },
+            type: 'GET',
+            success: function (result) {
+                $('#modal-div').html(result);
+                $('#assignModal').modal('show');
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
+
+    });
+
+    $('.transfer-case-btn').click(function () {
+        var Id = $(this).data("id");
+        var phyId = $(this).data("phyid");
+
+        $.ajax({
+            url: "/Admin/TransferCaseModal",
+            data: { requestId: Id,physicianId: phyId },
+            type: 'GET',
+            success: function (result) {
+                $('#modal-div').html(result);
+                $('#transferModal').modal('show');
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
+
+
+    });
+
+    $('.cancel-case-btn').click(function () {
+
+        var Id = $(this).data("id");
+        var Name = $(this).data("name");
+
+        $.ajax({
+            url: "/Admin/CancelCaseModal",
+            data: { requestId: Id, patientName: Name },
+            type: 'GET',
+            success: function (result) {
+                $('#modal-div').html(result);
+                $('#cancelModal').modal('show');
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
+
+    });
+
+    $('.block-patient-btn').click(function () {
+        var Id = $(this).data("id");
+
+        var Name = $(this).data("name");
+
+        $.ajax({
+            url: "/Admin/BlockCaseModal",
+            data: { requestId: Id, patientName: Name },
+            type: 'GET',
+            success: function (result) {
+                $('#modal-div').html(result);
+                $('#blockModal').modal('show');
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
+    });
+
+    $('.clear-case-btn').click(function () {
+        var Id = $(this).data("id");
+
+        $.ajax({
+            url: "/Admin/ClearCaseModal",
+            data: { requestId: Id },
+            type: 'GET',
+            success: function (result) {
+                $('#modal-div').html(result);
+                $('#clearCaseModal').modal('show');
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
+    });
+
+    $('.send-agreement-btn').click(function () {
+        var Id = $(this).data("id");
+        var phoneNumber = $(this).data("number");
+        var emailAddress = $(this).data("email");
+        var rType = $(this).data("type");
+
+        $.ajax({
+            url: "/Admin/SendAgreementModal",
+            data: { requestId: Id, requestType: rType, phone: phoneNumber, email: emailAddress },
+            type: 'GET',
+            success: function (result) {
+                $('#modal-div').html(result);
+                $('#sendAgreementModal').modal('show');
+            },
+            error: function (error) {
+                console.log(error);
+                alert('Error Cancelling Request')
+            },
+        });
+
+    });
+
+</script>

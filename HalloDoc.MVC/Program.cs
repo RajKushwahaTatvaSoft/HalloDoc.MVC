@@ -29,9 +29,8 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 options.UseNpgsql(builder.Configuration.GetConnectionString("ApplicationDbContext")));
 
-builder.Services.AddScoped<IPatientDashboardRepository, PatientDashboardRepository>();
+builder.Services.AddScoped<IPatientDashboardService, PatientDashboardService>();
 builder.Services.AddScoped<IPhysicianDashboardService, PhysicianDashboardService>();
-builder.Services.AddScoped<IPatientAuthRepository, PatientAuthRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
 builder.Services.AddScoped<IJwtService, JwtService>();

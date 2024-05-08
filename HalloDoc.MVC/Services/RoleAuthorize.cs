@@ -7,6 +7,8 @@ using System.Text;
 using Business_Layer.Services.Helper.Interface;
 using AspNetCore;
 using Business_Layer.Repository.IRepository;
+using AspNetCoreHero.ToastNotification.Abstractions;
+using Business_Layer.Utilities;
 
 namespace HalloDoc.MVC.Services
 {
@@ -31,8 +33,10 @@ namespace HalloDoc.MVC.Services
 
             IJwtService? _jwtService = context.HttpContext.RequestServices.GetService<IJwtService>();
             IUnitOfWork? _unitOfWork = context.HttpContext.RequestServices.GetService<IUnitOfWork>();
+            INotyfService? _notyfService = context.HttpContext.RequestServices.GetService<INotyfService>();
 
-            if (_jwtService == null || _unitOfWork == null)
+
+            if (_jwtService == null || _unitOfWork == null || _notyfService == null)
             {
                 context.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Guest", action = "Index" }));
                 context.HttpContext.Response.Cookies.Delete("hallodoc");
@@ -43,6 +47,7 @@ namespace HalloDoc.MVC.Services
 
             if (token == null || !_jwtService.ValidateToken(token, out JwtSecurityToken jwtToken))
             {
+                _notyfService.Error("Invalid Token. Please Login Again");
                 context.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Guest", action = "Index" }));
                 context.HttpContext.Response.Cookies.Delete("hallodoc");
                 return;
@@ -75,7 +80,19 @@ namespace HalloDoc.MVC.Services
 
             if (!roleMenus.Any(rm => rm.Menuid == _menuId))
             {
-                context.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Guest", action = "AccessDenied" }));
+                if (_menuId == (int)AllowMenu.AdminDashboard && roleMenus.Any())
+                {
+                    int hasAccessMenuId = roleMenus?.FirstOrDefault()?.Menuid ?? 0;
+
+                    string controller = AuthHelper.GetControllerFromMenuId(hasAccessMenuId);
+                    string action = AuthHelper.GetActionFromMenuId(hasAccessMenuId);
+
+                    context.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = controller, action = action }));
+                }
+                else
+                {
+                    context.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Guest", action = "AccessDenied" }));
+                }
                 return;
             }
 

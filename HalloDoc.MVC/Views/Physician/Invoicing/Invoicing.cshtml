@@ -19,9 +19,9 @@
 
         </div>
 
-        <div class="dashboard-card">
+        <div class="mt-3">
 
-            <div class="d-flex mt-3 px-3 justify-content-between">
+            <div class="d-flex pt-3 px-3 justify-content-between">
 
                 <div id="timesheet-div" class="form-floating">
                     <input id="timesheet-date-text" type="text" class="form-control">
@@ -43,6 +43,7 @@
 
         </div>
 
+
     </div>
 
     <div style="height: 20px;"></div>
@@ -52,9 +53,9 @@
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.3/themes/base/jquery-ui.css">
 <script src="https://code.jquery.com/ui/1.13.3/jquery-ui.min.js" integrity="sha256-sw0iNNXmOJbQhYFuC9OF2kOlD5KQKe1y5lfBn4C9Sjg=" crossorigin="anonymous"></script>
 
-
 <script>
 
+    let dateText = "";
     let startDate = new Date();
     let endDate = new Date();
 
@@ -79,8 +80,8 @@
             endDate = new Date(year, month + 1, 0);
         }
 
-
-        dateText = startDate.getDate() + "-" + (startDate.getMonth() + 1) + "-" + startDate.getFullYear() + " to " + endDate.getDate() + "-" + (endDate.getMonth() + 1) + "-" + endDate.getFullYear();
+        dateText = startDate.getFullYear() + "/" + (startDate.getMonth() + 1) + "/" + startDate.getDate() + " - " + endDate.getFullYear() + "/" + (endDate.getMonth() + 1) + "/" + endDate.getDate();
+        // dateText = startDate.getDate() + "-" + (startDate.getMonth() + 1) + "-" + startDate.getFullYear() + " to " + endDate.getDate() + "-" + (endDate.getMonth() + 1) + "-" + endDate.getFullYear();
 
         $('#timesheet-date-text').val(dateText);
 
@@ -109,7 +110,6 @@
 
     function updateTimeSheetDate() {
 
-        let dateText = "";
         let pickerDate = $('#timesheet-datepicker').val();
         let selectedDate = new Date(pickerDate);
 
@@ -122,11 +122,10 @@
         location.href = "/Physician/TimeSheetForm?startDateISO=" + startDate.toISOString();
     });
 
-    $(document).ready(function(){
+    $(document).ready(function () {
         adjustStartAndEndDates(startDate);
         loadInvoicingPartialTable();
     });
-
 
 </script>
 

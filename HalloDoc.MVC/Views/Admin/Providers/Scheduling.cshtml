@@ -131,28 +131,6 @@
 </style>
 
 <script>
-    var phyInfoEdit = document.getElementById("viewShift-edit-btn");
-    var phyInfoSave = document.getElementById("viewShift-save-btn");
-    var phyInfoCancel = document.getElementById("viewShift-cancel-btn");
-
-    $("#viewShift-edit-btn").click(function () {
-        document.getElementById("viewShift-set").disabled = false;
-
-        phyInfoSave.classList.remove('d-none');
-        phyInfoEdit.classList.add('d-none');
-
-    });
-
-    $("#viewShift-cancel-btn").click(function () {
-        document.getElementById("viewShift-set").disabled = true;
-
-        phyInfoEdit.classList.remove('d-none');
-        phyInfoSave.classList.add('d-none');
-
-    });
-</script>
-
-<script>
 
     $('#add-new-shift-btn').click(function () {
         $.ajax({
@@ -297,40 +275,6 @@
 
         }
 
-    });
-
-    $("#regionList").change(function () {
-        var type = $('option:selected', this).val();
-        console.log(type);
-
-        $.ajax({
-            url: '/Admin/GetPhyByRegion',
-            type: 'POST',
-            data: {
-                id: type,
-            },
-            success: function (result) {
-                //console.log(result);
-                $('#physicianList').empty();
-                $('#physicianList').append($('<option>', {
-                    value: null,
-                    text: "Select any option",
-                }));
-
-                $.each(result, function (index, object) {
-
-                    $('#physicianList').append($('<option>', {
-                        value: object["physicianid"],
-                        text: object["firstname"] + " " + object["lastname"]
-                    }));
-
-                });
-            },
-
-            error: function (err) {
-                console.error(err);
-            }
-        });
     });
 
     $('#day-wise-schedule-btn').click(function () {

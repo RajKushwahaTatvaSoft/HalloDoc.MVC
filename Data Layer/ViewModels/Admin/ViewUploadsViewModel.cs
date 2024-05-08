@@ -11,13 +11,13 @@ namespace Data_Layer.ViewModels.Admin
     public class ViewUploadsViewModel
     {
         public bool IsAdmin { get; set; } = false;
-        public string RequestFilesPath {  get; set; }
-        public string PatientName { get; set; }
-        public string ConfirmationNumber { get; set;}
+        public string? RequestFilesPath {  get; set; }
+        public string? PatientName { get; set; }
+        public string? ConfirmationNumber { get; set;}
         public int RequestId { get; set;}
         public IFormFile? File { get; set; }
-        public List<Requestwisefile> requestwisefiles { get; set; }
-        public List<string> extensions { get; set; }
+        public List<Requestwisefile>? requestwisefiles { get; set; }
+        public List<string>? extensions { get; set; }
 
     }
 }

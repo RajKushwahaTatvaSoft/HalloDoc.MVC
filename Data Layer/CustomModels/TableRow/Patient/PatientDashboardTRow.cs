@@ -9,7 +9,7 @@ namespace Data_Layer.CustomModels.TableRow.Patient
     public class PatientDashboardTRow
     {
         public int RequestId { get; set; }
-        public string RequestStatus { get; set; }
+        public string RequestStatus { get; set; } = string.Empty;
         public int FileCount { get; set; }
         public DateTime CreatedDate { get; set; }
     }

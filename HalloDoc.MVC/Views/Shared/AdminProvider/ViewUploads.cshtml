@@ -259,7 +259,7 @@
             type: 'POST',
             data: { fileIds: selectedFiles, requestId: @Model.RequestId },
             success: function (result) {
-                location.reload();
+                // location.reload();
             },
             error: function (error) {
                 console.log(error);
@@ -283,26 +283,26 @@
         });
     });
 
-    document.getElementById("download-selected-btn").addEventListener("click", function () {
+    // document.getElementById("download-selected-btn").addEventListener("click", function () {
 
-        let selectedFiles = [];
-        let checkboxes = document.querySelectorAll(".check");
-        let count = 0;
-        console.log("download-selected");
+    //     let selectedFiles = [];
+    //     let checkboxes = document.querySelectorAll(".check");
+    //     let count = 0;
+    //     console.log("download-selected");
 
-        checkboxes.forEach(function (checkbox) {
-            if (checkbox.checked) {
-                selectedFiles.push(count);
-                console.log(count);
-            }
-            count++;
-        });
+    //     checkboxes.forEach(function (checkbox) {
+    //         if (checkbox.checked) {
+    //             selectedFiles.push(count);
+    //             console.log(count);
+    //         }
+    //         count++;
+    //     });
 
-        selectedFiles.forEach(function (index) {
-            document.getElementById(index).click();
-        });
+    //     selectedFiles.forEach(function (index) {
+    //         document.getElementById(index).click();
+    //     });
 
-    });
+    // });
 
 </script>
 

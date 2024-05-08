@@ -12,21 +12,12 @@ public partial class ProviderPayrate
     [Key]
     public int PayrateId { get; set; }
 
+    public int PayrateCategoryId { get; set; }
+
     public int PhysicianId { get; set; }
 
-    public int? Shift { get; set; }
-
-    public int? PhoneConsult { get; set; }
-
-    public int? HouseCall { get; set; }
-
-    public int? BatchTesting { get; set; }
-
-    public int? NightShiftWeekend { get; set; }
-
-    public int? HouseCallNightWeekend { get; set; }
-
-    public int? PhoneConsultNightWeekend { get; set; }
+    [Precision(8, 3)]
+    public decimal Payrate { get; set; }
 
     [StringLength(128)]
     public string CreatedBy { get; set; } = null!;
@@ -47,6 +38,10 @@ public partial class ProviderPayrate
     [ForeignKey("ModifiedBy")]
     [InverseProperty("ProviderPayrateModifiedByNavigations")]
     public virtual Aspnetuser? ModifiedByNavigation { get; set; }
+
+    [ForeignKey("PayrateCategoryId")]
+    [InverseProperty("ProviderPayrates")]
+    public virtual PayrateCategory PayrateCategory { get; set; } = null!;
 
     [ForeignKey("PhysicianId")]
     [InverseProperty("ProviderPayrates")]

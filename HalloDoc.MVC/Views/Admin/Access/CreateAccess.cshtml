@@ -92,7 +92,7 @@
         var type1 = $('option:selected', this).val();
 
         $.ajax({
-            url: "/Admin/GetMenusByAccounttype",
+            url: "/Guest/GetMenusByAccounttype",
             data: { type: type1 },
             method: 'GET',
             success: function (response) {

@@ -25,9 +25,9 @@ namespace Business_Layer.Repository
             return isUserExists;
 
         }
-        public User GetUserWithID(int userid)
+        public User? GetUserWithID(int userid)
         {
-            User user = _context.Users.FirstOrDefault(u => u.Userid == userid);
+            User? user = _context.Users.FirstOrDefault(u => u.Userid == userid);
             return user;
         }
 

@@ -11,7 +11,7 @@ namespace Data_Layer.ViewModels.Admin
     public class CreateAccessViewModel
     {
         [Required]
-        public string? RoleName { get; set; }
+        public string RoleName { get; set; } = string.Empty;
         [Required]
         public int? AccountType { get; set; }
         public IEnumerable<Aspnetrole>? netRoles { get; set; }

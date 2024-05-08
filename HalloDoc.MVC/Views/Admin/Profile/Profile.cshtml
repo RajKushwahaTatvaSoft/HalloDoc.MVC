@@ -72,9 +72,9 @@
 
                     <div class="d-flex justify-content-end mt-3">
 
-                        <button id="account-info-edit-btn" type="button" class="btn btn-primary m-1">Edit</button>
+                        <button id="account-info-edit-btn" type="button" class="btn btn-info m-1">Edit</button>
                         <button type="reset" id="account-info-cancel-btn" class="btn btn-danger me-1 d-none">Cancel</button>
-                        <button type="button" id="account-info-save-btn" class="btn btn-primary me-1 d-none">Save</button><br />
+                        <button type="button" id="account-info-save-btn" class="btn btn-info me-1 d-none">Save</button><br />
                         <button id="account-info-reset-pass-btn" type="button" class="btn btn-outline-info m-1">Reset Password</button><br />
 
                     </div>
@@ -342,7 +342,7 @@
         var regId = $('option:selected', this).val();
 
         $.ajax({
-            url: '/Admin/GetCitiesByRegion',
+            url: '/Guest/GetCitiesByRegion',
             type: 'POST',
             data: {
                 regionId: regId,

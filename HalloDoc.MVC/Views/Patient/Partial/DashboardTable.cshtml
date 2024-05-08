@@ -54,7 +54,7 @@
 
 <div class="pagination d-flex justify-content-center align-content-center">
 
-    @if (Model.hasPrevious)
+    @if (Model.HasPrevious)
     {
         <button class="border-0 mx-1 page-item" onclick="loadPage(1)">❮❮</button>
         <button class="page-item mx-1 border-0" onclick="loadPage(@(Model.CurrentPage-1))">❮</button>
@@ -67,7 +67,7 @@
 
     <button class="page-item mx-1 active border-0">@Model.CurrentPage</button>
 
-    @if (Model.hasNext)
+    @if (Model.HasNext)
     {
         <button class="page-item mx-1 border-0" onclick="loadPage(@(Model.CurrentPage+1))">❯</button>
         <button class="page-item mx-1 border-0" onclick="loadPage(@Model.TotalPages)">❯❯</button>

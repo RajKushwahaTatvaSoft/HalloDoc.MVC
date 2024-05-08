@@ -1,12 +1,11 @@
 ﻿@model InvoicingTimeSheetViewModel
 
 @if (Model != null && Model.timeSheetRecords != null && Model.timeSheetRecords.Count() > 0)
-@* @if (true) *@
 {
 
-    <div>
+    <div class="table-responsive">
 
-        <table class="table mt-4  table-bordered">
+        <table class="table mt-4">
 
             <thead class="table-head">
 
@@ -43,6 +42,53 @@
 
         </table>
 
+
+        <div class="mt-3">
+
+            <h4>TimeSheet ReImbursement</h4>
+
+            <div id="invoicing-reimbursement-table">
+
+                @if (Model.receiptRecords != null && Model.receiptRecords.Count() > 0)
+                {
+
+                    <table class="table mt-4">
+
+                        <thead class="table-head">
+
+                            <tr class="">
+                                <th>Date</th>
+                                <th>Item</th>
+                                <th>Amount</th>
+                                <th>Bill</th>
+                                <th>Action</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            @foreach (var record in Model.receiptRecords)
+                            {
+                                <tr>
+                                    <td>@record.DateOfRecord.ToString("MMM dd, yyyy")</td>
+                                    <td>@record.ItemName</td>
+                                    <td>@record.Amount</td>
+                                    <td>@record.BillReceiptName</td>
+                                    <td>
+                                        <a href="@record.BillReceiptFilePath" target="_blank" class="btn btn-outline-info">View</a>
+                                    </td>
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                }
+
+            </div>
+        </div>
 
     </div>
 

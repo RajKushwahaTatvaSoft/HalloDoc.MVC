@@ -11,6 +11,9 @@ using Business_Layer.Utilities;
 using Business_Layer.Repository.IRepository;
 using Business_Layer.Services.Patient.Interface;
 using AspNetCoreHero.ToastNotification.Abstractions;
+using Data_Layer.CustomModels;
+using Data_Layer.CustomModels.TableRow.Patient;
+using Business_Layer.Services.Helper.Interface;
 
 namespace HalloDoc.MVC.Controllers
 {
@@ -20,27 +23,24 @@ namespace HalloDoc.MVC.Controllers
     {
         private readonly IWebHostEnvironment _environment;
         private readonly IConfiguration _config;
-        private readonly IPatientDashboardRepository _dashboardRepo;
+        private readonly IPatientDashboardService _dashboardRepo;
         private readonly IUnitOfWork _unitOfWork;
         private readonly INotyfService _notyf;
+        private readonly IUtilityService _utilityService;
 
-        public PatientController(IWebHostEnvironment environment, IConfiguration config, IPatientDashboardRepository patientDashboardRepository, IUnitOfWork unitwork, INotyfService notyfService)
+        public PatientController(IWebHostEnvironment environment, IUtilityService utilityService, IConfiguration config, IPatientDashboardService patientDashboardRepository, IUnitOfWork unitwork, INotyfService notyfService)
         {
             _environment = environment;
             _config = config;
             _dashboardRepo = patientDashboardRepository;
             _unitOfWork = unitwork;
             _notyf = notyfService;
+            _utilityService = utilityService;
         }
 
         public IActionResult Index()
         {
             return View();
-        }
-
-        public IActionResult PatientDashboardHeader()
-        {
-            return View("Dashboard/PatientDashboardHeader");
         }
 
         [HttpPost]
@@ -51,7 +51,7 @@ namespace HalloDoc.MVC.Controllers
 
             try
             {
-                var pagedList = await _dashboardRepo.GetPatientRequestsAsync(userId, page, pageSize);
+                PagedList<PatientDashboardTRow> pagedList = await _dashboardRepo.GetPatientRequestsAsync(userId, page, pageSize);
                 return PartialView("Partial/DashboardTable", pagedList);
             }
             catch (Exception ex)
@@ -64,173 +64,184 @@ namespace HalloDoc.MVC.Controllers
 
         public IActionResult Dashboard()
         {
-
-            int userId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-            string? userName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
-
-            if (userId == 0)
-            {
-                return View("Error");
-            }
-
-            PatientDashboardViewModel model = new PatientDashboardViewModel()
-            {
-                UserId = userId,
-                UserName = userName ?? "",
-            };
-
-            return View("Dashboard/Dashboard", model);
+            return View("Dashboard/Dashboard");
         }
 
         public IActionResult RequestForMe()
         {
-
-            int userId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-
-            if (userId == 0)
+            try
             {
-                return View("Error");
+
+                int userId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+
+                if (userId == 0)
+                {
+                    return View("Error");
+                }
+
+                User user = _unitOfWork.UserRepository.GetUserWithID((int)userId);
+
+                DateTime? dobDate = DateHelper.GetDOBDateTime(user.Intyear, user.Strmonth, user.Intdate);
+
+                IEnumerable<City> selectedCities = _unitOfWork.CityRepository.Where(city => city.Regionid == user.Regionid);
+                int? cityId = _unitOfWork.CityRepository.GetFirstOrDefault(city => city.Name == user.City)?.Id;
+
+                MeRequestViewModel model = new()
+                {
+                    UserId = user.Userid,
+                    FirstName = user.Firstname,
+                    LastName = user.Lastname,
+                    DOB = dobDate,
+                    Phone = user.Mobile,
+                    Email = user.Email,
+                    Street = user.Street,
+                    State = user.State,
+                    ZipCode = user.Zipcode,
+                    RegionId = user.Regionid,
+                    selectedRegionCities = selectedCities,
+                    CityId = cityId,
+                    regions = _unitOfWork.RegionRepository.GetAll(),
+                };
+
+                return View("Dashboard/RequestForMe", model);
             }
-
-            User user = _unitOfWork.UserRepository.GetUserWithID((int)userId);
-
-            DateTime? dobDate = DateHelper.GetDOBDateTime(user.Intyear, user.Strmonth, user.Intdate);
-
-
-            IEnumerable<City> selectedCities = _unitOfWork.CityRepository.Where(city => city.Regionid == user.Regionid);
-            int? cityId = _unitOfWork.CityRepository.GetFirstOrDefault(city => city.Name == user.City)?.Id;
-
-            MeRequestViewModel model = new()
+            catch (Exception ex)
             {
-                UserId = user.Userid,
-                FirstName = user.Firstname,
-                LastName = user.Lastname,
-                DOB = dobDate,
-                Phone = user.Mobile,
-                Email = user.Email,
-                Street = user.Street,
-                State = user.State,
-                ZipCode = user.Zipcode,
-                RegionId = user.Regionid,
-                selectedRegionCities = selectedCities,
-                CityId = cityId,
-                regions = _unitOfWork.RegionRepository.GetAll(),
-            };
-
-            return View("Dashboard/RequestForMe", model);
+                _notyf.Error(ex.Message);
+                return RedirectToAction("Dashboard");
+            }
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult RequestForMe(MeRequestViewModel meRequestViewModel)
         {
-
-            int userId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-
-            if (userId == 0)
-            {
-                return View("Error");
-            }
-
-            if (ModelState.IsValid)
+            try
             {
 
-                User user = _unitOfWork.UserRepository.GetUserWithID((int)userId);
-                string requestIpAddress = RequestHelper.GetRequestIP();
 
-                string phone = "+" + meRequestViewModel.Countrycode + '-' + meRequestViewModel.Phone;
+                int userId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
 
-                string phoneNumber = phone.Replace(" ", "");
-
-                string state = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == meRequestViewModel.RegionId).Name;
-                string city = _unitOfWork.CityRepository.GetFirstOrDefault(city => city.Id == meRequestViewModel.CityId).Name;
-
-                Request request = new()
+                if (userId == 0)
                 {
-                    Requesttypeid = 2,
-                    Userid = user.Userid,
-                    Confirmationnumber = GenerateConfirmationNumber(user),
-                    Firstname = meRequestViewModel.FirstName,
-                    Lastname = meRequestViewModel.LastName,
-                    Phonenumber = phoneNumber,
-                    Email = meRequestViewModel.Email,
-                    Status = (short)RequestStatus.Unassigned,
-                    Createddate = DateTime.Now,
-                    Patientaccountid = user.Aspnetuserid,
-                    Createduserid = user.Userid,
-                    Ip = requestIpAddress,
-                };
-
-                _unitOfWork.RequestRepository.Add(request);
-                _unitOfWork.Save();
-
-                //Adding request in RequestClient Table
-                Requestclient requestclient = new()
-                {
-                    Requestid = request.Requestid,
-                    Firstname = meRequestViewModel.FirstName,
-                    Lastname = meRequestViewModel.LastName,
-                    Phonenumber = phoneNumber,
-                    Email = meRequestViewModel.Email,
-                    Address = meRequestViewModel.Street,
-                    City = city,
-                    Regionid = meRequestViewModel.RegionId,
-                    State = state,
-                    Street = meRequestViewModel.Street,
-                    Strmonth = meRequestViewModel.DOB?.Month.ToString(),
-                    Intdate = meRequestViewModel.DOB?.Day,
-                    Intyear = meRequestViewModel.DOB?.Year,
-                    Zipcode = meRequestViewModel.ZipCode,
-                    Notes = meRequestViewModel.Symptom,
-                    Ip = requestIpAddress,
-                };
-
-                _unitOfWork.RequestClientRepository.Add(requestclient);
-                _unitOfWork.Save();
-
-                //Adding File Data in RequestWiseFile Table
-                if (meRequestViewModel.File != null)
-                {
-                    FileHelper.InsertFileForRequest(meRequestViewModel.File,_environment.WebRootPath,request.Requestid);
-
-                    Requestwisefile requestwisefile = new()
-                    {
-                        Requestid = request.Requestid,
-                        Createddate = DateTime.Now,
-                        Ip = requestIpAddress,
-                        Filename = meRequestViewModel.File.FileName,
-                    };
-
-                    _unitOfWork.RequestWiseFileRepository.Add(requestwisefile);
-                    _unitOfWork.Save();
+                    return View("Error");
                 }
 
-                _notyf.Success("Request Added Successfully.");
-                return RedirectToAction("Dashboard");
-            }
+                if (ModelState.IsValid)
+                {
 
-            meRequestViewModel.regions = _unitOfWork.RegionRepository.GetAll();
-            return View("Dashboard/RequestForMe", meRequestViewModel);
+                    User user = _unitOfWork.UserRepository.GetUserWithID((int)userId);
+                    string requestIpAddress = RequestHelper.GetRequestIP();
+
+                    string phone = "+" + meRequestViewModel.Countrycode + '-' + meRequestViewModel.Phone;
+
+                    string phoneNumber = phone.Replace(" ", "");
+
+                    string state = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == meRequestViewModel.RegionId).Name;
+                    string city = _unitOfWork.CityRepository.GetFirstOrDefault(city => city.Id == meRequestViewModel.CityId).Name;
+
+                    Request request = new()
+                    {
+                        Requesttypeid = 2,
+                        Userid = user.Userid,
+                        Confirmationnumber = _utilityService.GenerateConfirmationNumber(user),
+                        Firstname = meRequestViewModel.FirstName,
+                        Lastname = meRequestViewModel.LastName,
+                        Phonenumber = phoneNumber,
+                        Email = meRequestViewModel.Email,
+                        Status = (short)RequestStatus.Unassigned,
+                        Createddate = DateTime.Now,
+                        Patientaccountid = user.Aspnetuserid,
+                        Createduserid = user.Userid,
+                        Ip = requestIpAddress,
+                    };
+
+                    _unitOfWork.RequestRepository.Add(request);
+                    _unitOfWork.Save();
+
+                    //Adding request in RequestClient Table
+                    Requestclient requestclient = new()
+                    {
+                        Requestid = request.Requestid,
+                        Firstname = meRequestViewModel.FirstName,
+                        Lastname = meRequestViewModel.LastName,
+                        Phonenumber = phoneNumber,
+                        Email = meRequestViewModel.Email,
+                        Address = meRequestViewModel.Street,
+                        City = city,
+                        Regionid = meRequestViewModel.RegionId,
+                        State = state,
+                        Street = meRequestViewModel.Street,
+                        Strmonth = meRequestViewModel.DOB?.Month.ToString(),
+                        Intdate = meRequestViewModel.DOB?.Day,
+                        Intyear = meRequestViewModel.DOB?.Year,
+                        Zipcode = meRequestViewModel.ZipCode,
+                        Notes = meRequestViewModel.Symptom,
+                        Ip = requestIpAddress,
+                    };
+
+                    _unitOfWork.RequestClientRepository.Add(requestclient);
+                    _unitOfWork.Save();
+
+                    //Adding File Data in RequestWiseFile Table
+                    if (meRequestViewModel.File != null)
+                    {
+                        FileHelper.InsertFileForRequest(meRequestViewModel.File, _environment.WebRootPath, request.Requestid);
+
+                        Requestwisefile requestwisefile = new()
+                        {
+                            Requestid = request.Requestid,
+                            Createddate = DateTime.Now,
+                            Ip = requestIpAddress,
+                            Filename = meRequestViewModel.File.FileName,
+                        };
+
+                        _unitOfWork.RequestWiseFileRepository.Add(requestwisefile);
+                        _unitOfWork.Save();
+                    }
+
+                    _notyf.Success("Request Added Successfully.");
+                    return RedirectToAction("Dashboard");
+                }
+
+                meRequestViewModel.regions = _unitOfWork.RegionRepository.GetAll();
+                return View("Dashboard/RequestForMe", meRequestViewModel);
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                meRequestViewModel.regions = _unitOfWork.RegionRepository.GetAll();
+                return View("Dashboard/RequestForMe", meRequestViewModel);
+            }
         }
 
         public IActionResult RequestForSomeoneElse()
         {
-            int userId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-
-            if (userId == null)
+            try
             {
-                return View("Error");
+                int userId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+
+                if (userId == null)
+                {
+                    return View("Error");
+                }
+
+                User user = _unitOfWork.UserRepository.GetUserWithID((int)userId);
+
+                SomeoneElseRequestViewModel model = new()
+                {
+                    Username = user.Firstname + " " + user.Lastname,
+                    regions = _unitOfWork.RegionRepository.GetAll(),
+                };
+
+                return View("Dashboard/RequestForSomeoneElse", model);
+
             }
-
-            User user = _unitOfWork.UserRepository.GetUserWithID((int)userId);
-
-            SomeoneElseRequestViewModel model = new()
+            catch (Exception ex)
             {
-                Username = user.Firstname + " " + user.Lastname,
-                regions = _unitOfWork.RegionRepository.GetAll(),
-            };
-
-            return View("Dashboard/RequestForSomeoneElse", model);
+                _notyf.Error(ex.Message);
+                return RedirectToAction("Dashboard");
+            }
         }
 
         [HttpPost]
@@ -249,189 +260,18 @@ namespace HalloDoc.MVC.Controllers
 
                 if (ModelState.IsValid)
                 {
-                    bool isUserExists = _unitOfWork.UserRepository.IsUserWithEmailExists(srvm.patientDetails.Email);
 
-                    User relationUser = _unitOfWork.UserRepository.GetUserWithID((int)userId);
-                    string requestIpAddress = RequestHelper.GetRequestIP();
-                    string phoneNumber = "+" + srvm.patientDetails.Countrycode + '-' + srvm.patientDetails.Phone;
-                    string? state = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == srvm.patientDetails.RegionId)?.Name;
-                    string? city = _unitOfWork.CityRepository.GetFirstOrDefault(city => city.Id == srvm.patientDetails.CityId)?.Name;
+                    ServiceResponse response = _dashboardRepo.SubmitRequestForSomeoneElse(srvm, userId);
 
-                    User? user = null;
-
-                    if (!isUserExists)
+                    if (response.StatusCode == ResponseCode.Success)
                     {
-
-                        Guid generatedId = Guid.NewGuid();
-
-                        // Creating Patient in Aspnetusers Table
-                        Aspnetuser aspnetuser = new()
-                        {
-                            Id = generatedId.ToString(),
-                            Username = srvm.patientDetails.Email!,
-                            Email = srvm.patientDetails.Email,
-                            Phonenumber = phoneNumber,
-                            Createddate = DateTime.Now,
-                            Ip = requestIpAddress,
-                            Accounttypeid = (int)AccountType.Patient,
-                        };
-
-                        _unitOfWork.AspNetUserRepository.Add(aspnetuser);
-                        _unitOfWork.Save();
-
-                        // Creating Patient in User Table
-                        user = new()
-                        {
-                            Aspnetuserid = generatedId.ToString(),
-                            Firstname = srvm.patientDetails.FirstName,
-                            Lastname = srvm.patientDetails.LastName,
-                            Email = srvm.patientDetails.Email,
-                            Mobile = phoneNumber,
-                            Street = srvm.patientDetails.Street,
-                            City = city,
-                            Regionid = srvm.patientDetails.RegionId,
-                            State = state,
-                            Zipcode = srvm.patientDetails.ZipCode,
-                            Createddate = DateTime.Now,
-                            Createdby = generatedId.ToString(),
-                            Ip = requestIpAddress,
-                            Intdate = srvm.patientDetails.DOB.Value.Day,
-                            Strmonth = srvm.patientDetails.DOB.Value.Month.ToString(),
-                            Intyear = srvm.patientDetails.DOB.Value.Year,
-                        };
-
-                        _unitOfWork.UserRepository.Add(user);
-                        _unitOfWork.Save();
-
-                        SendMailForCreateAccount(srvm.patientDetails.Email);
-
-
-                        Request request = new()
-                        {
-                            Requesttypeid = (int)RequestType.Family,
-                            Userid = relationUser.Userid,
-                            Confirmationnumber = GenerateConfirmationNumber(user),
-                            Firstname = relationUser.Firstname,
-                            Lastname = relationUser.Lastname,
-                            Phonenumber = relationUser.Mobile,
-                            Email = relationUser.Email,
-                            Status = (short)RequestStatus.Unassigned,
-                            Createddate = DateTime.Now,
-                            Patientaccountid = user.Aspnetuserid,
-                            Createduserid = user.Userid,
-                            Ip = requestIpAddress,
-                        };
-
-                        _unitOfWork.RequestRepository.Add(request);
-                        _unitOfWork.Save();
-
-                        //Adding request in RequestClient Table
-                        Requestclient requestclient = new()
-                        {
-                            Requestid = request.Requestid,
-                            Firstname = srvm.patientDetails.FirstName,
-                            Lastname = srvm.patientDetails.LastName,
-                            Phonenumber = phoneNumber,
-                            Email = srvm.patientDetails.Email,
-                            Address = srvm.patientDetails.Street,
-                            City = city,
-                            Regionid = srvm.patientDetails.RegionId,
-                            State = state,
-                            Strmonth = srvm.patientDetails.DOB?.Month.ToString(),
-                            Intdate = srvm.patientDetails.DOB?.Day,
-                            Intyear = srvm.patientDetails.DOB?.Year,
-                            Zipcode = srvm.patientDetails.ZipCode,
-                            Notes = srvm.patientDetails.Symptom,
-                            Ip = requestIpAddress,
-                        };
-
-                        _unitOfWork.RequestClientRepository.Add(requestclient);
-                        _unitOfWork.Save();
-
-                        //Adding File Data in RequestWiseFile Table
-                        if (srvm.patientDetails.File != null)
-                        {
-                            FileHelper.InsertFileForRequest(srvm.patientDetails.File, _environment.WebRootPath, request.Requestid);
-
-                            Requestwisefile requestwisefile = new()
-                            {
-                                Requestid = request.Requestid,
-                                Createddate = DateTime.Now,
-                                Ip = requestIpAddress,
-                                Filename = srvm.patientDetails.File.FileName,
-                            };
-
-                            _unitOfWork.RequestWiseFileRepository.Add(requestwisefile);
-                            _unitOfWork.Save();
-                        }
-
-                    }
-                    else
-                    {
-
-                        user = _unitOfWork.UserRepository.GetUserWithEmail(srvm.patientDetails.Email);
-
-                        Request request = new()
-                        {
-                            Requesttypeid = (int)RequestType.Family,
-                            Userid = relationUser.Userid,
-                            Confirmationnumber = GenerateConfirmationNumber(user),
-                            Firstname = relationUser.Firstname,
-                            Lastname = relationUser.Lastname,
-                            Phonenumber = relationUser.Mobile,
-                            Email = relationUser.Email,
-                            Status = (short)RequestStatus.Unassigned,
-                            Createddate = DateTime.Now,
-                            Patientaccountid = user.Aspnetuserid,
-                            Createduserid = user.Userid,
-                            Ip = requestIpAddress,
-                        };
-
-                        _unitOfWork.RequestRepository.Add(request);
-                        _unitOfWork.Save();
-
-                        //Adding request in RequestClient Table
-                        Requestclient requestclient = new()
-                        {
-                            Requestid = request.Requestid,
-                            Firstname = srvm.patientDetails.FirstName,
-                            Lastname = srvm.patientDetails.LastName,
-                            Phonenumber = phoneNumber,
-                            Email = srvm.patientDetails.Email,
-                            Address = srvm.patientDetails.Street,
-                            City = city,
-                            Regionid = srvm.patientDetails.RegionId,
-                            State = state,
-                            Zipcode = srvm.patientDetails.ZipCode,
-                            Notes = srvm.patientDetails.Symptom,
-                            Ip = requestIpAddress,
-                        };
-
-                        _unitOfWork.RequestClientRepository.Add(requestclient);
-                        _unitOfWork.Save();
-
-                        //Adding File Data in RequestWiseFile Table
-                        if (srvm.patientDetails.File != null)
-                        {
-                            FileHelper.InsertFileForRequest(srvm.patientDetails.File, _environment.WebRootPath, request.Requestid);
-
-                            Requestwisefile requestwisefile = new()
-                            {
-                                Requestid = request.Requestid,
-                                Createddate = DateTime.Now,
-                                Ip = requestIpAddress,
-                                Filename = srvm.patientDetails.File.FileName,
-                            };
-
-                            _unitOfWork.RequestWiseFileRepository.Add(requestwisefile);
-                            _unitOfWork.Save();
-                        }
-
+                        _notyf.Success("Request Added Successfully");
+                        return RedirectToAction("Dashboard");
                     }
 
-                    _notyf.Success("Request Added Successfully");
-
-                    return RedirectToAction("Dashboard");
+                    _notyf.Error(response.Message);
+                    srvm.regions = _unitOfWork.RegionRepository.GetAll();
+                    return View("Dashboard/RequestForSomeoneElse", srvm);
 
                 }
 
@@ -658,71 +498,6 @@ namespace HalloDoc.MVC.Controllers
             }
         }
 
-        public void SendMailForCreateAccount(string email)
-        {
-            try
-            {
-                Aspnetuser aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(user => user.Email == email);
-
-                string createAccToken = Guid.NewGuid().ToString();
-
-                Passtoken passtoken = new Passtoken()
-                {
-                    Aspnetuserid = aspUser.Id,
-                    Createddate = DateTime.Now,
-                    Email = email,
-                    Isdeleted = false,
-                    Isresettoken = true,
-                    Uniquetoken = createAccToken,
-                };
-
-                _unitOfWork.PassTokenRepository.Add(passtoken);
-                _unitOfWork.Save();
-
-                var createLink = Url.Action("CreateAccount", "Patient", new { token = createAccToken }, Request.Scheme);
-
-                string senderEmail = _config.GetSection("OutlookSMTP")["Sender"];
-                string senderPassword = _config.GetSection("OutlookSMTP")["Password"];
-
-                SmtpClient client = new SmtpClient("smtp.office365.com")
-                {
-                    Port = 587,
-                    Credentials = new NetworkCredential(senderEmail, senderPassword),
-                    EnableSsl = true,
-                    DeliveryMethod = SmtpDeliveryMethod.Network,
-                    UseDefaultCredentials = false
-                };
-
-                MailMessage mailMessage = new MailMessage
-                {
-                    From = new MailAddress(senderEmail, "HalloDoc"),
-                    Subject = "Set up your Account",
-                    IsBodyHtml = true,
-                    Body = "<h1>Create Account By clicking below</h1><a href=\"" + createLink + "\" >Create Account link</a>",
-                };
-
-                mailMessage.To.Add(email);
-
-                client.Send(mailMessage);
-                _notyf.Success("Email has been successfully sent to " + email + " for create account link.");
-            }
-            catch (Exception ex)
-            {
-                _notyf.Error(ex.Message);
-            }
-        }
-
-
-        public string GenerateConfirmationNumber(User user)
-        {
-            string regionAbbr = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == user.Regionid).Abbreviation;
-
-            DateTime todayStart = DateTime.Now.Date;
-            int count = _unitOfWork.RequestRepository.Where(req => req.Createddate > todayStart).Count();
-
-            string confirmationNumber = regionAbbr + user.Createddate.Date.ToString("D2") + user.Createddate.Month.ToString("D2") + user.Lastname.Substring(0, 2).ToUpper() + user.Firstname.Substring(0, 2).ToUpper() + (count + 1).ToString("D4");
-            return confirmationNumber;
-        }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()

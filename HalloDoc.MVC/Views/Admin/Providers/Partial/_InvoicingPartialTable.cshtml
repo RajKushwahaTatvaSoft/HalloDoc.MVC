@@ -1,0 +1,47 @@
+﻿@model InvoicingTimeSheetViewModel
+
+@if(Model == null)
+{
+    <h4>Time sheet not created yet.</h4>
+}
+else if (!Model.IsFinalized)
+{
+    <h4>@Model.TextToShow</h4>
+}
+else if (!Model.IsApproved)
+{
+    <div id="admin-pending-timesheet">
+
+        <table class="table mt-4">
+
+            <thead class="table-head">
+
+                <tr class="">
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                <tr>
+                    <td>@Model.StartDate.ToString("MMM dd,yyyy")</td>
+                    <td>@Model.EndDate.ToString("MMM dd,yyyy")</td>
+                    <td>Pending</td>
+                    <td>
+                        <a class="btn btn-outline-info text-info" asp-action="ApproveTimeSheetForm" asp-route-timesheetId="@Model.TimeSheetId" >Approve</a>
+                    </td>
+                </tr>
+            </tbody>
+
+        </table>
+
+    </div>
+}
+else
+{
+    <h4>Invoicing Table</h4>
+}

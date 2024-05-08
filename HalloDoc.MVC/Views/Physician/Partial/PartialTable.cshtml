@@ -206,7 +206,7 @@
 
 <div class="pagination d-flex justify-content-center align-content-center">
 
-    @if (Model.pagedList.hasPrevious)
+    @if (Model.pagedList.HasPrevious)
     {
         <button class="border-0 mx-1 page-item" onclick="loadPage(1)">❮❮</button>
         <button class="page-item mx-1 border-0" onclick="loadPreviousPage(@Model.CurrentPage)">❮</button>
@@ -219,7 +219,7 @@
 
     <button class="page-item mx-1 active border-0">@Model.CurrentPage</button>
 
-    @if (Model.pagedList.hasNext)
+    @if (Model.pagedList.HasNext)
     {
         <button class="page-item mx-1 border-0" onclick="loadNextPage(@Model.CurrentPage)">❯</button>
         <button class="page-item mx-1 border-0" onclick="loadPage(@Model.pagedList.TotalPages)">❯❯</button>

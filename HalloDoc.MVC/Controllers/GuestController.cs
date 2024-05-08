@@ -46,105 +46,35 @@ namespace HalloDoc.MVC.Controllers
 
         public IActionResult Index()
         {
-            string? token = HttpContext.Request.Cookies["hallodoc"];
-            if (token == null)
-            {
-                return View();
-            }
-
-            bool isTokenValid = _jwtService.ValidateToken(token, out JwtSecurityToken jwtToken);
-            if (!isTokenValid)
-            {
-                return View();
-            }
-
-            Claim? roleClaim = jwtToken.Claims.FirstOrDefault(claims => claims.Type == "accountTypeId");
-            int roleId = Convert.ToInt32(roleClaim?.Value);
-
-            if (roleId == (int)AccountType.Patient)
-            {
-                return RedirectToAction("Dashboard", "Patient");
-            }
-            else if (roleId == (int)AccountType.Physician)
-            {
-                return RedirectToAction("Dashboard", "Physician");
-            }
-            else if (roleId == (int)AccountType.Admin)
-            {
-                return RedirectToAction("Dashboard", "Admin");
-            }
-
-            return View();
-
-        }
-
-        // email token isdeleted createddate aspnetuserid expirydate
-        [HttpGet]
-        public IActionResult CreateAccount(string token)
-        {
             try
             {
-                bool isTokenValid = _unitOfWork.PassTokenRepository.ValidatePassToken(token, false, out string errorMessage);
 
+                string? token = HttpContext.Request.Cookies["hallodoc"];
+                if (token == null)
+                {
+                    return View();
+                }
+
+                bool isTokenValid = _jwtService.ValidateToken(token, out JwtSecurityToken jwtToken);
                 if (!isTokenValid)
                 {
-                    _notyf.Error(errorMessage);
-                    return View("Index");
+                    return View();
                 }
 
-                ForgotPasswordViewModel fpvm = new ForgotPasswordViewModel();
-                Passtoken? pass = _unitOfWork.PassTokenRepository.GetFirstOrDefault(pass => pass.Uniquetoken == token);
+                Claim? roleClaim = jwtToken.Claims.FirstOrDefault(claims => claims.Type == "accountTypeId");
+                int roleId = Convert.ToInt32(roleClaim?.Value);
 
-                fpvm.Email = pass?.Email;
-
-                return View("Patient/CreateAccount", fpvm);
-
-
-            }
-            catch (Exception ex)
-            {
-                return Content(ex.Message);
-            }
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult CreateAccount(ForgotPasswordViewModel fpvm)
-        {
-            try
-            {
-                Aspnetuser? user = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(u => u.Email == fpvm.Email);
-
-                if (user == null)
+                if (roleId == (int)AccountType.Patient)
                 {
-                    _notyf.Error("User doesn't exists. Please try again.");
-                    return NotFound("Error");
+                    return RedirectToAction("Dashboard", "Patient");
                 }
-
-                if (ModelState.IsValid)
+                else if (roleId == (int)AccountType.Physician)
                 {
-                    string passHash = GenerateSHA256(fpvm.Password);
-                    user.Passwordhash = passHash;
-                    user.Modifieddate = DateTime.Now;
-
-                    _unitOfWork.AspNetUserRepository.Update(user);
-                    _unitOfWork.Save();
-
-                    Passtoken? token = _unitOfWork.PassTokenRepository.GetFirstOrDefault(pass => pass.Email == fpvm.Email);
-
-                    if (token == null)
-                    {
-                        _notyf.Error("Token not found");
-                        return RedirectToAction("Login");
-                    }
-
-                    token.Isdeleted = true;
-                    _unitOfWork.PassTokenRepository.Update(token);
-                    _unitOfWork.Save();
-
-                    _notyf.Success("Account Successfully Created.");
-                    return RedirectToAction("Login");
-
+                    return RedirectToAction("Dashboard", "Physician");
+                }
+                else if (roleId == (int)AccountType.Admin)
+                {
+                    return RedirectToAction("Dashboard", "Admin");
                 }
 
                 return View();
@@ -153,339 +83,16 @@ namespace HalloDoc.MVC.Controllers
             catch (Exception ex)
             {
                 _notyf.Error(ex.Message);
-                return View("Index");
+                return View("Error");
             }
-        }
-
-        public IActionResult SubmitRequest()
-        {
-            return View("Request/SubmitRequest");
         }
 
         public IActionResult AccessDenied()
         {
-            ViewData["page"] = "Access Denied";
             return View();
         }
 
-        public static string GenerateSHA256(string input)
-        {
-            var bytes = Encoding.UTF8.GetBytes(input);
-            using (var hashEngine = SHA256.Create())
-            {
-                var hashedBytes = hashEngine.ComputeHash(bytes, 0, bytes.Length);
-                var sb = new StringBuilder();
-                foreach (var b in hashedBytes)
-                {
-                    var hex = b.ToString("x2");
-                    sb.Append(hex);
-                }
-                return sb.ToString();
-            }
-        }
-
-        // GET
-        public IActionResult Login()
-        {
-            return View();
-        }
-
-        // POST
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult Login(LoginViewModel loginUser)
-        {
-            if (ModelState.IsValid)
-            {
-                var passHash = GenerateSHA256(loginUser.Password);
-                Aspnetuser? aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(aspnetuser => aspnetuser.Email == loginUser.UserName && aspnetuser.Passwordhash == passHash);
-
-                if (aspUser == null)
-                {
-                    _notyf.Error("User doesn't exists");
-                    return View();
-                }
-
-                SessionUser sessionUser = new SessionUser();
-                string controller = "";
-
-                if (aspUser.Accounttypeid == (int)AccountType.Patient)
-                {
-
-                    User? patientUser = _unitOfWork.UserRepository.GetFirstOrDefault(u => u.Aspnetuserid == aspUser.Id);
-                    if (patientUser == null)
-                    {
-                        _notyf.Error("Patient doesn't exists");
-                        return View();
-                    }
-
-                    sessionUser = new SessionUser()
-                    {
-                        UserId = patientUser.Userid,
-                        UserAspId = aspUser.Id,
-                        Email = patientUser.Email,
-                        AccountTypeId = aspUser.Accounttypeid,
-                        RoleId = 0,
-                        UserName = patientUser.Firstname + (String.IsNullOrEmpty(patientUser.Lastname) ? "" : " " + patientUser.Lastname),
-                    };
-
-
-                    controller = "Patient";
-                }
-                else if (aspUser.Accounttypeid == (int)AccountType.Physician)
-                {
-
-                    Physician? physicianUser = _unitOfWork.PhysicianRepository.GetFirstOrDefault(u => u.Aspnetuserid == aspUser.Id);
-                    if (physicianUser == null)
-                    {
-                        _notyf.Error("Physician doesn't exists");
-                        return View();
-                    }
-
-                    sessionUser = new SessionUser()
-                    {
-                        UserId = physicianUser.Physicianid,
-                        UserAspId = aspUser.Id,
-                        Email = physicianUser.Email,
-                        AccountTypeId = aspUser.Accounttypeid,
-                        RoleId = physicianUser.Roleid ?? 0,
-                        UserName = physicianUser.Firstname + (String.IsNullOrEmpty(physicianUser.Lastname) ? "" : " " + physicianUser.Lastname),
-                    };
-
-
-                    controller = "Physician";
-                }
-                else if (aspUser.Accounttypeid == (int)AccountType.Admin)
-                {
-
-                    Admin? adminUser = _unitOfWork.AdminRepository.GetFirstOrDefault(u => u.Aspnetuserid == aspUser.Id);
-                    if (adminUser == null)
-                    {
-                        _notyf.Error("Admin doesn't exists");
-                        return View();
-                    }
-
-                    sessionUser = new SessionUser()
-                    {
-                        UserId = adminUser.Adminid,
-                        UserAspId = aspUser.Id,
-                        Email = adminUser.Email,
-                        AccountTypeId = aspUser.Accounttypeid,
-                        RoleId = adminUser.Roleid ?? 0,
-                        UserName = adminUser.Firstname + (String.IsNullOrEmpty(adminUser.Lastname) ? "" : " " + adminUser.Lastname),
-                    };
-
-                    controller = "Admin";
-
-                }
-
-                _notyf.Success("Login Successfull", 3);
-                string jwtToken = _jwtService.GenerateJwtToken(sessionUser);
-                Response.Cookies.Append("hallodoc", jwtToken);
-
-                return RedirectToAction("Dashboard", controller);
-            }
-
-
-            _notyf.Error("Invalid Username or Password");
-
-            return View();
-
-        }
-
-
-        //GET
-        public IActionResult PatientRequest()
-        {
-            PatientRequestViewModel model = new PatientRequestViewModel()
-            {
-                regions = _unitOfWork.RegionRepository.GetAll(),
-            };
-
-            return View("Request/PatientRequest", model);
-        }
-
-        //POST
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult PatientRequest(PatientRequestViewModel userViewModel)
-        {
-            if (ModelState.IsValid)
-            {
-                ServiceResponse result = _requestService.SubmitPatientRequest(userViewModel);
-
-                if (result.StatusCode == ResponseCode.Success)
-                {
-                    _notyf.Success(result.Message);
-
-                    return RedirectToAction("Login");
-                }
-                else
-                {
-                    _notyf.Error(result.Message);
-                }
-            }
-
-            userViewModel.Phone = "+" + userViewModel.Countrycode + '-' + userViewModel.Phone;
-            userViewModel.regions = _unitOfWork.RegionRepository.GetAll();
-            userViewModel.IsValidated = true;
-            return View("Request/PatientRequest", userViewModel);
-
-        }
-
-        public void InsertRequestWiseFile(IFormFile document)
-        {
-            string path = _environment.WebRootPath + "/document/patient";
-            string fileName = document.FileName;
-
-            if (!Directory.Exists(path))
-            {
-                Directory.CreateDirectory(path);
-            }
-            string fullPath = Path.Combine(path, fileName);
-
-            using FileStream stream = new(fullPath, FileMode.Create);
-            document.CopyTo(stream);
-        }
-
-        public static string GetRequestIP()
-        {
-            string ip = "127.0.0.1";
-            return ip;
-        }
-
-        [HttpPost]
-        public JsonResult PatientCheckEmail(string email)
-        {
-            bool emailExists = _unitOfWork.AspNetUserRepository.IsUserWithEmailExists(email);
-            return Json(new { exists = emailExists });
-        }
-
-        public IActionResult FamilyFriendRequest()
-        {
-            FamilyFriendRequestViewModel model = new FamilyFriendRequestViewModel();
-            model.regions = _unitOfWork.RegionRepository.GetAll();
-            return View("Request/FamilyFriendRequest", model);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult FamilyFriendRequest(FamilyFriendRequestViewModel friendViewModel)
-        {
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-
-                    string? createLink = Url.Action("CreateAccount", "Guest", null, Request.Scheme);
-                    ServiceResponse response = _requestService.SubmitFamilyFriendRequest(friendViewModel, createLink);
-
-                    if (response.StatusCode == ResponseCode.Success)
-                    {
-                        _notyf.Success(response.Message);
-                        return RedirectToAction("Index");
-                    }
-                    else
-                    {
-                        _notyf.Error(response.Message);
-                    }
-
-                }
-                catch (Exception ex)
-                {
-                    _notyf.Error(ex.Message);
-                }
-            }
-
-            friendViewModel.regions = _unitOfWork.RegionRepository.GetAll();
-            friendViewModel.IsValidated = true;
-
-            return View("Request/FamilyFriendRequest", friendViewModel);
-        }
-
-        public IActionResult ConciergeRequest()
-        {
-            ConciergeRequestViewModel model = new ConciergeRequestViewModel();
-            model.regions = _unitOfWork.RegionRepository.GetAll();
-            return View("Request/ConciergeRequest", model);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult ConciergeRequest(ConciergeRequestViewModel conciergeViewModel)
-        {
-            if (ModelState.IsValid)
-            {
-                try
-                {
-
-                    string? createLink = Url.Action("CreateAccount", "Guest", null, Request.Scheme);
-                    ServiceResponse response = _requestService.SubmitConciergeRequest(conciergeViewModel, createLink);
-
-                    if (response.StatusCode == ResponseCode.Success)
-                    {
-                        _notyf.Success(response.Message);
-                        return RedirectToAction("Index");
-                    }
-                    else
-                    {
-                        _notyf.Error(response.Message);
-                    }
-
-                }
-                catch (Exception ex)
-                {
-                    _notyf.Error(ex.Message);
-                }
-            }
-
-            conciergeViewModel.regions = _unitOfWork.RegionRepository.GetAll();
-            conciergeViewModel.IsValidated = true;
-            return View("Request/ConciergeRequest", conciergeViewModel);
-        }
-
-        public IActionResult BusinessRequest()
-        {
-            BusinessRequestViewModel model = new BusinessRequestViewModel();
-            model.regions = _unitOfWork.RegionRepository.GetAll();
-            return View("Request/BusinessRequest", model);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult BusinessRequest(BusinessRequestViewModel businessViewModel)
-        {
-            if (ModelState.IsValid)
-            {
-                try
-                {
-
-                    string? createLink = Url.Action("CreateAccount", "Guest", null, Request.Scheme);
-                    ServiceResponse response = _requestService.SubmitBusinessRequest(businessViewModel, createLink);
-
-                    if (response.StatusCode == ResponseCode.Success)
-                    {
-                        _notyf.Success(response.Message);
-                        return RedirectToAction("Index");
-                    }
-                    else
-                    {
-                        _notyf.Error(response.Message);
-                    }
-
-                }
-                catch (Exception ex)
-                {
-                    _notyf.Error(ex.Message);
-                }
-
-            }
-
-            businessViewModel.regions = _unitOfWork.RegionRepository.GetAll();
-            businessViewModel.IsValidated = true;
-            return View("Request/BusinessRequest", businessViewModel);
-        }
+        #region Review Agreement
 
         public IActionResult ReviewAgreement(string requestId)
         {
@@ -522,7 +129,6 @@ namespace HalloDoc.MVC.Controllers
                 return View("Index");
             }
         }
-
 
         [HttpPost]
         public bool AcceptAgreement(int requestId)
@@ -637,17 +243,381 @@ namespace HalloDoc.MVC.Controllers
             }
         }
 
+        #endregion
 
-        public string GenerateConfirmationNumber(User user)
+        #region Create Requests
+
+        public IActionResult SubmitRequest()
         {
-            string regionAbbr = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == user.Regionid).Abbreviation;
-
-            DateTime todayStart = DateTime.Now.Date;
-            int count = _unitOfWork.RequestRepository.Where(req => req.Createddate > todayStart).Count();
-
-            string confirmationNumber = regionAbbr + user.Createddate.Day.ToString("D2") + user.Createddate.Month.ToString("D2") + (user.Lastname?.Substring(0, 2).ToUpper() ?? "NA") + user.Firstname.Substring(0, 2).ToUpper() + (count + 1).ToString("D4");
-            return confirmationNumber;
+            return View("Request/SubmitRequest");
         }
+
+
+        //GET
+        public IActionResult PatientRequest()
+        {
+            try
+            {
+
+                PatientRequestViewModel model = new PatientRequestViewModel()
+                {
+                    regions = _unitOfWork.RegionRepository.GetAll(),
+                };
+
+                return View("Request/PatientRequest", model);
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return RedirectToAction("SubmitRequest");
+            }
+
+        }
+
+        //POST
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult PatientRequest(PatientRequestViewModel userViewModel)
+        {
+            try
+            {
+
+                if (ModelState.IsValid)
+                {
+                    ServiceResponse result = _requestService.SubmitPatientRequest(userViewModel);
+
+                    if (result.StatusCode == ResponseCode.Success)
+                    {
+                        _notyf.Success(result.Message);
+
+                        return RedirectToAction("Login");
+                    }
+                    else
+                    {
+                        _notyf.Error(result.Message);
+                    }
+                }
+
+                userViewModel.Phone = "+" + userViewModel.Countrycode + '-' + userViewModel.Phone;
+                userViewModel.regions = _unitOfWork.RegionRepository.GetAll();
+                userViewModel.IsValidated = true;
+                return View("Request/PatientRequest", userViewModel);
+
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                userViewModel.Phone = "+" + userViewModel.Countrycode + '-' + userViewModel.Phone;
+                userViewModel.regions = _unitOfWork.RegionRepository.GetAll();
+                userViewModel.IsValidated = true;
+                return View("Request/PatientRequest", userViewModel);
+            }
+
+        }
+
+        public IActionResult FamilyFriendRequest()
+        {
+            try
+            {
+                FamilyFriendRequestViewModel model = new FamilyFriendRequestViewModel();
+                model.regions = _unitOfWork.RegionRepository.GetAll();
+                return View("Request/FamilyFriendRequest", model);
+
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return RedirectToAction("SubmitRequest");
+            }
+
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult FamilyFriendRequest(FamilyFriendRequestViewModel friendViewModel)
+        {
+            try
+            {
+
+
+                if (ModelState.IsValid)
+                {
+
+                    string? createLink = Url.Action("CreateAccount", "Guest", null, Request.Scheme);
+                    ServiceResponse response = _requestService.SubmitFamilyFriendRequest(friendViewModel, createLink);
+
+                    if (response.StatusCode == ResponseCode.Success)
+                    {
+                        _notyf.Success(response.Message);
+                        return RedirectToAction("Index");
+                    }
+
+                    _notyf.Error(response.Message);
+                    friendViewModel.regions = _unitOfWork.RegionRepository.GetAll();
+                    friendViewModel.IsValidated = true;
+
+                    return View("Request/FamilyFriendRequest", friendViewModel);
+
+                }
+
+                _notyf.Error("Please enter valid details");
+                friendViewModel.regions = _unitOfWork.RegionRepository.GetAll();
+                friendViewModel.IsValidated = true;
+
+                return View("Request/FamilyFriendRequest", friendViewModel);
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                friendViewModel.regions = _unitOfWork.RegionRepository.GetAll();
+                friendViewModel.IsValidated = true;
+                return View("Request/FamilyFriendRequest", friendViewModel);
+            }
+        }
+
+        public IActionResult ConciergeRequest()
+        {
+            try
+            {
+
+                ConciergeRequestViewModel model = new ConciergeRequestViewModel();
+                model.regions = _unitOfWork.RegionRepository.GetAll();
+                return View("Request/ConciergeRequest", model);
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return RedirectToAction("SubmitRequest");
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ConciergeRequest(ConciergeRequestViewModel conciergeViewModel)
+        {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+
+                    string? createLink = Url.Action("CreateAccount", "Guest", null, Request.Scheme);
+                    ServiceResponse response = _requestService.SubmitConciergeRequest(conciergeViewModel, createLink);
+
+                    if (response.StatusCode == ResponseCode.Success)
+                    {
+                        _notyf.Success(response.Message);
+                        return RedirectToAction("Index");
+                    }
+                    else
+                    {
+                        _notyf.Error(response.Message);
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    _notyf.Error(ex.Message);
+                }
+            }
+
+            conciergeViewModel.regions = _unitOfWork.RegionRepository.GetAll();
+            conciergeViewModel.IsValidated = true;
+            return View("Request/ConciergeRequest", conciergeViewModel);
+        }
+
+        public IActionResult BusinessRequest()
+        {
+            try
+            {
+                BusinessRequestViewModel model = new BusinessRequestViewModel();
+                model.regions = _unitOfWork.RegionRepository.GetAll();
+                return View("Request/BusinessRequest", model);
+
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return RedirectToAction("SubmitRequest");
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult BusinessRequest(BusinessRequestViewModel businessViewModel)
+        {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+
+                    string? createLink = Url.Action("CreateAccount", "Guest", null, Request.Scheme);
+                    ServiceResponse response = _requestService.SubmitBusinessRequest(businessViewModel, createLink);
+
+                    if (response.StatusCode == ResponseCode.Success)
+                    {
+                        _notyf.Success(response.Message);
+                        return RedirectToAction("Index");
+                    }
+                    else
+                    {
+                        _notyf.Error(response.Message);
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    _notyf.Error(ex.Message);
+                }
+
+            }
+
+            businessViewModel.regions = _unitOfWork.RegionRepository.GetAll();
+            businessViewModel.IsValidated = true;
+            return View("Request/BusinessRequest", businessViewModel);
+        }
+
+
+        #endregion
+
+        #region Account Based
+
+        #region Login
+
+
+        // GET
+        public IActionResult Login()
+        {
+            return View();
+        }
+
+        // POST
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Login(LoginViewModel loginUser)
+        {
+            try
+            {
+
+
+                if (ModelState.IsValid)
+                {
+                    var passHash = AuthHelper.GenerateSHA256(loginUser.Password);
+                    Aspnetuser? aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(aspnetuser => aspnetuser.Email == loginUser.UserName && aspnetuser.Passwordhash == passHash);
+
+                    if (aspUser == null)
+                    {
+                        _notyf.Error("User doesn't exists");
+                        return View();
+                    }
+
+                    SessionUser sessionUser = new SessionUser();
+                    string controller = "";
+
+                    switch (aspUser.Accounttypeid)
+                    {
+                        case (int)AccountType.Patient:
+                            break;
+
+                        case (int)AccountType.Physician:
+                            break;
+
+                        case (int)AccountType.Admin:
+                            break;
+                    }
+
+                    if (aspUser.Accounttypeid == (int)AccountType.Patient)
+                    {
+
+                        User? patientUser = _unitOfWork.UserRepository.GetFirstOrDefault(u => u.Aspnetuserid == aspUser.Id);
+                        if (patientUser == null)
+                        {
+                            _notyf.Error("Patient doesn't exists");
+                            return View();
+                        }
+
+                        sessionUser = new SessionUser()
+                        {
+                            UserId = patientUser.Userid,
+                            UserAspId = aspUser.Id,
+                            Email = patientUser.Email,
+                            AccountTypeId = aspUser.Accounttypeid,
+                            RoleId = 0,
+                            UserName = patientUser.Firstname + (String.IsNullOrEmpty(patientUser.Lastname) ? "" : " " + patientUser.Lastname),
+                        };
+
+
+                        controller = "Patient";
+                    }
+                    else if (aspUser.Accounttypeid == (int)AccountType.Physician)
+                    {
+
+                        Physician? physicianUser = _unitOfWork.PhysicianRepository.GetFirstOrDefault(u => u.Aspnetuserid == aspUser.Id);
+                        if (physicianUser == null)
+                        {
+                            _notyf.Error("Physician doesn't exists");
+                            return View();
+                        }
+
+                        sessionUser = new SessionUser()
+                        {
+                            UserId = physicianUser.Physicianid,
+                            UserAspId = aspUser.Id,
+                            Email = physicianUser.Email,
+                            AccountTypeId = aspUser.Accounttypeid,
+                            RoleId = physicianUser.Roleid ?? 0,
+                            UserName = physicianUser.Firstname + (String.IsNullOrEmpty(physicianUser.Lastname) ? "" : " " + physicianUser.Lastname),
+                        };
+
+
+                        controller = "Physician";
+                    }
+                    else if (aspUser.Accounttypeid == (int)AccountType.Admin)
+                    {
+
+                        Admin? adminUser = _unitOfWork.AdminRepository.GetFirstOrDefault(u => u.Aspnetuserid == aspUser.Id);
+                        if (adminUser == null)
+                        {
+                            _notyf.Error("Admin doesn't exists");
+                            return View();
+                        }
+
+                        sessionUser = new SessionUser()
+                        {
+                            UserId = adminUser.Adminid,
+                            UserAspId = aspUser.Id,
+                            Email = adminUser.Email,
+                            AccountTypeId = aspUser.Accounttypeid,
+                            RoleId = adminUser.Roleid ?? 0,
+                            UserName = adminUser.Firstname + (String.IsNullOrEmpty(adminUser.Lastname) ? "" : " " + adminUser.Lastname),
+                        };
+
+                        controller = "Admin";
+
+                    }
+
+                    _notyf.Success("Login Successfull", 3);
+                    string jwtToken = _jwtService.GenerateJwtToken(sessionUser);
+                    Response.Cookies.Append("hallodoc", jwtToken);
+
+                    return RedirectToAction("Dashboard", controller);
+                }
+
+                _notyf.Error("Invalid Username or Password");
+
+                return View();
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return View();
+            }
+
+        }
+
+
+        #endregion
+
+        #region Forget Password
 
 
         // email token isdeleted createddate aspnetuserid expirydate
@@ -694,7 +664,7 @@ namespace HalloDoc.MVC.Controllers
                 if (ModelState.IsValid)
                 {
 
-                    string passHash = GenerateSHA256(fpvm.Password ?? "");
+                    string passHash = AuthHelper.GenerateSHA256(fpvm.Password ?? "");
                     user.Passwordhash = passHash;
                     user.Modifieddate = DateTime.Now;
 
@@ -787,20 +757,138 @@ namespace HalloDoc.MVC.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult ForgetPassword(ForgotPasswordViewModel forPasVM)
         {
-            if (ModelState.IsValid)
+            try
             {
-                bool isUserExists = _unitOfWork.UserRepository.IsUserWithEmailExists(forPasVM.Email ?? "");
-                if (isUserExists)
+                if (ModelState.IsValid)
                 {
-                    return SendMailForForgetPassword(forPasVM.Email ?? "");
+                    bool isUserExists = _unitOfWork.UserRepository.IsUserWithEmailExists(forPasVM.Email ?? "");
+                    if (isUserExists)
+                    {
+                        return SendMailForForgetPassword(forPasVM.Email ?? "");
+                    }
                 }
+                _notyf.Error("User doesn't exist.");
+                return View("Patient/ForgetPassword", forPasVM);
+
             }
-            _notyf.Error("User doesn't exist.");
-            return View("Patient/ForgetPassword");
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return View("Patient/ForgetPassword", forPasVM);
+
+            }
 
         }
 
+
+        #endregion
+
+        #region Create Patient Account
+
+        // email token isdeleted createddate aspnetuserid expirydate
+        [HttpGet]
+        public IActionResult CreateAccount(string token)
+        {
+            try
+            {
+                bool isTokenValid = _unitOfWork.PassTokenRepository.ValidatePassToken(token, false, out string errorMessage);
+
+                if (!isTokenValid)
+                {
+                    _notyf.Error(errorMessage);
+                    return View("Index");
+                }
+
+                ForgotPasswordViewModel fpvm = new ForgotPasswordViewModel();
+                Passtoken? pass = _unitOfWork.PassTokenRepository.GetFirstOrDefault(pass => pass.Uniquetoken == token);
+
+                fpvm.Email = pass?.Email;
+
+                return View("Patient/CreateAccount", fpvm);
+
+
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return View("Error");
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult CreateAccount(ForgotPasswordViewModel fpvm)
+        {
+            try
+            {
+                Aspnetuser? user = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(u => u.Email == fpvm.Email);
+
+                if (user == null)
+                {
+                    _notyf.Error("User doesn't exists. Please try again.");
+                    return NotFound("Error");
+                }
+
+                if (ModelState.IsValid)
+                {
+                    string passHash = AuthHelper.GenerateSHA256(fpvm.Password);
+                    user.Passwordhash = passHash;
+                    user.Modifieddate = DateTime.Now;
+
+                    _unitOfWork.AspNetUserRepository.Update(user);
+                    _unitOfWork.Save();
+
+                    Passtoken? token = _unitOfWork.PassTokenRepository.GetFirstOrDefault(pass => pass.Email == fpvm.Email);
+
+                    if (token == null)
+                    {
+                        _notyf.Error("Token not found");
+                        return RedirectToAction("Login");
+                    }
+
+                    token.Isdeleted = true;
+                    _unitOfWork.PassTokenRepository.Update(token);
+                    _unitOfWork.Save();
+
+                    _notyf.Success("Account Successfully Created.");
+                    return RedirectToAction("Login");
+
+                }
+
+                return View();
+
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return View("Index");
+            }
+        }
+
+
+        #endregion
+
+        #endregion
+
         #region HelperFunctions
+
+        [HttpPost]
+        public JsonResult PatientCheckEmail(string email)
+        {
+            bool emailExists = _unitOfWork.AspNetUserRepository.IsUserWithEmailExists(email);
+            return Json(new { exists = emailExists });
+        }
+
+        [HttpGet]
+        public ActionResult GetMenusByAccounttype(short type)
+        {
+            List<Menu> checkboxItems;
+            checkboxItems = _unitOfWork.MenuRepository.Where(x => x.Accounttype == type).ToList();
+
+            return Ok(checkboxItems);
+
+        }
+
 
         [HttpPost]
         public IEnumerable<City> GetCitiesByRegion(int regionId)

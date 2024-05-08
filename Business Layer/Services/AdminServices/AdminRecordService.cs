@@ -6,6 +6,8 @@ using Data_Layer.CustomModels;
 using Data_Layer.CustomModels.Filter;
 using System.Data;
 using Data_Layer.DataModels;
+using Data_Layer.ViewModels.Admin;
+using Org.BouncyCastle.Utilities;
 
 namespace Business_Layer.Services.AdminServices
 {
@@ -20,38 +22,38 @@ namespace Business_Layer.Services.AdminServices
         public IEnumerable<SearchRecordTRow> GetSearchRecordsDataUnPaginated(SearchRecordFilter searchRecordFilter)
         {
             IQueryable<SearchRecordTRow> query = (from r in _unitOfWork.RequestRepository.GetAll()
-                         join rc in _unitOfWork.RequestClientRepository.GetAll() on r.Requestid equals rc.Requestid
-                         join rnote in _unitOfWork.RequestNoteRepository.GetAll() on r.Requestid equals rnote.Requestid into noteGroup
-                         from noteItem in noteGroup.DefaultIfEmpty()
-                         join rs in _unitOfWork.RequestStatusRepository.GetAll() on r.Status equals rs.Statusid
-                         join phy in _unitOfWork.PhysicianRepository.GetAll() on r.Physicianid equals phy.Physicianid into phyGroup
-                         from phyItem in phyGroup.DefaultIfEmpty()
-                         where (string.IsNullOrEmpty(searchRecordFilter.PatientName) || (rc.Firstname + " " + rc.Lastname).ToLower().Contains(searchRecordFilter.PatientName.ToLower()))
-                         && (searchRecordFilter.RequestStatus == 0 || r.Status == searchRecordFilter.RequestStatus)
-                         && (searchRecordFilter.RequestType == 0 || r.Requesttypeid == searchRecordFilter.RequestType)
-                         && (string.IsNullOrEmpty(searchRecordFilter.PhoneNumber) || rc.Phonenumber.ToLower().Contains(searchRecordFilter.PhoneNumber.ToLower()))
-                         && (string.IsNullOrEmpty(searchRecordFilter.ProviderName) || (phyItem.Firstname + " " + phyItem.Lastname).ToLower().Contains(searchRecordFilter.ProviderName.ToLower()))
-                         && (string.IsNullOrEmpty(searchRecordFilter.PatientEmail) || rc.Email.ToLower().Contains(searchRecordFilter.PatientEmail.ToLower()))
-                         && ((searchRecordFilter.FromDateOfService == null) || r.Accepteddate >= searchRecordFilter.FromDateOfService.Value.Date)
-                         && ((searchRecordFilter.ToDateOfService == null) || r.Accepteddate <= searchRecordFilter.ToDateOfService.Value.Date)
-                         select new SearchRecordTRow
-                         {
-                             RequestId = r.Requestid,
-                             PatientName = rc.Firstname + " " + rc.Lastname,
-                             Requestor = RequestHelper.GetRequestType(r.Requesttypeid),
-                             DateOfService = r.Accepteddate,
-                             CloseCaseDate = _unitOfWork.RequestStatusLogRepository.GetAll().AsEnumerable().FirstOrDefault(rstaus => rstaus.Requestid == r.Requestid && rstaus.Status == (int)RequestStatus.Closed).Createddate,
-                             Email = rc.Email ?? "",
-                             PhoneNumber = rc.Phonenumber ?? "",
-                             Address = rc.Address ?? "",
-                             Zip = rc.Zipcode ?? "",
-                             RequestStatus = rs.Statusname,
-                             Physician = phyItem.Firstname + " " + phyItem.Lastname,
-                             PhysicianNote = noteItem.Physiciannotes,
-                             AdminNote = noteItem.Adminnotes,
-                             CancelledByPhysicianNote = "",
-                             PatientNote = "",
-                         });
+                                                  join rc in _unitOfWork.RequestClientRepository.GetAll() on r.Requestid equals rc.Requestid
+                                                  join rnote in _unitOfWork.RequestNoteRepository.GetAll() on r.Requestid equals rnote.Requestid into noteGroup
+                                                  from noteItem in noteGroup.DefaultIfEmpty()
+                                                  join rs in _unitOfWork.RequestStatusRepository.GetAll() on r.Status equals rs.Statusid
+                                                  join phy in _unitOfWork.PhysicianRepository.GetAll() on r.Physicianid equals phy.Physicianid into phyGroup
+                                                  from phyItem in phyGroup.DefaultIfEmpty()
+                                                  where (string.IsNullOrEmpty(searchRecordFilter.PatientName) || (rc.Firstname + " " + rc.Lastname).ToLower().Contains(searchRecordFilter.PatientName.ToLower()))
+                                                  && (searchRecordFilter.RequestStatus == 0 || r.Status == searchRecordFilter.RequestStatus)
+                                                  && (searchRecordFilter.RequestType == 0 || r.Requesttypeid == searchRecordFilter.RequestType)
+                                                  && (string.IsNullOrEmpty(searchRecordFilter.PhoneNumber) || rc.Phonenumber.ToLower().Contains(searchRecordFilter.PhoneNumber.ToLower()))
+                                                  && (string.IsNullOrEmpty(searchRecordFilter.ProviderName) || (phyItem.Firstname + " " + phyItem.Lastname).ToLower().Contains(searchRecordFilter.ProviderName.ToLower()))
+                                                  && (string.IsNullOrEmpty(searchRecordFilter.PatientEmail) || rc.Email.ToLower().Contains(searchRecordFilter.PatientEmail.ToLower()))
+                                                  && ((searchRecordFilter.FromDateOfService == null) || r.Accepteddate >= searchRecordFilter.FromDateOfService.Value.Date)
+                                                  && ((searchRecordFilter.ToDateOfService == null) || r.Accepteddate <= searchRecordFilter.ToDateOfService.Value.Date)
+                                                  select new SearchRecordTRow
+                                                  {
+                                                      RequestId = r.Requestid,
+                                                      PatientName = rc.Firstname + " " + rc.Lastname,
+                                                      Requestor = RequestHelper.GetRequestType(r.Requesttypeid),
+                                                      DateOfService = r.Accepteddate,
+                                                      CloseCaseDate = _unitOfWork.RequestStatusLogRepository.GetAll().AsEnumerable().FirstOrDefault(rstaus => rstaus.Requestid == r.Requestid && rstaus.Status == (int)RequestStatus.Closed).Createddate,
+                                                      Email = rc.Email ?? "",
+                                                      PhoneNumber = rc.Phonenumber ?? "",
+                                                      Address = rc.Address ?? "",
+                                                      Zip = rc.Zipcode ?? "",
+                                                      RequestStatus = rs.Statusname,
+                                                      Physician = phyItem.Firstname + " " + phyItem.Lastname,
+                                                      PhysicianNote = noteItem.Physiciannotes,
+                                                      AdminNote = noteItem.Adminnotes,
+                                                      CancelledByPhysicianNote = "",
+                                                      PatientNote = "",
+                                                  });
 
             return query;
         }
@@ -62,38 +64,38 @@ namespace Business_Layer.Services.AdminServices
             int pageNumber = searchRecordFilter.PageNumber < 1 ? 1 : searchRecordFilter.PageNumber;
 
             IQueryable<SearchRecordTRow> query = (from r in _unitOfWork.RequestRepository.GetAll()
-                         join rc in _unitOfWork.RequestClientRepository.GetAll() on r.Requestid equals rc.Requestid
-                         join rnote in _unitOfWork.RequestNoteRepository.GetAll() on r.Requestid equals rnote.Requestid into noteGroup
-                         from noteItem in noteGroup.DefaultIfEmpty()
-                         join rs in _unitOfWork.RequestStatusRepository.GetAll() on r.Status equals rs.Statusid
-                         join phy in _unitOfWork.PhysicianRepository.GetAll() on r.Physicianid equals phy.Physicianid into phyGroup
-                         from phyItem in phyGroup.DefaultIfEmpty()
-                         where (string.IsNullOrEmpty(searchRecordFilter.PatientName) || (rc.Firstname + " " + rc.Lastname).ToLower().Contains(searchRecordFilter.PatientName.ToLower()))
-                         && (searchRecordFilter.RequestStatus == 0 || r.Status == searchRecordFilter.RequestStatus)
-                         && (searchRecordFilter.RequestType == 0 || r.Requesttypeid == searchRecordFilter.RequestType)
-                         && (string.IsNullOrEmpty(searchRecordFilter.PhoneNumber) || rc.Phonenumber.ToLower().Contains(searchRecordFilter.PhoneNumber.ToLower()))
-                         && (string.IsNullOrEmpty(searchRecordFilter.ProviderName) || (phyItem.Firstname + " " + phyItem.Lastname).ToLower().Contains(searchRecordFilter.ProviderName.ToLower()))
-                         && (string.IsNullOrEmpty(searchRecordFilter.PatientEmail) || rc.Email.ToLower().Contains(searchRecordFilter.PatientEmail.ToLower()))
-                         && ((searchRecordFilter.FromDateOfService == null) || r.Accepteddate >= searchRecordFilter.FromDateOfService.Value.Date)
-                         && ((searchRecordFilter.ToDateOfService == null) || r.Accepteddate <= searchRecordFilter.ToDateOfService.Value.Date)
-                         select new SearchRecordTRow
-                         {
-                             RequestId = r.Requestid,
-                             PatientName = rc.Firstname + " " + rc.Lastname,
-                             Requestor = RequestHelper.GetRequestType(r.Requesttypeid),
-                             DateOfService = r.Accepteddate,
-                             CloseCaseDate = _unitOfWork.RequestStatusLogRepository.GetAll().AsEnumerable().FirstOrDefault(rstaus => rstaus.Requestid == r.Requestid && rstaus.Status == (int)RequestStatus.Closed).Createddate,
-                             Email = rc.Email ?? "",
-                             PhoneNumber = rc.Phonenumber ?? "",
-                             Address = rc.Address ?? "",
-                             Zip = rc.Zipcode ?? "",
-                             RequestStatus = rs.Statusname,
-                             Physician = phyItem.Firstname + " " + phyItem.Lastname,
-                             PhysicianNote = noteItem.Physiciannotes,
-                             AdminNote = noteItem.Adminnotes,
-                             CancelledByPhysicianNote = "",
-                             PatientNote = "",
-                         }).AsQueryable();
+                                                  join rc in _unitOfWork.RequestClientRepository.GetAll() on r.Requestid equals rc.Requestid
+                                                  join rnote in _unitOfWork.RequestNoteRepository.GetAll() on r.Requestid equals rnote.Requestid into noteGroup
+                                                  from noteItem in noteGroup.DefaultIfEmpty()
+                                                  join rs in _unitOfWork.RequestStatusRepository.GetAll() on r.Status equals rs.Statusid
+                                                  join phy in _unitOfWork.PhysicianRepository.GetAll() on r.Physicianid equals phy.Physicianid into phyGroup
+                                                  from phyItem in phyGroup.DefaultIfEmpty()
+                                                  where (string.IsNullOrEmpty(searchRecordFilter.PatientName) || (rc.Firstname + " " + rc.Lastname).ToLower().Contains(searchRecordFilter.PatientName.ToLower()))
+                                                  && (searchRecordFilter.RequestStatus == 0 || r.Status == searchRecordFilter.RequestStatus)
+                                                  && (searchRecordFilter.RequestType == 0 || r.Requesttypeid == searchRecordFilter.RequestType)
+                                                  && (string.IsNullOrEmpty(searchRecordFilter.PhoneNumber) || rc.Phonenumber.ToLower().Contains(searchRecordFilter.PhoneNumber.ToLower()))
+                                                  && (string.IsNullOrEmpty(searchRecordFilter.ProviderName) || (phyItem.Firstname + " " + phyItem.Lastname).ToLower().Contains(searchRecordFilter.ProviderName.ToLower()))
+                                                  && (string.IsNullOrEmpty(searchRecordFilter.PatientEmail) || rc.Email.ToLower().Contains(searchRecordFilter.PatientEmail.ToLower()))
+                                                  && ((searchRecordFilter.FromDateOfService == null) || r.Accepteddate >= searchRecordFilter.FromDateOfService.Value.Date)
+                                                  && ((searchRecordFilter.ToDateOfService == null) || r.Accepteddate <= searchRecordFilter.ToDateOfService.Value.Date)
+                                                  select new SearchRecordTRow
+                                                  {
+                                                      RequestId = r.Requestid,
+                                                      PatientName = rc.Firstname + " " + rc.Lastname,
+                                                      Requestor = RequestHelper.GetRequestType(r.Requesttypeid),
+                                                      DateOfService = r.Accepteddate,
+                                                      CloseCaseDate = _unitOfWork.RequestStatusLogRepository.GetAll().AsEnumerable().FirstOrDefault(rstaus => rstaus.Requestid == r.Requestid && rstaus.Status == (int)RequestStatus.Closed).Createddate,
+                                                      Email = rc.Email ?? "",
+                                                      PhoneNumber = rc.Phonenumber ?? "",
+                                                      Address = rc.Address ?? "",
+                                                      Zip = rc.Zipcode ?? "",
+                                                      RequestStatus = rs.Statusname,
+                                                      Physician = phyItem.Firstname + " " + phyItem.Lastname,
+                                                      PhysicianNote = noteItem.Physiciannotes,
+                                                      AdminNote = noteItem.Adminnotes,
+                                                      CancelledByPhysicianNote = "",
+                                                      PatientNote = "",
+                                                  }).AsQueryable();
 
             PagedList<SearchRecordTRow> pagedList = await PagedList<SearchRecordTRow>.CreateAsync(
             query, pageNumber, pageSize);
@@ -152,22 +154,22 @@ namespace Business_Layer.Services.AdminServices
         {
 
             IQueryable<LogTableRow> query = (from log in _unitOfWork.SMSLogRepository.GetAll()
-                         where (filter.RoleId == 0 || log.Roleid == filter.RoleId)
-                         && (string.IsNullOrEmpty(filter.MobileNumber) || log.Mobilenumber == filter.MobileNumber)
-                         && (filter.CreatedDate == null || log.Createdate.Date == filter.CreatedDate.Value.Date)
-                         && (filter.SentDate == null || log.Sentdate == null ? true : log.Sentdate.Value.Date == filter.SentDate.Value.Date)
-                         select new LogTableRow
-                         {
-                             RecipientName = log.Recipientname,
-                             MobileNumber = log.Mobilenumber,
-                             Action = log.Action.ToString(),
-                             RoleName = log.Roleid.ToString(),
-                             CreatedDate = log.Createdate,
-                             SentDate = log.Sentdate,
-                             SentTries = log.Senttries,
-                             IsSent = log.Issmssent ?? false,
-                             ConfirmationNumber = log.Confirmationnumber,
-                         }).AsQueryable();
+                                             where (filter.RoleId == 0 || log.Roleid == filter.RoleId)
+                                             && (string.IsNullOrEmpty(filter.MobileNumber) || log.Mobilenumber == filter.MobileNumber)
+                                             && (filter.CreatedDate == null || log.Createdate.Date == filter.CreatedDate.Value.Date)
+                                             && (filter.SentDate == null || log.Sentdate == null ? true : log.Sentdate.Value.Date == filter.SentDate.Value.Date)
+                                             select new LogTableRow
+                                             {
+                                                 RecipientName = log.Recipientname,
+                                                 MobileNumber = log.Mobilenumber,
+                                                 Action = log.Action.ToString(),
+                                                 RoleName = log.Roleid.ToString(),
+                                                 CreatedDate = log.Createdate,
+                                                 SentDate = log.Sentdate,
+                                                 SentTries = log.Senttries,
+                                                 IsSent = log.Issmssent ?? false,
+                                                 ConfirmationNumber = log.Confirmationnumber,
+                                             }).AsQueryable();
 
             PagedList<LogTableRow> pagedList = await PagedList<LogTableRow>.CreateAsync(
             query, filter.PageNumber, filter.PageSize);
@@ -179,22 +181,22 @@ namespace Business_Layer.Services.AdminServices
         {
 
             IQueryable<LogTableRow> query = (from log in _unitOfWork.EmailLogRepository.GetAll()
-                         where (filter.RoleId == 0 || log.Roleid == filter.RoleId)
-                                      && (string.IsNullOrEmpty(filter.EmailAddress) || log.Emailid == filter.EmailAddress)
-                                      && (filter.CreatedDate == null || log.Createdate.Date == filter.CreatedDate.Value.Date)
-                                      && (filter.SentDate == null || log.Sentdate == null ? true : log.Sentdate.Value.Date == filter.SentDate.Value.Date)
-                         select new LogTableRow
-                         {
-                             RecipientName = log.Recipientname,
-                             Email = log.Emailid,
-                             Action = log.Subjectname,
-                             RoleName = log.Roleid.ToString(),
-                             CreatedDate = log.Createdate,
-                             SentDate = log.Sentdate,
-                             SentTries = log.Senttries ?? 1,
-                             IsSent = log.Isemailsent ?? false,
-                             ConfirmationNumber = log.Confirmationnumber,
-                         }).AsQueryable();
+                                             where (filter.RoleId == 0 || log.Roleid == filter.RoleId)
+                                                          && (string.IsNullOrEmpty(filter.EmailAddress) || log.Emailid == filter.EmailAddress)
+                                                          && (filter.CreatedDate == null || log.Createdate.Date == filter.CreatedDate.Value.Date)
+                                                          && (filter.SentDate == null || log.Sentdate == null ? true : log.Sentdate.Value.Date == filter.SentDate.Value.Date)
+                                             select new LogTableRow
+                                             {
+                                                 RecipientName = log.Recipientname,
+                                                 Email = log.Emailid,
+                                                 Action = log.Subjectname,
+                                                 RoleName = log.Roleid.ToString(),
+                                                 CreatedDate = log.Createdate,
+                                                 SentDate = log.Sentdate,
+                                                 SentTries = log.Senttries ?? 1,
+                                                 IsSent = log.Isemailsent ?? false,
+                                                 ConfirmationNumber = log.Confirmationnumber,
+                                             }).AsQueryable();
 
             PagedList<LogTableRow> pagedList = await PagedList<LogTableRow>.CreateAsync(
             query, filter.PageNumber, filter.PageSize);
@@ -214,6 +216,32 @@ namespace Business_Layer.Services.AdminServices
             logs, filter.PageNumber, filter.PageSize);
 
             return pagedList;
+        }
+
+        public async Task<PagedList<BlockedHistory>> GetBlockedHistoryRecordsPaginatedAsync(int pageNumber, int pageSize)
+        {
+
+            IQueryable<BlockedHistory> list = (from br in _unitOfWork.BlockRequestRepo.GetAll()
+                                                where (br.Isactive == true)
+                                                join r in _unitOfWork.RequestRepository.GetAll() on br.Requestid equals r.Requestid
+                                                join rc in _unitOfWork.RequestClientRepository.GetAll() on r.Requestid equals rc.Requestid
+                                                select new BlockedHistory
+                                                {
+                                                    BlockedRequestID = br.Blockrequestid,
+                                                    RequestId = r.Requestid,
+                                                    PatientName = rc.Firstname + " " + rc.Lastname,
+                                                    CreatedDate = br.Createddate,
+                                                    PhoneNumber = br.Phonenumber,
+                                                    Email = br.Email,
+                                                    Notes = br.Reason,
+                                                    IsActive = br.Isactive ?? false,
+                                                });
+
+            PagedList<BlockedHistory> pagedList = await PagedList<BlockedHistory>.CreateAsync(
+            list, pageNumber, pageSize);
+
+            return pagedList;
+
         }
 
 
@@ -269,6 +297,29 @@ namespace Business_Layer.Services.AdminServices
             {
                 StatusCode = ResponseCode.Success,
             };
+        }
+
+        public ServiceResponse DeleteRequest(int requestId)
+        {
+
+            Request? req = _unitOfWork.RequestRepository.GetFirstOrDefault(a => a.Requestid == requestId);
+
+            if (req == null)
+            {
+                return new ServiceResponse
+                {
+                    StatusCode = ResponseCode.Error,
+                    Message = NotificationMessage.REQUEST_NOT_FOUND,
+                };
+            }
+
+            req.Isdeleted = true;
+            req.Modifieddate = DateTime.Now;
+
+            _unitOfWork.RequestRepository.Update(req);
+            _unitOfWork.Save();
+
+            return new ServiceResponse { StatusCode = ResponseCode.Success, };
         }
 
     }

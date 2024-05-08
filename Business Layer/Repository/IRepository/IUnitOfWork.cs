@@ -42,6 +42,8 @@
         ITimeSheetRepository TimeSheetRepository { get; }
         ITimeSheetDetailRepo TimeSheetDetailRepo { get; }
         ITimeSheetDetailReimbursementRepo TimeSheetDetailReimbursementRepo{ get; }
+        IPayrateCategoryRepository PayrateCategoryRepository { get; }
+        IProviderPayrateRepository ProviderPayrateRepository { get; }
         void Save();
     }
 

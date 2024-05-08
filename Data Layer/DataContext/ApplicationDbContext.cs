@@ -50,6 +50,8 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<Passtoken> Passtokens { get; set; }
 
+    public virtual DbSet<PayrateCategory> PayrateCategories { get; set; }
+
     public virtual DbSet<Physician> Physicians { get; set; }
 
     public virtual DbSet<Physicianlocation> Physicianlocations { get; set; }
@@ -218,6 +220,11 @@ public partial class ApplicationDbContext : DbContext
             entity.HasKey(e => e.Id).HasName("passtoken_pkey");
         });
 
+        modelBuilder.Entity<PayrateCategory>(entity =>
+        {
+            entity.HasKey(e => e.PayrateCategoryId).HasName("PayrateCategory_pkey");
+        });
+
         modelBuilder.Entity<Physician>(entity =>
         {
             entity.HasKey(e => e.Physicianid).HasName("physician_pkey");
@@ -262,8 +269,9 @@ public partial class ApplicationDbContext : DbContext
 
         modelBuilder.Entity<ProviderPayrate>(entity =>
         {
-            entity.HasKey(e => e.PayrateId).HasName("ProviderPayrate_pkey");
+            entity.HasKey(e => e.PayrateId).HasName("PayrateByProvider_pkey");
 
+            entity.Property(e => e.PayrateId).HasDefaultValueSql("nextval('\"PayrateByProvider_PayrateId_seq\"'::regclass)");
             entity.Property(e => e.CreatedDate).HasDefaultValueSql("CURRENT_TIMESTAMP");
 
             entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.ProviderPayrateCreatedByNavigations)
@@ -271,6 +279,10 @@ public partial class ApplicationDbContext : DbContext
                 .HasConstraintName("fk_createdby");
 
             entity.HasOne(d => d.ModifiedByNavigation).WithMany(p => p.ProviderPayrateModifiedByNavigations).HasConstraintName("fk_modifiedby");
+
+            entity.HasOne(d => d.PayrateCategory).WithMany(p => p.ProviderPayrates)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_payratecategory");
 
             entity.HasOne(d => d.Physician).WithMany(p => p.ProviderPayrates)
                 .OnDelete(DeleteBehavior.ClientSetNull)

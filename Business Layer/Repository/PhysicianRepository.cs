@@ -4,6 +4,7 @@ using Data_Layer.DataModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -24,6 +25,25 @@ namespace Business_Layer.Repository
             IEnumerable<Physician> physicians = _context.Physicians.Where(phy => phyRegions.Contains(phy.Physicianid));
 
             return physicians;
+        }
+
+
+        public override Physician? GetFirstOrDefault(Expression<Func<Physician, bool>> filter)
+        {
+            IQueryable<Physician> query = dbSet.Where(admin => admin.Isdeleted != true);
+            return query.FirstOrDefault(filter);
+        }
+
+        public override IQueryable<Physician> GetAll()
+        {
+            IQueryable<Physician> query = dbSet.Where(role => role.Isdeleted != true);
+            return query;
+        }
+
+        public override IQueryable<Physician> Where(Expression<Func<Physician, bool>> filter)
+        {
+            IQueryable<Physician> query = dbSet.Where(role => role.Isdeleted != true);
+            return query.Where(filter);
         }
     }
 }

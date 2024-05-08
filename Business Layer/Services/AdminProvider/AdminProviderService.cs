@@ -5,6 +5,7 @@ using Business_Layer.Utilities;
 using Data_Layer.CustomModels;
 using Data_Layer.DataModels;
 using Data_Layer.ViewModels.Admin;
+using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Http;
 using System;
@@ -201,7 +202,7 @@ namespace Business_Layer.Services.AdminProvider
         public ServiceResponse SubmitCreateRequest(AdminCreateRequestViewModel model, string aspNetUserId, string createAccLink, bool isAdmin)
         {
             ServiceResponse response = new ServiceResponse();
-            Data_Layer.DataModels.Physician? phy = new Data_Layer.DataModels.Physician();
+            Physician? phy = new Physician();
             if (!isAdmin)
             {
                 phy = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Aspnetuserid == aspNetUserId);
@@ -217,6 +218,14 @@ namespace Business_Layer.Services.AdminProvider
 
             try
             {
+                bool canCreateRequest = _unitOfWork.AspNetUserRepository.CanPatientWithEmailCreateRequest(model.Email);
+
+                if (!canCreateRequest)
+                {
+                    response.StatusCode = ResponseCode.Error;
+                    response.Message = NotificationMessage.PATIENT_CANNOT_CREATED_WITH_GIVEN_EMAIL;
+                    return response;
+                }
 
                 string phoneNumber = "+" + model.CountryCode + "-" + model.PhoneNumber;
                 string? state = _unitOfWork.RegionRepository.GetFirstOrDefault(reg => reg.Regionid == model.RegionId)?.Name;
@@ -224,9 +233,9 @@ namespace Business_Layer.Services.AdminProvider
 
                 // Creating Patient in Aspnetusers Table
 
-                bool isUserExists = _unitOfWork.UserRepository.IsUserWithEmailExists(model.Email);
+                User? oldUser = _unitOfWork.UserRepository.GetFirstOrDefault(user => user.Email == model.Email);
 
-                if (!isUserExists)
+                if (oldUser == null)
                 {
 
                     Guid generatedId = Guid.NewGuid();
@@ -245,7 +254,7 @@ namespace Business_Layer.Services.AdminProvider
                     _unitOfWork.AspNetUserRepository.Add(aspnetuser);
                     _unitOfWork.Save();
 
-                    User user1 = new()
+                    User newUser = new()
                     {
                         Aspnetuserid = generatedId.ToString(),
                         Firstname = model.FirstName,
@@ -264,77 +273,141 @@ namespace Business_Layer.Services.AdminProvider
                         Intyear = model.DOB?.Year
                     };
 
-
-                    _unitOfWork.UserRepository.Add(user1);
+                    _unitOfWork.UserRepository.Add(newUser);
                     _unitOfWork.Save();
 
-                    _emailService.SendMailForCreateAccount(model.Email, user1.Aspnetuserid, createAccLink);
-                }
+                    _emailService.SendMailForCreateAccount(model.Email, newUser.Aspnetuserid, createAccLink);
 
-                User? user = _unitOfWork.UserRepository.GetFirstOrDefault(u => u.Email == model.Email);
+                    Request request = new()
+                    {
+                        Requesttypeid = (int)RequestType.Patient,
+                        Userid = newUser.Userid,
+                        Firstname = model.FirstName,
+                        Lastname = model.LastName,
+                        Phonenumber = phoneNumber,
+                        Email = model.Email,
+                        Status = (short)RequestStatus.Unassigned,
+                        Createddate = DateTime.Now,
+                        Confirmationnumber = _utilityService.GenerateConfirmationNumber(newUser),
+                        Patientaccountid = newUser.Aspnetuserid,
+                    };
 
-                Request request = new()
-                {
-                    Requesttypeid = (int)RequestType.Patient,
-                    Userid = user.Userid,
-                    Firstname = model.FirstName,
-                    Lastname = model.LastName,
-                    Phonenumber = phoneNumber,
-                    Email = model.Email,
-                    Status = (short)RequestStatus.Unassigned,
-                    Createddate = DateTime.Now,
-                    Confirmationnumber = _utilityService.GenerateConfirmationNumber(user),
-                    Patientaccountid = user.Aspnetuserid,
-                };
+                    if (!isAdmin)
+                    {
+                        request.Status = (short)RequestStatus.Accepted;
+                        request.Physicianid = phy.Physicianid;
+                    }
 
-                if (!isAdmin)
-                {
-                    request.Status = (short)RequestStatus.Accepted;
-                    request.Physicianid = phy.Physicianid;
-                }
+                    _unitOfWork.RequestRepository.Add(request);
+                    _unitOfWork.Save();
 
-                _unitOfWork.RequestRepository.Add(request);
-                _unitOfWork.Save();
-
-                //Adding request in RequestClient Table
-                Requestclient requestclient = new()
-                {
-                    Requestid = request.Requestid,
-                    Firstname = model.FirstName,
-                    Lastname = model.LastName,
-                    Phonenumber = phoneNumber,
-                    Email = model.Email,
-                    Address = model.Street,
-                    City = city,
-                    State = state,
-                    Regionid = model.RegionId,
-                    Zipcode = model.ZipCode,
-                    Strmonth = model.DOB?.Month.ToString(),
-                    Intdate = model.DOB?.Day,
-                    Intyear = model.DOB?.Year
-                };
-
-                _unitOfWork.RequestClientRepository.Add(requestclient);
-                _unitOfWork.Save();
-                if (model.Notes != null)
-                {
-                    Requestnote rn = new()
+                    //Adding request in RequestClient Table
+                    Requestclient requestclient = new()
                     {
                         Requestid = request.Requestid,
-                        Createdby = aspNetUserId,
-                        Createddate = DateTime.Now
+                        Firstname = model.FirstName,
+                        Lastname = model.LastName,
+                        Phonenumber = phoneNumber,
+                        Email = model.Email,
+                        Address = model.Street,
+                        City = city,
+                        State = state,
+                        Regionid = model.RegionId,
+                        Zipcode = model.ZipCode,
+                        Strmonth = model.DOB?.Month.ToString(),
+                        Intdate = model.DOB?.Day,
+                        Intyear = model.DOB?.Year
                     };
-                    if (isAdmin)
+
+                    _unitOfWork.RequestClientRepository.Add(requestclient);
+                    _unitOfWork.Save();
+                    if (model.Notes != null)
                     {
-                        rn.Adminnotes = model.Notes;
+                        Requestnote rn = new()
+                        {
+                            Requestid = request.Requestid,
+                            Createdby = aspNetUserId,
+                            Createddate = DateTime.Now
+                        };
+                        if (isAdmin)
+                        {
+                            rn.Adminnotes = model.Notes;
+                        }
+                        else
+                        {
+                            rn.Physiciannotes = model.Notes;
+                        }
+
+                        _unitOfWork.RequestNoteRepository.Add(rn);
+                        _unitOfWork.Save();
                     }
-                    else
+                }
+                else
+                {
+
+                    Request request = new()
                     {
-                        rn.Physiciannotes = model.Notes;
+                        Requesttypeid = (int)RequestType.Patient,
+                        Userid = oldUser.Userid,
+                        Firstname = model.FirstName,
+                        Lastname = model.LastName,
+                        Phonenumber = phoneNumber,
+                        Email = model.Email,
+                        Status = (short)RequestStatus.Unassigned,
+                        Createddate = DateTime.Now,
+                        Confirmationnumber = _utilityService.GenerateConfirmationNumber(oldUser),
+                        Patientaccountid = oldUser.Aspnetuserid,
+                    };
+
+                    if (!isAdmin)
+                    {
+                        request.Status = (short)RequestStatus.Accepted;
+                        request.Physicianid = phy.Physicianid;
                     }
 
-                    _unitOfWork.RequestNoteRepository.Add(rn);
+                    _unitOfWork.RequestRepository.Add(request);
                     _unitOfWork.Save();
+
+                    //Adding request in RequestClient Table
+                    Requestclient requestclient = new()
+                    {
+                        Requestid = request.Requestid,
+                        Firstname = model.FirstName,
+                        Lastname = model.LastName,
+                        Phonenumber = phoneNumber,
+                        Email = model.Email,
+                        Address = model.Street,
+                        City = city,
+                        State = state,
+                        Regionid = model.RegionId,
+                        Zipcode = model.ZipCode,
+                        Strmonth = model.DOB?.Month.ToString(),
+                        Intdate = model.DOB?.Day,
+                        Intyear = model.DOB?.Year
+                    };
+
+                    _unitOfWork.RequestClientRepository.Add(requestclient);
+                    _unitOfWork.Save();
+                    if (model.Notes != null)
+                    {
+                        Requestnote rn = new()
+                        {
+                            Requestid = request.Requestid,
+                            Createdby = aspNetUserId,
+                            Createddate = DateTime.Now
+                        };
+                        if (isAdmin)
+                        {
+                            rn.Adminnotes = model.Notes;
+                        }
+                        else
+                        {
+                            rn.Physiciannotes = model.Notes;
+                        }
+
+                        _unitOfWork.RequestNoteRepository.Add(rn);
+                        _unitOfWork.Save();
+                    }
                 }
 
                 model.regions = _unitOfWork.RegionRepository.GetAll();

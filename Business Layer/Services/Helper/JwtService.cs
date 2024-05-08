@@ -32,7 +32,9 @@ namespace Business_Layer.Services.Helper
                 new Claim("userAspId", user.UserAspId),
             };
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+            string? jwtKey = _config["Jwt:Key"];
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
             var credential = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
             var expires = DateTime.UtcNow.AddDays(1);
 
@@ -56,8 +58,14 @@ namespace Business_Layer.Services.Helper
                 return false;
             }
 
+            string? jwtKey = _config["Jwt:Key"];
+            if (jwtKey == null)
+            {
+                return false;
+            }
+
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.UTF8.GetBytes(_config["Jwt:Key"]);
+            var key = Encoding.UTF8.GetBytes(jwtKey);
             try
             {
 
@@ -83,7 +91,7 @@ namespace Business_Layer.Services.Helper
                 return false;
 
             }
-            catch (Exception ex)
+            catch
             {
                 return false;
             }

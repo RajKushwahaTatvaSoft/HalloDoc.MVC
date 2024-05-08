@@ -34,6 +34,15 @@ input[type="checkbox"]:checked {
     border-color: var(--primary);
 }
 
+.btn-info {
+    color: white;
+    background-color: #10bce9;
+}
+
+.btn-info:hover {
+    color: white;
+}
+
 .night-mode-btn svg {
     fill: var(--primary);
 }
@@ -48,6 +57,8 @@ input[type="checkbox"]:checked {
 
 .form-card {
     background-color: white;
+    border-radius: 5px;
+    box-shadow: 0px 0px 20px 5px #ececec;
 }
 
 
@@ -57,23 +68,21 @@ input[type="checkbox"]:checked {
     padding: 8px 16px;
     text-decoration: none;
     transition: background-color .3s;
+    border-radius: 5px;
 }
 
     .pagination .page-item.active {
         background-color: #10bce9;
         color: white;
-        border-radius: 5px;
     }
 
     .pagination .page-item.disabled {
         background-color: lightgrey;
         color: white;
-        border-radius: 5px;
     }
 
     .pagination .page-item:hover:not(.active) {
         background-color: #ddd;
-        border-radius: 5px;
     }
 
 /* HTML: <div class="loader"></div> */
@@ -237,13 +246,13 @@ x::-webkit-file-upload-button, input[type=file]:after {
 }
 
 .dashboard-sidebar .nav-link .active {
-    background-color : #10bce9;
-    border-radius : 7px;
+    background-color: #10bce9;
+    border-radius: 7px;
 }
 
-.dashboard-sidebar .nav-link .active span {
-    color: white;
-}
+    .dashboard-sidebar .nav-link .active span {
+        color: white;
+    }
 
 .active .tabHeader {
     text-decoration: none;
@@ -276,17 +285,6 @@ x::-webkit-file-upload-button, input[type=file]:after {
     border-radius: 5px;
 }
 
-.admin-dashboard input:focus {
-    box-shadow: none;
-}
-
-.admin-dashboard textarea:focus {
-    box-shadow: none;
-}
-
-.admin-dashboard select:focus {
-    box-shadow: none;
-}
 
 .status-tab div {
     border-radius: 8px;
@@ -380,11 +378,17 @@ x::-webkit-file-upload-button, input[type=file]:after {
 .admin-dashboard select:focus {
     box-shadow: none;
 }
-.form-floating input:focus, .form-floating select:focus, .form-floating textarea:focus {
+
+
+input:focus {
     box-shadow: none !important
 }
 
-.normal-input select:focus, .normal-input input:focus, .normal-input textarea:focus {
+textarea:focus {
+    box-shadow: none !important
+}
+
+select:focus {
     box-shadow: none !important
 }
 
@@ -395,7 +399,7 @@ x::-webkit-file-upload-button, input[type=file]:after {
 }
 
     .normal-input:focus-within {
-        border: 1px solid var(--primary);        
+        border: 1px solid var(--primary);
     }
 
 .filter-options {

@@ -34,8 +34,7 @@ namespace Business_Layer.Utilities
             file.CopyTo(stream);
         }
 
-
-        public static void InsertFileAtPath(IFormFile document,string path)
+        public static void InsertFileAtPath(IFormFile document, string path)
         {
             if (!Directory.Exists(path))
             {
@@ -49,11 +48,19 @@ namespace Business_Layer.Utilities
             document.CopyTo(stream);
         }
 
-        public static void InsertFileForRequest(IFormFile file,string webRootPath,int requestId)
+        public static void InsertFileForRequest(IFormFile file, string webRootPath, int requestId)
         {
-            string requestFilePath = Path.Combine(webRootPath, "document" , "request" , requestId.ToString());
+            string requestFilePath = Path.Combine(webRootPath, "document", "request", requestId.ToString());
 
             InsertFileAtPath(file, requestFilePath);
+        }
+
+        public static void InsertFileForTimeSheetReceipt(IFormFile file, string webRootPath, int phyId, int timeSheetId, int recordId)
+        {
+
+            string receiptPath = Path.Combine(webRootPath, "document", "timesheet", $"physician{phyId}", timeSheetId.ToString());
+
+            InsertFileAfterRename(file, receiptPath, recordId.ToString());
         }
 
     }

@@ -271,7 +271,7 @@
         var regId = $('option:selected', this).val();
 
         $.ajax({
-            url: '/Admin/GetCitiesByRegion',
+            url: '/Guest/GetCitiesByRegion',
             type: 'POST',
             data: {
                 regionId: regId,

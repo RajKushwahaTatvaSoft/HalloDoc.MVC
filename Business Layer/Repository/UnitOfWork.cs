@@ -49,6 +49,8 @@ namespace Business_Layer.Repository
             TimeSheetDetailRepo = new TimeSheetDetailRepo(_context);
             TimeSheetRepository = new TimeSheetRepository(_context);
             TimeSheetDetailReimbursementRepo = new TimeSheetDetailReimbursementRepo(_context);
+            PayrateCategoryRepository = new PayrateCategoryRepository(_context);
+            ProviderPayrateRepository = new ProviderPayrateRepository(_context);
         }
 
         public IAdminRepository AdminRepository { get; private set; }
@@ -102,6 +104,8 @@ namespace Business_Layer.Repository
         public ITimeSheetRepository TimeSheetRepository { get; private set; }
         public ITimeSheetDetailRepo TimeSheetDetailRepo { get; private set; }
         public ITimeSheetDetailReimbursementRepo TimeSheetDetailReimbursementRepo { get; private set; }
+        public IProviderPayrateRepository ProviderPayrateRepository { get; private set; }
+        public IPayrateCategoryRepository PayrateCategoryRepository { get; private set; }
 
         public void Save()
         {

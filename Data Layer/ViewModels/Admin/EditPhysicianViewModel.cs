@@ -8,6 +8,7 @@ namespace Data_Layer.ViewModels.Admin
     {
         public string? LoggedInUserName { get; set; }
         public IEnumerable<Region>? regions { get; set; }
+        public IEnumerable<City>? selectedCities {  get; set; }
         public IEnumerable<Role>? roles { get; set; }
         public IEnumerable<int>? physicianRegions { get; set; }
         public IEnumerable<int>? selectedRegions { get; set; }

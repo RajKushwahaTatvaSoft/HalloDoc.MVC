@@ -15,14 +15,12 @@ using Business_Layer.Services.Helper.Interface;
 using System.Text;
 using Rotativa.AspNetCore;
 using Business_Layer.Services.AdminServices.Interface;
-using Business_Layer.Services.AdminServices;
 using Business_Layer.Services.PhysicianServices.Interface;
 using System.IO.Compression;
 using Data_Layer.CustomModels.Filter;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 using Data_Layer.DataContext;
-using DocumentFormat.OpenXml.Office2010.PowerPoint;
+using Humanizer.DateTimeHumanizeStrategy;
 
 namespace HalloDoc.MVC.Controllers
 {
@@ -84,60 +82,68 @@ namespace HalloDoc.MVC.Controllers
         [RoleAuthorize((int)AllowMenu.ProviderProfile)]
         public IActionResult Profile()
         {
-
-            int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-            string? phyAspId = GetPhysicianAspUserId();
-
-            Physician? physician = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Aspnetuserid == phyAspId);
-
-            if (physician == null)
+            try
             {
-                return View("Error");
+                int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+                string? phyAspId = GetPhysicianAspUserId();
+
+                Physician? physician = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Aspnetuserid == phyAspId);
+
+                if (physician == null)
+                {
+                    return View("Error");
+                }
+
+                Aspnetuser? aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(user => user.Id == physician.Aspnetuserid);
+
+                if (aspUser == null)
+                {
+                    return View("Error");
+                }
+
+                int? cityId = _unitOfWork.CityRepository.GetFirstOrDefault(city => city.Name == physician.City)?.Id;
+
+                IEnumerable<int> phyRegions = _unitOfWork.PhysicianRegionRepo.Where(pr => pr.Physicianid == physician.Physicianid).ToList().Select(_ => (int)_.Regionid); ;
+
+                EditPhysicianViewModel model = new EditPhysicianViewModel()
+                {
+                    PhyUserName = aspUser.Username,
+                    PhysicianId = physician.Physicianid,
+                    FirstName = physician.Firstname,
+                    LastName = physician.Lastname,
+                    Email = physician.Email,
+                    Phone = physician.Mobile,
+                    MedicalLicenseNumber = physician.Medicallicense,
+                    NPINumber = physician.Npinumber,
+                    SyncEmail = physician.Syncemailaddress,
+                    Address1 = physician.Address1,
+                    Address2 = physician.Address2,
+                    RegionId = physician.Regionid,
+                    Zip = physician.Zip,
+                    RoleId = (int)physician.Roleid,
+                    MailPhone = physician.Altphone,
+                    BusinessName = physician.Businessname,
+                    CityId = cityId,
+                    BusinessWebsite = physician.Businesswebsite,
+                    regions = _unitOfWork.RegionRepository.GetAll(),
+                    roles = _unitOfWork.RoleRepo.Where(role => role.Accounttype == (int)AccountType.Physician),
+                    physicianRegions = phyRegions,
+                    IsICA = physician.Isagreementdoc ?? false,
+                    IsBGCheck = physician.Isbackgrounddoc ?? false,
+                    IsHIPAA = physician.Iscredentialdoc ?? false,
+                    IsLicenseDoc = physician.Islicensedoc ?? false,
+                    IsNDA = physician.Isnondisclosuredoc ?? false,
+                    selectedRegions = _unitOfWork.PhysicianRegionRepo.Where(pr => pr.Physicianid == physician.Physicianid).Select(_ => _.Regionid),
+                };
+
+                return View("Profile/Profile", model);
+
             }
-
-            Aspnetuser? aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(user => user.Id == physician.Aspnetuserid);
-
-            if (aspUser == null)
+            catch (Exception ex)
             {
-                return View("Error");
+                _notyf.Error(ex.Message);
+                return RedirectToAction("Dashboard");
             }
-
-            int? cityId = _unitOfWork.CityRepository.GetFirstOrDefault(city => city.Name == physician.City)?.Id;
-
-            IEnumerable<int> phyRegions = _unitOfWork.PhysicianRegionRepo.Where(pr => pr.Physicianid == physician.Physicianid).ToList().Select(_ => (int)_.Regionid); ;
-
-            EditPhysicianViewModel model = new EditPhysicianViewModel()
-            {
-                PhyUserName = aspUser.Username,
-                PhysicianId = physician.Physicianid,
-                FirstName = physician.Firstname,
-                LastName = physician.Lastname,
-                Email = physician.Email,
-                Phone = physician.Mobile,
-                MedicalLicenseNumber = physician.Medicallicense,
-                NPINumber = physician.Npinumber,
-                SyncEmail = physician.Syncemailaddress,
-                Address1 = physician.Address1,
-                Address2 = physician.Address2,
-                RegionId = physician.Regionid,
-                Zip = physician.Zip,
-                RoleId = (int)physician.Roleid,
-                MailPhone = physician.Altphone,
-                BusinessName = physician.Businessname,
-                CityId = cityId,
-                BusinessWebsite = physician.Businesswebsite,
-                regions = _unitOfWork.RegionRepository.GetAll(),
-                roles = _unitOfWork.RoleRepo.Where(role => role.Accounttype == (int)AccountType.Physician),
-                physicianRegions = phyRegions,
-                IsICA = physician.Isagreementdoc ?? false,
-                IsBGCheck = physician.Isbackgrounddoc ?? false,
-                IsHIPAA = physician.Iscredentialdoc ?? false,
-                IsLicenseDoc = physician.Islicensedoc ?? false,
-                IsNDA = physician.Isnondisclosuredoc ?? false,
-                selectedRegions = _unitOfWork.PhysicianRegionRepo.Where(pr => pr.Physicianid == physician.Physicianid).Select(_ => _.Regionid),
-            };
-
-            return View("Profile/Profile", model);
         }
 
         public bool ResetPhysicianPassword(string? updatePassword)
@@ -166,9 +172,9 @@ namespace HalloDoc.MVC.Controllers
 
                 return true;
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-
+                _notyf.Error(ex.Message);
 
                 return false;
             }
@@ -178,68 +184,22 @@ namespace HalloDoc.MVC.Controllers
         [HttpPost]
         public bool SendMessageToAdmin(string message)
         {
-            int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-            string phyName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
-
-            IEnumerable<Admin> admins = _unitOfWork.AdminRepository.GetAll();
-
-            string subject = "Need To Edit My Profile";
-            string? senderEmail = _config.GetSection("OutlookSMTP")["Sender"];
-            string? senderPassword = _config.GetSection("OutlookSMTP")["Password"];
-
-            string editPhysicianProfileLink = Url.Action("EditPhysicianAccount", "Admin", new { physicianId = phyId }, Request.Scheme);
-
-            string body = "<p>" +
-                "Provider " + phyName + " sent message regarding changing his profile: " + message +
-                "</p>" +
-                "<a href=\"" + editPhysicianProfileLink + "\" >Click here to edit physician profile</a>";
-
-            SmtpClient client = new SmtpClient("smtp.office365.com")
+            try
             {
-                Port = 587,
-                Credentials = new NetworkCredential(senderEmail, senderPassword),
-                EnableSsl = true,
-                DeliveryMethod = SmtpDeliveryMethod.Network,
-                UseDefaultCredentials = false
-            };
 
-            MailMessage mailMessage = new MailMessage
-            {
-                From = new MailAddress(senderEmail, "HalloDoc"),
-                Subject = subject,
-                IsBodyHtml = true,
-                Body = body,
-            };
+                int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+                string? phyName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+                _emailService.SendMailToAdminForEditProfile(message, phyId, phyName);
 
-            foreach (Admin admin in admins)
-            {
-                string email = admin.Email;
+                _notyf.Success("Mail successfully send to admin");
 
-                if (!string.IsNullOrEmpty(email))
-                {
-                    mailMessage.To.Add(email);
-
-                    Emaillog emaillog = new()
-                    {
-                        Emailtemplate = "r",
-                        Subjectname = subject,
-                        Emailid = email,
-                        Roleid = admin.Roleid,
-                        Adminid = admin.Adminid,
-                        Createdate = DateTime.Now,
-                        Sentdate = DateTime.Now,
-                        Isemailsent = true,
-                    };
-                    _unitOfWork.EmailLogRepository.Add(emaillog);
-                }
-
+                return true;
             }
-
-            client.Send(mailMessage);
-            _unitOfWork.Save();
-
-
-            return false;
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return false;
+            }
         }
 
         #endregion
@@ -249,59 +209,85 @@ namespace HalloDoc.MVC.Controllers
         [RoleAuthorize((int)AllowMenu.ProviderSchedule)]
         public IActionResult ShowDayShiftsModal(DateTime jsDate)
         {
-            DateTime shiftDate = jsDate.ToLocalTime().Date;
-            DayShiftModel model = new DayShiftModel()
+            try
             {
-                ShiftDate = shiftDate,
-                shiftdetails = _unitOfWork.ShiftDetailRepository.Where(shift => shift.Shiftdate == shiftDate),
-            };
 
-            return PartialView("Schedule/DayShiftModal", model);
+                DateTime shiftDate = jsDate.ToLocalTime().Date;
+                DayShiftModel model = new DayShiftModel()
+                {
+                    ShiftDate = shiftDate,
+                    shiftdetails = _unitOfWork.ShiftDetailRepository.Where(shift => shift.Shiftdate == shiftDate),
+                };
+
+                return PartialView("Schedule/DayShiftModal", model);
+
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return View("Error");
+            }
         }
 
         [RoleAuthorize((int)AllowMenu.ProviderSchedule)]
         public IActionResult Schedule()
         {
+            try
+            {
+                SchedulingViewModel model = new SchedulingViewModel();
+                model.regions = _unitOfWork.RegionRepository.GetAll();
 
-            SchedulingViewModel model = new SchedulingViewModel();
-            model.regions = _unitOfWork.RegionRepository.GetAll();
+                return View("Schedule/MySchedule", model);
 
-            return View("Schedule/MySchedule", model);
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return RedirectToAction("Dashboard");
+            }
         }
 
         [RoleAuthorize((int)AllowMenu.ProviderSchedule)]
         public IActionResult LoadMonthSchedule(int shiftMonth, int shiftYear)
         {
-
-            int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-
-            if (phyId == 0)
+            try
             {
-                return View("ErrorPartial");
+
+                int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+
+                if (phyId == 0)
+                {
+                    return View("ErrorPartial");
+                }
+
+                // 0 index'ed month of js to 1 index'ed month of c#
+                shiftMonth++;
+
+                IEnumerable<Shiftdetail> query = (from shift in _unitOfWork.ShiftRepository.GetAll()
+                                                  where (shift.Physicianid == phyId)
+                                                  join shiftDetail in _unitOfWork.ShiftDetailRepository.GetAll()
+                                                  on shift.Shiftid equals shiftDetail.Shiftid
+                                                  where (shiftDetail.Shiftdate.Month == shiftMonth && shiftDetail.Shiftdate.Year == shiftYear)
+                                                  select shiftDetail
+                                                  );
+
+                int days = DateTime.DaysInMonth(shiftYear, shiftMonth);
+                DayOfWeek dayOfWeek = new DateTime(shiftYear, shiftMonth, 1).DayOfWeek;
+
+                ShiftMonthViewModel model = new ShiftMonthViewModel()
+                {
+                    StartDate = new DateTime(shiftYear, shiftMonth, 1),
+                    shiftDetails = query,
+                    DaysInMonth = days,
+                };
+
+                return PartialView("Schedule/Partial/_MonthViewPartial", model);
             }
-
-            // 0 index'ed month of js to 1 index'ed month of c#
-            shiftMonth++;
-
-            IEnumerable<Shiftdetail> query = (from shift in _unitOfWork.ShiftRepository.GetAll()
-                                              where (shift.Physicianid == phyId)
-                                              join shiftDetail in _unitOfWork.ShiftDetailRepository.GetAll()
-                                              on shift.Shiftid equals shiftDetail.Shiftid
-                                              where (shiftDetail.Shiftdate.Month == shiftMonth && shiftDetail.Shiftdate.Year == shiftYear)
-                                              select shiftDetail
-                                              );
-
-            int days = DateTime.DaysInMonth(shiftYear, shiftMonth);
-            DayOfWeek dayOfWeek = new DateTime(shiftYear, shiftMonth, 1).DayOfWeek;
-
-            ShiftMonthViewModel model = new ShiftMonthViewModel()
+            catch (Exception ex)
             {
-                StartDate = new DateTime(shiftYear, shiftMonth, 1),
-                shiftDetails = query,
-                DaysInMonth = days,
-            };
-
-            return PartialView("Schedule/Partial/_MonthViewPartial", model);
+                _notyf.Error(ex.Message);
+                return PartialView("Schedule/Partial/_MonthViewPartial");
+            }
         }
 
 
@@ -326,40 +312,57 @@ namespace HalloDoc.MVC.Controllers
 
         public IActionResult ViewShiftModal(int shiftDetailId)
         {
-
-            int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
-
-            Shiftdetail? shiftdetail = _unitOfWork.ShiftDetailRepository.GetFirstOrDefault(shift => shift.Shiftdetailid == shiftDetailId);
-            if (shiftdetail == null)
+            try
             {
+
+                int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
+
+                Shiftdetail? shiftdetail = _unitOfWork.ShiftDetailRepository.GetFirstOrDefault(shift => shift.Shiftdetailid == shiftDetailId);
+                if (shiftdetail == null)
+                {
+                    return View("Error");
+                }
+
+                Physician? phy = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Physicianid == phyId);
+
+                ViewShiftModel model = new ViewShiftModel()
+                {
+                    PhysicianName = phy?.Firstname + " " + phy?.Lastname,
+                    RegionName = _unitOfWork.RegionRepository.GetFirstOrDefault(reg => reg.Regionid == shiftdetail.Regionid)?.Name,
+                    ShiftDate = shiftdetail.Shiftdate,
+                    ShiftEndTime = shiftdetail.Endtime,
+                    ShiftStartTime = shiftdetail.Starttime,
+                };
+
+                return PartialView("Schedule/ViewShiftModal", model);
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
                 return View("Error");
             }
-
-            Physician? phy = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Physicianid == phyId);
-
-            ViewShiftModel model = new ViewShiftModel()
-            {
-                PhysicianName = phy?.Firstname + " " + phy?.Lastname,
-                RegionName = _unitOfWork.RegionRepository.GetFirstOrDefault(reg => reg.Regionid == shiftdetail.Regionid)?.Name,
-                ShiftDate = shiftdetail.Shiftdate,
-                ShiftEndTime = shiftdetail.Endtime,
-                ShiftStartTime = shiftdetail.Starttime,
-            };
-
-            return PartialView("Schedule/ViewShiftModal", model);
 
         }
 
         [HttpGet]
         public IActionResult AddShiftModal()
         {
-            int phyId = GetPhysicianId();
+            try
+            {
 
-            IEnumerable<int> phyRegions = _unitOfWork.PhysicianRegionRepo.Where(phy => phy.Physicianid == phyId).Select(_ => _.Regionid);
-            AddShiftModel model = new AddShiftModel();
-            model.regions = _unitOfWork.RegionRepository.Where(reg => phyRegions.Contains(reg.Regionid));
-            model.PhysicianId = phyId;
-            return PartialView("Schedule/AddShiftModal", model);
+                int phyId = GetPhysicianId();
+
+                IEnumerable<int> phyRegions = _unitOfWork.PhysicianRegionRepo.Where(phy => phy.Physicianid == phyId).Select(_ => _.Regionid);
+                AddShiftModel model = new AddShiftModel();
+                model.regions = _unitOfWork.RegionRepository.Where(reg => phyRegions.Contains(reg.Regionid));
+                model.PhysicianId = phyId;
+                return PartialView("Schedule/AddShiftModal", model);
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return View("Error");
+            }
         }
 
 
@@ -451,138 +454,146 @@ namespace HalloDoc.MVC.Controllers
         [HttpPost]
         public bool AddShift(AddShiftModel model)
         {
-
-            int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
-            string? phyAspId = HttpContext.Request.Headers.Where(a => a.Key == "userAspId").FirstOrDefault().Value;
-
-            if (phyAspId == null || phyId == 0)
-            {
-                _notyf.Error("Physician Not found");
-                return false;
-            }
-
-            if (model.ShiftDate == null || model.StartTime == null || model.EndTime == null)
-            {
-                _notyf.Error("Please enter all the required details");
-                return false;
-            }
-
-            if (model.ShiftDate.Value.Date == DateTime.Today && model.StartTime < TimeOnly.FromDateTime(DateTime.Now))
-            {
-                _notyf.Error("Please create shifts after the current time for today's shifts.");
-                return false;
-            }
-
-            if (ModelState.IsValid)
+            try
             {
 
-                List<DateTime> totalShiftDates = new List<DateTime>();
-                List<DateTime> clashingShifts = new List<DateTime>();
-                bool isAnotherShiftExists = false;
+                int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
+                string? phyAspId = HttpContext.Request.Headers.Where(a => a.Key == "userAspId").FirstOrDefault().Value;
 
-                totalShiftDates.Add(model.ShiftDate.Value.Date);
-                bool isExistsInit = _unitOfWork.ShiftDetailRepository.IsAnotherShiftExists(model.PhysicianId, model.ShiftDate.Value.Date, model.StartTime, model.EndTime);
-
-                if (isExistsInit)
+                if (phyAspId == null || phyId == 0)
                 {
-                    isAnotherShiftExists = true;
-                    clashingShifts.Add(model.ShiftDate.Value.Date);
+                    _notyf.Error("Physician Not found");
+                    return false;
                 }
 
-                if (model.IsRepeat != null && model.repeatDays != null)
+                if (model.ShiftDate == null || model.StartTime == null || model.EndTime == null)
                 {
-                    DateTime nextShiftDate = model.ShiftDate ?? DateTime.Now;
-                    int currentDayOfWeek = (int)nextShiftDate.DayOfWeek;
-                    List<int> sorted = model.repeatDays.OrderBy(_ => _).ToList();
+                    _notyf.Error("Please enter all the required details");
+                    return false;
+                }
 
-                    int offset = GetOffSet(currentDayOfWeek, sorted);
+                if (model.ShiftDate.Value.Date == DateTime.Today && model.StartTime < TimeOnly.FromDateTime(DateTime.Now))
+                {
+                    _notyf.Error("Please create shifts after the current time for today's shifts.");
+                    return false;
+                }
 
-                    for (int i = 0; i < model.RepeatCount; i++)
+                if (ModelState.IsValid)
+                {
+
+                    List<DateTime> totalShiftDates = new List<DateTime>();
+                    List<DateTime> clashingShifts = new List<DateTime>();
+                    bool isAnotherShiftExists = false;
+
+                    totalShiftDates.Add(model.ShiftDate.Value.Date);
+                    bool isExistsInit = _unitOfWork.ShiftDetailRepository.IsAnotherShiftExists(model.PhysicianId, model.ShiftDate.Value.Date, model.StartTime, model.EndTime);
+
+                    if (isExistsInit)
                     {
-                        int length = sorted.Count;
+                        isAnotherShiftExists = true;
+                        clashingShifts.Add(model.ShiftDate.Value.Date);
+                    }
 
-                        for (int j = 0; j < length; j++)
+                    if (model.IsRepeat != null && model.repeatDays != null)
+                    {
+                        DateTime nextShiftDate = model.ShiftDate ?? DateTime.Now;
+                        int currentDayOfWeek = (int)nextShiftDate.DayOfWeek;
+                        List<int> sorted = model.repeatDays.OrderBy(_ => _).ToList();
+
+                        int offset = GetOffSet(currentDayOfWeek, sorted);
+
+                        for (int i = 0; i < model.RepeatCount; i++)
                         {
-                            int offsetIndex = (j + offset) % length;
+                            int length = sorted.Count;
 
-                            nextShiftDate = GetNextWeekday(nextShiftDate, sorted[offsetIndex]);
-                            totalShiftDates.Add(nextShiftDate);
-
-                            bool isExists = _unitOfWork.ShiftDetailRepository.IsAnotherShiftExists(model.PhysicianId, nextShiftDate.Date, model.StartTime, model.EndTime);
-
-                            if (isExists)
+                            for (int j = 0; j < length; j++)
                             {
-                                isAnotherShiftExists = true;
-                                clashingShifts.Add(nextShiftDate);
+                                int offsetIndex = (j + offset) % length;
+
+                                nextShiftDate = GetNextWeekday(nextShiftDate, sorted[offsetIndex]);
+                                totalShiftDates.Add(nextShiftDate);
+
+                                bool isExists = _unitOfWork.ShiftDetailRepository.IsAnotherShiftExists(model.PhysicianId, nextShiftDate.Date, model.StartTime, model.EndTime);
+
+                                if (isExists)
+                                {
+                                    isAnotherShiftExists = true;
+                                    clashingShifts.Add(nextShiftDate);
+                                }
+
                             }
 
                         }
 
                     }
 
-                }
-
-                if (isAnotherShiftExists)
-                {
-                    StringBuilder stringBuilder = new StringBuilder();
-                    foreach (DateTime date in clashingShifts)
+                    if (isAnotherShiftExists)
                     {
-                        stringBuilder.Append(date.ToString("ddd, dd MMM yyyy"));
+                        StringBuilder stringBuilder = new StringBuilder();
+                        foreach (DateTime date in clashingShifts)
+                        {
+                            stringBuilder.Append(date.ToString("ddd, dd MMM yyyy"));
+                        }
+
+                        _notyf.Error("Your shifts are clashing with shifts on: \n" + stringBuilder.ToString());
+                        return false;
                     }
 
-                    _notyf.Error("Your shifts are clashing with shifts on: \n" + stringBuilder.ToString());
-                    return false;
-                }
 
-
-                Shift shift = new()
-                {
-                    Physicianid = model.PhysicianId,
-                    Startdate = DateOnly.FromDateTime(model.ShiftDate.Value.Date),
-                    Repeatupto = model.RepeatCount,
-                    Createddate = DateTime.Now,
-                    Createdby = phyAspId,
-                    Isrepeat = model.IsRepeat != null,
-                };
-
-                _unitOfWork.ShiftRepository.Add(shift);
-                _unitOfWork.Save();
-
-
-                foreach (DateTime date in totalShiftDates)
-                {
-
-                    Shiftdetail shiftdetail = new()
+                    Shift shift = new()
                     {
-                        Shiftid = shift.Shiftid,
-                        Shiftdate = date,
-                        Regionid = model.RegionId,
-                        Starttime = (TimeOnly)model.StartTime,
-                        Endtime = (TimeOnly)model.EndTime,
-                        Status = (short)ShiftStatus.Pending,
-                        Isdeleted = false
+                        Physicianid = model.PhysicianId,
+                        Startdate = DateOnly.FromDateTime(model.ShiftDate.Value.Date),
+                        Repeatupto = model.RepeatCount,
+                        Createddate = DateTime.Now,
+                        Createdby = phyAspId,
+                        Isrepeat = model.IsRepeat != null,
                     };
 
-                    _unitOfWork.ShiftDetailRepository.Add(shiftdetail);
+                    _unitOfWork.ShiftRepository.Add(shift);
                     _unitOfWork.Save();
 
-                    Shiftdetailregion s = new()
+
+                    foreach (DateTime date in totalShiftDates)
                     {
-                        Shiftdetailid = shiftdetail.Shiftdetailid,
-                        Regionid = (int)shiftdetail.Regionid
-                    };
-                    _unitOfWork.ShiftDetailRegionRepository.Add(s);
-                    _unitOfWork.Save();
+
+                        Shiftdetail shiftdetail = new()
+                        {
+                            Shiftid = shift.Shiftid,
+                            Shiftdate = date,
+                            Regionid = model.RegionId,
+                            Starttime = (TimeOnly)model.StartTime,
+                            Endtime = (TimeOnly)model.EndTime,
+                            Status = (short)ShiftStatus.Pending,
+                            Isdeleted = false
+                        };
+
+                        _unitOfWork.ShiftDetailRepository.Add(shiftdetail);
+                        _unitOfWork.Save();
+
+                        Shiftdetailregion s = new()
+                        {
+                            Shiftdetailid = shiftdetail.Shiftdetailid,
+                            Regionid = (int)shiftdetail.Regionid
+                        };
+                        _unitOfWork.ShiftDetailRegionRepository.Add(s);
+                        _unitOfWork.Save();
+
+                    }
+
+                    _notyf.Success("Successfully Added shifts");
+                    return true;
 
                 }
 
-                _notyf.Success("Successfully Added shifts");
-                return true;
-
+                _notyf.Error("Please enter all the required details");
+                return false;
             }
-
-            _notyf.Error("Please enter all the required details");
-            return false;
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return false;
+            }
         }
 
 
@@ -633,6 +644,7 @@ namespace HalloDoc.MVC.Controllers
                                           where record.TimesheetId == timesheet.TimesheetId
                                           select new InvoicingTimeSheetTRow
                                           {
+                                              TimeSheetDetailId = record.TimesheetDetailId,
                                               ShiftDate = record.TimesheetDate,
                                               ShiftCount = -1,
                                               HouseCall = record.NumberOfHouseCall ?? 0,
@@ -641,8 +653,30 @@ namespace HalloDoc.MVC.Controllers
                                               PhoneConsultsNightWeekendCount = -1,
                                               NightShiftsWeekendCount = -1,
                                               BatchTesting = -1,
-                                          });
+                                          }).ToList();
 
+                List<ReceiptRecord> records = new List<ReceiptRecord>();
+
+                foreach (var sheetDetail in model.timeSheetRecords)
+                {
+                    TimesheetDetailReimbursement? receipt = _unitOfWork.TimeSheetDetailReimbursementRepo.GetFirstOrDefault(record => record.TimesheetDetailId == sheetDetail.TimeSheetDetailId);
+
+                    if (receipt != null)
+                    {
+                        ReceiptRecord record = new ReceiptRecord
+                        {
+                            DateOfRecord = sheetDetail.ShiftDate,
+                            ItemName = receipt.ItemName,
+                            Amount = receipt.Amount,
+                            BillReceiptName = receipt.Bill,
+                            BillReceiptFilePath = $"/document/timesheet/physician{phyId}/{timesheet.TimesheetId}/{receipt.TimesheetDetailReimbursementId}.pdf",
+                        };
+
+                        records.Add(record);
+                    }
+                }
+
+                model.receiptRecords = records;
                 return PartialView("Invoicing/Partial/_InvoicingTimeSheetTable", model);
 
             }
@@ -661,51 +695,37 @@ namespace HalloDoc.MVC.Controllers
             {
                 int phyId = GetPhysicianId();
 
-                DateTime startDate = startDateISO.ToLocalTime();
-                DateTime endDate = startDate;
+                DateOnly startDate = DateOnly.FromDateTime(startDateISO.ToLocalTime());
+                DateOnly endDate = startDate;
 
-                DateTime firstDayOfMonth = new DateTime(startDate.Year, startDate.Month, 1);
+                DateOnly firstDayOfMonth = new DateOnly(startDate.Year, startDate.Month, 1);
 
                 if (startDate.Day < 15)
                 {
                     startDate = firstDayOfMonth;
-                    endDate = new DateTime(startDate.Year, startDate.Month, 14);
+                    endDate = new DateOnly(startDate.Year, startDate.Month, 14);
                 }
                 else
                 {
-                    startDate = new DateTime(startDate.Year, startDate.Month, 15);
-                    endDate = firstDayOfMonth.AddMonths(1).AddTicks(-1);
+                    startDate = new DateOnly(startDate.Year, startDate.Month, 15);
+                    endDate = firstDayOfMonth.AddMonths(1).AddDays(-1);
                 }
 
                 Timesheet? oldTimeSheet = _unitOfWork.TimeSheetRepository.GetFirstOrDefault(sheet =>
                 sheet.PhysicianId == phyId
-                && sheet.StartDate == DateOnly.FromDateTime(startDate)
-                && sheet.EndDate == DateOnly.FromDateTime(endDate)
+                && sheet.StartDate == startDate
+                && sheet.EndDate == endDate
                 );
 
-
-                DateOnly receiptDate = DateOnly.FromDateTime(startDate);
-
-                List<ReceiptRecord> receiptRecords = new List<ReceiptRecord>();
-                while (receiptDate <= DateOnly.FromDateTime(endDate))
-                {
-                    ReceiptRecord record = new ReceiptRecord()
-                    {
-                        DateOfRecord = receiptDate,
-                    };
-
-                    receiptRecords.Add(record);
-                    receiptDate = receiptDate.AddDays(1);
-                }
 
 
                 if (oldTimeSheet == null)
                 {
 
-                    DateOnly loopDate = DateOnly.FromDateTime(startDate);
+                    DateOnly loopDate = startDate;
 
                     List<TimeSheetDayRecord> records = new List<TimeSheetDayRecord>();
-                    while (loopDate <= DateOnly.FromDateTime(endDate))
+                    while (loopDate <= endDate)
                     {
                         TimeSheetDayRecord record = new TimeSheetDayRecord()
                         {
@@ -716,10 +736,26 @@ namespace HalloDoc.MVC.Controllers
                         loopDate = loopDate.AddDays(1);
                     }
 
-                    FinalizeTimeSheetViewModel model = new FinalizeTimeSheetViewModel()
+
+                    DateOnly receiptDate = startDate;
+
+                    List<ReceiptRecord> receiptRecords = new List<ReceiptRecord>();
+                    while (receiptDate <= endDate)
                     {
-                        StartDate = DateOnly.FromDateTime(startDate),
-                        EndDate = DateOnly.FromDateTime(endDate),
+                        ReceiptRecord record = new ReceiptRecord()
+                        {
+                            DateOfRecord = receiptDate,
+                        };
+
+                        receiptRecords.Add(record);
+                        receiptDate = receiptDate.AddDays(1);
+                    }
+
+
+                    TimeSheetFormViewModel model = new TimeSheetFormViewModel()
+                    {
+                        StartDate = startDate,
+                        EndDate = endDate,
                         timeSheetDayRecords = records,
                         timeSheetReceiptRecords = receiptRecords,
                     };
@@ -734,26 +770,13 @@ namespace HalloDoc.MVC.Controllers
                         return RedirectToAction("Invoicing");
                     }
 
-                    IEnumerable<TimeSheetDayRecord> records = (from record in _unitOfWork.TimeSheetDetailRepo.GetAll()
-                                                               where record.TimesheetId == oldTimeSheet.TimesheetId
-                                                               select new TimeSheetDayRecord
-                                                               {
-                                                                   DateOfRecord = record.TimesheetDate,
-                                                                   IsHoliday = record.IsWeekend ?? false,
-                                                                   NoOfHouseCall = record.NumberOfHouseCall ?? 0,
-                                                                   NoOfPhoneConsult = record.NumberOfPhoneCall ?? 0,
-                                                                   OnCallHours = -1,
-                                                                   TotalHours = record.TotalHours ?? 0,
-                                                               }).OrderBy(_ => _.DateOfRecord);
+                    TimeSheetFormViewModel? model = GetExistingTimeSheetViewModel(oldTimeSheet?.TimesheetId ?? 0, startDate, endDate);
 
-                    FinalizeTimeSheetViewModel model = new FinalizeTimeSheetViewModel()
+                    if (model == null)
                     {
-                        TimesheetId = oldTimeSheet?.TimesheetId ?? 0,
-                        StartDate = DateOnly.FromDateTime(startDate),
-                        EndDate = DateOnly.FromDateTime(endDate),
-                        timeSheetDayRecords = records.ToList(),
-                        timeSheetReceiptRecords = receiptRecords,
-                    };
+                        _notyf.Error("Could not fetch data");
+                        return RedirectToAction("Invoicing");
+                    }
 
                     return View("Invoicing/TimeSheetForm", model);
                 }
@@ -766,8 +789,281 @@ namespace HalloDoc.MVC.Controllers
             }
         }
 
+        public TimeSheetFormViewModel? GetExistingTimeSheetViewModel(int timeSheetId, DateOnly startDate, DateOnly endDate)
+        {
+
+            try
+            {
+                int phyId = GetPhysicianId();
+
+                IEnumerable<TimeSheetDayRecord> records = (from record in _unitOfWork.TimeSheetDetailRepo.GetAll()
+                                                           where record.TimesheetId == timeSheetId
+                                                           select new TimeSheetDayRecord
+                                                           {
+                                                               TimeSheetDetailId = record.TimesheetDetailId,
+                                                               DateOfRecord = record.TimesheetDate,
+                                                               IsHoliday = record.IsWeekend ?? false,
+                                                               NoOfHouseCall = record.NumberOfHouseCall ?? 0,
+                                                               NoOfPhoneConsult = record.NumberOfPhoneCall ?? 0,
+                                                               OnCallHours = -1,
+                                                               TotalHours = record.TotalHours ?? 0,
+                                                           }).OrderBy(_ => _.DateOfRecord);
+
+                DateOnly receiptDate = startDate;
+
+                List<ReceiptRecord> receiptRecords = new List<ReceiptRecord>();
+                while (receiptDate <= endDate)
+                {
+                    int? timeSheetDetailId = records.FirstOrDefault(record => record.DateOfRecord == receiptDate)?.TimeSheetDetailId;
+
+                    TimesheetDetailReimbursement? reimbursement = _unitOfWork.TimeSheetDetailReimbursementRepo.GetFirstOrDefault(receipt=> receipt.TimesheetDetailId == timeSheetDetailId);
+                    
+                    ReceiptRecord record = new ReceiptRecord()
+                    {
+                        TimeSheetDetailId = timeSheetDetailId ?? 0,
+                        DateOfRecord = receiptDate,
+                    };
+
+                    if (reimbursement != null)
+                    {
+                        record = new ReceiptRecord()
+                        {
+                            TimeSheetDetailId = timeSheetDetailId ?? 0,
+                            DateOfRecord = receiptDate,
+                            ItemName = reimbursement.ItemName,
+                            Amount = reimbursement.Amount,
+                            BillReceiptName = reimbursement.Bill,
+                            BillReceiptFilePath = $"/document/timesheet/physician{phyId}/{timeSheetId}/{reimbursement.TimesheetDetailReimbursementId}.pdf",
+                        };
+                    }
+
+                    receiptRecords.Add(record);
+                    receiptDate = receiptDate.AddDays(1);
+                }
+
+                TimeSheetFormViewModel model = new TimeSheetFormViewModel()
+                {
+                    TimesheetId = timeSheetId,
+                    StartDate = startDate,
+                    EndDate = endDate,
+                    timeSheetDayRecords = records.ToList(),
+                    timeSheetReceiptRecords = receiptRecords,
+                };
+
+                return model;
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return null;
+            }
+        }
+
+        public bool SubmitNewTimesheet(TimeSheetFormViewModel model)
+        {
+            int phyId = GetPhysicianId();
+            string? phyAspId = GetPhysicianAspUserId();
+
+            try
+            {
+
+                Timesheet newTimeSheet = new Timesheet()
+                {
+                    PhysicianId = phyId,
+                    StartDate = model.StartDate,
+                    EndDate = model.EndDate,
+                    IsFinalize = false,
+                    IsApproved = false,
+                    CreatedBy = phyAspId ?? "",
+                    CreatedDate = DateTime.Now,
+                };
+
+                _unitOfWork.TimeSheetRepository.Add(newTimeSheet);
+                _unitOfWork.Save();
+
+                if (model.IsReceiptsAdded)
+                {
+                    if (model.timeSheetDayRecords != null && model.timeSheetDayRecords.Any())
+                    {
+                        foreach (TimeSheetDayRecord record in model.timeSheetDayRecords)
+                        {
+                            TimesheetDetail sheetDetail = new TimesheetDetail()
+                            {
+                                TimesheetId = newTimeSheet.TimesheetId,
+                                TimesheetDate = record.DateOfRecord,
+                                TotalHours = record.TotalHours,
+                                IsWeekend = record.IsHoliday,
+                                NumberOfHouseCall = record.NoOfHouseCall,
+                                NumberOfPhoneCall = record.NoOfPhoneConsult,
+                                CreatedBy = phyAspId ?? "",
+                                CreatedDate = DateTime.Now,
+                            };
+
+                            _unitOfWork.TimeSheetDetailRepo.Add(sheetDetail);
+                            _unitOfWork.Save();
+
+                            ReceiptRecord? receipt = model.timeSheetReceiptRecords?.FirstOrDefault(receipt => receipt.DateOfRecord == record.DateOfRecord);
+
+
+                            if (receipt == null || receipt.ItemName == null || receipt.Amount == 0 || receipt.BillReceipt == null)
+                            {
+                                continue;
+                            }
+
+
+                            TimesheetDetailReimbursement recordDetail = new TimesheetDetailReimbursement()
+                            {
+                                TimesheetDetailId = newTimeSheet.TimesheetId,
+                                ItemName = receipt.ItemName,
+                                Amount = receipt.Amount,
+                                Bill = receipt.BillReceipt.FileName,
+                                CreatedBy = phyAspId ?? "",
+                                CreatedDate = DateTime.Now,
+                            };
+
+                            _unitOfWork.TimeSheetDetailReimbursementRepo.Add(recordDetail);
+                            _unitOfWork.Save();
+
+                            FileHelper.InsertFileForTimeSheetReceipt(receipt.BillReceipt, _environment.WebRootPath, phyId, newTimeSheet.TimesheetId, recordDetail.TimesheetDetailReimbursementId);
+
+                        }
+
+                        _notyf.Success("Time Sheet Added Successfully");
+
+                    }
+                }
+                else
+                {
+                    if (model.timeSheetDayRecords != null && model.timeSheetDayRecords.Any())
+                    {
+                        foreach (TimeSheetDayRecord record in model.timeSheetDayRecords)
+                        {
+                            TimesheetDetail sheetDetail = new TimesheetDetail()
+                            {
+                                TimesheetId = newTimeSheet.TimesheetId,
+                                TimesheetDate = record.DateOfRecord,
+                                TotalHours = record.TotalHours,
+                                IsWeekend = record.IsHoliday,
+                                NumberOfHouseCall = record.NoOfHouseCall,
+                                NumberOfPhoneCall = record.NoOfPhoneConsult,
+                                CreatedBy = phyAspId ?? "",
+                                CreatedDate = DateTime.Now,
+                            };
+
+                            _unitOfWork.TimeSheetDetailRepo.Add(sheetDetail);
+                        }
+
+                        _unitOfWork.Save();
+
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return false;
+            }
+        }
+
+        public bool UpdateExistingTimesheet(TimeSheetFormViewModel model, int timeSheetId)
+        {
+            int phyId = GetPhysicianId();
+            string? phyAspId = GetPhysicianAspUserId();
+            try
+            {
+
+                DateOnly loopDate = model.StartDate;
+
+                while (loopDate <= model.EndDate)
+                {
+
+                    TimesheetDetail? sheetDetail = _unitOfWork.TimeSheetDetailRepo.GetFirstOrDefault(sheet => sheet.TimesheetId == timeSheetId
+                    && sheet.TimesheetDate == loopDate);
+                    TimeSheetDayRecord? inputRecord = model.timeSheetDayRecords?.FirstOrDefault(record => record.DateOfRecord == loopDate);
+
+                    if (sheetDetail != null && inputRecord != null)
+                    {
+                        sheetDetail.TotalHours = inputRecord.TotalHours;
+                        sheetDetail.IsWeekend = inputRecord.IsHoliday;
+                        sheetDetail.NumberOfHouseCall = inputRecord.NoOfHouseCall;
+                        sheetDetail.NumberOfPhoneCall = inputRecord.NoOfPhoneConsult;
+
+                        _unitOfWork.TimeSheetDetailRepo.Update(sheetDetail);
+                    }
+
+                    loopDate = loopDate.AddDays(1);
+
+                }
+
+                if (model.IsReceiptsAdded)
+
+                {
+
+                    loopDate = model.StartDate;
+
+                    while (loopDate <= model.EndDate)
+                    {
+
+                        ReceiptRecord? inputRecord = model.timeSheetReceiptRecords?.FirstOrDefault(record => record.DateOfRecord == loopDate);
+
+                        if (inputRecord == null || inputRecord.ItemName == null || inputRecord.Amount <= 0 || inputRecord.BillReceipt == null)
+                        {
+                            loopDate = loopDate.AddDays(1);
+                            continue;
+                        }
+
+                        TimesheetDetailReimbursement? reimbursementDetail = _unitOfWork.TimeSheetDetailReimbursementRepo.GetFirstOrDefault(sheet => sheet.TimesheetDetailReimbursementId == inputRecord.RecordId);
+
+                        if (reimbursementDetail != null)
+                        {
+                            reimbursementDetail.ItemName = inputRecord.ItemName;
+                            reimbursementDetail.Amount = inputRecord.Amount;
+                            reimbursementDetail.Bill = inputRecord.BillReceipt.FileName;
+                            reimbursementDetail.ModifiedBy = phyAspId;
+                            reimbursementDetail.ModifiedDate = DateTime.Now;
+                            _unitOfWork.TimeSheetDetailReimbursementRepo.Update(reimbursementDetail);
+                            _unitOfWork.Save();
+                        }
+                        else
+                        {
+                            TimeSheetDayRecord? timeSheetDetailRecord = model.timeSheetDayRecords?.FirstOrDefault(record => record.DateOfRecord == loopDate);
+
+                            reimbursementDetail = new TimesheetDetailReimbursement()
+                            {
+                                TimesheetDetailId = timeSheetDetailRecord.TimeSheetDetailId,
+                                ItemName = inputRecord.ItemName,
+                                Amount = inputRecord.Amount,
+                                Bill = inputRecord.BillReceipt.FileName,
+                                CreatedBy = phyAspId,
+                                CreatedDate = DateTime.Now,
+                            };
+
+                            _unitOfWork.TimeSheetDetailReimbursementRepo.Add(reimbursementDetail);
+                            _unitOfWork.Save();
+                        }
+
+                        FileHelper.InsertFileForTimeSheetReceipt(inputRecord.BillReceipt, _environment.WebRootPath,
+                            phyId, timeSheetId, reimbursementDetail.TimesheetDetailReimbursementId);
+                        loopDate = loopDate.AddDays(1);
+
+                    }
+                }
+
+                _unitOfWork.Save();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return false;
+            }
+        }
+
+
         [HttpPost]
-        public IActionResult TimeSheetForm(FinalizeTimeSheetViewModel model)
+        public IActionResult TimeSheetForm(TimeSheetFormViewModel model)
         {
             int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
             string? phyAspId = HttpContext.Request.Headers.Where(x => x.Key == "userAspId").FirstOrDefault().Value;
@@ -782,152 +1078,22 @@ namespace HalloDoc.MVC.Controllers
 
                 if (oldTimeSheet == null)
                 {
-                    Timesheet newTimeSheet = new Timesheet()
+                    bool isSuccess = SubmitNewTimesheet(model);
+                    if (!isSuccess)
                     {
-                        PhysicianId = phyId,
-                        StartDate = model.StartDate,
-                        EndDate = model.EndDate,
-                        IsFinalize = false,
-                        IsApproved = false,
-                        CreatedBy = phyAspId ?? "",
-                        CreatedDate = DateTime.Now,
-                    };
-
-                    _unitOfWork.TimeSheetRepository.Add(newTimeSheet);
-                    _unitOfWork.Save();
-
-                    if (model.IsReceiptsAdded)
-                    {
-
-                        if (model.timeSheetDayRecords != null && model.timeSheetDayRecords.Any())
-                        {
-                            foreach (TimeSheetDayRecord record in model.timeSheetDayRecords)
-                            {
-                                TimesheetDetail sheetDetail = new TimesheetDetail()
-                                {
-                                    TimesheetId = newTimeSheet.TimesheetId,
-                                    TimesheetDate = record.DateOfRecord,
-                                    TotalHours = record.TotalHours,
-                                    IsWeekend = record.IsHoliday,
-                                    NumberOfHouseCall = record.NoOfHouseCall,
-                                    NumberOfPhoneCall = record.NoOfPhoneConsult,
-                                    CreatedBy = phyAspId ?? "",
-                                    CreatedDate = DateTime.Now,
-                                };
-
-                                _unitOfWork.TimeSheetDetailRepo.Add(sheetDetail);
-                                _unitOfWork.Save();
-
-                                ReceiptRecord? receipt = model.timeSheetReceiptRecords?.FirstOrDefault(receipt => receipt.DateOfRecord == record.DateOfRecord);
-
-                                if (receipt != null)
-                                {
-
-                                    TimesheetDetailReimbursement recordDetail = new TimesheetDetailReimbursement()
-                                    {
-                                        TimesheetDetailId = newTimeSheet.TimesheetId,
-                                        ItemName = receipt.ItemName,
-                                        Amount = receipt.Amount,
-                                        Bill = receipt.BillReceipt.FileName,
-                                        CreatedBy = phyAspId ?? "",
-                                        CreatedDate = DateTime.Now,
-                                    };
-
-                                    _unitOfWork.TimeSheetDetailReimbursementRepo.Add(recordDetail);
-                                    _unitOfWork.Save();
-                                }
-                                
-
-                            }
-
-
-                        }
-
-                        if (model.IsReceiptsAdded && model.timeSheetReceiptRecords != null && model.timeSheetReceiptRecords.Any())
-                        {
-
-                            _unitOfWork.Save();
-                            _notyf.Success("Time Sheet Added Successfully");
-
-                        }
+                        return View("Invoicing/TimeSheetForm", model);
                     }
-                    else
-                    {
-                        if (model.timeSheetDayRecords != null && model.timeSheetDayRecords.Any())
-                        {
-                            foreach (TimeSheetDayRecord record in model.timeSheetDayRecords)
-                            {
-                                TimesheetDetail sheetDetail = new TimesheetDetail()
-                                {
-                                    TimesheetId = newTimeSheet.TimesheetId,
-                                    TimesheetDate = record.DateOfRecord,
-                                    TotalHours = record.TotalHours,
-                                    IsWeekend = record.IsHoliday,
-                                    NumberOfHouseCall = record.NoOfHouseCall,
-                                    NumberOfPhoneCall = record.NoOfPhoneConsult,
-                                    CreatedBy = phyAspId ?? "",
-                                    CreatedDate = DateTime.Now,
-                                };
-
-                                _unitOfWork.TimeSheetDetailRepo.Add(sheetDetail);
-                            }
-
-                            _unitOfWork.Save();
-
-                        }
-                    }
-
                     _notyf.Success("Time Sheet Added Successfully");
 
                 }
                 else
                 {
 
-                    DateOnly loopDate = model.StartDate;
-
-                    while (loopDate <= model.EndDate)
+                    bool isSuccess = UpdateExistingTimesheet(model, oldTimeSheet.TimesheetId);
+                    if (!isSuccess)
                     {
-
-                        TimesheetDetail? sheetDetail = _unitOfWork.TimeSheetDetailRepo.GetFirstOrDefault(sheet => sheet.TimesheetId == oldTimeSheet.TimesheetId
-                        && sheet.TimesheetDate == loopDate);
-                        TimeSheetDayRecord? inputRecord = model.timeSheetDayRecords?.FirstOrDefault(record => record.DateOfRecord == loopDate);
-
-                        if (sheetDetail != null && inputRecord != null)
-                        {
-                            sheetDetail.TotalHours = inputRecord.TotalHours;
-                            sheetDetail.IsWeekend = inputRecord.IsHoliday;
-                            sheetDetail.NumberOfHouseCall = inputRecord.NoOfHouseCall;
-                            sheetDetail.NumberOfPhoneCall = inputRecord.NoOfPhoneConsult;
-
-                            _unitOfWork.TimeSheetDetailRepo.Update(sheetDetail);
-                        }
-
-                        loopDate = loopDate.AddDays(1);
-
+                        return View("Invoicing/TimeSheetForm", model);
                     }
-
-                    loopDate = model.StartDate;
-
-                    while (loopDate <= model.EndDate)
-                    {
-
-                        ReceiptRecord? inputRecord = model.timeSheetReceiptRecords?.FirstOrDefault(record => record.DateOfRecord == loopDate);
-                        TimesheetDetailReimbursement? sheetDetail = _unitOfWork.TimeSheetDetailReimbursementRepo.GetFirstOrDefault(sheet => sheet.TimesheetDetailReimbursementId == inputRecord.RecordId);
-
-                        if (sheetDetail != null && inputRecord != null)
-                        {
-                            sheetDetail.ItemName = inputRecord.ItemName;
-                            sheetDetail.Amount = inputRecord.Amount;
-                            sheetDetail.Bill = inputRecord.BillReceipt.FileName;
-
-                            _unitOfWork.TimeSheetDetailReimbursementRepo.Update(sheetDetail);
-                        }
-
-                        loopDate = loopDate.AddDays(1);
-
-                    }
-
-                    _unitOfWork.Save();
                     _notyf.Success("Time Sheet Updated Successfully");
                 }
 
@@ -942,79 +1108,102 @@ namespace HalloDoc.MVC.Controllers
         }
 
         [HttpPost]
-        public bool FinalizeTimeSheet(int timeSheetId)
+        public IActionResult FinalizeTimeSheet(TimeSheetFormViewModel model)
         {
-            return false;
+            Timesheet? timesheet = _unitOfWork.TimeSheetRepository.GetFirstOrDefault(sheet => sheet.TimesheetId == model.TimesheetId);
+            
+            if(timesheet == null)
+            {
+                _notyf.Error("Timesheet not found");
+                return RedirectToAction("Invoicing");
+            }
+
+            TimeSheetForm(model);
+
+            timesheet.IsFinalize = true;
+            _unitOfWork.TimeSheetRepository.Update(timesheet);
+            _unitOfWork.Save();
+
+            _notyf.Success("Timesheet successfully finalized");
+            return RedirectToAction("Invoicing");
         }
 
         #endregion
-
 
         #region Dashboard
 
         [RoleAuthorize((int)AllowMenu.ProviderDashboard)]
         public IActionResult Dashboard()
         {
-            string? phyName = GetPhysicianName();
-            int phyId = GetPhysicianId();
-
-            if (phyName == null)
+            try
             {
-                return RedirectToAction("Index", "Guest");
+
+                string? phyName = GetPhysicianName();
+                int phyId = GetPhysicianId();
+
+                if (phyName == null)
+                {
+                    return RedirectToAction("Index", "Guest");
+                }
+
+                int? status = HttpContext.Session.GetInt32("currentStatus");
+                int? page = HttpContext.Session.GetInt32("currentPage");
+                int? region = HttpContext.Session.GetInt32("currentRegionFilter");
+                int? type = HttpContext.Session.GetInt32("currentTypeFilter");
+                string? search = HttpContext.Session.GetString("currentSearchFilter");
+
+
+                if (status == null)
+                {
+                    status = 1;
+                    HttpContext.Session.SetInt32("currentStatus", 1);
+                }
+                if (page == null)
+                {
+                    page = 1;
+                    HttpContext.Session.SetInt32("currentPage", 1);
+                }
+                if (region == null)
+                {
+                    region = 0;
+                    HttpContext.Session.SetInt32("currentRegionFilter", 0);
+                }
+                if (type == null)
+                {
+                    type = 0;
+                    HttpContext.Session.SetInt32("currentTypeFilter", 0);
+                }
+                if (search == null)
+                {
+                    search = "";
+                    HttpContext.Session.SetString("currentSearchFilter", "");
+                }
+
+                DashboardFilter initialFilter = new DashboardFilter();
+                initialFilter.Status = (int)status;
+                initialFilter.PageNumber = (int)page;
+                initialFilter.RegionFilter = (int)region;
+                initialFilter.RequestTypeFilter = (int)type;
+                initialFilter.PatientSearchText = (string)search;
+
+                PhysicianDashboardViewModel model = new PhysicianDashboardViewModel();
+                model.UserName = phyName;
+                model.physicians = _unitOfWork.PhysicianRepository.GetAll();
+                model.regions = _unitOfWork.RegionRepository.GetAll();
+                model.NewReqCount = _unitOfWork.RequestRepository.Where(r => r.Physicianid == phyId && r.Status == (short)RequestStatus.Unassigned).Count();
+                model.PendingReqCount = _unitOfWork.RequestRepository.Where(r => r.Physicianid == phyId && r.Status == (short)RequestStatus.Accepted).Count();
+                model.ActiveReqCount = _unitOfWork.RequestRepository.Where(r => r.Physicianid == phyId && ((r.Status == (short)RequestStatus.MDEnRoute) || (r.Status == (short)RequestStatus.MDOnSite))).Count();
+                model.ConcludeReqCount = _unitOfWork.RequestRepository.Where(r => r.Physicianid == phyId && r.Status == (short)RequestStatus.Conclude).Count();
+                model.casetags = _unitOfWork.CaseTagRepository.GetAll();
+                model.filterOptions = initialFilter;
+
+                return View("Dashboard/Dashboard", model);
             }
-
-            int? status = HttpContext.Session.GetInt32("currentStatus");
-            int? page = HttpContext.Session.GetInt32("currentPage");
-            int? region = HttpContext.Session.GetInt32("currentRegionFilter");
-            int? type = HttpContext.Session.GetInt32("currentTypeFilter");
-            string? search = HttpContext.Session.GetString("currentSearchFilter");
-
-
-            if (status == null)
+            catch (Exception ex)
             {
-                status = 1;
-                HttpContext.Session.SetInt32("currentStatus", 1);
+                _notyf.Error(ex.Message);
+                return RedirectToAction("Login", "Guest");
             }
-            if (page == null)
-            {
-                page = 1;
-                HttpContext.Session.SetInt32("currentPage", 1);
-            }
-            if (region == null)
-            {
-                region = 0;
-                HttpContext.Session.SetInt32("currentRegionFilter", 0);
-            }
-            if (type == null)
-            {
-                type = 0;
-                HttpContext.Session.SetInt32("currentTypeFilter", 0);
-            }
-            if (search == null)
-            {
-                search = "";
-                HttpContext.Session.SetString("currentSearchFilter", "");
-            }
-
-            DashboardFilter initialFilter = new DashboardFilter();
-            initialFilter.Status = (int)status;
-            initialFilter.PageNumber = (int)page;
-            initialFilter.RegionFilter = (int)region;
-            initialFilter.RequestTypeFilter = (int)type;
-            initialFilter.PatientSearchText = (string)search;
-
-            PhysicianDashboardViewModel model = new PhysicianDashboardViewModel();
-            model.UserName = phyName;
-            model.physicians = _unitOfWork.PhysicianRepository.GetAll();
-            model.regions = _unitOfWork.RegionRepository.GetAll();
-            model.NewReqCount = _unitOfWork.RequestRepository.Where(r => r.Physicianid == phyId && r.Status == (short)RequestStatus.Unassigned).Count();
-            model.PendingReqCount = _unitOfWork.RequestRepository.Where(r => r.Physicianid == phyId && r.Status == (short)RequestStatus.Accepted).Count();
-            model.ActiveReqCount = _unitOfWork.RequestRepository.Where(r => r.Physicianid == phyId && ((r.Status == (short)RequestStatus.MDEnRoute) || (r.Status == (short)RequestStatus.MDOnSite))).Count();
-            model.ConcludeReqCount = _unitOfWork.RequestRepository.Where(r => r.Physicianid == phyId && r.Status == (short)RequestStatus.Conclude).Count();
-            model.casetags = _unitOfWork.CaseTagRepository.GetAll();
-            model.filterOptions = initialFilter;
-
-            return View("Dashboard/Dashboard", model);
 
         }
 
@@ -1023,10 +1212,10 @@ namespace HalloDoc.MVC.Controllers
             try
             {
 
-                using (var client = new HttpClient())
+                using (HttpClient client = new HttpClient())
                 {
-                    string apiKey = _config.GetSection("Geocoding")["ApiKey"];
-                    string baseUrl = $"https://geocode.maps.co/reverse?lat={latitude}&lon={longtitude}&api_key=" + apiKey;
+                    string? apiKey = _config.GetSection("Geocoding")["ApiKey"];
+                    string baseUrl = $"https://geocode.maps.co/reverse?lat={latitude}&lon={longtitude}&api_key={apiKey}";
                     //HTTP GET
 
                     var responseTask = client.GetAsync(baseUrl);
@@ -1108,6 +1297,7 @@ namespace HalloDoc.MVC.Controllers
 
             catch (Exception ex)
             {
+                _notyf.Error($"Error updating location :{ex.Message}");
                 return false;
             }
 
@@ -1117,22 +1307,31 @@ namespace HalloDoc.MVC.Controllers
         [RoleAuthorize((int)AllowMenu.ProviderDashboard)]
         public IActionResult ViewNotes(int requestId)
         {
-            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-            string? phyName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
-
-            ViewNotesViewModel? model = _physicianService.AdminProviderService.GetViewNotesModel(requestId);
-
-            if (model == null)
+            try
             {
-                _notyf.Error("Cannot get data. Please try again later.");
+
+                int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+                string? phyName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+
+                ViewNotesViewModel? model = _physicianService.AdminProviderService.GetViewNotesModel(requestId);
+
+                if (model == null)
+                {
+                    _notyf.Error("Cannot get data. Please try again later.");
+                    return RedirectToAction("Dashboard");
+                }
+
+                model.UserName = phyName;
+                model.IsAdmin = false;
+
+
+                return View("AdminProvider/ViewNotes", model);
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
                 return RedirectToAction("Dashboard");
             }
-
-            model.UserName = phyName;
-            model.IsAdmin = false;
-
-
-            return View("AdminProvider/ViewNotes", model);
         }
 
         [RoleAuthorize((int)AllowMenu.ProviderDashboard)]
@@ -1173,27 +1372,35 @@ namespace HalloDoc.MVC.Controllers
         [RoleAuthorize((int)AllowMenu.ProviderDashboard)]
         public IActionResult ViewCase(int? requestId)
         {
-
-            int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-            string? phyName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
-
-            if (requestId == null)
+            try
             {
-                return View("Error");
+
+                int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+                string? phyName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+
+                if (requestId == null)
+                {
+                    return View("Error");
+                }
+
+                ViewCaseViewModel? model = _physicianService.AdminProviderService.GetViewCaseModel(requestId ?? 0);
+
+                if (model == null)
+                {
+                    _notyf.Error("Cannot get data. Please try again later.");
+                    return RedirectToAction("Dashboard");
+                }
+
+                model.UserName = phyName;
+                model.IsAdmin = false;
+
+                return View("AdminProvider/ViewCase", model);
             }
-
-            ViewCaseViewModel? model = _physicianService.AdminProviderService.GetViewCaseModel(requestId ?? 0);
-
-            if (model == null)
+            catch (Exception ex)
             {
-                _notyf.Error("Cannot get data. Please try again later.");
+                _notyf.Error(ex.Message);
                 return RedirectToAction("Dashboard");
             }
-
-            model.UserName = phyName;
-            model.IsAdmin = false;
-
-            return View("AdminProvider/ViewCase", model);
 
         }
 
@@ -1201,85 +1408,110 @@ namespace HalloDoc.MVC.Controllers
         [HttpPost]
         public async Task<ActionResult> PartialTable(int status, int page, int typeFilter, string searchFilter, int regionFilter)
         {
-
-            HttpContext.Session.SetInt32("currentStatus", status);
-            HttpContext.Session.SetInt32("currentPage", page);
-            HttpContext.Session.SetInt32("currentTypeFilter", typeFilter);
-            HttpContext.Session.SetInt32("currentRegionFilter", regionFilter);
-            HttpContext.Session.SetString("currentSearchFilter", searchFilter ?? "");
-
-            int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-
-            int pageNumber = 1;
-            if (page > 0)
+            try
             {
-                pageNumber = page;
+
+                HttpContext.Session.SetInt32("currentStatus", status);
+                HttpContext.Session.SetInt32("currentPage", page);
+                HttpContext.Session.SetInt32("currentTypeFilter", typeFilter);
+                HttpContext.Session.SetInt32("currentRegionFilter", regionFilter);
+                HttpContext.Session.SetString("currentSearchFilter", searchFilter ?? "");
+
+                int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+
+                int pageNumber = 1;
+                if (page > 0)
+                {
+                    pageNumber = page;
+                }
+
+                DashboardFilter filter = new DashboardFilter()
+                {
+                    RequestTypeFilter = typeFilter,
+                    PatientSearchText = searchFilter,
+                    RegionFilter = regionFilter,
+                    PageNumber = pageNumber,
+                    PageSize = 5,
+                    Status = status,
+                };
+
+                PagedList<PhyDashboardTRow> pagedList = await _physicianService.PhysicianDashboardService.GetPhysicianRequestAsync(filter, phyId);
+
+                PhysicianDashboardViewModel model = new PhysicianDashboardViewModel();
+                model.pagedList = pagedList;
+                model.DashboardStatus = status;
+                model.CurrentPage = pageNumber;
+                model.filterOptions = filter;
+
+                return PartialView("Partial/PartialTable", model);
             }
-
-            DashboardFilter filter = new DashboardFilter()
+            catch (Exception ex)
             {
-                RequestTypeFilter = typeFilter,
-                PatientSearchText = searchFilter,
-                RegionFilter = regionFilter,
-                PageNumber = pageNumber,
-                PageSize = 5,
-                Status = status,
-            };
-
-            PagedList<PhyDashboardTRow> pagedList = await _physicianService.PhysicianDashboardService.GetPhysicianRequestAsync(filter, phyId);
-
-            PhysicianDashboardViewModel model = new PhysicianDashboardViewModel();
-            model.pagedList = pagedList;
-            model.DashboardStatus = status;
-            model.CurrentPage = pageNumber;
-            model.filterOptions = filter;
-
-            return PartialView("Partial/PartialTable", model);
+                _notyf.Error(ex.Message);
+                return PartialView("Partial/PartialTable");
+            }
         }
 
 
         [RoleAuthorize((int)AllowMenu.ProviderDashboard)]
         public IActionResult ViewUploads(int requestId)
         {
-
-            ViewUploadsViewModel? model = _physicianService.AdminProviderService.GetViewUploadsModel(requestId, false);
-
-            if (model == null)
+            try
             {
-                _notyf.Error("Cannot get data. Please try again later.");
+
+                ViewUploadsViewModel? model = _physicianService.AdminProviderService.GetViewUploadsModel(requestId, false);
+
+                if (model == null)
+                {
+                    _notyf.Error("Cannot get data. Please try again later.");
+                    return RedirectToAction("Dashboard");
+                }
+
+                return View("AdminProvider/ViewUploads", model);
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
                 return RedirectToAction("Dashboard");
             }
-
-            return View("AdminProvider/ViewUploads", model);
         }
 
         [HttpPost]
         public IActionResult ViewUploads(ViewUploadsViewModel uploadsVM)
         {
-            int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-
-            if (uploadsVM.File != null)
+            try
             {
-                string webRootPath = _environment.WebRootPath;
-                string requestPath = Path.Combine(webRootPath, REQUEST_FILE_PATH, uploadsVM.RequestId.ToString());
-                FileHelper.InsertFileAtPath(uploadsVM.File, requestPath);
 
-                Requestwisefile requestwisefile = new()
+                int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
+
+                if (uploadsVM.File != null)
                 {
-                    Requestid = uploadsVM.RequestId,
-                    Filename = uploadsVM.File.FileName,
-                    Createddate = DateTime.Now,
-                    Physicianid = phyId,
-                    Ip = "127.0.0.1",
-                };
+                    string webRootPath = _environment.WebRootPath;
+                    string requestPath = Path.Combine(webRootPath, REQUEST_FILE_PATH, uploadsVM.RequestId.ToString());
+                    FileHelper.InsertFileAtPath(uploadsVM.File, requestPath);
 
-                _unitOfWork.RequestWiseFileRepository.Add(requestwisefile);
-                _unitOfWork.Save();
+                    Requestwisefile requestwisefile = new()
+                    {
+                        Requestid = uploadsVM.RequestId,
+                        Filename = uploadsVM.File.FileName,
+                        Createddate = DateTime.Now,
+                        Physicianid = phyId,
+                        Ip = "127.0.0.1",
+                    };
 
-                uploadsVM.File = null;
+                    _unitOfWork.RequestWiseFileRepository.Add(requestwisefile);
+                    _unitOfWork.Save();
+
+                    uploadsVM.File = null;
+                }
+
+                return RedirectToAction("ViewUploads", new { Requestid = uploadsVM.RequestId });
             }
-
-            return RedirectToAction("ViewUploads", new { Requestid = uploadsVM.RequestId });
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return View("AdminProvider/ViewUploads", uploadsVM);
+            }
         }
 
 
@@ -1295,33 +1527,14 @@ namespace HalloDoc.MVC.Controllers
                 }
                 Requestclient? reqCli = _unitOfWork.RequestClientRepository.GetFirstOrDefault(requestCli => requestCli.Requestid == requestId);
 
-                string? senderEmail = _config.GetSection("OutlookSMTP")["Sender"];
-                string? senderPassword = _config.GetSection("OutlookSMTP")["Password"];
-
-                if (reqCli == null || reqCli.Email == null || senderEmail == null)
+                if (reqCli == null || reqCli.Email == null)
                 {
-                    _notyf.Error("Could not fetch credentials");
+                    _notyf.Error("Could not fetch user data");
                     return false;
                 }
 
-                SmtpClient client = new SmtpClient("smtp.office365.com")
-                {
-                    Port = 587,
-                    Credentials = new NetworkCredential(senderEmail, senderPassword),
-                    EnableSsl = true,
-                    DeliveryMethod = SmtpDeliveryMethod.Network,
-                    UseDefaultCredentials = false
-                };
-
-                MailMessage mailMessage = new MailMessage
-                {
-                    From = new MailAddress(senderEmail, "HalloDoc"),
-                    Subject = "Hallodoc documents attachments",
-                    IsBodyHtml = true,
-                    Body = "<h3>Admin has sent you documents regarding your request.</h3>",
-                };
-
                 MemoryStream memoryStream;
+                List<Attachment> mailAttachments = new List<Attachment>();
                 foreach (int fileId in fileIds)
                 {
                     Requestwisefile? file = _unitOfWork.RequestWiseFileRepository.GetFirstOrDefault(reqFile => reqFile.Requestwisefileid == fileId);
@@ -1335,12 +1548,12 @@ namespace HalloDoc.MVC.Controllers
 
                     byte[] fileBytes = System.IO.File.ReadAllBytes(documentPath);
                     memoryStream = new MemoryStream(fileBytes);
-                    mailMessage.Attachments.Add(new Attachment(memoryStream, file.Filename));
+
+                    Attachment attachment = new Attachment(memoryStream, file.Filename);
+                    mailAttachments.Add(attachment);
                 }
 
-                mailMessage.To.Add(reqCli.Email);
-
-                client.Send(mailMessage);
+                _emailService.SendMailWithFilesAttached(reqCli.Email, mailAttachments);
 
                 _notyf.Success("Email with selected documents has been successfully sent to " + reqCli.Email);
                 return true;
@@ -1551,35 +1764,7 @@ namespace HalloDoc.MVC.Controllers
         {
             try
             {
-                string encryptedId = EncryptionService.Encrypt(model.RequestId.ToString());
-                var agreementLink = Url.Action("ReviewAgreement", "Guest", new { requestId = encryptedId }, Request.Scheme);
-
-                string senderEmail = _config.GetSection("OutlookSMTP")["Sender"];
-                string senderPassword = _config.GetSection("OutlookSMTP")["Password"];
-
-                SmtpClient client = new SmtpClient("smtp.office365.com")
-                {
-                    Port = 587,
-                    Credentials = new NetworkCredential(senderEmail, senderPassword),
-                    EnableSsl = true,
-                    DeliveryMethod = SmtpDeliveryMethod.Network,
-                    UseDefaultCredentials = false
-                };
-
-                string subject = "Set up your Account";
-                string body = "<h1>Hello , Patient!!</h1><p>You can review your agrrement and accept it to go ahead with the medical process, which  sent by the physician. </p><a href=\"" + agreementLink + "\" >Click here to accept agreement</a>";
-
-                MailMessage mailMessage = new MailMessage
-                {
-                    From = new MailAddress(senderEmail, "HalloDoc"),
-                    Subject = subject,
-                    IsBodyHtml = true,
-                    Body = body,
-                };
-
-                mailMessage.To.Add(model.PatientEmail);
-
-                client.Send(mailMessage);
+                _emailService.SendMailForPatientAgreement(model.RequestId, model.PatientEmail);
 
                 _notyf.Success("Agreement Sent Successfully.");
                 return Redirect("/Admin/Dashboard");
@@ -1635,7 +1820,7 @@ namespace HalloDoc.MVC.Controllers
         {
 
             int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-            string phyName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+            string? phyName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
 
             try
             {
@@ -1686,7 +1871,7 @@ namespace HalloDoc.MVC.Controllers
         {
 
             int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(x => x.Key == "userId").FirstOrDefault().Value);
-            string phyName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
+            string? phyName = HttpContext.Request.Headers.Where(x => x.Key == "userName").FirstOrDefault().Value;
 
             try
             {
@@ -1951,11 +2136,20 @@ namespace HalloDoc.MVC.Controllers
         [RoleAuthorize((int)AllowMenu.ProviderDashboard)]
         public IActionResult CreateRequest()
         {
-            IEnumerable<Region> regions = _unitOfWork.RegionRepository.GetAll();
-            AdminCreateRequestViewModel model = new AdminCreateRequestViewModel();
-            model.regions = regions;
-            model.IsAdmin = false;
-            return View("AdminProvider/CreateRequest", model);
+            try
+            {
+
+                IEnumerable<Region> regions = _unitOfWork.RegionRepository.GetAll();
+                AdminCreateRequestViewModel model = new AdminCreateRequestViewModel();
+                model.regions = regions;
+                model.IsAdmin = false;
+                return View("AdminProvider/CreateRequest", model);
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return RedirectToAction("Dashboard");
+            }
         }
 
         [HttpPost]
@@ -2061,13 +2255,21 @@ namespace HalloDoc.MVC.Controllers
         [RoleAuthorize((int)AllowMenu.ProviderDashboard)]
         public IActionResult Orders(int requestId)
         {
+            try
+            {
 
-            SendOrderViewModel model = new SendOrderViewModel();
-            model.professionalTypeList = _unitOfWork.HealthProfessionalTypeRepo.GetAll();
-            model.RequestId = requestId;
-            model.IsAdmin = false;
+                SendOrderViewModel model = new SendOrderViewModel();
+                model.professionalTypeList = _unitOfWork.HealthProfessionalTypeRepo.GetAll();
+                model.RequestId = requestId;
+                model.IsAdmin = false;
 
-            return View("AdminProvider/Orders", model);
+                return View("AdminProvider/Orders", model);
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return RedirectToAction("Dashboard");
+            }
         }
 
         [HttpPost]
@@ -2110,58 +2312,22 @@ namespace HalloDoc.MVC.Controllers
         [HttpPost]
         public IActionResult SendLinkForSubmitRequest(SendLinkModel model)
         {
-            int adminId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
+            int phyId = Convert.ToInt32(HttpContext.Request.Headers.Where(a => a.Key == "userId").FirstOrDefault().Value);
 
             if (ModelState.IsValid)
             {
                 try
                 {
-                    string? sendPatientLink = Url.Action("SubmitRequest", "Guest", new { }, Request.Scheme);
 
-                    string? senderEmail = _config.GetSection("OutlookSMTP")["Sender"];
-                    string? senderPassword = _config.GetSection("OutlookSMTP")["Password"];
-
-                    SmtpClient client = new SmtpClient("smtp.office365.com")
-                    {
-                        Port = 587,
-                        Credentials = new NetworkCredential(senderEmail, senderPassword),
-                        EnableSsl = true,
-                        DeliveryMethod = SmtpDeliveryMethod.Network,
-                        UseDefaultCredentials = false
-                    };
-
-                    string subject = "Set up your Account";
-                    string body = "<h1>Hola , " + model.FirstName + " " + model.LastName + "!!</h1><p>Clink the link below to create request.</p><a href=\"" + sendPatientLink + "\" >Submit Request Link</a>";
-
-                    if (senderEmail != null)
-                    {
-
-                        _emailService.SendMail(model.Email, body, subject, out int sentTries, out bool isSent);
-
-                        Emaillog emailLog = new Emaillog()
-                        {
-                            Emailtemplate = "1",
-                            Subjectname = subject,
-                            Emailid = model.Email,
-                            Roleid = (int)AccountType.Patient,
-                            Physicianid = adminId,
-                            Createdate = DateTime.Now,
-                            Sentdate = DateTime.Now,
-                            Isemailsent = isSent,
-                            Senttries = sentTries,
-                        };
-
-                        _unitOfWork.EmailLogRepository.Add(emailLog);
-                        _unitOfWork.Save();
-
-                    }
+                    string patientName = model.FirstName + " " + model.LastName;
+                    _emailService.SendMailForSubmitRequest(patientName, model.Email, false, phyId);
 
                     Smslog smsLog = new Smslog()
                     {
                         Smstemplate = "1",
                         Mobilenumber = model.Phone,
                         Roleid = (int)AccountType.Patient,
-                        Physicianid = adminId,
+                        Physicianid = phyId,
                         Createdate = DateTime.Now,
                         Sentdate = DateTime.Now,
                         Issmssent = true,
@@ -2186,62 +2352,5 @@ namespace HalloDoc.MVC.Controllers
 
         #endregion
 
-
-        #region HelperFunctions
-
-        public string GenerateConfirmationNumber(User user)
-        {
-            string regionAbbr = _unitOfWork.RegionRepository.GetFirstOrDefault(region => region.Regionid == user.Regionid).Abbreviation;
-
-            DateTime todayStart = DateTime.Now.Date;
-            int count = _unitOfWork.RequestRepository.Where(req => req.Createddate > todayStart).Count();
-
-            string confirmationNumber = regionAbbr + user.Createddate.Date.ToString("D2") + user.Createddate.Month.ToString("D2") + user.Lastname.Substring(0, 2).ToUpper() + user.Firstname.Substring(0, 2).ToUpper() + (count + 1).ToString("D4");
-            return confirmationNumber;
-        }
-
-
-        [HttpPost]
-        public JsonArray GetBusinessByType(int professionType)
-        {
-            var result = new JsonArray();
-            IEnumerable<Healthprofessional> businesses = _unitOfWork.HealthProfessionalRepo.Where(prof => prof.Profession == professionType);
-
-            foreach (Healthprofessional business in businesses)
-            {
-                result.Add(new { businessId = business.Vendorid, businessName = business.Vendorname });
-            }
-
-            return result;
-        }
-
-        [HttpPost]
-        public JsonArray GetPhysicianByRegion(int regionId)
-        {
-            var result = new JsonArray();
-            IEnumerable<Physician> physicians = _unitOfWork.PhysicianRepository.Where(phy => phy.Regionid == regionId);
-
-            foreach (Physician physician in physicians)
-            {
-                result.Add(new { physicianId = physician.Physicianid, physicianName = physician.Firstname + " " + physician.Lastname });
-            }
-
-            return result;
-        }
-
-
-        [HttpPost]
-        public Healthprofessional GetBusinessDetailsById(int vendorId)
-        {
-            if (vendorId <= 0)
-            {
-                return null;
-            }
-            Healthprofessional business = _unitOfWork.HealthProfessionalRepo.GetFirstOrDefault(prof => prof.Vendorid == vendorId);
-
-            return business;
-        }
-
-        #endregion
     }
 }

@@ -26,7 +26,7 @@ namespace Data_Layer.ViewModels.Admin
 
         [Required(ErrorMessage = "Email cannot be empty")]
         [RegularExpression("^([\\w\\.\\-]+)@([\\w\\-]+)((\\.(\\w){2,3})+)$", ErrorMessage = "Enter Valid Email")]
-        public string? Email { get; set; }
+        public string Email { get; set; } = string.Empty;  
 
         [Required(ErrorMessage = "DOB cannot be empty")]
         [DateNotInFuture(ErrorMessage = "Date Of Birth should be in past.")]
