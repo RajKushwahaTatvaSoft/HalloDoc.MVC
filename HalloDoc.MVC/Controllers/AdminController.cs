@@ -3556,6 +3556,46 @@ namespace HalloDoc.MVC.Controllers
                 return RedirectToAction("Invoicing");
             }
         }
+        
+        public IActionResult UpdateTimesheetForm(AdminApprovedViewModel model)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+
+                    DateOnly loopDate = model.TimesheetDetails.StartDate;
+
+                    while (loopDate <= model.TimesheetDetails.EndDate)
+                    {
+
+                        TimesheetDetail? sheetDetail = _unitOfWork.TimeSheetDetailRepo.GetFirstOrDefault(sheet => sheet.TimesheetId == model.TimesheetDetails.TimesheetId
+                        && sheet.TimesheetDate == loopDate);
+                        TimeSheetDayRecord? inputRecord = model.TimesheetDetails.timeSheetDayRecords?.FirstOrDefault(record => record.DateOfRecord == loopDate);
+
+                        if (sheetDetail != null && inputRecord != null)
+                        {
+                            sheetDetail.TotalHours = inputRecord.TotalHours;
+                            sheetDetail.IsWeekend = inputRecord.IsHoliday;
+                            sheetDetail.NumberOfHouseCall = inputRecord.NoOfHouseCall;
+                            sheetDetail.NumberOfPhoneCall = inputRecord.NoOfPhoneConsult;
+
+                            _unitOfWork.TimeSheetDetailRepo.Update(sheetDetail);
+                        }
+
+                        loopDate = loopDate.AddDays(1);
+
+                    }
+                }
+
+                return View();
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return View("Providers/ApproveTimeSheetForm", model);
+            }
+        }
 
 
         public TimeSheetFormViewModel? GetExistingTimeSheetViewModel(int timeSheetId, DateOnly startDate, DateOnly endDate, int phyId)
@@ -4968,3 +5008,32 @@ namespace HalloDoc.MVC.Controllers
 
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

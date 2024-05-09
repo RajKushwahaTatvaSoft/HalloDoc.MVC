@@ -1495,7 +1495,6 @@ namespace HalloDoc.MVC.Controllers
                         Filename = uploadsVM.File.FileName,
                         Createddate = DateTime.Now,
                         Physicianid = phyId,
-                        Ip = "127.0.0.1",
                     };
 
                     _unitOfWork.RequestWiseFileRepository.Add(requestwisefile);
