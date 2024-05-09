@@ -3,7 +3,6 @@
     Layout = "_PhysicianDashboardLayout";
 }
 
-
 <div class="container-fluid d-flex justify-content-center row ">
 
     <div class="col-md-8 col-12">
@@ -267,12 +266,10 @@
     });
 
     $(".receipt-file").change(function () {
-
         let textInputDiv = $(this).siblings("div").find("input");
         let textInput = $(this).siblings("div");
 
         textInputDiv.val(this.value.replace(/C:\\fakepath\\/i, ''));
-
     });
 
 </script>
@@ -289,6 +286,13 @@
 
     $("#phy_photo_input_id").change(function () {
         $('#phy_photo_text_input_id').val(this.value.replace(/C:\\fakepath\\/i, ''))
-    })
+    });
+
+</script>
+
+<script>
+
+    $('.admin-tab').removeClass("active");
+    $('#invoicing-tab').addClass("active");
 
 </script>

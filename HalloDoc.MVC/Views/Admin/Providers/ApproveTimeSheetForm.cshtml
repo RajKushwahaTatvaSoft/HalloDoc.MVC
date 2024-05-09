@@ -1,4 +1,5 @@
-﻿@model TimeSheetFormViewModel
+﻿@using Business_Layer.Utilities
+@model AdminApprovedViewModel
 @{
     Layout = "_AdminDashboardLayout";
 }
@@ -21,18 +22,18 @@
         </div>
 
         <form method="post" enctype="multipart/form-data">
-            <input hidden asp-for="TimesheetId" />
+            <input hidden asp-for="TimesheetDetails.TimesheetId" />
 
             <div class="dashboard-card">
 
                 <div>
 
-                    @if (Model != null && Model.timeSheetDayRecords != null && Model.timeSheetDayRecords.Count > 0)
+                    @if (Model != null && Model.TimesheetDetails.timeSheetDayRecords != null && Model.TimesheetDetails.timeSheetDayRecords.Count > 0)
                     @* @if (true) *@
                     {
 
-                        <input hidden asp-for="StartDate" />
-                        <input hidden asp-for="EndDate" />
+                        <input hidden asp-for="TimesheetDetails.StartDate" />
+                        <input hidden asp-for="TimesheetDetails.EndDate" />
 
                         <div class="table-responsive">
 
@@ -47,33 +48,75 @@
                                         <th>Weekend/Holiday</th>
                                         <th>Number of Housecalls</th>
                                         <th>Number of Phone Consults</th>
+                                        <th>Total</th>
                                     </tr>
 
                                 </thead>
 
                                 <tbody>
 
-                                    @for (int i = 0; i < Model.timeSheetDayRecords.Count; i++)
+                                    @for (int i = 0; i < Model.TimesheetDetails.timeSheetDayRecords.Count; i++)
                                     {
-                                        <input asp-for="timeSheetDayRecords[i].TimeSheetDetailId" hidden />
-                                        <input asp-for="timeSheetDayRecords[i].DateOfRecord" hidden />
+                                        <input asp-for="TimesheetDetails.timeSheetDayRecords[i].TimeSheetDetailId" hidden />
+                                        <input asp-for="TimesheetDetails.timeSheetDayRecords[i].DateOfRecord" hidden />
                                         <tr>
-                                            <td>@Model.timeSheetDayRecords[i].DateOfRecord.ToString("dd-MM-yyyy")</td>
-                                            <td>@Model.timeSheetDayRecords[i].OnCallHours</td>
+                                            <td>@Model.TimesheetDetails.timeSheetDayRecords[i].DateOfRecord.ToString("dd-MM-yyyy")</td>
+                                            <td>@Model.TimesheetDetails.timeSheetDayRecords[i].OnCallHours</td>
                                             <td>
-                                                <input class="form-control" asp-for="timeSheetDayRecords[i].TotalHours" type="number" />
+                                                <input class="form-control" asp-for="TimesheetDetails.timeSheetDayRecords[i].TotalHours" type="number" />
                                             </td>
                                             <td>
-                                                <input class="form-check-input" asp-for="timeSheetDayRecords[i].IsHoliday" type="checkbox" />
+                                                <input class="form-check-input" asp-for="TimesheetDetails.timeSheetDayRecords[i].IsHoliday" type="checkbox" />
                                             </td>
                                             <td>
-                                                <input class="form-control" asp-for="timeSheetDayRecords[i].NoOfHouseCall" type="number" />
+                                                <input class="form-control" asp-for="TimesheetDetails.timeSheetDayRecords[i].NoOfHouseCall" type="number" />
                                             </td>
                                             <td>
-                                                <input class="form-control" asp-for="timeSheetDayRecords[i].NoOfPhoneConsult" type="number" />
+                                                <input class="form-control" asp-for="TimesheetDetails.timeSheetDayRecords[i].NoOfPhoneConsult" type="number" />
                                             </td>
+                                            <td></td>
                                         </tr>
                                     }
+
+                                    @{
+                                        decimal? houseCallPayrate = Model.providerPayrates.FirstOrDefault(rate => rate.PayrateCategoryId == (int)PayrateCategoryEnum.HouseCall)?.Payrate;
+                                        decimal? phoneConsultPayrate = Model.providerPayrates.FirstOrDefault(rate => rate.PayrateCategoryId == (int)PayrateCategoryEnum.PhoneConsult)?.Payrate;
+
+                                    }
+
+                                    <tr>
+                                        <td colspan="2">Payrate</td>
+                                        <td>
+                                            <input class="form-control" disabled value="@houseCallPayrate" />
+                                        </td>
+                                        <td>
+                                            <input class="form-control" disabled value="@houseCallPayrate" />
+                                        </td>
+                                        <td>
+                                            <input class="form-control" disabled value="@houseCallPayrate" />
+                                        </td>
+                                        <td>
+                                            <input class="form-control" disabled value="@phoneConsultPayrate" />
+                                        </td>
+                                        <td></td>
+                                    </tr>
+
+                                    <tr>
+                                        <td colspan="2">Invoice Total</td>
+                                        <td>
+                                            <input class="form-control" disabled value="@houseCallPayrate" />
+                                        </td>
+                                        <td>
+                                            <input class="form-control" disabled value="@houseCallPayrate" />
+                                        </td>
+                                        <td>
+                                            <input class="form-control" disabled value="@houseCallPayrate" />
+                                        </td>
+                                        <td>
+                                            <input class="form-control" disabled value="@phoneConsultPayrate" />
+                                        </td>
+                                        <td></td>
+                                    </tr>
 
                                 </tbody>
 
@@ -96,7 +139,7 @@
                 <button class="btn text-white btn-danger" type="button" id="cancel-receipt-btn" style="display:none;">Cancel Receipts</button>
             </div>
 
-            @if (Model != null && Model.timeSheetReceiptRecords != null && Model.timeSheetReceiptRecords.Count > 0)
+            @if (Model != null && Model.TimesheetDetails.timeSheetReceiptRecords != null && Model.TimesheetDetails.timeSheetReceiptRecords.Count > 0)
             {
                 <div class="table-responsive">
 
@@ -125,24 +168,24 @@
                         </thead>
 
                         <tbody>
-                            <input id="is-receipt-added-checkbox" asp-for="IsReceiptsAdded" type="checkbox" />
+                            <input id="is-receipt-added-checkbox" asp-for="TimesheetDetails.IsReceiptsAdded" type="checkbox" />
 
-                            @for (int i = 0; i < Model.timeSheetReceiptRecords.Count; i++)
+                            @for (int i = 0; i < Model.TimesheetDetails.timeSheetReceiptRecords.Count; i++)
                             {
-                                ReceiptRecord currentRecord = Model.timeSheetReceiptRecords[i];
+                                ReceiptRecord currentRecord = Model.TimesheetDetails.timeSheetReceiptRecords[i];
 
-                                <input hidden asp-for="timeSheetReceiptRecords[i].RecordId" />
+                                <input hidden asp-for="TimesheetDetails.timeSheetReceiptRecords[i].RecordId" />
 
-                                <input asp-for="timeSheetReceiptRecords[i].DateOfRecord" hidden />
+                                <input asp-for="TimesheetDetails.timeSheetReceiptRecords[i].DateOfRecord" hidden />
                                 <tr>
                                     <td>
-                                        @Model.timeSheetReceiptRecords[i].DateOfRecord.ToString("dd-MM-yyyy")
+                                        @Model.TimesheetDetails.timeSheetReceiptRecords[i].DateOfRecord.ToString("dd-MM-yyyy")
                                     </td>
                                     <td>
-                                        <input type="text" asp-for="timeSheetReceiptRecords[i].ItemName" class="form-control" id="item-name">
+                                        <input type="text" asp-for="TimesheetDetails.timeSheetReceiptRecords[i].ItemName" class="form-control" id="item-name">
                                     </td>
                                     <td>
-                                        <input type="text" asp-for="timeSheetReceiptRecords[i].Amount" class="form-control " id="amoount">
+                                        <input type="text" asp-for="TimesheetDetails.timeSheetReceiptRecords[i].Amount" class="form-control " id="amoount">
                                     </td>
                                     <td>
                                         @if (!string.IsNullOrEmpty(currentRecord.BillReceiptName))
@@ -151,7 +194,7 @@
                                         }
                                         else
                                         {
-                                            <input id="bill-receipt-record-file-@i" class="form-control receipt-file" asp-for="timeSheetReceiptRecords[i].BillReceipt" accept="application/pdf" type="file" style="display:none;">
+                                            <input id="bill-receipt-record-file-@i" class="form-control receipt-file" asp-for="TimesheetDetails.timeSheetReceiptRecords[i].BillReceipt" accept="application/pdf" type="file" style="display:none;">
 
                                             <div class="input-group mb-3">
                                                 <input type="text" id="bill-receipt-record-file-text-input-@i" data-fileindex="@i" class="form-control receipt-text-input-btn" placeholder="Select File"
@@ -176,9 +219,6 @@
                                     <td>
                                         @if (!string.IsNullOrEmpty(currentRecord.BillReceiptFilePath))
                                         {
-
-                                            <button type="button" class="btn btn-outline-info">Edit</button>
-                                            <button type="button" class="btn btn-outline-info">Delete</button>
                                             <a target="_blank" href="@currentRecord.BillReceiptFilePath" class="btn btn-outline-info">View</a>
                                         }
                                     </td>
@@ -196,19 +236,35 @@
             {
                 <h4>Couldn't fetch receipts data</h4>
             }
-            <button class="btn text-white btn-info mt-3" type="submit">Submit</button>
-
-            <div class="d-flex justify-content-end">
-
-                <button class="btn text-white btn-info" type="submit" asp-action="ApproveTimeSheet">Approve</button>
-
-            </div>
 
         </form>
 
+        <div class="d-flex justify-content-end">
+
+            <a class="btn text-white btn-info" asp-action="ApproveTimeSheet" asp-route-timeSheetId="@Model?.TimesheetDetails.TimesheetId">Approve</a>
+
+        </div>
 
     </div>
 
     <div style="height: 20px;"></div>
 
 </div>
+
+<script>
+
+    $('#add-receipt-btn').click(function () {
+        $(this).hide();
+        $('#cancel-receipt-btn').show();
+        $('#bill-table').removeClass("d-none");
+        $('#is-receipt-added-checkbox').prop("checked", true);
+    });
+
+    $('#cancel-receipt-btn').click(function () {
+        $(this).hide();
+        $('#add-receipt-btn').show();
+        $('#bill-table').addClass("d-none");
+        $('#is-receipt-added-checkbox').prop("checked", false);
+    });
+
+</script>

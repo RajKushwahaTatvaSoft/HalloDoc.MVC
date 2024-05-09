@@ -998,7 +998,6 @@ namespace HalloDoc.MVC.Controllers
                 }
 
                 if (model.IsReceiptsAdded)
-
                 {
 
                     loopDate = model.StartDate;

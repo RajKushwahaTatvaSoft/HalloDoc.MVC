@@ -24,11 +24,11 @@
             <div class="d-flex pt-3 px-3 justify-content-between">
 
                 <div id="timesheet-div" class="form-floating">
-                    <input id="timesheet-date-text" type="text" class="form-control">
-                    <label>Timesheetperiod</label>
-                    <input id="timesheet-datepicker" class="border-0" type="text" onchange="updateTimeSheetDate()" style="width: 0px;height: 0px;" />
-                </div>
 
+                    <input id="timesheet-datepicker" class="form-control" type="text" onchange="updateTimeSheetDate()" />
+                    <label>Timesheetperiod</label>
+
+                </div>
                 <div>
 
                     <button id="finalize-timesheet-btn" class="btn btn-outline-info shadow-none night-mode-btn d-flex align-items-center">
@@ -61,10 +61,6 @@
 
     $('#timesheet-datepicker').datepicker();
 
-    $("#timesheet-div").click(function () {
-        $('#timesheet-datepicker').datepicker('show');
-    });
-
     function adjustStartAndEndDates(selectedDate) {
 
         let date = selectedDate.getDate();
@@ -83,7 +79,7 @@
         dateText = startDate.getFullYear() + "/" + (startDate.getMonth() + 1) + "/" + startDate.getDate() + " - " + endDate.getFullYear() + "/" + (endDate.getMonth() + 1) + "/" + endDate.getDate();
         // dateText = startDate.getDate() + "-" + (startDate.getMonth() + 1) + "-" + startDate.getFullYear() + " to " + endDate.getDate() + "-" + (endDate.getMonth() + 1) + "-" + endDate.getFullYear();
 
-        $('#timesheet-date-text').val(dateText);
+        $('#timesheet-datepicker').val(dateText);
 
     }
 

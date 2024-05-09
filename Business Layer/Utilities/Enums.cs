@@ -12,6 +12,17 @@ namespace Business_Layer.Utilities
         Disabled = 2,
     }
 
+    public enum PayrateCategoryEnum
+    {
+        NightShiftWeekend = 1,
+        Shift = 2,
+        HouseCallNightWeekend =3,
+        PhoneConsult = 4,
+        PhoneConsultNightWeekend =5,
+        BatchTesting = 6,
+        HouseCall = 7,
+    }
+
     public enum RequestCallType
     {
         HouseCall = 1,

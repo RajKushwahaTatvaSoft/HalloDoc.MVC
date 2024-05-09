@@ -8,6 +8,7 @@ using Data_Layer.CustomModels;
 using Data_Layer.CustomModels.Filter;
 using Data_Layer.CustomModels.TableRow;
 using Data_Layer.CustomModels.TableRow.Admin;
+using Data_Layer.CustomModels.TableRow.Physician;
 using Data_Layer.DataModels;
 using Data_Layer.ViewModels.Admin;
 using Data_Layer.ViewModels.Physician;
@@ -3448,12 +3449,80 @@ namespace HalloDoc.MVC.Controllers
                 return PartialView("Providers/Partial/_InvoicingPartialTable", model);
             }
 
+            model.timeSheetRecords = (from record in _unitOfWork.TimeSheetDetailRepo.GetAll()
+                                      where record.TimesheetId == timesheet.TimesheetId
+                                      select new InvoicingTimeSheetTRow
+                                      {
+                                          TimeSheetDetailId = record.TimesheetDetailId,
+                                          ShiftDate = record.TimesheetDate,
+                                          ShiftCount = -1,
+                                          HouseCall = record.NumberOfHouseCall ?? 0,
+                                          HouseCallNightWeekendCount = -1,
+                                          PhoneConsults = record.NumberOfPhoneCall ?? 0,
+                                          PhoneConsultsNightWeekendCount = -1,
+                                          NightShiftsWeekendCount = -1,
+                                          BatchTesting = -1,
+                                      }).ToList();
+
+            List<ReceiptRecord> records = new List<ReceiptRecord>();
+
+            foreach (var sheetDetail in model.timeSheetRecords)
+            {
+                TimesheetDetailReimbursement? receipt = _unitOfWork.TimeSheetDetailReimbursementRepo.GetFirstOrDefault(record => record.TimesheetDetailId == sheetDetail.TimeSheetDetailId);
+
+                if (receipt != null)
+                {
+                    ReceiptRecord record = new ReceiptRecord
+                    {
+                        DateOfRecord = sheetDetail.ShiftDate,
+                        ItemName = receipt.ItemName,
+                        Amount = receipt.Amount,
+                        BillReceiptName = receipt.Bill,
+                        BillReceiptFilePath = $"/document/timesheet/physician{phyId}/{timesheet.TimesheetId}/{receipt.TimesheetDetailReimbursementId}.pdf",
+                    };
+
+                    records.Add(record);
+                }
+            }
+
+            model.receiptRecords = records;
+
             return PartialView("Providers/Partial/_InvoicingPartialTable", model);
 
 
         }
 
-        public IActionResult ApproveTimeSheetForm(int timeSheetId)
+        public IActionResult ApproveTimeSheet(int timeSheetId)
+        {
+            try
+            {
+                Timesheet? timesheet = _unitOfWork.TimeSheetRepository.GetFirstOrDefault(sheet => sheet.TimesheetId == timeSheetId);
+
+                if (timesheet == null)
+                {
+                    _notyf.Error(NotificationMessage.TIMESHEET_NOT_FOUND);
+                    return RedirectToAction("GetApproveTimeSheetForm");
+                }
+
+                timesheet.IsApproved = true;
+                timesheet.ModifiedBy = GetAdminAspId();
+                timesheet.ModifiedDate = DateTime.Now;
+
+                _unitOfWork.TimeSheetRepository.Update(timesheet);
+                _unitOfWork.Save();
+
+                _notyf.Success("Timesheet approved successfully.");
+
+                return RedirectToAction("Invoicing");
+            }
+            catch (Exception ex)
+            {
+                _notyf.Error(ex.Message);
+                return RedirectToAction("GetApproveTimeSheetForm");
+            }
+
+        }
+        public IActionResult GetApproveTimeSheetForm(int timeSheetId)
         {
             try
             {
@@ -3465,15 +3534,21 @@ namespace HalloDoc.MVC.Controllers
                     return RedirectToAction("Invoicing");
                 }
 
-                TimeSheetFormViewModel? model = GetExistingTimeSheetViewModel(timeSheetId, timesheet.StartDate, timesheet.EndDate, timesheet.PhysicianId);
+                TimeSheetFormViewModel? timeSheetModel = GetExistingTimeSheetViewModel(timeSheetId, timesheet.StartDate, timesheet.EndDate, timesheet.PhysicianId);
 
-                if (model == null)
+                if (timeSheetModel == null)
                 {
                     _notyf.Error("Cound not get data");
                     return RedirectToAction("Invoicing");
                 }
 
-                return View("Providers/ApproveTimeSheetForm",model);
+                AdminApprovedViewModel model = new AdminApprovedViewModel()
+                {
+                    TimesheetDetails = timeSheetModel,
+                    providerPayrates = _unitOfWork.ProviderPayrateRepository.Where(payrate => payrate.PhysicianId == timesheet.PhysicianId),
+                };
+
+                return View("Providers/ApproveTimeSheetForm", model);
             }
             catch (Exception ex)
             {

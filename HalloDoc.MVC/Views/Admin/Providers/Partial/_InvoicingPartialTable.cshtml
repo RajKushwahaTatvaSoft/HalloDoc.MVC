@@ -32,7 +32,7 @@ else if (!Model.IsApproved)
                     <td>@Model.EndDate.ToString("MMM dd,yyyy")</td>
                     <td>Pending</td>
                     <td>
-                        <a class="btn btn-outline-info text-info" asp-action="ApproveTimeSheetForm" asp-route-timesheetId="@Model.TimeSheetId" >Approve</a>
+                        <a class="btn btn-outline-info text-info" asp-action="GetApproveTimeSheetForm" asp-route-timeSheetId="@Model.TimeSheetId">Approve</a>
                     </td>
                 </tr>
             </tbody>
@@ -43,5 +43,94 @@ else if (!Model.IsApproved)
 }
 else
 {
-    <h4>Invoicing Table</h4>
+
+    <div class="table-responsive">
+
+        <table class="table mt-4">
+
+            <thead class="table-head">
+
+                <tr class="">
+                    <th>Shift Date</th>
+                    <th>Shift</th>
+                    <th>Nightshift Weekend</th>
+                    <th>Housecall</th>
+                    <th>Housecall Night Weekend</th>
+                    <th>Phone Consults</th>
+                    <th>Phone Consults Night Weekend</th>
+                    <th>Batch Testing</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                @foreach (var record in Model.timeSheetRecords)
+                {
+                    <tr>
+                        <td>@record.ShiftDate.ToString("MMM dd, yyyy")</td>
+                        <td>@record.ShiftCount</td>
+                        <td>@record.NightShiftsWeekendCount</td>
+                        <td>@record.HouseCall</td>
+                        <td>@record.HouseCallNightWeekendCount</td>
+                        <td>@record.PhoneConsults</td>
+                        <td>@record.PhoneConsultsNightWeekendCount</td>
+                        <td>@record.BatchTesting</td>
+                    </tr>
+                }
+
+            </tbody>
+
+        </table>
+
+
+        <div class="mt-3">
+
+            <h4>TimeSheet ReImbursement</h4>
+
+            <div id="invoicing-reimbursement-table">
+
+                @if (Model.receiptRecords != null && Model.receiptRecords.Count() > 0)
+                {
+
+                    <table class="table mt-4">
+
+                        <thead class="table-head">
+
+                            <tr class="">
+                                <th>Date</th>
+                                <th>Item</th>
+                                <th>Amount</th>
+                                <th>Bill</th>
+                                <th>Action</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            @foreach (var record in Model.receiptRecords)
+                            {
+                                <tr>
+                                    <td>@record.DateOfRecord.ToString("MMM dd, yyyy")</td>
+                                    <td>@record.ItemName</td>
+                                    <td>@record.Amount</td>
+                                    <td>@record.BillReceiptName</td>
+                                    <td>
+                                        <a href="@record.BillReceiptFilePath" target="_blank" class="btn btn-outline-info">View</a>
+                                    </td>
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                }
+
+            </div>
+        </div>
+
+    </div>
+
 }
