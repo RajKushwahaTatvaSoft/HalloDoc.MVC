@@ -55,7 +55,7 @@
                                     <input type="text" asp-for="@payrate.PayrateId" name="payrateId" hidden />
                                     <input type="text" asp-for="@payrate.CategoryId" name="payrateCategoryId" hidden />
                                     <div class="form-floating">
-                                        <input type="text" asp-for="@payrate.PayrateAmount" name="payrateValue" class="form-control payrateInput" id="PayrateNightShiftWeekend" />
+                                        <input type="text" asp-for="@payrate.PayrateAmount" name="payrateValue" disabled class="form-control payrate-input" id="PayrateNightShiftWeekend" />
                                         <label for="PayrateNightShiftWeekend" class="ms-2">Payrate</label>
                                     </div>
                                 </td>
@@ -94,6 +94,11 @@
 
     $('.editReceiptBtn').click(function () {
 
+        var inputs = $(this).closest('tr').find('.payrate-input');
+        for (var i = 0; i < inputs.length; i++) {
+            inputs[i].disabled = false;
+        }
+
         $(this).hide();
         $(this).siblings(".saveReceiptBtn").show();
         $(this).siblings(".cancelReceiptBtn").show();
@@ -102,6 +107,11 @@
 
 
     $('.cancelReceiptBtn').click(function () {
+
+        var inputs = $(this).closest('tr').find('.payrate-input');
+        for (var i = 0; i < inputs.length; i++) {
+            inputs[i].disabled = true;
+        }
 
         $(this).hide();
         $(this).siblings(".saveReceiptBtn").hide();

@@ -23,7 +23,7 @@
 
             <div class="d-flex pt-3 px-3 justify-content-between">
 
-                <div id="timesheet-div" class="form-floating">
+                <div id="timesheet-div" style="cursor:pointer;" class="form-floating">
 
                     <input id="timesheet-datepicker" class="form-control" type="text" onchange="updateTimeSheetDate()" />
                     <label>Timesheetperiod</label>
@@ -31,7 +31,7 @@
                 </div>
                 <div>
 
-                    <button id="finalize-timesheet-btn" class="btn btn-outline-info shadow-none night-mode-btn d-flex align-items-center">
+                    <button id="finalize-timesheet-btn" style="display:none;" class="btn btn-outline-info shadow-none night-mode-btn">
                         <span>Finalize Timesheet</span>
                     </button>
 
@@ -119,6 +119,7 @@
     });
 
     $(document).ready(function () {
+        let firstDate = new Date();
         adjustStartAndEndDates(startDate);
         loadInvoicingPartialTable();
     });

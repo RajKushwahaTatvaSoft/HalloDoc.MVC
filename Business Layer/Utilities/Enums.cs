@@ -16,9 +16,9 @@ namespace Business_Layer.Utilities
     {
         NightShiftWeekend = 1,
         Shift = 2,
-        HouseCallNightWeekend =3,
+        HouseCallNightWeekend = 3,
         PhoneConsult = 4,
-        PhoneConsultNightWeekend =5,
+        PhoneConsultNightWeekend = 5,
         BatchTesting = 6,
         HouseCall = 7,
     }

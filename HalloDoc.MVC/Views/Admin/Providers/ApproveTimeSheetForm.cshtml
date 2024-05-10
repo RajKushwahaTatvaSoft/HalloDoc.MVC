@@ -80,7 +80,6 @@
                                     @{
                                         decimal? houseCallPayrate = Model.providerPayrates.FirstOrDefault(rate => rate.PayrateCategoryId == (int)PayrateCategoryEnum.HouseCall)?.Payrate;
                                         decimal? phoneConsultPayrate = Model.providerPayrates.FirstOrDefault(rate => rate.PayrateCategoryId == (int)PayrateCategoryEnum.PhoneConsult)?.Payrate;
-
                                     }
 
                                     <tr>
@@ -114,7 +113,9 @@
                                         <td>
                                             <input class="form-control" disabled value="@phoneConsultPayrate" />
                                         </td>
-                                        <td></td>
+                                        <td>
+                                            <input class="form-control" disabled value="230" />
+                                        </td>
                                     </tr>
 
                                 </tbody>

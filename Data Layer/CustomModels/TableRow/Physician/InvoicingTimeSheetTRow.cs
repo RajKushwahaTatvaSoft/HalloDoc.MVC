@@ -10,7 +10,7 @@ namespace Data_Layer.CustomModels.TableRow.Physician
     {
         public int TimeSheetDetailId { get; set; }
         public DateOnly ShiftDate { get; set; }
-        public int ShiftCount { get; set; }
+        public double ShiftCount { get; set; }
         public int NightShiftsWeekendCount { get; set; }
         public int HouseCall { get; set; }
         public int HouseCallNightWeekendCount { get; set; }

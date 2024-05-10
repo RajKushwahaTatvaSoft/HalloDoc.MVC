@@ -2736,7 +2736,7 @@ namespace HalloDoc.MVC.Controllers
                     {
                         PayrateCategoryId = payrateCategoryId,
                         PhysicianId = physicianId,
-                        Payrate = payrateValue,
+                        Payrate = Math.Round(payrateValue, 2),
                         PayrateId = payrateId ?? 0,
                         CreatedBy = adminAspId ?? "",
                         CreatedDate = DateTime.Now,
@@ -2756,7 +2756,7 @@ namespace HalloDoc.MVC.Controllers
 
                     providerPayrate.PayrateCategoryId = payrateCategoryId;
                     providerPayrate.PhysicianId = physicianId;
-                    providerPayrate.Payrate = payrateValue;
+                    providerPayrate.Payrate = Math.Round(payrateValue, 2);
                     providerPayrate.ModifiedBy = adminAspId ?? "";
                     providerPayrate.ModifiedDate = DateTime.Now;
 
@@ -3455,13 +3455,13 @@ namespace HalloDoc.MVC.Controllers
                                       {
                                           TimeSheetDetailId = record.TimesheetDetailId,
                                           ShiftDate = record.TimesheetDate,
-                                          ShiftCount = -1,
-                                          HouseCall = record.NumberOfHouseCall ?? 0,
-                                          HouseCallNightWeekendCount = -1,
-                                          PhoneConsults = record.NumberOfPhoneCall ?? 0,
-                                          PhoneConsultsNightWeekendCount = -1,
-                                          NightShiftsWeekendCount = -1,
-                                          BatchTesting = -1,
+                                          ShiftCount = record.TotalHours ?? 0,
+                                          HouseCall = (record.IsWeekend ?? false) ? 0 : record.NumberOfHouseCall ?? 0,
+                                          HouseCallNightWeekendCount = (record.IsWeekend ?? false) ? record.NumberOfHouseCall ?? 0 : 0,
+                                          PhoneConsults = (record.IsWeekend ?? false) ? 0 : record.NumberOfPhoneCall ?? 0,
+                                          PhoneConsultsNightWeekendCount = (record.IsWeekend ?? false) ? record.NumberOfPhoneCall ?? 0 : 0,
+                                          NightShiftsWeekendCount = (record.IsWeekend ?? false) ? 1 : 0,
+                                          BatchTesting = 0,
                                       }).ToList();
 
             List<ReceiptRecord> records = new List<ReceiptRecord>();
@@ -3488,7 +3488,6 @@ namespace HalloDoc.MVC.Controllers
             model.receiptRecords = records;
 
             return PartialView("Providers/Partial/_InvoicingPartialTable", model);
-
 
         }
 
@@ -3556,7 +3555,7 @@ namespace HalloDoc.MVC.Controllers
                 return RedirectToAction("Invoicing");
             }
         }
-        
+
         public IActionResult UpdateTimesheetForm(AdminApprovedViewModel model)
         {
             try

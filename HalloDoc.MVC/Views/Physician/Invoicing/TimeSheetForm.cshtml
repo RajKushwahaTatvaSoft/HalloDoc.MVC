@@ -20,10 +20,10 @@
 
         </div>
 
-        <form method="post" enctype="multipart/form-data">
-            <input hidden asp-for="TimesheetId"/>
+        <div class="dashboard-card">
+            <form method="post" enctype="multipart/form-data" novalidate>
 
-            <div class="dashboard-card">
+                <input hidden asp-for="TimesheetId" />
 
                 <div>
 
@@ -89,123 +89,30 @@
 
                 </div>
 
-            </div>
 
-            <div class="d-flex mt-3 justify-content-start">
-                <button class="btn text-white btn-info" type="button" id="add-receipt-btn">Add Receipts</button>
-                <button class="btn text-white btn-danger" type="button" id="cancel-receipt-btn" style="display:none;">Cancel Receipts</button>
-            </div>
+                <div class="d-flex justify-content-end">
 
-            @if (Model != null && Model.timeSheetReceiptRecords != null && Model.timeSheetReceiptRecords.Count > 0)
-            {
-                <div class="table-responsive">
-
-                    <table class="table mt-4 table-bordered d-none" id="bill-table">
-
-                        <colgroup>
-
-                            <col span="1" style="width: 10%;">
-                            <col span="1" style="width: 20%;">
-                            <col span="1" style="width: 20%;">
-                            <col span="1" style="width: 30%;">
-                            <col span="1" style="width: 20%;">
-
-                        </colgroup>
-
-                        <thead class="">
-
-                            <tr class="">
-                                <th>Date</th>
-                                <th>Item Name</th>
-                                <th>Amount</th>
-                                <th>Bill</th>
-                                <th>Actions</th>
-                            </tr>
-
-                        </thead>
-
-                        <tbody>
-                            <input id="is-receipt-added-checkbox" asp-for="IsReceiptsAdded" type="checkbox" />
-
-                            @for (int i = 0; i < Model.timeSheetReceiptRecords.Count; i++)
-                            {
-                                ReceiptRecord currentRecord = Model.timeSheetReceiptRecords[i];
-
-                                <input hidden asp-for="timeSheetReceiptRecords[i].RecordId" />
-
-                                <input asp-for="timeSheetReceiptRecords[i].DateOfRecord" hidden />
-                                <tr>
-                                    <td>
-                                        @Model.timeSheetReceiptRecords[i].DateOfRecord.ToString("dd-MM-yyyy")
-                                    </td>
-                                    <td>
-                                        <input type="text" asp-for="timeSheetReceiptRecords[i].ItemName" class="form-control" id="item-name">
-                                    </td>
-                                    <td>
-                                        <input type="text" asp-for="timeSheetReceiptRecords[i].Amount" class="form-control " id="amoount">
-                                    </td>
-                                    <td>
-                                        @if (!string.IsNullOrEmpty(currentRecord.BillReceiptName))
-                                        {
-                                            <span>@currentRecord.BillReceiptName</span>
-                                        }
-                                        else
-                                        {
-                                            <input id="bill-receipt-record-file-@i" class="form-control receipt-file" asp-for="timeSheetReceiptRecords[i].BillReceipt" accept="application/pdf" type="file" style="display:none;">
-
-                                            <div class="input-group mb-3">
-                                                <input type="text" id="bill-receipt-record-file-text-input-@i" data-fileindex="@i" class="form-control receipt-text-input-btn" placeholder="Select File"
-                                                       style="caret-color: transparent" autocomplete="off">
-
-                                                <span class="input-group-text receipt-file-upload-btn" data-fileindex="@i" id="bill-receipt-record-file-span-@i" style="background-color: #10bce9;">
-                                                    <label for="text_input_span_id">
-                                                        <button style="background-color: #10bce9; border: none;" type="button">
-                                                            <img src="/images/upload_icon.svg" alt="upload-icon">
-                                                            <span class="ms-1 text-white">Upload</span>
-                                                        </button>
-                                                    </label>
-                                                </span>
-
-                                            </div>
-                                        }
-                                        @*
-                                <input type="file" hidden asp-for="timeSheetReceiptRecords[i].BillReceipt" class="fileUpload" id="bill-@i">
-                                <button type="button" class="btn btn-info text-white uploadbtn" data-file="@i">Select File</button>
-                                *@
-                                    </td>
-                                    <td>
-                                        @if (!string.IsNullOrEmpty(currentRecord.BillReceiptFilePath))
-                                        {
-
-                                            <button type="button" class="btn btn-outline-info">Edit</button>
-                                            <button type="button" class="btn btn-outline-info">Delete</button>
-                                            <a target="_blank" href="@currentRecord.BillReceiptFilePath" class="btn btn-outline-info">View</a>
-                                        }
-                                    </td>
-
-                                </tr>
-                            }
-
-                        </tbody>
-
-                    </table>
+                    <button class="btn text-white btn-info mt-3" type="submit">Submit</button>
 
                 </div>
-            }
-            else
-            {
-                <h4>Couldn't fetch receipts data</h4>
-            }
-            <button class="btn text-white btn-info mt-3" type="submit">Submit</button>
 
-            <div class="d-flex justify-content-end">
+            </form>
+        </div>
 
-                <button class="btn text-white btn-info" type="submit" asp-action="FinalizeTimeSheet">Finalize</button>
+        <div class="d-flex mt-3 justify-content-start">
+            <button class="btn text-white btn-info" type="button" id="add-receipt-btn">Add Receipts</button>
+            <button class="btn text-white btn-danger" type="button" id="cancel-receipt-btn" style="display:none;">Cancel Receipts</button>
+        </div>
 
-            </div>
+        <div>
+            @Html.Partial("Invoicing/Partial/_AddReceiptPartialView", Model?.ReceiptPartialViewModel)
+        </div>
 
-        </form>
+        <div class="d-flex justify-content-end">
 
+            <button class="btn text-white btn-info" type="submit" asp-action="FinalizeTimeSheet">Finalize</button>
+
+        </div>
 
     </div>
 
@@ -214,20 +121,6 @@
 </div>
 
 <script>
-
-    $('#add-receipt-btn').click(function () {
-        $(this).hide();
-        $('#cancel-receipt-btn').show();
-        $('#bill-table').removeClass("d-none");
-        $('#is-receipt-added-checkbox').prop("checked", true);
-    });
-
-    $('#cancel-receipt-btn').click(function () {
-        $(this).hide();
-        $('#add-receipt-btn').show();
-        $('#bill-table').addClass("d-none");
-        $('#is-receipt-added-checkbox').prop("checked", false);
-    });
 
     $('#finalize-timesheet-btn').click(function () {
 
@@ -247,29 +140,6 @@
         });
 
 
-    });
-
-</script>
-
-<script>
-
-    $('.receipt-file-upload-btn').on('click', function () {
-        let fileIndex = $(this).data('fileindex');
-        let fileInputBtn = document.getElementById("bill-receipt-record-file-" + fileIndex);
-        fileInputBtn.click();
-    });
-
-    $('.receipt-text-input-btn').on('click', function () {
-        let fileIndex = $(this).data('fileindex');
-        let fileInputBtn = document.getElementById("bill-receipt-record-file-" + fileIndex);
-        fileInputBtn.click();
-    });
-
-    $(".receipt-file").change(function () {
-        let textInputDiv = $(this).siblings("div").find("input");
-        let textInput = $(this).siblings("div");
-
-        textInputDiv.val(this.value.replace(/C:\\fakepath\\/i, ''));
     });
 
 </script>

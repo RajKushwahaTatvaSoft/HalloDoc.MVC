@@ -97,3 +97,16 @@ else
 {
     <h4>No Record(s) Found</h4>
 }
+
+@if (Model?.IsFinalized ?? false)
+{
+    <script>
+        $('#finalize-timesheet-btn').hide();
+    </script>
+}
+else
+{
+    <script>
+        $('#finalize-timesheet-btn').show();
+    </script>
+}

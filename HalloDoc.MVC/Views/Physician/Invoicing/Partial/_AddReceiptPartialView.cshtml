@@ -1,0 +1,246 @@
+﻿@model ReceiptPartialViewModel
+
+@if (Model != null && Model.receiptRecords.Count > 0)
+{
+    <div class="table-responsive">
+
+        <table class="table mt-4 table-bordered d-none" id="bill-table">
+
+            <colgroup>
+
+                <col span="1" style="width: 10%;">
+                <col span="1" style="width: 20%;">
+                <col span="1" style="width: 20%;">
+                <col span="1" style="width: 30%;">
+                <col span="1" style="width: 20%;">
+
+            </colgroup>
+
+            <thead class="">
+
+                <tr class="">
+                    <th>Date</th>
+                    <th>Item Name</th>
+                    <th>Amount</th>
+                    <th>Bill</th>
+                    <th>Actions</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                @for (int i = 0; i < Model.receiptRecords.Count; i++)
+                {
+                    ReceiptRecord currentRecord = Model.receiptRecords[i];
+
+                    <form method="post" class="receipt-form" enctype="multipart/form-data">
+
+                        <input hidden asp-for="TimeSheetId" name="timeSheetId" />
+                        <input hidden asp-for="@Model.receiptRecords[i].RecordId" name="recordId" />
+                        <input hidden asp-for="@Model.receiptRecords[i].TimeSheetDetailId" name="timeSheetDetailId" />
+                        <input asp-for="@Model.receiptRecords[i].DateOfRecord" name="dateOfRecord" hidden />
+                    <tr>
+                        <td>
+                                @Model.receiptRecords[i].DateOfRecord.ToString("dd-MM-yyyy")
+                        </td>
+                        <td>
+                                @if (!string.IsNullOrEmpty(currentRecord.ItemName))
+                                {
+                                <span class="receipt-item-name-span">@currentRecord.ItemName</span>
+                                <input style="display:none;" type="text" asp-for="@Model.receiptRecords[i].ItemName" class="form-control receipt-item-name-input" name="itemName">
+                                }
+                                else
+                                {
+                                <input type="text" asp-for="@Model.receiptRecords[i].ItemName" class="form-control receipt-item-name-input" name="itemName">
+                                }
+
+                        </td>
+                        <td>
+                                @if (currentRecord.Amount != 0)
+                                {
+                                <span class="receipt-item-amount-span">@currentRecord.Amount</span>
+                                <input style="display:none;" type="text" asp-for="@Model.receiptRecords[i].Amount" class="form-control receipt-item-amount-input" name="billAmount">
+                                }
+                                else
+                                {
+                                <input type="text" asp-for="@Model.receiptRecords[i].Amount" class="form-control receipt-item-amount-input" name="billAmount">
+                                }
+                        </td>
+                        <td>
+                                @if (!string.IsNullOrEmpty(currentRecord.BillReceiptName))
+                                {
+                                <span>@currentRecord.BillReceiptName</span>
+                                }
+                                else
+                                {
+                                <input id="bill-receipt-record-file-@i" class="form-control receipt-file" name="billReceipt" asp-for="@Model.receiptRecords[i].BillReceipt" accept="application/pdf" type="file" style="display:none;">
+
+                                <div class="input-group mb-3">
+                                    <input type="text" id="bill-receipt-record-file-text-input-@i" data-fileindex="@i" class="form-control receipt-text-input-btn" placeholder="Select File"
+                                           style="caret-color: transparent" autocomplete="off">
+
+                                    <span class="input-group-text receipt-file-upload-btn" data-fileindex="@i" id="bill-receipt-record-file-span-@i" style="background-color: #10bce9;">
+                                        <label for="text_input_span_id">
+                                            <button style="background-color: #10bce9; border: none;" type="button">
+                                                <img src="/images/upload_icon.svg" alt="upload-icon">
+                                                <span class="ms-1 text-white">Upload</span>
+                                            </button>
+                                        </label>
+                                    </span>
+
+                                </div>
+                                }
+                                @*
+                    <input type="file" hidden asp-for="timeSheetReceiptRecords[i].BillReceipt" class="fileUpload" id="bill-@i">
+                    <button type="button" class="btn btn-info text-white uploadbtn" data-file="@i">Select File</button>
+                    *@
+                        </td>
+                        <td>
+                                @if (!string.IsNullOrEmpty(currentRecord.BillReceiptFilePath))
+                                {
+                                <button type="button" class="btn btn-outline-info receipt-edit-btn">Edit</button>
+                                <button type="button" class="btn btn-outline-info receipt-delete-btn" data-recordid="@Model.receiptRecords[i].RecordId">Delete</button>
+                                <a target="_blank" href="@currentRecord.BillReceiptFilePath" class="btn btn-outline-info receipt-view-btn">View</a>
+                                <button type="submit" class="btn btn-info receipt-save-btn" style="display:none;">Save</button>
+                                <button type="button" class="btn btn-danger receipt-cancel-btn" style="display:none;">Cancel</button>
+                                }
+                                else
+                                {
+                                <button type="submit" class="btn btn-info receipt-save-btn">Save</button>
+                                }
+                        </td>
+
+                    </tr>
+
+                    </form>
+                }
+
+            </tbody>
+
+        </table>
+
+    </div>
+}
+else
+{
+    <h4>Couldn't fetch receipts data</h4>
+}
+
+<script>
+
+    $('.receipt-edit-btn').click(function () {
+        $(this).hide();
+        $(this).siblings('.receipt-delete-btn').hide();
+        $(this).siblings('.receipt-view-btn').hide();
+
+        $(this).siblings('.receipt-save-btn').show();
+        $(this).siblings('.receipt-cancel-btn').show();
+
+        $(this).closest('tr').find('.receipt-item-name-span').hide();
+        $(this).closest('tr').find('.receipt-item-name-input').show();
+
+        $(this).closest('tr').find('.receipt-item-amount-span').hide();
+        $(this).closest('tr').find('.receipt-item-amount-input').show();
+    });
+
+    $('.receipt-cancel-btn').click(function () {
+        $(this).hide();
+        $(this).siblings('.receipt-save-btn').hide();
+
+        $(this).siblings('.receipt-delete-btn').show();
+        $(this).siblings('.receipt-view-btn').show();
+        $(this).siblings('.receipt-edit-btn').show();
+
+        $(this).closest('tr').find('.receipt-item-name-span').show();
+        $(this).closest('tr').find('.receipt-item-name-input').hide();
+
+        $(this).closest('tr').find('.receipt-item-amount-span').show();
+        $(this).closest('tr').find('.receipt-item-amount-input').hide();
+    });
+
+
+    $('.receipt-delete-btn').click(function () {
+
+        let recordIdVal = $(this).data('recordid');
+
+        $.ajax({
+            url: "/Physician/DeleteReceiptRecord",
+            data: { recordId: recordIdVal },
+            type: 'POST',
+            success: function (result) {
+                if (result) {
+                    location.reload();
+                }
+            },
+            error: function (error) {
+                console.log('Error Updating Location')
+                console.log(error);
+            },
+        });
+
+    });
+
+    $('.receipt-form').submit(function (event) {
+
+        event.preventDefault();
+        let formData = $(this).serialize();
+
+        $.ajax({
+            url: "/Physician/AddUpdateReceiptRecord",
+            data: formData,
+            type: 'POST',
+            success: function (result) {
+                if (result) {
+                    location.reload();
+                }
+            },
+            error: function (error) {
+                console.log('Error Updating Location')
+                console.log(error);
+            },
+        });
+    });
+
+</script>
+
+<script>
+
+    $('#add-receipt-btn').click(function () {
+        $(this).hide();
+        $('#cancel-receipt-btn').show();
+        $('#bill-table').removeClass("d-none");
+        $('#is-receipt-added-checkbox').prop("checked", true);
+    });
+
+    $('#cancel-receipt-btn').click(function () {
+        $(this).hide();
+        $('#add-receipt-btn').show();
+        $('#bill-table').addClass("d-none");
+        $('#is-receipt-added-checkbox').prop("checked", false);
+    });
+
+</script>
+
+<script>
+
+    $('.receipt-file-upload-btn').on('click', function () {
+        let fileIndex = $(this).data('fileindex');
+        let fileInputBtn = document.getElementById("bill-receipt-record-file-" + fileIndex);
+        fileInputBtn.click();
+    });
+
+    $('.receipt-text-input-btn').on('click', function () {
+        let fileIndex = $(this).data('fileindex');
+        let fileInputBtn = document.getElementById("bill-receipt-record-file-" + fileIndex);
+        fileInputBtn.click();
+    });
+
+    $(".receipt-file").change(function () {
+        let textInputDiv = $(this).siblings("div").find("input");
+        let textInput = $(this).siblings("div");
+
+        textInputDiv.val(this.value.replace(/C:\\fakepath\\/i, ''));
+    });
+
+</script>
