@@ -4,6 +4,16 @@
     Layout = "_AdminDashboardLayout";
 }
 
+
+@{
+    decimal houseCallPayrate = Model.providerPayrates.FirstOrDefault(rate => rate.PayrateCategoryId == (int)PayrateCategoryEnum.HouseCall)?.Payrate ?? 0;
+    decimal phoneConsultPayrate = Model.providerPayrates.FirstOrDefault(rate => rate.PayrateCategoryId == (int)PayrateCategoryEnum.PhoneConsult)?.Payrate ?? 0;
+    decimal shiftPayrate = Model.providerPayrates.FirstOrDefault(rate => rate.PayrateCategoryId == (int)PayrateCategoryEnum.Shift)?.Payrate ?? 0;
+    decimal nightShiftWeekend = Model.providerPayrates.FirstOrDefault(rate => rate.PayrateCategoryId == (int)PayrateCategoryEnum.NightShiftWeekend)?.Payrate ?? 0;
+
+}
+
+
 <div class="container-fluid d-flex justify-content-center row ">
 
     <div class="col-md-8 col-12">
@@ -62,33 +72,28 @@
                                             <td>@Model.TimesheetDetails.timeSheetDayRecords[i].DateOfRecord.ToString("dd-MM-yyyy")</td>
                                             <td>@Model.TimesheetDetails.timeSheetDayRecords[i].OnCallHours</td>
                                             <td>
-                                                <input class="form-control" asp-for="TimesheetDetails.timeSheetDayRecords[i].TotalHours" type="number" />
+                                                <input class="form-control timesheet-total-hour" asp-for="TimesheetDetails.timeSheetDayRecords[i].TotalHours" type="number" />
                                             </td>
                                             <td>
-                                                <input class="form-check-input" asp-for="TimesheetDetails.timeSheetDayRecords[i].IsHoliday" type="checkbox" />
+                                                <input class="form-check-input timesheet-is-weekend" asp-for="TimesheetDetails.timeSheetDayRecords[i].IsHoliday" type="checkbox" />
                                             </td>
                                             <td>
-                                                <input class="form-control" asp-for="TimesheetDetails.timeSheetDayRecords[i].NoOfHouseCall" type="number" />
+                                                <input class="form-control timesheet-house-call" asp-for="TimesheetDetails.timeSheetDayRecords[i].NoOfHouseCall" type="number" />
                                             </td>
                                             <td>
-                                                <input class="form-control" asp-for="TimesheetDetails.timeSheetDayRecords[i].NoOfPhoneConsult" type="number" />
+                                                <input class="form-control timesheet-phone-consult" asp-for="TimesheetDetails.timeSheetDayRecords[i].NoOfPhoneConsult" type="number" />
                                             </td>
                                             <td></td>
                                         </tr>
                                     }
 
-                                    @{
-                                        decimal? houseCallPayrate = Model.providerPayrates.FirstOrDefault(rate => rate.PayrateCategoryId == (int)PayrateCategoryEnum.HouseCall)?.Payrate;
-                                        decimal? phoneConsultPayrate = Model.providerPayrates.FirstOrDefault(rate => rate.PayrateCategoryId == (int)PayrateCategoryEnum.PhoneConsult)?.Payrate;
-                                    }
-
                                     <tr>
                                         <td colspan="2">Payrate</td>
                                         <td>
-                                            <input class="form-control" disabled value="@houseCallPayrate" />
+                                            <input class="form-control" disabled value="@shiftPayrate" />
                                         </td>
                                         <td>
-                                            <input class="form-control" disabled value="@houseCallPayrate" />
+                                            <input class="form-control" disabled value="@nightShiftWeekend" />
                                         </td>
                                         <td>
                                             <input class="form-control" disabled value="@houseCallPayrate" />
@@ -102,19 +107,19 @@
                                     <tr>
                                         <td colspan="2">Invoice Total</td>
                                         <td>
-                                            <input class="form-control" disabled value="@houseCallPayrate" />
+                                            <input class="form-control" id="total-hour-total-invoice" disabled value="" />
                                         </td>
                                         <td>
-                                            <input class="form-control" disabled value="@houseCallPayrate" />
+                                            <input class="form-control" id="weekend-shift-total-invoice" disabled value="" />
                                         </td>
                                         <td>
-                                            <input class="form-control" disabled value="@houseCallPayrate" />
+                                            <input class="form-control" id="house-call-total-invoice" disabled value="" />
                                         </td>
                                         <td>
-                                            <input class="form-control" disabled value="@phoneConsultPayrate" />
+                                            <input class="form-control" id="phone-consult-total-invoice" disabled value="" />
                                         </td>
                                         <td>
-                                            <input class="form-control" disabled value="230" />
+                                            <input class="form-control" disabled id="timesheet-total-invoice" value="" />
                                         </td>
                                     </tr>
 
@@ -256,6 +261,129 @@
     <div style="height: 20px;"></div>
 
 </div>
+
+<script>
+    let totalHourInvoice = 0;
+    let weekendShiftInvoice = 0;
+    let houseCallInvoice = 0;
+    let phoneConsultInvoice = 0;
+
+    function updateTotalHourInvoice() {
+
+        let totalHours = 0;
+
+        $('.timesheet-total-hour').each(function (index, object) {
+            totalHours = totalHours + parseInt($(this).val());
+        });
+
+        // console.log(totalHours);
+        // console.log(@shiftPayrate);
+
+        totalHourInvoice = totalHours * @shiftPayrate;
+
+        $('#total-hour-total-invoice').val(totalHourInvoice);
+
+        updateTotalTimesheetInvoice();
+    }
+
+    function updateHouseCallInvoice() {
+
+        let houseCalls = 0;
+
+        $('.timesheet-house-call').each(function (index, object) {
+            houseCalls = houseCalls + parseInt($(this).val());
+        });
+
+        // console.log(houseCalls);
+        // console.log(@houseCallPayrate);
+
+        houseCallInvoice = houseCalls * @houseCallPayrate;
+
+        $('#house-call-total-invoice').val(houseCallInvoice);
+
+        updateTotalTimesheetInvoice();
+    }
+
+    function updatePhoneConsultInvoice() {
+
+        let phoneConsults = 0;
+
+        $('.timesheet-phone-consult').each(function (index, object) {
+            phoneConsults = phoneConsults + parseInt($(this).val());
+        });
+
+        // console.log(phoneConsults);
+        // console.log(@phoneConsultPayrate);
+
+        phoneConsultInvoice = phoneConsults * @phoneConsultPayrate;
+
+        $('#phone-consult-total-invoice').val(phoneConsultInvoice);
+
+        updateTotalTimesheetInvoice();
+    }
+
+    function updateWeekendShiftInvoice() {
+
+        let weekendShifts = $('input.timesheet-is-weekend:checked').length;
+
+        // console.log(weekendShifts);
+        // console.log(@nightShiftWeekend);
+
+        weekendShiftInvoice = weekendShifts * @nightShiftWeekend;
+
+        $('#weekend-shift-total-invoice').val(weekendShiftInvoice);
+
+        updateTotalTimesheetInvoice();
+    }
+
+    function updateTotalTimesheetInvoice() {
+
+        let totalInvoice = totalHourInvoice + weekendShiftInvoice + houseCallInvoice + phoneConsultInvoice;
+        $('#timesheet-total-invoice').val(totalInvoice);
+    }
+
+    $('.timesheet-total-hour').change(function () {
+
+        let hourVal = $(this).val();
+        if (!hourVal.trim()) {
+            $(this).val(0);
+        }
+
+        updateTotalHourInvoice();
+    });
+
+    $('.timesheet-house-call').change(function () {
+
+        let hourVal = $(this).val();
+        if (!hourVal.trim()) {
+            $(this).val(0);
+        }
+
+        updateHouseCallInvoice();
+    });
+
+    $('.timesheet-phone-consult').change(function () {
+
+        let hourVal = $(this).val();
+        if (!hourVal.trim()) {
+            $(this).val(0);
+        }
+
+        updatePhoneConsultInvoice();
+    });
+
+    $('.timesheet-is-weekend').change(function () {
+        updateWeekendShiftInvoice();
+    });
+
+    $(document).ready(function () {
+        updateTotalHourInvoice();
+        updateWeekendShiftInvoice();
+        updateHouseCallInvoice();
+        updatePhoneConsultInvoice();
+        updateTotalTimesheetInvoice();
+    });
+</script>
 
 <script>
 
