@@ -18,5 +18,8 @@ namespace Data_Layer.CustomModels.TableRow.Physician
         public string? Phone { get; set; }
         public string? Address { get; set; }
         public bool IsFinalize { get; set; } = false;
+        public string? AdminAspId { get; set; }
+        public string? PatientAspId { get; set; }
+
     }
 }

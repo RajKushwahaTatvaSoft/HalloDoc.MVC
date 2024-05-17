@@ -12,5 +12,7 @@ namespace Data_Layer.CustomModels.TableRow.Patient
         public string RequestStatus { get; set; } = string.Empty;
         public int FileCount { get; set; }
         public DateTime CreatedDate { get; set; }
+        public string? AdminAspId { get; set; }
+        public string? PhyAspId {  get; set; }
     }
 }

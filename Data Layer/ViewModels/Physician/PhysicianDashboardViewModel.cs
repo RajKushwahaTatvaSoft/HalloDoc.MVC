@@ -19,5 +19,7 @@ namespace Data_Layer.ViewModels.Physician
         public int ActiveReqCount { get; set; }
         public int ConcludeReqCount { get; set; }
         public int CurrentPage {  get; set; }
+        public string? PhyAspId { get; set; }
+
     }
 }

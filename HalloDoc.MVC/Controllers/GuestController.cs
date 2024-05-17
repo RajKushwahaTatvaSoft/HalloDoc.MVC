@@ -27,7 +27,6 @@ namespace HalloDoc.MVC.Controllers
     {
         private readonly IJwtService _jwtService;
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IWebHostEnvironment _environment;
         private readonly IConfiguration _config;
         private readonly IUtilityService _utilityService;
         private readonly INotyfService _notyf;
@@ -37,7 +36,6 @@ namespace HalloDoc.MVC.Controllers
         {
             _jwtService = jwt;
             _unitOfWork = unitOfWork;
-            _environment = environment;
             _config = config;
             _utilityService = utilityService;
             _notyf = notyf;
@@ -947,6 +945,98 @@ namespace HalloDoc.MVC.Controllers
 
         #endregion
 
+        public IEnumerable<ChatMessage> FetchChats(string senderAspId, string receiverAspId, int requestId)
+        {
+            IEnumerable<ChatMessage> chatMessages = _unitOfWork.ChatMessageRepository
+                .Where(chat =>
+                 chat.RequestId == requestId
+                && ((chat.SenderAspId == senderAspId && chat.ReceiverAspId == receiverAspId)
+                 || (chat.ReceiverAspId == senderAspId && chat.SenderAspId == receiverAspId))
+                )
+                .OrderBy(_ => _.SentTime);
+            JsonArray chatArray = new();
+
+            foreach (ChatMessage message in chatMessages)
+            {
+                string formattedTime = message.SentTime.ToString("hh:mm");
+                chatArray.Add(new
+                {
+                    messageContent = message.MessageContent,
+                    sentTime = formattedTime,
+                    senderAspId = message.SenderAspId,
+                });
+            }
+
+            return chatMessages;
+        }
+
+        public JsonResult GetNameAndImageFromAspId(string userAspId, int accountType)
+        {
+            Aspnetuser? aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(user => user.Id.Equals(userAspId));
+
+            if (aspUser == null || aspUser.Accounttypeid != accountType)
+            {
+                _notyf.Error("Cannot find user");
+                return Json(new { isSuccess = false });
+            }
+
+            switch ((AccountType)accountType)
+            {
+                case AccountType.Admin:
+                    {
+                        Admin? admin = _unitOfWork.AdminRepository.GetFirstOrDefault(admin => admin.Aspnetuserid == userAspId);
+                        if (admin == null)
+                        {
+                            _notyf.Error("Cannot find user");
+                            return Json(new { isSuccess = false });
+                        }
+
+                        string adminName = $"{admin.Firstname} {admin.Lastname}";
+                        string imagePath = "/images/default/admin_default_svg.svg";
+
+                        return Json(new { isSuccess = true, userName = adminName, userImagePath = imagePath });
+                    }
+
+                case AccountType.Physician:
+                    {
+
+                        Physician? physician = _unitOfWork.PhysicianRepository.GetFirstOrDefault(phy => phy.Aspnetuserid == userAspId);
+                        if (physician == null)
+                        {
+                            _notyf.Error("Cannot find user");
+                            return Json(new { isSuccess = false });
+                        }
+
+                        string phyName = $"{physician.Firstname} {physician.Lastname}";
+                        string imagePath = "/images/default/physician_default_svg.svg";
+
+                        if(physician.Photo != null)
+                        {
+                            imagePath = $"/document/physician/{physician.Physicianid}/ProfilePhoto.jpg";
+                        }
+
+                        return Json(new { isSuccess = true, userName = phyName, userImagePath = imagePath });
+                    }
+
+                case AccountType.Patient:
+                    {
+
+                        User? patient = _unitOfWork.UserRepository.GetFirstOrDefault(user => user.Aspnetuserid == userAspId);
+                        if (patient == null)
+                        {
+                            _notyf.Error("Cannot find user");
+                            return Json(new { isSuccess = false });
+                        }
+
+                        string patientName = $"{patient.Firstname} {patient.Lastname}";
+                        string imagePath = "/images/default/patient_default_svg.svg";
+
+                        return Json(new { isSuccess = true, userName = patientName, userImagePath = imagePath });
+                    }
+            }
+
+            return Json(new { isSuccess = false });
+        }
 
     }
 }

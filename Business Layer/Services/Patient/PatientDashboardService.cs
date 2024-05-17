@@ -37,12 +37,17 @@ namespace Business_Layer.Services.Patient
             
             var query = (from r in _context.Requests
                          where r.Createduserid == userId
+                         join p in _context.Physicians on r.Physicianid equals p.Physicianid into phyGroup
+                         from phyItem in phyGroup.DefaultIfEmpty()
+                         
                          select new PatientDashboardTRow
                          {
                              RequestId = r.Requestid,
                              RequestStatus = RequestHelper.GetRequestStatusString(r.Status),
                              CreatedDate = r.Createddate,
                              FileCount = _context.Requestwisefiles.Count(file => file.Requestid == r.Requestid),
+                             PhyAspId = phyItem.Aspnetuserid,
+                             AdminAspId = Constants.MASTER_ADMIN_ASP_USER_ID,
                          }).AsQueryable();
 
             return await PagedList<PatientDashboardTRow>.CreateAsync(

@@ -147,8 +147,8 @@
         </form>
 
         <div class="d-flex mt-3 justify-content-start">
-            <button class="btn text-white btn-info" type="button" id="add-receipt-btn">Add Receipts</button>
-            <button class="btn text-white btn-danger" type="button" id="cancel-receipt-btn" style="display:none;">Cancel Receipts</button>
+            <button class="btn text-white btn-info" type="button" id="add-receipt-btn">Show Receipts</button>
+            <button class="btn text-white btn-danger" type="button" id="cancel-receipt-btn" style="display:none;">Hide Receipts</button>
         </div>
 
         @if (Model != null && Model.TimesheetDetails.timeSheetReceiptRecords != null && Model.TimesheetDetails.timeSheetReceiptRecords.Count > 0)
@@ -180,53 +180,23 @@
                     </thead>
 
                     <tbody>
-                        <input id="is-receipt-added-checkbox" asp-for="TimesheetDetails.IsReceiptsAdded" type="checkbox" />
 
                         @for (int i = 0; i < Model.TimesheetDetails.timeSheetReceiptRecords.Count; i++)
                         {
                             ReceiptRecord currentRecord = Model.TimesheetDetails.timeSheetReceiptRecords[i];
 
-                            <input hidden asp-for="TimesheetDetails.timeSheetReceiptRecords[i].RecordId" />
-
-                            <input asp-for="TimesheetDetails.timeSheetReceiptRecords[i].DateOfRecord" hidden />
                             <tr>
                                 <td>
-                                    @Model.TimesheetDetails.timeSheetReceiptRecords[i].DateOfRecord.ToString("dd-MM-yyyy")
+                                    @currentRecord.DateOfRecord.ToString("dd-MM-yyyy")
                                 </td>
                                 <td>
-                                    <input type="text" asp-for="TimesheetDetails.timeSheetReceiptRecords[i].ItemName" class="form-control" id="item-name">
+                                    @currentRecord.ItemName
                                 </td>
                                 <td>
-                                    <input type="text" asp-for="TimesheetDetails.timeSheetReceiptRecords[i].Amount" class="form-control " id="amoount">
+                                    @currentRecord.Amount
                                 </td>
                                 <td>
-                                    @if (!string.IsNullOrEmpty(currentRecord.BillReceiptName))
-                                    {
-                                        <span>@currentRecord.BillReceiptName</span>
-                                    }
-                                    else
-                                    {
-                                        <input id="bill-receipt-record-file-@i" class="form-control receipt-file" asp-for="TimesheetDetails.timeSheetReceiptRecords[i].BillReceipt" accept="application/pdf" type="file" style="display:none;">
-
-                                        <div class="input-group mb-3">
-                                            <input type="text" id="bill-receipt-record-file-text-input-@i" data-fileindex="@i" class="form-control receipt-text-input-btn" placeholder="Select File"
-                                                   style="caret-color: transparent" autocomplete="off">
-
-                                            <span class="input-group-text receipt-file-upload-btn" data-fileindex="@i" id="bill-receipt-record-file-span-@i" style="background-color: #10bce9;">
-                                                <label for="text_input_span_id">
-                                                    <button style="background-color: #10bce9; border: none;" type="button">
-                                                        <img src="/images/upload_icon.svg" alt="upload-icon">
-                                                        <span class="ms-1 text-white">Upload</span>
-                                                    </button>
-                                                </label>
-                                            </span>
-
-                                        </div>
-                                    }
-                                    @*
-                            <input type="file" hidden asp-for="timeSheetReceiptRecords[i].BillReceipt" class="fileUpload" id="bill-@i">
-                            <button type="button" class="btn btn-info text-white uploadbtn" data-file="@i">Select File</button>
-                            *@
+                                    <span>@currentRecord.BillReceiptName</span>
                                 </td>
                                 <td>
                                     @if (!string.IsNullOrEmpty(currentRecord.BillReceiptFilePath))
@@ -234,7 +204,6 @@
                                         <a target="_blank" href="@currentRecord.BillReceiptFilePath" class="btn btn-outline-info">View</a>
                                     }
                                 </td>
-
                             </tr>
                         }
 
@@ -249,13 +218,27 @@
             <h4>Couldn't fetch receipts data</h4>
         }
 
+        <form method="post" asp-action="ApproveTimeSheet">
 
-        <div class="d-flex justify-content-end">
+            <div class="d-flex justify-content-end">
 
-            <a class="btn text-white btn-info" asp-action="ApproveTimeSheet" asp-route-timeSheetId="@Model?.TimesheetDetails.TimesheetId">Approve</a>
+                <input hidden asp-for="TimesheetDetails.TimesheetId" name="timeSheetId" />
 
-        </div>
+                <div class="form-floating me-2">
+                    <input asp-for="BonusAmount" class="form-control" type="number" step=".001" placeholder="Bonus Amount" />
+                    <label>Bonus Amount</label>
+                </div>
 
+                <div class="form-floating me-2">
+                    <input asp-for="AdminDescription" class="form-control" type="text" placeholder="Admin Description" />
+                    <label>Admin Description</label>
+                </div>
+
+                <button type="submit" class="btn text-white btn-info align-items-center d-flex">Approve</button>
+
+            </div>
+
+        </form>
     </div>
 
     <div style="height: 20px;"></div>
@@ -391,14 +374,12 @@
         $(this).hide();
         $('#cancel-receipt-btn').show();
         $('#bill-table').removeClass("d-none");
-        $('#is-receipt-added-checkbox').prop("checked", true);
     });
 
     $('#cancel-receipt-btn').click(function () {
         $(this).hide();
         $('#add-receipt-btn').show();
         $('#bill-table').addClass("d-none");
-        $('#is-receipt-added-checkbox').prop("checked", false);
     });
 
 </script>

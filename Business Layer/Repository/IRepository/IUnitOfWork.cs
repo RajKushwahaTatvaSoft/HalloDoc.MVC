@@ -44,6 +44,7 @@
         ITimeSheetDetailReimbursementRepo TimeSheetDetailReimbursementRepo{ get; }
         IPayrateCategoryRepository PayrateCategoryRepository { get; }
         IProviderPayrateRepository ProviderPayrateRepository { get; }
+        IChatMessageRepository ChatMessageRepository { get; }
         void Save();
     }
 

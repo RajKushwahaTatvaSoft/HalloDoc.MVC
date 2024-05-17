@@ -12,5 +12,6 @@ namespace Business_Layer.Utilities
         public const int DEFAULT_ADMIN_ROLE_ID = 3;
         public const int DEFAULT_PHYSICIAN_ROLE_ID = 5;
         public const string BASE_URL = "https://localhost:7161";
+        public const string MASTER_ADMIN_ASP_USER_ID = "master12-fc91-4435-8ee5-9324978admin";
     }
 }

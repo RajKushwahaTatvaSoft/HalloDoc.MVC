@@ -7,7 +7,6 @@ namespace Data_Layer.ViewModels.Admin
     public class AdminDashboardViewModel
     {
         public PagedList<AdminRequest> pagedList {  get; set; }
-        public List<AdminRequest> adminRequests {  get; set; }
         public IEnumerable<Casetag> casetags { get; set; }
         public IEnumerable<Region> regions { get; set; }
         public IEnumerable<DataModels.Physician> physicians { get; set; }
@@ -20,5 +19,7 @@ namespace Data_Layer.ViewModels.Admin
         public int ToCloseReqCount { get; set; }
         public int UnpaidReqCount { get; set; }
         public int CurrentPage {  get; set; }
+        public string? AdminAspId { get; set; }
+
     }
 }

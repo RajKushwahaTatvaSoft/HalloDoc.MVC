@@ -64,7 +64,8 @@ namespace HalloDoc.MVC.Controllers
 
         public IActionResult Dashboard()
         {
-            return View("Dashboard/Dashboard");
+            string? patientAspId = HttpContext.Request.Headers.Where(x => x.Key == "userAspId").FirstOrDefault().Value;
+            return View("Dashboard/Dashboard",patientAspId);
         }
 
         public IActionResult RequestForMe()

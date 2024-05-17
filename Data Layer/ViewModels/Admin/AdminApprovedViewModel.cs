@@ -10,7 +10,10 @@ namespace Data_Layer.ViewModels.Admin
 {
     public class AdminApprovedViewModel
     {
-        public TimeSheetFormViewModel TimesheetDetails {  get; set; }
         public IEnumerable<ProviderPayrate> providerPayrates {  get; set; }
+        public TimeSheetFormViewModel TimesheetDetails {  get; set; }
+        public decimal BonusAmount { get; set; }
+        public string? AdminDescription {  get; set; }
+
     }
 }

@@ -1375,6 +1375,7 @@ namespace HalloDoc.MVC.Controllers
                 model.ConcludeReqCount = _unitOfWork.RequestRepository.Where(r => r.Physicianid == phyId && r.Status == (short)RequestStatus.Conclude).Count();
                 model.casetags = _unitOfWork.CaseTagRepository.GetAll();
                 model.filterOptions = initialFilter;
+                model.PhyAspId = GetPhysicianAspUserId();
 
                 return View("Dashboard/Dashboard", model);
             }

@@ -1,4 +1,5 @@
-﻿using AspNetCoreHero.ToastNotification.Abstractions;
+﻿using AspNetCore;
+using AspNetCoreHero.ToastNotification.Abstractions;
 using Business_Layer.Repository.IRepository;
 using Business_Layer.Services.AdminServices.Interface;
 using Business_Layer.Services.Helper.Interface;
@@ -211,6 +212,7 @@ namespace HalloDoc.MVC.Controllers
                 model.UnpaidReqCount = _unitOfWork.RequestRepository.Where(r => r.Status == (short)RequestStatus.Unpaid).Count();
                 model.casetags = _unitOfWork.CaseTagRepository.GetAll();
                 model.filterOptions = initialFilter;
+                model.AdminAspId = GetAdminAspId();
 
                 return View("Dashboard/Dashboard", model);
 
@@ -3490,8 +3492,8 @@ namespace HalloDoc.MVC.Controllers
             return PartialView("Providers/Partial/_InvoicingPartialTable", model);
 
         }
-
-        public IActionResult ApproveTimeSheet(int timeSheetId)
+        [HttpPost]
+        public IActionResult ApproveTimeSheet(int timeSheetId, decimal bonusAmount, string adminDescription)
         {
             try
             {
@@ -3503,7 +3505,12 @@ namespace HalloDoc.MVC.Controllers
                     return RedirectToAction("GetApproveTimeSheetForm");
                 }
 
+                decimal totalInvoice = _unitOfWork.TimeSheetRepository.GetInvoiceTotal(timeSheetId);
+
                 timesheet.IsApproved = true;
+                timesheet.BonusAmount = bonusAmount;
+                timesheet.InvoiceTotal = totalInvoice;
+                timesheet.AdminNotes = adminDescription;
                 timesheet.ModifiedBy = GetAdminAspId();
                 timesheet.ModifiedDate = DateTime.Now;
 
@@ -3521,6 +3528,8 @@ namespace HalloDoc.MVC.Controllers
             }
 
         }
+
+
         public IActionResult GetApproveTimeSheetForm(int timeSheetId)
         {
             try
@@ -3556,6 +3565,7 @@ namespace HalloDoc.MVC.Controllers
             }
         }
 
+        [HttpPost]
         public IActionResult UpdateTimesheetForm(AdminApprovedViewModel model)
         {
             try
@@ -3580,6 +3590,7 @@ namespace HalloDoc.MVC.Controllers
                             sheetDetail.NumberOfPhoneCall = inputRecord.NoOfPhoneConsult;
 
                             _unitOfWork.TimeSheetDetailRepo.Update(sheetDetail);
+                            _unitOfWork.Save();
                         }
 
                         loopDate = loopDate.AddDays(1);
@@ -3642,9 +3653,9 @@ namespace HalloDoc.MVC.Controllers
                             BillReceiptName = reimbursement.Bill,
                             BillReceiptFilePath = $"/document/timesheet/physician{phyId}/{timeSheetId}/{reimbursement.TimesheetDetailReimbursementId}.pdf",
                         };
+                        receiptRecords.Add(record);
                     }
 
-                    receiptRecords.Add(record);
                     receiptDate = receiptDate.AddDays(1);
                 }
 
@@ -5007,32 +5018,3 @@ namespace HalloDoc.MVC.Controllers
 
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

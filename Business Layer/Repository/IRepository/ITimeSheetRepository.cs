@@ -9,5 +9,6 @@ namespace Business_Layer.Repository.IRepository
 {
     public interface ITimeSheetRepository : IGenericRepository<Timesheet>
     {
+        public decimal GetInvoiceTotal(int timeSheetId);
     }
 }

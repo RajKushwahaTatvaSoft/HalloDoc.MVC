@@ -3,6 +3,14 @@
     Layout = "_AdminDashboardLayout";
 }
 
+<partial name="_ChatSideBarView" />
+
+<script>
+    loggedInUserAspId = '@Model.AdminAspId';
+    loggedInUserAccountTypeId = 1;
+</script>
+
+
 @* MODALS DIV*@
 <div id="modal-div"></div>
 
@@ -387,9 +395,6 @@ C25.163,30.114,24.933,30.163,24.687,30.163z"></path>
 
 </div>
 
-<script src="https://code.jquery.com/jquery-3.6.1.min.js"
-        integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous">
-</script>
 
 <script src="/js/admin/admin-dashboard.js"></script>
 

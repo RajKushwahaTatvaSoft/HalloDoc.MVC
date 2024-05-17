@@ -19,6 +19,7 @@ namespace Business_Layer.Services.PhysicianServices
 
         public async Task<PagedList<PhyDashboardTRow>> GetPhysicianRequestAsync(DashboardFilter dashboardParams, int physicianId)
         {
+
             int pageNumber = dashboardParams.PageNumber;
 
             if (dashboardParams.PageNumber < 1)
@@ -54,6 +55,8 @@ namespace Business_Layer.Services.PhysicianServices
             }
 
             var query = (from r in _unitOfWork.RequestRepository.GetAll()
+                         join u in _unitOfWork.UserRepository.GetAll() on r.Userid equals u.Userid into usergroup
+                         from userItem in usergroup.DefaultIfEmpty()
                          where r.Physicianid == physicianId
                          && validRequestTypes.Contains(r.Status)
                          join rc in _unitOfWork.RequestClientRepository.GetAll() on r.Requestid equals rc.Requestid
@@ -73,6 +76,8 @@ namespace Business_Layer.Services.PhysicianServices
                              Phone = r.Phonenumber,
                              Address = rc.Address,
                              IsFinalize = formItem.Isfinalize ? true : false,
+                             PatientAspId = userItem.Aspnetuserid,
+                             AdminAspId = Constants.MASTER_ADMIN_ASP_USER_ID,
                          }).AsQueryable();
 
             return await PagedList<PhyDashboardTRow>.CreateAsync(

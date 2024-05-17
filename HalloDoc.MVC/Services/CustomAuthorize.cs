@@ -14,11 +14,11 @@ namespace HalloDoc.MVC.Services
         {
             _accountTypeId = accountType;
         }
- 
+
         public void OnAuthorization(AuthorizationFilterContext context)
         {
 
-            if(_accountTypeId == 0)
+            if (_accountTypeId == 0)
             {
                 context.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Guest", action = "Index" }));
                 context.HttpContext.Response.Cookies.Delete("hallodoc");
@@ -35,7 +35,7 @@ namespace HalloDoc.MVC.Services
             }
 
             var token = context.HttpContext.Request.Cookies["hallodoc"];
-         
+
             if (token == null || !jwtService.ValidateToken(token, out JwtSecurityToken jwtToken))
             {
                 context.HttpContext.Response.Cookies.Delete("hallodoc");
@@ -48,13 +48,14 @@ namespace HalloDoc.MVC.Services
             var userNameClaim = jwtToken.Claims.FirstOrDefault(claims => claims.Type == "userName");
             var userAspIdClaim = jwtToken.Claims.FirstOrDefault(claims => claims.Type == "userAspId");
 
-            context.HttpContext.Session.SetString("userName",userNameClaim?.Value ?? "");
-            context.HttpContext.Request.Headers.Add("userId",userIdClaim?.Value);
+            context.HttpContext.Session.SetString("userName", userNameClaim?.Value ?? "");
+            context.HttpContext.Session.SetString("userAspId", userAspIdClaim?.Value ?? "");
+            context.HttpContext.Request.Headers.Add("userId", userIdClaim?.Value);
             context.HttpContext.Request.Headers.Add("userName", userNameClaim?.Value);
             context.HttpContext.Request.Headers.Add("userAspId", userAspIdClaim?.Value);
 
             if (roleClaim == null)
-            {                
+            {
                 context.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Guest", action = "Index" }));
                 context.HttpContext.Response.Cookies.Delete("hallodoc");
                 return;

@@ -20,6 +20,7 @@ using Business_Layer.Services.AdminServices;
 using Business_Layer.Services.AdminServices.Interface;
 using Business_Layer.Services.PhysicianServices;
 using Business_Layer.Services.PhysicianServices.Interface;
+using HalloDoc.MVC.ChatService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -69,6 +70,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddNotyf(config => { config.DurationInSeconds = 3; config.IsDismissable = true; config.Position = NotyfPosition.TopRight; });
 
+builder.Services.AddSignalR();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -91,5 +94,6 @@ app.MapControllerRoute(
     pattern: "{controller=Guest}/{action=Index}");
 
 // Add method for custom roles
+app.MapHub<ChatHub>("/chatHub");
 
 app.Run();

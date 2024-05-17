@@ -21,7 +21,7 @@ namespace Business_Layer.Utilities
             string[] oldfiles = Directory.GetFiles(path, updateName + ".*");
             foreach (string f in oldfiles)
             {
-                System.IO.File.Delete(f);
+                File.Delete(f);
             }
 
             string extension = Path.GetExtension(file.FileName);

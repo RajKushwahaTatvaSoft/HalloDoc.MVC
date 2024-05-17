@@ -54,6 +54,8 @@ namespace Business_Layer.Services.AdminServices
             }
 
             var query = (from r in _unitOfWork.RequestRepository.GetAll()
+                         join u in _unitOfWork.UserRepository.GetAll() on r.Userid equals u.Userid into usergroup
+                         from userItem in usergroup.DefaultIfEmpty()
                          where validRequestTypes.Contains(r.Status)
                          && (dashboardParams.RequestTypeFilter == 0 || r.Requesttypeid == dashboardParams.RequestTypeFilter)
                          join rc in _unitOfWork.RequestClientRepository.GetAll() on r.Requestid equals rc.Requestid
@@ -79,6 +81,8 @@ namespace Business_Layer.Services.AdminServices
                              PhysicianName = phyItem.Firstname + " " + phyItem.Lastname,
                              Phone = r.Phonenumber,
                              Address = rc.Address,
+                             PatientAspId = userItem.Aspnetuserid,
+                             PhysicianAspId = phyItem.Aspnetuserid,
                              //Notes = rc.Notes,
                              Notes = _unitOfWork.RequestStatusLogRepository.GetAll().Where(log => log.Requestid == r.Requestid).OrderByDescending(_ => _.Createddate).First().Notes,
                          }).AsQueryable();

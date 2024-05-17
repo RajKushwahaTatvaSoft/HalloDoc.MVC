@@ -22,8 +22,8 @@ public partial class Timesheet
 
     public bool? IsApproved { get; set; }
 
-    [StringLength(128)]
-    public string? BonusAmount { get; set; }
+    [Precision(8, 3)]
+    public decimal? BonusAmount { get; set; }
 
     public string? AdminNotes { get; set; }
 
@@ -38,6 +38,9 @@ public partial class Timesheet
 
     [Column(TypeName = "timestamp without time zone")]
     public DateTime? ModifiedDate { get; set; }
+
+    [Precision(8, 3)]
+    public decimal? InvoiceTotal { get; set; }
 
     [ForeignKey("CreatedBy")]
     [InverseProperty("TimesheetCreatedByNavigations")]

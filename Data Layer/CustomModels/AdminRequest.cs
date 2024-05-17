@@ -23,5 +23,7 @@ namespace Data_Layer.CustomModels
         public string Phone { get; set; }
         public string Address { get; set; }
         public string? Notes { get; set; }
+        public string? PatientAspId {  get; set; }
+        public string? PhysicianAspId {  get; set; }
     }
 }

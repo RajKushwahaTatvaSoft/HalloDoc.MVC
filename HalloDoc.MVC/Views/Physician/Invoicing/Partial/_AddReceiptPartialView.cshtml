@@ -34,7 +34,7 @@
                 {
                     ReceiptRecord currentRecord = Model.receiptRecords[i];
 
-                    <form method="post" class="receipt-form" enctype="multipart/form-data">
+                    <form method="post" class="receipt-form" enctype="multipart/form-data" asp-action="AddUpdateReceiptRecord">
 
                         <input hidden asp-for="TimeSheetId" name="timeSheetId" />
                         <input hidden asp-for="@Model.receiptRecords[i].RecordId" name="recordId" />
@@ -54,7 +54,6 @@
                                 {
                                 <input type="text" asp-for="@Model.receiptRecords[i].ItemName" class="form-control receipt-item-name-input" name="itemName">
                                 }
-
                         </td>
                         <td>
                                 @if (currentRecord.Amount != 0)
@@ -91,10 +90,7 @@
 
                                 </div>
                                 }
-                                @*
-                    <input type="file" hidden asp-for="timeSheetReceiptRecords[i].BillReceipt" class="fileUpload" id="bill-@i">
-                    <button type="button" class="btn btn-info text-white uploadbtn" data-file="@i">Select File</button>
-                    *@
+
                         </td>
                         <td>
                                 @if (!string.IsNullOrEmpty(currentRecord.BillReceiptFilePath))
@@ -181,26 +177,28 @@ else
 
     });
 
-    $('.receipt-form').submit(function (event) {
+    // $('.receipt-form').submit(function (event) {
 
-        event.preventDefault();
-        let formData = $(this).serialize();
+    //     event.preventDefault();
+    //     let formData = $(this).serialize();
 
-        $.ajax({
-            url: "/Physician/AddUpdateReceiptRecord",
-            data: formData,
-            type: 'POST',
-            success: function (result) {
-                if (result) {
-                    location.reload();
-                }
-            },
-            error: function (error) {
-                console.log('Error Updating Location')
-                console.log(error);
-            },
-        });
-    });
+    //     $.ajax({
+    //         url: "/Physician/AddUpdateReceiptRecord",
+    //         data: formData,
+    //         dataType: 'json',
+    //         type: 'POST',
+    //         contentType: false,
+    //         success: function (result) {
+    //             if (result) {
+    //                 location.reload();
+    //             }
+    //         },
+    //         error: function (error) {
+    //             console.log('Error Updating Location')
+    //             console.log(error);
+    //         },
+    //     });
+    // });
 
 </script>
 
