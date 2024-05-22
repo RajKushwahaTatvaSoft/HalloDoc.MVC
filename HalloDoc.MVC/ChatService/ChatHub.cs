@@ -28,12 +28,6 @@ namespace HalloDoc.MVC.ChatService
                 return;
             }
 
-            string? groupName = GetGroupNameForChat(receiverAspUserId, senderAspUserId, requestIdNumber);
-
-            if (groupName == null)
-            {
-                return;
-            }
             ChatMessage chatMessage = new()
             {
                 SenderAspId = senderAspUserId,
@@ -47,12 +41,11 @@ namespace HalloDoc.MVC.ChatService
             _context.SaveChanges();
 
             string? receiverConnectionId = _context.UserConnections.Where(x => x.UserAspNetUserId == receiverAspUserId).Select(x => x.SignalConnectionId).FirstOrDefault();
-
+                
             if (receiverConnectionId != null)
             {
-                await Groups.AddToGroupAsync(senderConnectionId, groupName);
-                await Groups.AddToGroupAsync(receiverConnectionId, groupName);
-                await Clients.Group(groupName).SendAsync("ReceiveMessage", senderAspUserId, message);
+                await Clients.Client(senderConnectionId).SendAsync("ReceiveMessage", senderAspUserId, message);
+                await Clients.Client(receiverConnectionId).SendAsync("ReceiveMessage", senderAspUserId, message);
             }
             else
             {
@@ -74,19 +67,19 @@ namespace HalloDoc.MVC.ChatService
                 return;
             }
 
-            string? groupName = $"GroupForRequest{requestId}";
+            string groupName = $"GroupForRequest{requestId}";
 
-            //ChatMessage chatMessage = new()
-            //{
-            //    SenderAspId = senderAspUserId,
-            //    ReceiverAspId = groupName,
-            //    MessageContent = message,
-            //    SentTime = DateTime.Now,
-            //    RequestId = requestIdNumber,
-            //};
+            ChatMessage chatMessage = new()
+            {
+                SenderAspId = senderAspUserId,
+                ReceiverAspId = groupName,
+                MessageContent = message,
+                SentTime = DateTime.Now,
+                RequestId = requestIdNumber,
+            };
 
-            //_context.ChatMessages.Add(chatMessage);
-            //_context.SaveChanges();
+            _context.ChatMessages.Add(chatMessage);
+            _context.SaveChanges();
 
             List<string> groupMemberConnectionIds = getGroupMembersConnectionIds(requestIdNumber);
 
@@ -148,37 +141,6 @@ namespace HalloDoc.MVC.ChatService
             response.Add(userConnectionId ?? "");
 
             return response;
-        }
-
-        private string? GetGroupNameForChat(string receiverAspUserId, string senderAspUserId, int requestId)
-        {
-            int receiverAccountType = _context.Aspnetusers.FirstOrDefault(user => user.Id == receiverAspUserId)?.Accounttypeid ?? 0;
-            int senderAccountType = _context.Aspnetusers.FirstOrDefault(user => user.Id == senderAspUserId)?.Accounttypeid ?? 0;
-
-            if (receiverAccountType == 0 || senderAccountType == 0 || requestId == 0)
-            {
-                return null;
-            }
-            StringBuilder stringBuilder = new StringBuilder();
-
-            if (receiverAccountType == (int)AccountType.Admin || senderAccountType == (int)AccountType.Admin)
-            {
-                stringBuilder.Append("Admin");
-            }
-
-            if (receiverAccountType == (int)AccountType.Physician || senderAccountType == (int)AccountType.Physician)
-            {
-                stringBuilder.Append("Phy");
-            }
-
-            if (receiverAccountType == (int)AccountType.Patient || senderAccountType == (int)AccountType.Patient)
-            {
-                stringBuilder.Append("Patient");
-            }
-
-            stringBuilder.Append($"Request{requestId}");
-
-            return stringBuilder.ToString();
         }
 
         public override Task OnConnectedAsync()

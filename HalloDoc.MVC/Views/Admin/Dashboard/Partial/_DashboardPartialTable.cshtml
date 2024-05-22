@@ -206,8 +206,8 @@
                     <td>
                                 <div class="d-flex justify-content-around">
                                  
-                                    <div class="d-flex justify-content-between p-1 patient-chat-btn" data-useraspid="@currentRequest.PatientAspId" data-requestid="@currentRequest.RequestId" style="border:1px solid white; border-radius:3px;">
-                                        <svg height="30px" width="30px" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+                                    <div class="d-flex white-border-btn align-items-center justify-content-center flex-grow-1 p-1 patient-chat-btn" data-useraspid="@currentRequest.PatientAspId" data-requestid="@currentRequest.RequestId">
+                                        <svg height="15px" width="15px" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
                                              viewBox="0 0 60.671 60.671" xml:space="preserve">
                                         <g>
                                         <g>
@@ -217,13 +217,13 @@
                                             </g>
                                         </g>
                                         </svg>
-                                        <span>Patient</span>
+                                        <span class="ms-2">Patient</span>
                                     </div>
                                     @if (!string.IsNullOrEmpty(currentRequest.PhysicianAspId))
                                     {
-                                        <div class="d-flex justify-content-between p-1 physician-chat-btn" data-useraspid="@currentRequest.PhysicianAspId" data-requestid="@currentRequest.RequestId" style="border:1px solid white; border-radius:3px;">
+                                        <div class="ms-2 d-flex white-border-btn align-items-center justify-content-center flex-grow-1 p-1 physician-chat-btn" data-useraspid="@currentRequest.PhysicianAspId" data-requestid="@currentRequest.RequestId" style="border:1px solid white; border-radius:3px;">
                                         <svg version="1.1" id="_x32_" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
-	 width="30px" height="30px" viewBox="0 0 512 512"  xml:space="preserve">
+	 width="15px" height="15px" viewBox="0 0 512 512"  xml:space="preserve">
 <style type="text/css">
 <![CDATA[
 	.st0{fill:#ffffff;}
@@ -318,11 +318,11 @@
 		L440.219,458.5z"/>
 </g>
 </svg>
-                                    <span>Provider</span>
+                                    <span class="ms-2">Provider</span>
                                     </div>
                                     }
                                     
-                                        <div class="d-flex justify-content-between p-1 group-chat-btn" data-requestid="@currentRequest.RequestId" style="border:1px solid white; border-radius:3px;">
+                                        <div class="ms-2 d-flex white-border-btn align-items-center justify-content-center flex-grow-1 p-1 group-chat-btn" data-requestid="@currentRequest.RequestId">
                                       
 <svg width="24px" height="24px" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" stroke-width="3" stroke="#ffffff" fill="none">
     <circle cx="31.89" cy="22.71" r="5.57"/>
@@ -332,7 +332,7 @@
     <circle cx="15.54" cy="22.71" r="5.57"/>
     <path d="M17.13,43.74H4.27A11.27,11.27,0,0,1,15.54,32.47h0a11.24,11.24,0,0,1,5.29,1.32"/>
 </svg>
-                                    <span>Group</span>
+                                    <span class="ms-2">Group</span>
                                     </div>
                                     
                                 </div>

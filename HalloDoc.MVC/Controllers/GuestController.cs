@@ -19,6 +19,7 @@ using System.Transactions;
 using Data_Layer.ViewModels.Guest;
 using System.IO.IsolatedStorage;
 using System.Security.Claims;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 
 namespace HalloDoc.MVC.Controllers
@@ -970,6 +971,78 @@ namespace HalloDoc.MVC.Controllers
             return chatMessages;
         }
 
+        public JsonArray FetchGroupChats(int requestId)
+        {
+
+            string groupName = $"GroupForRequest{requestId}";
+
+            IEnumerable<ChatMessage> chatMessages = _unitOfWork.ChatMessageRepository
+                .Where(chat =>
+                 chat.RequestId == requestId && chat.ReceiverAspId == groupName
+                )
+                .OrderBy(_ => _.SentTime).ToList();
+
+            JsonArray chatArray = new();
+
+            IEnumerable<string> distinctAspIds = chatMessages.Select(_ => _.SenderAspId).Distinct();
+            List<KeyValuePair<string, string>> aspIdWithImagePaths = new List<KeyValuePair<string, string>>();
+
+            foreach (string aspId in distinctAspIds)
+            {
+                Aspnetuser? aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(user => user.Id == aspId);
+
+                if (aspUser == null)
+                {
+                    aspIdWithImagePaths.Add(new KeyValuePair<string, string>(aspId, Constants.DEFAULT_PATIENT_IMAGE_PATH));
+                    continue;
+                }
+                KeyValuePair<string, string> aspIdImage;
+                switch ((AccountType)aspUser.Accounttypeid)
+                {
+                    case AccountType.Admin:
+                        aspIdImage = new KeyValuePair<string, string>(aspId, Constants.DEFAULT_ADMIN_IMAGE_PATH);
+                        break;
+
+                    case AccountType.Patient:
+                        aspIdImage = new KeyValuePair<string, string>(aspId, Constants.DEFAULT_PATIENT_IMAGE_PATH);
+                        break;
+
+                    case AccountType.Physician:
+                        {
+                            aspIdImage = new KeyValuePair<string, string>(aspId, Constants.DEFAULT_PROVIDER_IMAGE_PATH);
+                            break;
+                        }
+
+                    default:
+                        {
+                            aspIdImage = new KeyValuePair<string, string>(aspId, Constants.DEFAULT_PATIENT_IMAGE_PATH);
+                            break;
+                        }
+                }
+
+                aspIdWithImagePaths.Add(aspIdImage);
+
+            }
+
+            foreach (ChatMessage message in chatMessages)
+            {
+                string formattedTime = message.SentTime.ToString("hh:mm");
+
+                Aspnetuser? aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(user => user.Id == message.SenderAspId);
+
+
+                chatArray.Add(new
+                {
+                    messageContent = message.MessageContent,
+                    sentTime = formattedTime,
+                    senderAspId = message.SenderAspId,
+                    imagePath = aspIdWithImagePaths.FirstOrDefault(image => image.Key.Equals(message.SenderAspId)).Value,
+                });
+            }
+
+            return chatArray;
+        }
+
         public JsonResult GetNameAndImageFromAspId(string userAspId, int accountType)
         {
             Aspnetuser? aspUser = _unitOfWork.AspNetUserRepository.GetFirstOrDefault(user => user.Id.Equals(userAspId));
@@ -992,7 +1065,7 @@ namespace HalloDoc.MVC.Controllers
                         }
 
                         string adminName = $"{admin.Firstname} {admin.Lastname}";
-                        string imagePath = "/images/default/admin_default_svg.svg";
+                        string imagePath = Constants.DEFAULT_ADMIN_IMAGE_PATH;
 
                         return Json(new { isSuccess = true, userName = adminName, userImagePath = imagePath });
                     }
@@ -1008,9 +1081,9 @@ namespace HalloDoc.MVC.Controllers
                         }
 
                         string phyName = $"{physician.Firstname} {physician.Lastname}";
-                        string imagePath = "/images/default/physician_default_svg.svg";
+                        string imagePath = Constants.DEFAULT_PROVIDER_IMAGE_PATH;
 
-                        if(physician.Photo != null)
+                        if (physician.Photo != null)
                         {
                             imagePath = $"/document/physician/{physician.Physicianid}/ProfilePhoto.jpg";
                         }
@@ -1029,7 +1102,7 @@ namespace HalloDoc.MVC.Controllers
                         }
 
                         string patientName = $"{patient.Firstname} {patient.Lastname}";
-                        string imagePath = "/images/default/patient_default_svg.svg";
+                        string imagePath = Constants.DEFAULT_PATIENT_IMAGE_PATH;
 
                         return Json(new { isSuccess = true, userName = patientName, userImagePath = imagePath });
                     }

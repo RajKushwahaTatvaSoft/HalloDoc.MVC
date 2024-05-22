@@ -17,6 +17,7 @@ using HalloDoc.MVC.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.CodeAnalysis;
+using Microsoft.EntityFrameworkCore;
 using Rotativa.AspNetCore;
 using System.Data;
 using System.IO.Compression;
@@ -3614,25 +3615,67 @@ namespace HalloDoc.MVC.Controllers
             try
             {
 
-                IEnumerable<TimeSheetDayRecord> records = (from record in _unitOfWork.TimeSheetDetailRepo.GetAll()
-                                                           where record.TimesheetId == timeSheetId
-                                                           select new TimeSheetDayRecord
-                                                           {
-                                                               TimeSheetDetailId = record.TimesheetDetailId,
-                                                               DateOfRecord = record.TimesheetDate,
-                                                               IsHoliday = record.IsWeekend ?? false,
-                                                               NoOfHouseCall = record.NumberOfHouseCall ?? 0,
-                                                               NoOfPhoneConsult = record.NumberOfPhoneCall ?? 0,
-                                                               OnCallHours = -1,
-                                                               TotalHours = record.TotalHours ?? 0,
-                                                           }).OrderBy(_ => _.DateOfRecord);
+
+                DateOnly timeSheetDate = startDate;
+
+                List<TimeSheetDayRecord> timeSheetRecords = new List<TimeSheetDayRecord>();
+                while (timeSheetDate <= endDate)
+                {
+
+                    IEnumerable<Shiftdetail> query = (from shiftDetail in _unitOfWork.ShiftDetailRepository.GetAll().Include(_ => _.Shift)
+                                                      where shiftDetail.Shift.Physicianid == phyId
+                                                      && DateOnly.FromDateTime(shiftDetail.Shiftdate) == timeSheetDate
+                                                      select shiftDetail);
+
+                    int totalMinutes = 0;
+                    foreach (Shiftdetail shift in query)
+                    {
+                        if (shift.Starttime < shift.Endtime)
+                        {
+                            TimeSpan span = shift.Endtime - shift.Starttime;
+                            totalMinutes += (int)span.TotalMinutes;
+                        }
+                    }
+
+                    double onCallHours = Math.Round(totalMinutes / 60.0, 2);
+
+                    TimesheetDetail? timeSheetDetail = _unitOfWork.TimeSheetDetailRepo.GetFirstOrDefault(receipt => receipt.TimesheetId == timeSheetId && receipt.TimesheetDate == timeSheetDate);
+                    TimeSheetDayRecord sheetRecord;
+
+                    if (timeSheetDetail == null)
+                    {
+                        sheetRecord = new TimeSheetDayRecord()
+                        {
+                            DateOfRecord = timeSheetDate,
+                            OnCallHours = onCallHours,
+                            TotalHours = onCallHours,
+                        };
+                    }
+                    else
+                    {
+
+                        sheetRecord = new TimeSheetDayRecord()
+                        {
+                            TimeSheetDetailId = timeSheetDetail.TimesheetDetailId,
+                            DateOfRecord = timeSheetDate,
+                            IsHoliday = timeSheetDetail.IsWeekend ?? false,
+                            NoOfHouseCall = timeSheetDetail.NumberOfHouseCall ?? 0,
+                            NoOfPhoneConsult = timeSheetDetail.NumberOfPhoneCall ?? 0,
+                            OnCallHours = onCallHours,
+                            TotalHours = onCallHours < timeSheetDetail.TotalHours ? (timeSheetDetail.TotalHours ?? 0) : onCallHours,
+                        };
+                    }
+
+                    timeSheetRecords.Add(sheetRecord);
+                    timeSheetDate = timeSheetDate.AddDays(1);
+                }
 
                 DateOnly receiptDate = startDate;
 
                 List<ReceiptRecord> receiptRecords = new List<ReceiptRecord>();
                 while (receiptDate <= endDate)
                 {
-                    int? timeSheetDetailId = records.FirstOrDefault(record => record.DateOfRecord == receiptDate)?.TimeSheetDetailId;
+                    int? timeSheetDetailId = timeSheetRecords.FirstOrDefault(record => record.DateOfRecord == receiptDate)?.TimeSheetDetailId;
 
                     TimesheetDetailReimbursement? reimbursement = _unitOfWork.TimeSheetDetailReimbursementRepo.GetFirstOrDefault(receipt => receipt.TimesheetDetailId == timeSheetDetailId);
 
@@ -3664,7 +3707,7 @@ namespace HalloDoc.MVC.Controllers
                     TimesheetId = timeSheetId,
                     StartDate = startDate,
                     EndDate = endDate,
-                    timeSheetDayRecords = records.ToList(),
+                    timeSheetDayRecords = timeSheetRecords,
                     timeSheetReceiptRecords = receiptRecords,
                 };
 

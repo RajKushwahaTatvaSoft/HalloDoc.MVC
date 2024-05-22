@@ -647,12 +647,12 @@ namespace HalloDoc.MVC.Controllers
                                           {
                                               TimeSheetDetailId = record.TimesheetDetailId,
                                               ShiftDate = record.TimesheetDate,
-                                              ShiftCount = 0,
-                                              HouseCall = record.NumberOfHouseCall ?? 0,
-                                              PhoneConsults = record.NumberOfPhoneCall ?? 0,
-                                              HouseCallNightWeekendCount = 0,
-                                              PhoneConsultsNightWeekendCount = 0,
-                                              NightShiftsWeekendCount = 0,
+                                              ShiftCount = record.TotalHours ?? 0,
+                                              HouseCall = (record.IsWeekend ?? false) ? 0 : record.NumberOfHouseCall ?? 0,
+                                              HouseCallNightWeekendCount = (record.IsWeekend ?? false) ? record.NumberOfHouseCall ?? 0 : 0,
+                                              PhoneConsults = (record.IsWeekend ?? false) ? 0 : record.NumberOfPhoneCall ?? 0,
+                                              PhoneConsultsNightWeekendCount = (record.IsWeekend ?? false) ? record.NumberOfPhoneCall ?? 0 : 0,
+                                              NightShiftsWeekendCount = (record.IsWeekend ?? false) ? 1 : 0,
                                               BatchTesting = 0,
                                           }).ToList();
 

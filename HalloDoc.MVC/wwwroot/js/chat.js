@@ -3,6 +3,8 @@
 var connection = new signalR.HubConnectionBuilder().withUrl("/chatHub").build();
 let loggedInUserAspId = $('#loggedInUserAspId').val();
 let loggedInUserAccountTypeId = 0;
+let chatRequestId = 0;
+
 
 //Disable the send button until connection is established.
 document.getElementById("sendButton").disabled = true;
@@ -109,6 +111,7 @@ function setUpAndShowChatCanvas(requestId, userAspId, accountTypeId) {
 
     $('#chatUserAspId').val(userAspId);
     $('#chatRequestId').val(requestId);
+    chatRequestId = requestId;
 
 
     if (accountTypeId == -1) {
@@ -162,10 +165,41 @@ function setUpAndShowChatCanvas(requestId, userAspId, accountTypeId) {
 
 function startFetchingGroupChat() {
 
-    let chatDivElement = generateGroupChatDivElement("hi", "bye", "/images//default/group_default_svg.svg","");
+    document.getElementById("messagesList").innerHTML = "";
 
-    document.getElementById("messagesList").appendChild(chatDivElement);
+    //let chatDivElement = generateGroupChatDivElement("hi", "bye", "/images//default/group_default_svg.svg","");
 
+    //let receiverAspUserId = document.getElementById("chatUserAspId").value;
+    //let requestId = document.getElementById("chatRequestId").value;
+
+    $.ajax({
+        url: "/Guest/FetchGroupChats",
+        data: {
+            requestId: chatRequestId,
+        },
+        type: 'GET',
+        success: function (result) {
+
+            $.each(result, function (index, object) {
+
+                let message = object["messageContent"];
+                let sentTime = object["sentTime"];
+                let senderAspId = object["senderAspId"];
+                let imagePath = object["imagePath"];
+
+                //let chatDivElement = generateChatDivElement(message, sentTime, senderAspId);
+                let chatDivElement = generateGroupChatDivElement(message,sentTime,imagePath,senderAspId);
+
+                document.getElementById("messagesList").appendChild(chatDivElement);
+
+            });
+
+        },
+        error: function (error) {
+            console.log(error);
+            alert('Error Cancelling Request')
+        },
+    });
 }
 
 function generateGroupChatDivElement(message, sentTime, imagePath, senderAspId) {
@@ -207,7 +241,6 @@ function generateGroupChatDivElement(message, sentTime, imagePath, senderAspId) 
 
     return groupChatDivElement;
 }
-
 
 function generateChatDivElement(message, sentTime, senderAspId) {
 
