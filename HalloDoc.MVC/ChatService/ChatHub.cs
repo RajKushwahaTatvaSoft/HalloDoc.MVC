@@ -44,8 +44,8 @@ namespace HalloDoc.MVC.ChatService
                 
             if (receiverConnectionId != null)
             {
-                await Clients.Client(senderConnectionId).SendAsync("ReceiveMessage", senderAspUserId, message);
-                await Clients.Client(receiverConnectionId).SendAsync("ReceiveMessage", senderAspUserId, message);
+                await Clients.Client(senderConnectionId).SendAsync("ReceiveMessage", senderAspUserId, message,requestId,1);
+                await Clients.Client(receiverConnectionId).SendAsync("ReceiveMessage", senderAspUserId, message,requestId,1);
             }
             else
             {

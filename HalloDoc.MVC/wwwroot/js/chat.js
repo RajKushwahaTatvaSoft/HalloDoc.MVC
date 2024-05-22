@@ -9,7 +9,7 @@ let chatRequestId = 0;
 //Disable the send button until connection is established.
 document.getElementById("sendButton").disabled = true;
 
-connection.on("ReceiveMessage", function (senderAspUserId, message) {
+connection.on("ReceiveMessage", function (senderAspUserId, message,requestId,senderAccountTypeId) {
 
     let currentTime = new Date();
     let timeToShow = `${padTo2Digits(currentTime.getHours())}:${padTo2Digits(currentTime.getMinutes())}`
@@ -18,6 +18,20 @@ connection.on("ReceiveMessage", function (senderAspUserId, message) {
 
     document.getElementById("messagesList").appendChild(chatDivElement);
 
+    if (checkNotifinationPermission() && senderAspUserId !== loggedInUserAspId) {
+
+        let options = {
+            body: message,
+            icon: "/images//default/patient_default_svg.svg",
+        };
+        let title = "New Message";
+        let notification = new Notification(title, options);
+        notification.addEventListener("click", function (event) {
+            window.location.href = "/Physician/Dashboard";
+            //TODO: do it
+            //setUpAndShowChatCanvas(requestId, senderAspUserId, senderAccountTypeId);
+        });
+    }
 });
 
 connection.on("ReceiveGroupMessage", function (senderAspUserId, message, imagePath) {
@@ -25,7 +39,7 @@ connection.on("ReceiveGroupMessage", function (senderAspUserId, message, imagePa
     let currentTime = new Date();
     let timeToShow = `${padTo2Digits(currentTime.getHours())}:${padTo2Digits(currentTime.getMinutes())}`
 
-    let chatDivElement = generateGroupChatDivElement(message, timeToShow, imagePath,senderAspUserId);
+    let chatDivElement = generateGroupChatDivElement(message, timeToShow, imagePath, senderAspUserId);
 
     document.getElementById("messagesList").appendChild(chatDivElement);
 
@@ -188,7 +202,7 @@ function startFetchingGroupChat() {
                 let imagePath = object["imagePath"];
 
                 //let chatDivElement = generateChatDivElement(message, sentTime, senderAspId);
-                let chatDivElement = generateGroupChatDivElement(message,sentTime,imagePath,senderAspId);
+                let chatDivElement = generateGroupChatDivElement(message, sentTime, imagePath, senderAspId);
 
                 document.getElementById("messagesList").appendChild(chatDivElement);
 
@@ -206,7 +220,7 @@ function generateGroupChatDivElement(message, sentTime, imagePath, senderAspId) 
 
 
     if (senderAspId === "You" || senderAspId === loggedInUserAspId) {
-        return generateChatDivElement(message,sentTime,senderAspId);
+        return generateChatDivElement(message, sentTime, senderAspId);
     }
 
     let groupChatDivElement = document.createElement("div");
@@ -265,6 +279,34 @@ function generateChatDivElement(message, sentTime, senderAspId) {
     return chatDivElement;
 }
 
+
+function checkNotifinationPermission() {
+    if (!("Notification" in window)) {
+        // Check if the browser supports notifications
+        console.log("This browser does not support desktop notification");
+        return false;
+    }
+
+    if (Notification.permission === "granted") {
+        // Check whether notification permissions have already been granted;
+        return true;
+    }
+
+    if (Notification.permission !== "denied") {
+        // We need to ask the user for permission
+        Notification.requestPermission().then((permission) => {
+            // If the user accepts, let's create a notification
+            if (permission === "granted") {
+                return true;
+            }
+        });
+    }
+
+    // At last, if the user has denied notifications, and you
+    // want to be respectful there is no need to bother them anymore.
+
+    return false;
+}
 
 
 function startFetchingChat() {
